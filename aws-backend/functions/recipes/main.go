@@ -433,8 +433,8 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	var updateData map[string]interface{}
-	if err := json.Unmarshal([]byte(request.Body), &updateData); err != nil {
+	var updateRecipe models.CreateRecipeRequest
+	if err := json.Unmarshal([]byte(request.Body), &updateRecipe); err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "INVALID_REQUEST",
@@ -448,10 +448,159 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// TODO: Implement proper update logic with DynamoDB UpdateItem
-	// For now, return a placeholder response
+	// Get existing recipe first to check if it exists
+	getInput := &dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"id":     &types.AttributeValueMemberS{Value: recipeID},
+			"userId": &types.AttributeValueMemberS{Value: userID},
+		},
+	}
+
+	result, err := dynamoClient.GetItem(ctx, getInput)
+	if err != nil || result.Item == nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "RECIPE_NOT_FOUND",
+				"message":   "Recipe not found",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Parse existing recipe to get version and creation timestamp
+	var existingRecipe models.Recipe
+	err = attributevalue.UnmarshalMap(result.Item, &existingRecipe)
+	if err != nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to parse existing recipe",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Check if recipe is soft deleted
+	if existingRecipe.IsDeleted {
+		response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "RECIPE_NOT_FOUND",
+				"message":   "Recipe not found",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Validate required fields for update
+	if strings.TrimSpace(updateRecipe.Title) == "" {
+		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "VALIDATION_ERROR",
+				"message":   "Title is required",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Per requirement: "if a recipe exists (primary key: web url) and a user re-loads it from the web extension,
+	// the API behavior will be to simply overwrite the existing record"
+	// So we do a complete replacement of the recipe data
+	now := time.Now().UTC()
+	updatedRecipe := models.Recipe{
+		ID:               recipeID, // Keep existing ID
+		UserID:           userID,
+		Title:            strings.TrimSpace(updateRecipe.Title),
+		Ingredients:      updateRecipe.Ingredients,
+		Instructions:     updateRecipe.Instructions,
+		SourceURL:        strings.TrimSpace(updateRecipe.SourceURL),
+		MainPhotoURL:     updateRecipe.MainPhotoURL,
+		PrepTimeMinutes:  updateRecipe.PrepTimeMinutes,
+		CookTimeMinutes:  updateRecipe.CookTimeMinutes,
+		TotalTimeMinutes: updateRecipe.TotalTimeMinutes,
+		Servings:         updateRecipe.Servings,
+		Yield:            updateRecipe.Yield,
+		CreatedAt:        existingRecipe.CreatedAt, // Preserve original creation time
+		UpdatedAt:        now,                      // Update timestamp
+		IsDeleted:        false,                    // Ensure not deleted
+		Version:          existingRecipe.Version + 1, // Increment version
+	}
+
+	// Convert to DynamoDB attribute values
+	item, err := attributevalue.MarshalMap(updatedRecipe)
+	if err != nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to prepare updated recipe data",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Update the recipe in DynamoDB (complete overwrite)
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(tableName),
+		Item:      item,
+		// Condition to ensure we're updating an existing item and version hasn't changed
+		ConditionExpression: aws.String("attribute_exists(id) AND version = :expectedVersion"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":expectedVersion": &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", existingRecipe.Version)},
+		},
+	}
+
+	_, err = dynamoClient.PutItem(ctx, input)
+	if err != nil {
+		// Check if this is a conditional check failed error (concurrent update)
+		if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
+			response, responseErr := utils.NewAPIResponse(http.StatusConflict, map[string]interface{}{
+				"error": map[string]interface{}{
+					"code":      "CONCURRENT_UPDATE",
+					"message":   "Recipe was modified by another request. Please retry with the latest version.",
+					"timestamp": time.Now().UTC(),
+				},
+			})
+			if responseErr != nil {
+				return events.APIGatewayProxyResponse{}, responseErr
+			}
+			return response, nil
+		}
+
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to update recipe",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
 	response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
-		"message": fmt.Sprintf("Recipe %s updated (placeholder)", recipeID),
+		"recipe": updatedRecipe,
 	})
 	if responseErr != nil {
 		return events.APIGatewayProxyResponse{}, responseErr
