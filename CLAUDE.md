@@ -179,6 +179,7 @@ interface Recipe {
 - ✅ Cross-references validated
 - ✅ No duplicate files or variables
 - ✅ Proactive issue detection
+- ✅ **CLAUDE.md Review**: Automated review for pruning/consolidation opportunities
 - 🚨 **PII/Secrets scan (CRITICAL)**: Zero tolerance for PII/credentials in source
 
 ### Development Principles
@@ -187,6 +188,31 @@ interface Recipe {
 - **Error Handling**: Comprehensive logging and fallback mechanisms
 - **Code Quality**: Proactive duplicate/conflict detection
 - **Repository Cleanliness**: Regular cleanup of unnecessary files
+- **Documentation Maintenance**: Regular CLAUDE.md review and consolidation to keep project guide concise
+
+### 📋 CLAUDE.md Maintenance Rule
+
+**COMMIT RULE**: Every commit triggers an automated CLAUDE.md review to identify pruning and consolidation opportunities.
+
+**Automated Review Process**:
+- **Script**: `scripts/review-claude-md.js` runs on every commit via pre-commit hook
+- **Checks**: File length, section count, outdated content, duplicate mentions, verbosity
+- **Output**: Advisory suggestions for maintaining a concise project guide
+- **Goal**: Keep CLAUDE.md under 400 lines with focused, current content
+
+**Review Command**:
+```bash
+npm run docs:review  # Manual CLAUDE.md review
+```
+
+**Common Consolidation Actions**:
+- Archive completed features to reduce redundancy
+- Merge related sections for better organization  
+- Remove outdated status updates and TODOs
+- Keep essential context, prune verbose explanations
+- Consolidate repeated mentions of key topics (Authentication, Safari Extension, etc.)
+
+This ensures CLAUDE.md remains a focused, actionable project guide rather than an overwhelming historical document.
 
 ## 🚨 CRITICAL SECURITY REQUIREMENT: PII & SECRETS PROTECTION
 

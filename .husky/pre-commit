@@ -1,5 +1,6 @@
-# Run linting, security scanning, test file validation, and Go unit tests (fast checks only)
+# Run linting, security scanning, test file validation, CLAUDE.md review, and Go unit tests (fast checks only)
 .husky/check-test-files
 npm run security:scan
+npm run docs:review
 npm run lint
 npm run test:go
