@@ -293,6 +293,16 @@ For end-to-end testing, AWS Cognito test credentials are configured in the `.env
 - These credentials are **NEVER committed to the repository**
 - Use `.env.template` as a reference for setup
 
+#### 4. Loading Environment Variables
+```bash
+# Load environment variables for testing
+source scripts/load-env.sh
+
+# Verify credentials are loaded
+echo "Test user: $TEST_USER_EMAIL"
+echo "S3 bucket: $S3_BUCKET_NAME"
+```
+
 ### Makefile Configuration
 The Makefile uses these default values for testing:
 - `TEST_USER_ID`: test-user-001
