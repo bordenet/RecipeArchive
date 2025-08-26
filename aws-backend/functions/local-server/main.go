@@ -325,8 +325,10 @@ func main() {
 		AllowedOrigins: []string{
 			"http://localhost:3000",
 			"http://localhost:8080",
+			"http://127.0.0.1:8080",
 			"chrome-extension://*",
 			"safari-web-extension://*",
+			"moz-extension://*",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,

@@ -23,10 +23,10 @@ const CONFIG = {
   // API Endpoints
   API: {
     development: {
-      base: 'http://localhost:8080',
-      recipes: 'http://localhost:8080/api/recipes',
-      diagnostics: 'http://localhost:8080/api/diagnostics',
-      health: 'http://localhost:8080/health'
+      base: 'http://127.0.0.1:8081',
+      recipes: 'http://127.0.0.1:8081/api/recipes',
+      diagnostics: 'http://127.0.0.1:8081/api/diagnostics',
+      health: 'http://127.0.0.1:8081/health'
     },
     production: {
       base: 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod',
