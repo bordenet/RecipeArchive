@@ -1,4 +1,41 @@
+# Chrome Extension .gitignore
+
+# Dependencies
 node_modules/
+
+# Build artifacts
 *.zip
+dist/
+build/
+
+# Configuration files with secrets
 config.json
+secrets.json
+.env*
+
+# Operating system files
 .DS_Store
+Thumbs.db
+
+# Development backup files
+*-backup.*
+*-old.*
+*-original.*
+popup-safari.js
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp

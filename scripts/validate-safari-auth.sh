@@ -240,7 +240,10 @@ fi
 # 12. Generate validation report
 print_status "Generating validation report..."
 
-report_file="safari-auth-validation-$(date +%Y%m%d-%H%M%S).txt"
+# Ensure reports directory exists
+mkdir -p tools/reports
+
+report_file="tools/reports/safari-auth-validation-$(date +%Y%m%d-%H%M%S).txt"
 {
     echo "Safari Extension Authentication Validation Report"
     echo "Generated: $(date)"

@@ -4,10 +4,20 @@
 const CONFIG = {
   // Environment detection
   ENVIRONMENT: (function() {
-    // Check if we're in development mode
-    // For initial testing, default to development mode
-    const isDevelopment = localStorage.getItem('recipeArchive.dev') !== 'false';
-    return isDevelopment ? 'development' : 'production';
+    try {
+      // Check if we're in development mode
+      // For initial testing, default to development mode
+      if (typeof localStorage !== 'undefined') {
+        const isDevelopment = localStorage.getItem('recipeArchive.dev') !== 'false';
+        return isDevelopment ? 'development' : 'production';
+      } else {
+        // Fallback if localStorage is not available
+        return 'development';
+      }
+    } catch (error) {
+      console.warn('CONFIG: Could not access localStorage, defaulting to development mode');
+      return 'development';
+    }
   })(),
 
   // API Endpoints
@@ -35,8 +45,29 @@ const CONFIG = {
 
   // Development test user (use environment variables for real values)
   DEFAULT_TEST_USER: {
-    email: process.env.DEV_TEST_EMAIL || 'test@example.com',
-    // Password stored in environment variable DEV_TEST_PASSWORD
+    email: (function() {
+      try {
+        // In a browser extension, we can't access process.env directly
+        // Use localStorage for development configuration
+        if (typeof localStorage !== 'undefined') {
+          return localStorage.getItem('recipeArchive.testEmail') || 'test@example.com';
+        }
+        return 'test@example.com';
+      } catch (error) {
+        return 'test@example.com';
+      }
+    })(),
+    // Password should be retrieved from secure storage when needed
+    getPassword: function() {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          return localStorage.getItem('recipeArchive.testPassword') || '';
+        }
+        return '';
+      } catch (error) {
+        return '';
+      }
+    }
   },
 
   // Get current API endpoints based on environment

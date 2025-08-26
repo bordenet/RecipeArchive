@@ -1,0 +1,50 @@
+{
+  "name": "safari-extension-tests",
+  "version": "1.0.0",
+  "description": "Test suite for Safari browser extension",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:config": "jest --testNamePattern=\"CONFIG\" --verbose",
+    "test:popup": "jest --testNamePattern=\"Popup\" --verbose",
+    "test:auth": "jest --testNamePattern=\"Cognito\" --verbose",
+    "test:all": "jest --verbose",
+    "lint": "eslint . --ext .js,.test.js",
+    "lint:fix": "eslint . --ext .js,.test.js --fix"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^23.0.1",
+    "eslint": "^8.57.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!jest.config.js"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "testEnvironmentOptions": {
+      "url": "https://localhost",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+    }
+  },
+  "author": "Recipe Archive Team",
+  "license": "MIT"
+}

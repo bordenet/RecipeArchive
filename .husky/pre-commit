@@ -1,4 +1,5 @@
-# Run linting, security scanning, and Go unit tests (fast checks only)
+# Run linting, security scanning, test file validation, and Go unit tests (fast checks only)
+.husky/check-test-files
 npm run security:scan
 npm run lint
 npm run test:go

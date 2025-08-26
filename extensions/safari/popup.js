@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.RecipeArchiveConfig = CONFIG;
     console.log('RecipeArchive Safari: Config loaded', CONFIG);
     showMessage('Configuration loaded, checking authentication...', 'info');
+    
+    // Setup development controls after CONFIG is loaded
+    setupDevControls();
   } catch (error) {
     console.error('RecipeArchive Safari: Config error', error);
     showMessage('Configuration error: ' + error.message, 'error');
@@ -77,9 +80,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     showMessage('Authentication check failed: ' + error.message, 'error');
     showAuthRequired();
   }
-
-  // Setup development controls
-  setupDevControls();
   
   // Emergency dev bypass handler
   domElements.emergencyDevBypass.addEventListener('change', function(e) {
@@ -274,6 +274,7 @@ function captureRecipe() {
 
 async function sendRecipeToBackend(recipe) {
   const operation = 'sendRecipeToBackend';
+  let tokenResult = null; // Declare tokenResult at function scope
   
   try {
     // Performance monitoring
@@ -286,7 +287,7 @@ async function sendRecipeToBackend(recipe) {
     
     // Get auth token with enhanced error handling
     const cognitoAuth = new SafariCognitoAuth(config.getCognitoConfig());
-    const tokenResult = await cognitoAuth.getIdToken();
+    tokenResult = await cognitoAuth.getIdToken();
     
     if (!tokenResult.success) {
       throw new Error('Authentication required: ' + (tokenResult.error || 'No token available'));
@@ -366,14 +367,23 @@ async function sendRecipeToBackend(recipe) {
 
 function setupDevControls() {
   // Show dev controls in development
-  if (CONFIG.ENVIRONMENT === 'development') {
-    domElements.devControls.style.display = 'block';
-    domElements.devBypass.checked = localStorage.getItem('recipeArchive.devBypass') === 'true';
-    
-    domElements.devBypass.addEventListener('change', (e) => {
-      localStorage.setItem('recipeArchive.devBypass', e.target.checked ? 'true' : 'false');
-      showMessage(e.target.checked ? 'Dev bypass enabled - reload extension' : 'Dev bypass disabled - reload extension', 'info');
-    });
+  try {
+    if (typeof CONFIG !== 'undefined' && CONFIG.ENVIRONMENT === 'development') {
+      if (domElements.devControls) {
+        domElements.devControls.style.display = 'block';
+      }
+      
+      if (domElements.devBypass) {
+        domElements.devBypass.checked = localStorage.getItem('recipeArchive.devBypass') === 'true';
+        
+        domElements.devBypass.addEventListener('change', (e) => {
+          localStorage.setItem('recipeArchive.devBypass', e.target.checked ? 'true' : 'false');
+          showMessage(e.target.checked ? 'Dev bypass enabled - reload extension' : 'Dev bypass disabled - reload extension', 'info');
+        });
+      }
+    }
+  } catch (error) {
+    console.error('RecipeArchive Safari: Error setting up dev controls:', error);
   }
 }
 
