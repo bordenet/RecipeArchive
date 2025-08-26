@@ -47,7 +47,9 @@
 
 ### 🎯 PRD Governance
 
-**CRITICAL**: All development work strictly follows the PRDs included in this project. PRDs are the authoritative requirements specification.
+**CRITICAL**: All development work must strictly adhere to the PRDs included in this project. PRDs are the authoritative requirements specification and serve as the definitive guide for all development decisions.
+
+**Development Principle**: Every feature, design decision, and implementation must align with what is explicitly stated in the PRDs. When in doubt, consult the PRDs first. PRDs define the "WHAT" - the requirements, user experience, and functional specifications that must be followed.
 
 **PRD Attribution**: All PRD files include proper attribution to the Product Requirements Assistant at https://github.com/bordenet/product-requirements-assistant
 
@@ -61,23 +63,24 @@
 
 ### Critical PRD Documents
 
-This project is guided by **four comprehensive PRD documents** that define the complete product vision:
+This project is guided by **four comprehensive PRD documents** that define the complete product vision and serve as the authoritative source for all development work:
 
-#### 1. **Browser Extension PRD** (`docs/requirements/BrowserExtension_PRD.md`)
+#### 1. **Browser Extension PRD** (`docs/requirements/browser-extension.md`)
 - **Core Mission**: One-click recipe capture with 95% accuracy in <3 seconds
+- **Authentication**: Signed-in experience with authentication-first user interface
 - **Target Sites**: Washington Post, Food & Wine, NYT Cooking, Smitten Kitchen, Love & Lemons, etc.
 - **Performance**: <3 second extraction, <500ms popup load, 95% success rate
 
-#### 2. **AWS Backend PRD** (`docs/requirements/AWS_Backend_PRD.md`)
+#### 2. **AWS Backend PRD** (`docs/requirements/aws-backend.md`)
 - **Core Mission**: Secure, scalable, cost-effective recipe storage and sync
 - **Architecture**: Serverless (Lambda, DynamoDB, S3, API Gateway)
 - **Performance**: <300ms API response times, 99.9% uptime
 
-#### 3. **Website PRD** (`docs/requirements/Website_PRD.md`)
+#### 3. **Website PRD** (`docs/requirements/website.md`)
 - **Core Mission**: Clean, responsive web interface for recipe management
 - **Features**: Browse, search, filter recipes; CRUD operations; meal prep view
 
-#### 4. **iOS App PRD** (`docs/requirements/iOSApp_PRD.md`)
+#### 4. **iOS App PRD** (`docs/requirements/ios-app.md`)
 - **Core Mission**: Native iOS experience with offline-first design
 - **Platform**: iPhone and iPad support with size-optimized layouts
 

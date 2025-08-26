@@ -157,7 +157,33 @@ This creates a **self-improving parser ecosystem** where every real-world failur
 
 Start with sites having cleanest markup, expand incrementally based on success metrics.
 
-### 3.3 User Workflow
+### 3.3 Authentication-First User Experience
+
+**CRITICAL REQUIREMENT**: RecipeArchive is a **signed-in experience** with strict authentication requirements.
+
+#### 3.3.1 Initial User Experience
+
+- **First Launch**: Users must see only a "Sign In" button with no other options available
+- **Authentication Required**: No recipe capture functionality is accessible without authentication
+- **Clear Call-to-Action**: The sign-in button should be prominent and clearly labeled
+
+#### 3.3.2 Post-Authentication Interface
+
+Once authenticated, the popup interface must display:
+
+1. **Primary Action**: Large, prominent "Capture Recipe" button as the main interface element
+2. **User Identity**: Clear indication of the signed-in user (email or name)
+3. **Secondary Actions**: Minimalistic "Sign Out" button or link for credential management
+4. **Clean Design**: Interface dedicated primarily to recipe capture
+
+#### 3.3.3 Error Handling Requirements
+
+- **Popup-Contained Errors**: All error messages and notifications must display within the popup window
+- **Scrollable Interface**: The popup becomes scrollable when content (including errors) exceeds the viewport
+- **Clear Error States**: Authentication failures, capture errors, and network issues are clearly communicated
+- **Recovery Actions**: Users can easily retry failed operations or re-authenticate
+
+### 3.4 User Workflow
 
 1. **Trigger**: Click extension icon while on recipe page
 2. **Extract**: Automatic parsing of recipe components (3-second target)
@@ -165,7 +191,7 @@ Start with sites having cleanest markup, expand incrementally based on success m
 4. **Edit**: Optional corrections before saving
 5. **Save**: Confirmation and automatic sync to cloud
 
-### 3.4 Recipe Library Management
+### 3.5 Recipe Library Management
 
 - **Search within saved recipes** by title and ingredients
 - **Filter** by date captured, cook time, servings, source website
@@ -173,7 +199,7 @@ Start with sites having cleanest markup, expand incrementally based on success m
 - **Quick access** to recently viewed recipes
 - Local cache of 50 most recent/frequent recipes for offline access
 
-### 3.5 Data Storage & Sync
+### 3.6 Data Storage & Sync
 
 - Cloud storage for all captured recipes (AWS S3)
 - Automatic cross-device synchronization with conflict resolution
