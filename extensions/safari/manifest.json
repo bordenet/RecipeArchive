@@ -30,7 +30,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["auth.html", "setup.html"],
+      "resources": ["auth.html", "setup.html", "auth-enhanced.js", "auth-dashboard.js"],
       "matches": ["<all_urls>"]
     }
   ]

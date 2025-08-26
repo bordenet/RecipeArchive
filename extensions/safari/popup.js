@@ -150,7 +150,18 @@ async function checkAuthStatus() {
   } catch (error) {
     clearTimeout(authTimeout); // Clear timeout on error
     console.error('RecipeArchive Safari: Error checking auth status:', error);
-    showMessage(`Authentication Error: ${error.message}`, 'error');
+    
+    // Use enhanced error handling if available
+    let errorMessage = error.message;
+    if (typeof window !== 'undefined' && window.authErrorHandler) {
+      window.authErrorHandler.logError('checkAuthStatus', error, { 
+        context: 'popup-initialization',
+        url: window.location.href 
+      });
+      errorMessage = window.authErrorHandler.getUserFriendlyMessage(error);
+    }
+    
+    showMessage(`Authentication Error: ${errorMessage}`, 'error');
     showAuthRequired();
   }
 }
@@ -262,31 +273,95 @@ function captureRecipe() {
 }
 
 async function sendRecipeToBackend(recipe) {
-  const config = window.RecipeArchiveConfig;
-  const api = config.getCurrentAPI();
+  const operation = 'sendRecipeToBackend';
   
-  // Get auth token
-  const cognitoAuth = new SafariCognitoAuth(config.getCognitoConfig());
-  const tokenResult = await cognitoAuth.getIdToken();
-  
-  if (!tokenResult.success) {
-    throw new Error('No authentication token available');
+  try {
+    // Performance monitoring
+    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+      window.authPerformanceMonitor.startTimer(operation);
+    }
+    
+    const config = window.RecipeArchiveConfig;
+    const api = config.getCurrentAPI();
+    
+    // Get auth token with enhanced error handling
+    const cognitoAuth = new SafariCognitoAuth(config.getCognitoConfig());
+    const tokenResult = await cognitoAuth.getIdToken();
+    
+    if (!tokenResult.success) {
+      throw new Error('Authentication required: ' + (tokenResult.error || 'No token available'));
+    }
+    
+    // Enhanced request with retry logic
+    const makeRequest = async () => {
+      const response = await fetch(api.recipes, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tokenResult.data}`,
+          'X-Recipe-Source': 'safari-extension',
+          'X-Recipe-Version': '1.0'
+        },
+        body: JSON.stringify({
+          ...recipe,
+          capturedAt: new Date().toISOString(),
+          source: 'safari-extension'
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // Use default message if parsing fails
+        }
+        
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        error.__type = response.status >= 500 ? 'ServiceUnavailableException' : 'ClientError';
+        throw error;
+      }
+      
+      return await response.json();
+    };
+    
+    // Execute with retry logic
+    let result;
+    if (typeof window !== 'undefined' && window.authErrorHandler) {
+      result = await window.authErrorHandler.executeWithRetry(makeRequest, operation, {
+        recipeTitle: recipe.title ? recipe.title.substring(0, 50) + '...' : 'Untitled',
+        apiUrl: api.recipes
+      });
+    } else {
+      result = await makeRequest();
+    }
+    
+    // Performance success
+    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+      window.authPerformanceMonitor.endTimer(operation, true);
+    }
+    
+    return result;
+  } catch (error) {
+    // Performance failure
+    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+      window.authPerformanceMonitor.endTimer(operation, false);
+    }
+    
+    // Enhanced error logging
+    if (typeof window !== 'undefined' && window.authErrorHandler) {
+      window.authErrorHandler.logError(operation, error, {
+        recipeTitle: recipe.title ? recipe.title.substring(0, 50) + '...' : 'Untitled',
+        hasToken: !!tokenResult?.data
+      });
+    }
+    
+    throw error;
   }
-  
-  const response = await fetch(api.recipes, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${tokenResult.data}`
-    },
-    body: JSON.stringify(recipe)
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-  
-  return await response.json();
 }
 
 function setupDevControls() {

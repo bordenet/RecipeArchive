@@ -1,0 +1,31 @@
+# TruffleHog Configuration for RecipeArchive
+# Comprehensive secrets and PII detection
+
+# Files to exclude from scanning
+exclude:
+  paths:
+    - ".env.template"
+    - "aws-backend/.env.template"
+    - "**/node_modules/**"
+    - "**/.git/**"
+    - "**/*.log"
+    - "**/coverage/**"
+
+# Only report verified secrets to reduce false positives
+verify: true
+
+# Additional detectors for comprehensive scanning
+detectors:
+  - AWS
+  - AWSSessionKey
+  - GitHub
+  - GitLab
+  - JWT
+  - PrivateKey
+  - Slack
+  - SlackWebhook
+  - Stripe
+  - Twilio
+  - Mailgun
+  - SendGrid
+  - Heroku

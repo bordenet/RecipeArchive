@@ -16,64 +16,163 @@ class CognitoAuth {
     this.TOKEN_EXPIRES_KEY = 'cognito_token_expires';
   }
 
-  // Sign up a new user
+  // Sign up a new user with enhanced security validation
   async signUp(email, password, attributes = {}) {
-    const params = {
-      ClientId: this.clientId,
-      Username: email,
-      Password: password,
-      UserAttributes: [
-        { Name: 'email', Value: email },
-        ...Object.entries(attributes).map(([key, value]) => ({ Name: key, Value: value }))
-      ]
-    };
-
+    const operation = 'signUp';
+    
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.SignUp', params);
+      // Input validation and security checks
+      if (typeof window !== 'undefined' && window.authSecurityValidator) {
+        window.authSecurityValidator.validateEmail(email);
+        window.authSecurityValidator.validatePassword(password);
+      }
+      
+      // Performance monitoring
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.startTimer(operation);
+      }
+
+      const params = {
+        ClientId: this.clientId,
+        Username: email,
+        Password: password,
+        UserAttributes: [
+          { Name: 'email', Value: email },
+          ...Object.entries(attributes).map(([key, value]) => ({ Name: key, Value: value }))
+        ]
+      };
+
+      // Execute with retry logic
+      const response = await this._executeWithRetry(async () => {
+        return await this._makeRequest('AWSCognitoIdentityProviderService.SignUp', params);
+      }, operation, { email: email.substring(0, 3) + '***' });
+      
+      // Performance success
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.endTimer(operation, true);
+      }
+      
       return { success: true, data: response };
     } catch (error) {
+      // Performance failure
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.endTimer(operation, false);
+      }
+      
+      // Enhanced error handling
+      if (typeof window !== 'undefined' && window.authErrorHandler) {
+        const userFriendlyMessage = window.authErrorHandler.getUserFriendlyMessage(error);
+        return { success: false, error: userFriendlyMessage, originalError: error.message };
+      }
+      
       return { success: false, error: error.message };
     }
   }
 
   // Confirm sign up with verification code
   async confirmSignUp(email, confirmationCode) {
-    const params = {
-      ClientId: this.clientId,
-      Username: email,
-      ConfirmationCode: confirmationCode
-    };
-
+    const operation = 'confirmSignUp';
+    
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.ConfirmSignUp', params);
+      // Input validation
+      if (typeof window !== 'undefined' && window.authSecurityValidator) {
+        window.authSecurityValidator.validateEmail(email);
+        window.authSecurityValidator.validateConfirmationCode(confirmationCode);
+      }
+      
+      // Performance monitoring
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.startTimer(operation);
+      }
+
+      const params = {
+        ClientId: this.clientId,
+        Username: email,
+        ConfirmationCode: confirmationCode
+      };
+
+      // Execute with retry logic
+      const response = await this._executeWithRetry(async () => {
+        return await this._makeRequest('AWSCognitoIdentityProviderService.ConfirmSignUp', params);
+      }, operation, { email: email.substring(0, 3) + '***' });
+      
+      // Performance success
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.endTimer(operation, true);
+      }
+      
       return { success: true, data: response };
     } catch (error) {
+      // Performance failure
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.endTimer(operation, false);
+      }
+      
+      // Enhanced error handling
+      if (typeof window !== 'undefined' && window.authErrorHandler) {
+        const userFriendlyMessage = window.authErrorHandler.getUserFriendlyMessage(error);
+        return { success: false, error: userFriendlyMessage, originalError: error.message };
+      }
+      
       return { success: false, error: error.message };
     }
   }
 
-  // Sign in user
+  // Sign in user with enhanced security and error handling
   async signIn(email, password) {
-    const params = {
-      ClientId: this.clientId,
-      AuthFlow: 'USER_PASSWORD_AUTH',
-      AuthParameters: {
-        USERNAME: email,
-        PASSWORD: password
-      }
-    };
-
+    const operation = 'signIn';
+    
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.InitiateAuth', params);
+      // Input validation and security checks
+      if (typeof window !== 'undefined' && window.authSecurityValidator) {
+        window.authSecurityValidator.validateEmail(email);
+        window.authSecurityValidator.validatePassword(password);
+      }
+      
+      // Performance monitoring
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.startTimer(operation);
+      }
+
+      const params = {
+        ClientId: this.clientId,
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        AuthParameters: {
+          USERNAME: email,
+          PASSWORD: password
+        }
+      };
+
+      // Execute with retry logic
+      const response = await this._executeWithRetry(async () => {
+        return await this._makeRequest('AWSCognitoIdentityProviderService.InitiateAuth', params);
+      }, operation, { email: email.substring(0, 3) + '***' }); // Log only partial email
       
       if (response.AuthenticationResult) {
         await this._storeTokens(response.AuthenticationResult);
         const userInfo = await this._extractUserInfo(response.AuthenticationResult.IdToken);
+        
+        // Performance success
+        if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+          window.authPerformanceMonitor.endTimer(operation, true);
+        }
+        
         return { success: true, data: { user: userInfo, tokens: response.AuthenticationResult } };
       } else {
-        return { success: false, error: 'Authentication failed' };
+        throw new Error('Authentication failed - no authentication result');
       }
     } catch (error) {
+      // Performance failure
+      if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+        window.authPerformanceMonitor.endTimer(operation, false);
+      }
+      
+      // Enhanced error handling
+      if (typeof window !== 'undefined' && window.authErrorHandler) {
+        const userFriendlyMessage = window.authErrorHandler.getUserFriendlyMessage(error);
+        return { success: false, error: userFriendlyMessage, originalError: error.message };
+      }
+      
       return { success: false, error: error.message };
     }
   }
@@ -293,6 +392,40 @@ class CognitoAuth {
       console.error('User info extraction error:', error);
       return {};
     }
+  }
+
+  // Execute operation with enhanced retry logic
+  async _executeWithRetry(operation, operationName, context = {}) {
+    if (typeof window !== 'undefined' && window.authErrorHandler) {
+      return await window.authErrorHandler.executeWithRetry(operation, operationName, context);
+    }
+    
+    // Fallback retry logic if enhanced error handler not available
+    let lastError;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        
+        // Check if we should retry
+        const retryableErrors = ['NetworkError', 'TimeoutError', 'ServiceUnavailableException'];
+        const errorType = error.__type || error.name || 'UnknownError';
+        
+        if (attempt < maxRetries && retryableErrors.includes(errorType)) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+          console.log(`Retrying ${operationName} in ${delay}ms (attempt ${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        throw error;
+      }
+    }
+    
+    throw lastError;
   }
 
   // Make authenticated request to Cognito
