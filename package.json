@@ -26,6 +26,7 @@
     "security:scan-all": "trufflehog git file://. --only-verified --fail",
     "security:clean": "echo '🚨 SECURITY VIOLATION DETECTED! Remove all PII/secrets before committing.' && exit 1",
     "docs:review": "node scripts/review-claude-md.js",
+    "docs:organize": "node scripts/organize-docs.cjs",
     "prepare": "husky"
   },
   "devDependencies": {

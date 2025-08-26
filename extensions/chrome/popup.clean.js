@@ -2,8 +2,8 @@
 // Chrome Extension Popup Script
 // Handles the user interface and authentication flow
 
-// Configuration validation - use the actual config from config.js
-const CONFIG = window.RecipeArchiveConfig || {
+// Configuration validation
+const CONFIG = window.CONFIG || {
   cognito: {
     region: 'us-west-2',
     userPoolId: 'us-west-2_example',
@@ -38,7 +38,7 @@ const showMessage = (message, isError = false) => {
 const showMainInterface = () => {
   const authContainer = document.getElementById('auth-container');
   const mainContainer = document.getElementById('main-container');
-
+  
   if (authContainer) {
     authContainer.style.display = 'none';
   }
@@ -50,7 +50,7 @@ const showMainInterface = () => {
 const showAuthRequired = () => {
   const authContainer = document.getElementById('auth-container');
   const mainContainer = document.getElementById('main-container');
-
+  
   if (authContainer) {
     authContainer.style.display = 'block';
   }
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   try {
     cognitoAuth = new SafariCognitoAuth(CONFIG.cognito);
-
+    
     // Check authentication status
     checkAuthStatus();
   } catch (error) {
@@ -100,37 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
 });
 
-const handleAuthClick = () => {
-  if (!cognitoAuth) {
-    showMessage('Authentication not initialized', true);
-    return;
-  }
-
-  showMessage('Starting authentication...');
-  // This would trigger the OAuth flow
-  // Implementation depends on your specific OAuth setup
-};
-
-const handleSignOut = async () => {
-  if (!cognitoAuth) {
-    showMessage('Authentication not initialized', true);
-    return;
-  }
-
-  try {
-    const result = await cognitoAuth.signOut();
-
-    if (result.success) {
-      showMessage('Signed out successfully');
-      showAuthRequired();
-    } else {
-      showMessage(`Sign out failed: ${result.error}`, true);
-    }
-  } catch (error) {
-    showMessage(`Error during sign out: ${error.message}`, true);
-  }
-};
-
 const checkAuthStatus = async () => {
   if (!cognitoAuth) {
     showMessage('Authentication not initialized', true);
@@ -140,7 +109,7 @@ const checkAuthStatus = async () => {
 
   try {
     const result = await cognitoAuth.getCurrentUser();
-
+    
     if (result.success && result.user) {
       showMessage(`Welcome, ${result.user.name}!`);
       showMainInterface();
@@ -173,6 +142,76 @@ const setupEventListeners = () => {
   }
 };
 
+const handleAuthClick = async () => {
+  if (!cognitoAuth) {
+    showMessage('Authentication not initialized', true);
+    return;
+  }
+
+  showMessage('Starting authentication...');
+  // This would trigger the OAuth flow
+  // Implementation depends on your specific OAuth setup
+};
+
+const handleSignOut = async () => {
+  if (!cognitoAuth) {
+    showMessage('Authentication not initialized', true);
+    return;
+  }
+
+  try {
+    const result = await cognitoAuth.signOut();
+    
+    if (result.success) {
+      showMessage('Signed out successfully');
+      showAuthRequired();
+    } else {
+      showMessage(`Sign out failed: ${result.error}`, true);
+    }
+  } catch (error) {
+    showMessage(`Error during sign out: ${error.message}`, true);
+  }
+};
+
+const captureRecipe = () => {
+  if (!extensionAPI) {
+    showMessage('Extension API not available', true);
+    return;
+  }
+
+  showMessage('Capturing recipe...');
+  
+  extensionAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (!tabs || tabs.length === 0) {
+      showMessage('No active tab found', true);
+      return;
+    }
+
+    const activeTab = tabs[0];
+    
+    extensionAPI.tabs.sendMessage(activeTab.id, { action: 'extractRecipe' }, (response) => {
+      if (extensionAPI.runtime.lastError) {
+        showMessage(`Recipe capture failed: ${extensionAPI.runtime.lastError.message}`, true);
+        return;
+      }
+
+      if (response && response.success) {
+        showMessage('Recipe captured successfully!');
+        
+        // Send to backend
+        const sendResult = sendRecipeToBackend(response.data);
+        if (sendResult.success) {
+          showMessage('Recipe saved to your archive!');
+        } else {
+          showMessage(`Failed to save recipe: ${sendResult.error}`, true);
+        }
+      } else {
+        showMessage(`Recipe extraction failed: ${response ? response.error : 'Unknown error'}`, true);
+      }
+    });
+  });
+};
+
 const sendRecipeToBackend = (recipeData) => {
   if (!CONFIG || !CONFIG.api || !CONFIG.api.baseUrl) {
     return {
@@ -188,9 +227,9 @@ const sendRecipeToBackend = (recipeData) => {
     };
   }
 
-  // FIXME: Implement actual API call
+  // TODO: Implement actual API call
   console.log('Recipe data to send:', recipeData);
-
+  
   // Simulated success for now
   return {
     success: true,
@@ -198,56 +237,17 @@ const sendRecipeToBackend = (recipeData) => {
   };
 };
 
-const captureRecipe = () => {
-  if (!extensionAPI) {
-    showMessage('Extension API not available', true);
-    return;
-  }
-
-  showMessage('Capturing recipe...');
-
-  extensionAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs || tabs.length === 0) {
-      showMessage('No active tab found', true);
-      return;
-    }
-
-    const activeTab = tabs[0];
-
-    extensionAPI.tabs.sendMessage(activeTab.id, { action: 'extractRecipe' }, (response) => {
-      if (extensionAPI.runtime.lastError) {
-        showMessage(`Recipe capture failed: ${extensionAPI.runtime.lastError.message}`, true);
-        return;
-      }
-
-      if (response && response.success) {
-        showMessage('Recipe captured successfully!');
-
-        // Send to backend
-        const sendResult = sendRecipeToBackend(response.data);
-        if (sendResult.success) {
-          showMessage('Recipe saved to your archive!');
-        } else {
-          showMessage(`Failed to save recipe: ${sendResult.error}`, true);
-        }
-      } else {
-        showMessage(`Recipe extraction failed: ${response ? response.error : 'Unknown error'}`, true);
-      }
-    });
-  });
-};
-
 // Development functions
 const testExtraction = () => {
   showMessage('Testing recipe extraction...');
-
+  
   const testData = {
     title: 'Test Recipe',
     ingredients: ['1 cup flour', '2 eggs'],
     instructions: ['Mix ingredients', 'Bake for 30 minutes'],
     source: window.location.href
   };
-
+  
   const result = sendRecipeToBackend(testData);
   if (result.success) {
     showMessage('Test successful!');
@@ -275,7 +275,7 @@ const viewLogs = () => {
     `Auth initialized: ${cognitoAuth ? 'Yes' : 'No'}`,
     `Extension API: ${extensionAPI ? 'Available' : 'Not available'}`
   ];
-
+  
   console.log('RecipeArchive Extension Logs:', logs);
   showMessage('Logs printed to console (F12)');
 };

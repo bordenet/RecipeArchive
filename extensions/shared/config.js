@@ -91,6 +91,7 @@ console.log('🔧 Recipe Archive Extension Config:', CONFIG.getStatus());
 // Export for use in other files
 if (typeof window !== 'undefined') {
   window.RecipeArchiveConfig = CONFIG;
+  window.CONFIG = CONFIG; // Also expose as CONFIG for compatibility
 }
 
 // For testing/development environments that support module exports
