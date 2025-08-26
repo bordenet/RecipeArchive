@@ -3,7 +3,7 @@
 # Configuration
 TEST_USER_ID := test-user-001
 DYNAMODB_TABLE_NAME := RecipeArchive-Recipes-Dev  
-S3_BUCKET_NAME := recipe-archive-dev
+S3_BUCKET_NAME := recipearchive-storage-dev-990537043943
 TEST_DATA_FILE := functions/testdata/test-recipes.json
 
 # Build variables
@@ -30,6 +30,7 @@ help:
 	@echo "  test-all           - Run complete test suite (build, load data, validate CRUD)"
 	@echo "  validate-crud      - Run CRUD operation validation tests"
 	@echo "  test-url-overwrite - Test URL-based recipe overwrite behavior"
+	@echo "  test-backup        - Test backup functionality"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  cleanup-all       - Clean both S3 and DynamoDB test data"
@@ -100,12 +101,18 @@ cleanup-dynamodb: build
 test-url-overwrite: build
 	@echo "🔄 Testing URL-based recipe overwrite behavior..."
 	cd $(TEST_TOOLS_DIR) && \
-		DYNAMODB_TABLE_NAME=$(DYNAMODB_TABLE_NAME) \
 		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
 		./test-tools -action=test-url-overwrite
 
+# Test backup functionality
+test-backup: build
+	@echo "📦 Testing backup functionality..."
+	cd $(TEST_TOOLS_DIR) && \
+		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		./test-tools -action=test-backup -user-id=$(TEST_USER_ID)
+
 # Run complete test suite
-test-all: build cleanup-all load-test-data validate-crud test-url-overwrite
+test-all: build cleanup-all load-test-data validate-crud test-url-overwrite test-backup
 	@echo ""
 	@echo "✅ Complete test suite finished successfully!"
 	@echo "📊 Test Summary:"
@@ -114,10 +121,12 @@ test-all: build cleanup-all load-test-data validate-crud test-url-overwrite
 	@echo "  - Loaded fresh test data (5 recipes)"
 	@echo "  - Validated all CRUD operations"
 	@echo "  - Tested URL-based recipe overwrite behavior"
+	@echo "  - Validated backup functionality"
 	@echo ""
 	@echo "🎯 Next Steps:"
 	@echo "  - Run 'make list-recipes' to see loaded data"
 	@echo "  - Run 'make cleanup-all' when done testing"
+	@echo "  - Deploy backup Lambda for production use"
 
 # Development helpers
 dev-reset: cleanup-all load-test-data

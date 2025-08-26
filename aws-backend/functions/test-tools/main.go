@@ -43,7 +43,7 @@ func init() {
 }
 
 func main() {
-	var action = flag.String("action", "", "Action to perform: load-test-data, cleanup-s3, validate-crud, list-recipes, test-url-overwrite")
+	var action = flag.String("action", "", "Action to perform: load-test-data, cleanup-s3, validate-crud, list-recipes, test-url-overwrite, test-backup")
 	var userID = flag.String("user-id", "test-user-001", "User ID for testing")
 	_ = flag.String("recipe-id", "", "Recipe ID for single operations") // Currently unused
 	var testDataFile = flag.String("test-data", "../testdata/test-recipes.json", "Path to test data file")
@@ -57,6 +57,7 @@ func main() {
 		fmt.Println("  validate-crud      - Run full CRUD validation tests")
 		fmt.Println("  list-recipes       - List all recipes for a user")
 		fmt.Println("  test-url-overwrite - Test URL-based recipe overwrite behavior")
+		fmt.Println("  test-backup        - Test backup functionality")
 		os.Exit(1)
 	}
 
@@ -92,6 +93,9 @@ func main() {
 
 	case "test-url-overwrite":
 		runURLOverwriteTest()
+
+	case "test-backup":
+		runBackupTest()
 
 	default:
 		fmt.Printf("Unknown action: %s\\n", *action)

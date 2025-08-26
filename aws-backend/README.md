@@ -141,6 +141,80 @@ DELETE /v1/recipes/{id}
 Authorization: Bearer {jwt-token}
 ```
 
+### Create Backup
+```bash
+POST /v1/backup/create
+Authorization: Bearer {jwt-token}
+Content-Type: application/json
+
+Response:
+{
+  "backupId": "backup_user-123_1693564800",
+  "downloadUrl": "https://s3.amazonaws.com/bucket/backups/user-123/backup.zip?signed=...",
+  "expiresAt": "2025-08-27T12:00:00Z",
+  "recipeCount": 25,
+  "sizeBytes": 156784
+}
+```
+
+### List Backups
+```bash
+GET /v1/backup/list
+Authorization: Bearer {jwt-token}
+
+Response:
+{
+  "backups": [
+    {
+      "backupId": "backup_user-123_1693564800",
+      "createdAt": "2025-08-26T12:00:00Z",
+      "sizeBytes": 156784,
+      "available": true
+    }
+  ],
+  "total": 1
+}
+```
+
+## Backup System
+
+### Purpose
+The backup system provides data protection and risk mitigation for:
+- **Schema Changes**: Preserve data during database migrations
+- **Bug Recovery**: Restore recipes if application bugs cause data loss
+- **User Peace of Mind**: Allow users to download their complete recipe collection
+
+### Backup Contents
+Each backup zip file contains:
+- **backup-manifest.json**: Metadata about the backup (ID, timestamp, recipe count)
+- **recipes/**: Individual JSON files for each recipe with structured data
+- **README.md**: Human-readable instructions for restoration
+
+### File Structure
+```
+backup_user-123_1693564800.zip
+├── backup-manifest.json
+├── README.md
+└── recipes/
+    ├── recipe-001-chocolate-chip-cookies.json
+    ├── recipe-002-margherita-pizza.json
+    └── ...
+```
+
+### Storage Location
+```
+s3://recipe-archive-bucket/
+└── backups/
+    └── {userId}/
+        ├── backup_user-123_1693564800.zip
+        └── backup_user-123_1693478400.zip
+```
+
+### Security & Access
+- **User Isolation**: Each user can only access their own backups
+- **Time-Limited URLs**: Download URLs expire after 24 hours
+- **JWT Authentication**: All backup endpoints require valid authentication
+
 ## URL Overwrite Testing
 
 The AWS backend implements a specific requirement: when a user re-extracts a recipe from the same URL via the web extension, the system overwrites the existing record completely.

@@ -361,6 +361,23 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 - Promise.race() for timeout protection
 - Cached DOM elements for performance optimization
 
+## 🚨 CRITICAL STORAGE ARCHITECTURE DECISION
+
+**NEVER USE DYNAMODB AGAIN - S3 ONLY**: This project uses S3-based JSON storage for recipes.
+
+**Why S3-Only Architecture:**
+- **95% Cost Savings**: $0.05/month vs $3-5/month DynamoDB minimum
+- **Simpler Code**: Direct JSON read/write vs complex attribute mapping
+- **Perfect for Files**: Images and archives stored alongside recipe data
+- **No Vendor Lock-in**: Standard JSON files vs proprietary NoSQL
+
+**Architecture Confirmed 3 Times**:
+1. ✅ Original architecture decision documented
+2. ✅ Storage recommendations analysis completed  
+3. ✅ Implementation refactored from DynamoDB to S3
+
+**If Anyone Suggests DynamoDB**: Point to `docs/architecture/STORAGE_RECOMMENDATIONS.md`
+
 ### AWS Infrastructure Setup
 
 **Status**: **READY FOR DEPLOYMENT** 🚀
@@ -368,11 +385,11 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 **Infrastructure Created**:
 - ✅ **AWS CDK Stack**: Complete infrastructure as code (`aws-backend/infrastructure/`)
 - ✅ **Cognito User Pool**: Email-based authentication with 1hr/30day token expiration
-- ✅ **DynamoDB Table**: Recipe storage with GSI for search functionality
-- ✅ **S3 Bucket**: Photo and web archive storage with lifecycle management
+- ✅ **S3 Bucket**: Recipe JSON storage + photos + web archives with lifecycle management
 - ✅ **API Gateway**: RESTful API with CORS and rate limiting
-- ✅ **IAM Roles**: Least-privilege access for Lambda functions
+- ✅ **IAM Roles**: Least-privilege access for Lambda functions  
 - ✅ **Security**: Encryption at rest and in transit, no hardcoded secrets
+- 🗑️ **DynamoDB**: REMOVED - Use cleanup script if any tables exist
 
 **Deployment Tools**:
 - ✅ **Setup Command**: `recipe-cli setup` - Automated project initialization
