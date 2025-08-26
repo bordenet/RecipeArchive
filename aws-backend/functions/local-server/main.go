@@ -1,6 +1,8 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -376,6 +378,140 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// BackupManifest represents the backup metadata structure
+type BackupManifest struct {
+	BackupID      string    `json:"backupId"`
+	UserID        string    `json:"userId"`
+	CreatedAt     time.Time `json:"createdAt"`
+	RecipeCount   int       `json:"recipeCount"`
+	BackupVersion string    `json:"backupVersion"`
+	Description   string    `json:"description"`
+}
+
+// BackupInfo represents backup information for listing
+type BackupInfo struct {
+	BackupID  string    `json:"backupId"`
+	CreatedAt time.Time `json:"createdAt"`
+	SizeBytes int64     `json:"sizeBytes"`
+	Available bool      `json:"available"`
+}
+
+// Create backup handler (mock implementation for local testing)
+func createBackupHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+
+	// Get all active recipes for the user
+	var activeRecipes []Recipe
+	for _, recipe := range db.recipes {
+		if recipe.UserID == userID && !recipe.IsDeleted {
+			activeRecipes = append(activeRecipes, recipe)
+		}
+	}
+
+	// Create backup ID
+	backupID := fmt.Sprintf("backup_%s_%d", userID, time.Now().Unix())
+
+	// Create zip file in memory
+	var buf bytes.Buffer
+	zipWriter := zip.NewWriter(&buf)
+
+	// Create backup manifest
+	manifest := BackupManifest{
+		BackupID:      backupID,
+		UserID:        userID,
+		CreatedAt:     time.Now().UTC(),
+		RecipeCount:   len(activeRecipes),
+		BackupVersion: "1.0",
+		Description:   fmt.Sprintf("Local backup created on %s", time.Now().UTC().Format("2006-01-02 15:04:05")),
+	}
+
+	// Add manifest to zip
+	manifestWriter, err := zipWriter.Create("backup-manifest.json")
+	if err != nil {
+		http.Error(w, "Failed to create backup manifest", http.StatusInternalServerError)
+		return
+	}
+	manifestData, _ := json.MarshalIndent(manifest, "", "  ")
+	manifestWriter.Write(manifestData)
+
+	// Add README to zip
+	readmeWriter, err := zipWriter.Create("README.md")
+	if err != nil {
+		http.Error(w, "Failed to create README", http.StatusInternalServerError)
+		return
+	}
+	readme := fmt.Sprintf(`# Recipe Archive Backup
+
+This backup was created on %s and contains %d recipes.
+
+## Contents
+- backup-manifest.json: Backup metadata
+- recipes/: Individual recipe files (JSON format)
+
+## Restoration
+Each recipe file can be imported back into Recipe Archive using the import function.
+
+Backup ID: %s
+Created: %s
+Recipe Count: %d
+`, manifest.CreatedAt.Format("2006-01-02 15:04:05 UTC"), len(activeRecipes), backupID, manifest.CreatedAt.Format("2006-01-02 15:04:05 UTC"), len(activeRecipes))
+	readmeWriter.Write([]byte(readme))
+
+	// Add individual recipe files
+	for i, recipe := range activeRecipes {
+		filename := fmt.Sprintf("recipes/recipe-%03d-%s.json", i+1, strings.ReplaceAll(strings.ToLower(recipe.Title), " ", "-"))
+		recipeWriter, err := zipWriter.Create(filename)
+		if err != nil {
+			http.Error(w, "Failed to create recipe file", http.StatusInternalServerError)
+			return
+		}
+		recipeData, _ := json.MarshalIndent(recipe, "", "  ")
+		recipeWriter.Write(recipeData)
+	}
+
+	zipWriter.Close()
+
+	// For local testing, we'll return a mock download URL
+	mockDownloadURL := fmt.Sprintf("http://localhost:8080/download/%s.zip", backupID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"backupId":     backupID,
+		"downloadUrl":  mockDownloadURL,
+		"expiresAt":    time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+		"recipeCount":  len(activeRecipes),
+		"sizeBytes":    int64(buf.Len()),
+	})
+}
+
+// List backups handler (mock implementation for local testing)
+func listBackupsHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("X-User-ID")
+
+	// Mock backup list - in production this would query S3
+	mockBackups := []BackupInfo{
+		{
+			BackupID:  fmt.Sprintf("backup_%s_%d", userID, time.Now().Unix()-86400),
+			CreatedAt: time.Now().Add(-24 * time.Hour),
+			SizeBytes: 156784,
+			Available: true,
+		},
+		{
+			BackupID:  fmt.Sprintf("backup_%s_%d", userID, time.Now().Unix()-172800),
+			CreatedAt: time.Now().Add(-48 * time.Hour),
+			SizeBytes: 142301,
+			Available: true,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"backups": mockBackups,
+		"total":   len(mockBackups),
+	})
+}
+
 func main() {
 	// Initialize local database
 	db = &LocalDB{
@@ -402,6 +538,10 @@ func main() {
 	api.HandleFunc("/recipes", recipeHandler).Methods("GET", "POST", "OPTIONS")
 	api.HandleFunc("/recipes/{id}", recipeHandler).Methods("GET", "PUT", "DELETE", "OPTIONS")
 
+	// Backup routes
+	api.HandleFunc("/backup/create", createBackupHandler).Methods("POST", "OPTIONS")
+	api.HandleFunc("/backup/list", listBackupsHandler).Methods("GET", "OPTIONS")
+
 	// Setup CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
@@ -427,7 +567,10 @@ func main() {
 
 	fmt.Printf("🚀 Recipe Archive Local Server starting on port %s\n", port)
 	fmt.Printf("📝 Health check: http://localhost:%s/health\n", port)
-	fmt.Printf("🔐 API endpoints: http://localhost:%s/api/recipes\n", port)
+	fmt.Printf("🔐 API endpoints:\n")
+	fmt.Printf("   - Recipes: http://localhost:%s/api/recipes\n", port)
+	fmt.Printf("   - Backup: http://localhost:%s/api/backup/create\n", port)
+	fmt.Printf("   - List Backups: http://localhost:%s/api/backup/list\n", port)
 	fmt.Printf("💾 Using in-memory database for local development\n")
 	fmt.Printf("🔧 Mock authentication enabled (use any Bearer token)\n")
 

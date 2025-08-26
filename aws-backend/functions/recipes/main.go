@@ -12,32 +12,33 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 
+	"github.com/bordenet/recipe-archive/db"
 	"github.com/bordenet/recipe-archive/models"
 	"github.com/bordenet/recipe-archive/utils"
 )
 
-var dynamoClient *dynamodb.Client
-var tableName string
+var recipeDB db.RecipeDB
+var bucketName string
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		panic(fmt.Sprintf("Failed to load AWS config: %v", err))
 	}
-	dynamoClient = dynamodb.NewFromConfig(cfg)
 
-	// Get table name from environment variable
-	tableName = os.Getenv("DYNAMODB_TABLE_NAME")
-	if tableName == "" {
-		tableName = "RecipeArchive-Recipes" // fallback for local testing
+	// Get S3 bucket name from environment variable
+	bucketName = os.Getenv("S3_BUCKET_NAME")
+	if bucketName == "" {
+		bucketName = "recipe-archive-dev" // fallback for local testing
 	}
+
+	// Initialize S3-based storage (following architecture decision)
+	s3Client := s3.NewFromConfig(cfg)
+	recipeDB = db.NewS3RecipeDB(s3Client, bucketName)
 }
 
 func main() {
@@ -54,7 +55,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		return response, nil
 	}
 
-	// Extract user ID from JWT claims (simplified for now - will add full JWT validation later)
+	// Extract user ID from JWT claims
 	userID := getUserIDFromRequest(request)
 	if userID == "" {
 		response, err := utils.NewAPIResponse(http.StatusUnauthorized, map[string]interface{}{
@@ -126,17 +127,24 @@ func handleGetRecipes(ctx context.Context, request events.APIGatewayProxyRequest
 
 // handleGetRecipeByID handles GET requests for a specific recipe
 func handleGetRecipeByID(ctx context.Context, userID, recipeID string) (events.APIGatewayProxyResponse, error) {
-	// Get the recipe from DynamoDB
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]types.AttributeValue{
-			"id":     &types.AttributeValueMemberS{Value: recipeID},
-			"userId": &types.AttributeValueMemberS{Value: userID},
-		},
-	}
-
-	result, err := dynamoClient.GetItem(ctx, input)
+	// Get the recipe from S3
+	recipe, err := recipeDB.GetRecipe(userID, recipeID)
 	if err != nil {
+		// Check if it's a "not found" error (common S3 error patterns)
+		if strings.Contains(err.Error(), "NoSuchKey") || strings.Contains(err.Error(), "not found") {
+			response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
+				"error": map[string]interface{}{
+					"code":      "RECIPE_NOT_FOUND",
+					"message":   "Recipe not found",
+					"timestamp": time.Now().UTC(),
+				},
+			})
+			if responseErr != nil {
+				return events.APIGatewayProxyResponse{}, responseErr
+			}
+			return response, nil
+		}
+
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "INTERNAL_ERROR",
@@ -150,37 +158,7 @@ func handleGetRecipeByID(ctx context.Context, userID, recipeID string) (events.A
 		return response, nil
 	}
 
-	if result.Item == nil {
-		response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":      "RECIPE_NOT_FOUND",
-				"message":   "Recipe not found",
-				"timestamp": time.Now().UTC(),
-			},
-		})
-		if responseErr != nil {
-			return events.APIGatewayProxyResponse{}, responseErr
-		}
-		return response, nil
-	}
-
-	var recipe models.Recipe
-	err = attributevalue.UnmarshalMap(result.Item, &recipe)
-	if err != nil {
-		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":      "INTERNAL_ERROR",
-				"message":   "Failed to parse recipe data",
-				"timestamp": time.Now().UTC(),
-			},
-		})
-		if responseErr != nil {
-			return events.APIGatewayProxyResponse{}, responseErr
-		}
-		return response, nil
-	}
-
-	// Check if recipe is deleted (soft delete)
+	// Check if recipe is soft deleted
 	if recipe.IsDeleted {
 		response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
 			"error": map[string]interface{}{
@@ -214,18 +192,8 @@ func handleListRecipes(ctx context.Context, userID string, queryParams map[strin
 		}
 	}
 
-	// Use Scan with filter for now (will optimize with proper GSI later)
-	scanInput := &dynamodb.ScanInput{
-		TableName:        aws.String(tableName),
-		FilterExpression: aws.String("userId = :userId AND isDeleted = :isDeleted"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":userId":    &types.AttributeValueMemberS{Value: userID},
-			":isDeleted": &types.AttributeValueMemberBOOL{Value: false},
-		},
-		Limit: aws.Int32(int32(limit + 1)), // Get one extra to check if there are more
-	}
-
-	result, err := dynamoClient.Scan(ctx, scanInput)
+	// Get all recipes for user from S3
+	allRecipes, err := recipeDB.ListRecipes(userID)
 	if err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
@@ -240,44 +208,50 @@ func handleListRecipes(ctx context.Context, userID string, queryParams map[strin
 		return response, nil
 	}
 
-	// Parse results
-	recipes := make([]models.Recipe, 0, limit)
-	for i, item := range result.Items {
-		if i >= limit {
-			break // Don't include the extra item in the response
+	// Filter out soft-deleted recipes
+	var activeRecipes []models.Recipe
+	for _, recipe := range allRecipes {
+		if !recipe.IsDeleted {
+			activeRecipes = append(activeRecipes, recipe)
 		}
-
-		var recipe models.Recipe
-		err := attributevalue.UnmarshalMap(item, &recipe)
-		if err != nil {
-			response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
-				"error": map[string]interface{}{
-					"code":      "INTERNAL_ERROR",
-					"message":   "Failed to parse recipe data",
-					"timestamp": time.Now().UTC(),
-				},
-			})
-			if responseErr != nil {
-				return events.APIGatewayProxyResponse{}, responseErr
-			}
-			return response, nil
-		}
-		recipes = append(recipes, recipe)
 	}
 
-	// Determine if there are more results
-	hasMore := len(result.Items) > limit
-	var nextCursor string
-	if hasMore && len(recipes) > 0 {
-		nextCursor = recipes[len(recipes)-1].ID
+	// Apply pagination
+	total := len(activeRecipes)
+	start := 0
+	if cursor, exists := queryParams["cursor"]; exists {
+		// Simple cursor-based pagination using recipe index
+		if startIdx, err := strconv.Atoi(cursor); err == nil && startIdx >= 0 {
+			start = startIdx
+		}
+	}
+
+	end := start + limit
+	if end > total {
+		end = total
+	}
+
+	var recipes []models.Recipe
+	var nextCursor *string
+	hasMore := false
+
+	if start < total {
+		recipes = activeRecipes[start:end]
+		if end < total {
+			hasMore = true
+			cursorStr := strconv.Itoa(end)
+			nextCursor = &cursorStr
+		}
+	} else {
+		recipes = []models.Recipe{}
 	}
 
 	response := models.RecipesListResponse{
 		Recipes: recipes,
 		Pagination: models.Pagination{
-			NextCursor: &nextCursor,
+			NextCursor: nextCursor,
 			HasMore:    hasMore,
-			Total:      &[]int{len(recipes)}[0],
+			Total:      &total,
 		},
 	}
 
@@ -369,30 +343,8 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		Version:          1,
 	}
 
-	// Convert to DynamoDB attribute values
-	item, err := attributevalue.MarshalMap(recipe)
-	if err != nil {
-		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":      "INTERNAL_ERROR",
-				"message":   "Failed to prepare recipe data",
-				"timestamp": time.Now().UTC(),
-			},
-		})
-		if responseErr != nil {
-			return events.APIGatewayProxyResponse{}, responseErr
-		}
-		return response, nil
-	}
-
-	// Save to DynamoDB
-	input := &dynamodb.PutItemInput{
-		TableName:           aws.String(tableName),
-		Item:                item,
-		ConditionExpression: aws.String("attribute_not_exists(id)"),
-	}
-
-	_, err = dynamoClient.PutItem(ctx, input)
+	// Save to S3
+	err := recipeDB.CreateRecipe(&recipe)
 	if err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
@@ -433,8 +385,8 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	var updateData map[string]interface{}
-	if err := json.Unmarshal([]byte(request.Body), &updateData); err != nil {
+	var updateRecipe models.CreateRecipeRequest
+	if err := json.Unmarshal([]byte(request.Body), &updateRecipe); err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "INVALID_REQUEST",
@@ -448,10 +400,107 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// TODO: Implement proper update logic with DynamoDB UpdateItem
-	// For now, return a placeholder response
+	// Get existing recipe first to check if it exists
+	existingRecipe, err := recipeDB.GetRecipe(userID, recipeID)
+	if err != nil {
+		if strings.Contains(err.Error(), "NoSuchKey") || strings.Contains(err.Error(), "not found") {
+			response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
+				"error": map[string]interface{}{
+					"code":      "RECIPE_NOT_FOUND",
+					"message":   "Recipe not found",
+					"timestamp": time.Now().UTC(),
+				},
+			})
+			if responseErr != nil {
+				return events.APIGatewayProxyResponse{}, responseErr
+			}
+			return response, nil
+		}
+
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to retrieve existing recipe",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Check if recipe is soft deleted
+	if existingRecipe.IsDeleted {
+		response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "RECIPE_NOT_FOUND",
+				"message":   "Recipe not found",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Validate required fields for update
+	if strings.TrimSpace(updateRecipe.Title) == "" {
+		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "VALIDATION_ERROR",
+				"message":   "Title is required",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Per requirement: "if a recipe exists and a user re-loads it from the web extension,
+	// the API behavior will be to simply overwrite the existing record"
+	// So we do a complete replacement of the recipe data
+	now := time.Now().UTC()
+	updatedRecipe := models.Recipe{
+		ID:               recipeID, // Keep existing ID
+		UserID:           userID,
+		Title:            strings.TrimSpace(updateRecipe.Title),
+		Ingredients:      updateRecipe.Ingredients,
+		Instructions:     updateRecipe.Instructions,
+		SourceURL:        strings.TrimSpace(updateRecipe.SourceURL),
+		MainPhotoURL:     updateRecipe.MainPhotoURL,
+		PrepTimeMinutes:  updateRecipe.PrepTimeMinutes,
+		CookTimeMinutes:  updateRecipe.CookTimeMinutes,
+		TotalTimeMinutes: updateRecipe.TotalTimeMinutes,
+		Servings:         updateRecipe.Servings,
+		Yield:            updateRecipe.Yield,
+		CreatedAt:        existingRecipe.CreatedAt, // Preserve original creation time
+		UpdatedAt:        now,                      // Update timestamp
+		IsDeleted:        false,                    // Ensure not deleted
+		Version:          existingRecipe.Version + 1, // Increment version
+	}
+
+	// Update the recipe in S3 (S3 overwrites by default, perfect for our use case)
+	err = recipeDB.UpdateRecipe(&updatedRecipe)
+	if err != nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to update recipe",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
 	response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
-		"message": fmt.Sprintf("Recipe %s updated (placeholder)", recipeID),
+		"recipe": updatedRecipe,
 	})
 	if responseErr != nil {
 		return events.APIGatewayProxyResponse{}, responseErr
@@ -477,16 +526,37 @@ func handleDeleteRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	}
 
 	// Check if recipe exists first
-	getInput := &dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]types.AttributeValue{
-			"id":     &types.AttributeValueMemberS{Value: recipeID},
-			"userId": &types.AttributeValueMemberS{Value: userID},
-		},
+	existingRecipe, err := recipeDB.GetRecipe(userID, recipeID)
+	if err != nil {
+		if strings.Contains(err.Error(), "NoSuchKey") || strings.Contains(err.Error(), "not found") {
+			response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
+				"error": map[string]interface{}{
+					"code":      "RECIPE_NOT_FOUND",
+					"message":   "Recipe not found",
+					"timestamp": time.Now().UTC(),
+				},
+			})
+			if responseErr != nil {
+				return events.APIGatewayProxyResponse{}, responseErr
+			}
+			return response, nil
+		}
+
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to retrieve recipe",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
 	}
 
-	result, err := dynamoClient.GetItem(ctx, getInput)
-	if err != nil || result.Item == nil {
+	// Check if already deleted
+	if existingRecipe.IsDeleted {
 		response, responseErr := utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "RECIPE_NOT_FOUND",
@@ -500,23 +570,12 @@ func handleDeleteRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// Soft delete by setting isDeleted=true and updatedAt timestamp
-	updateInput := &dynamodb.UpdateItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]types.AttributeValue{
-			"id":     &types.AttributeValueMemberS{Value: recipeID},
-			"userId": &types.AttributeValueMemberS{Value: userID},
-		},
-		UpdateExpression: aws.String("SET isDeleted = :isDeleted, updatedAt = :updatedAt"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":isDeleted":  &types.AttributeValueMemberBOOL{Value: true},
-			":updatedAt":  &types.AttributeValueMemberS{Value: time.Now().UTC().Format(time.RFC3339)},
-			":notDeleted": &types.AttributeValueMemberBOOL{Value: false},
-		},
-		ConditionExpression: aws.String("attribute_exists(id) AND isDeleted = :notDeleted"),
-	}
+	// Soft delete by setting isDeleted=true and updating timestamp
+	now := time.Now().UTC()
+	existingRecipe.IsDeleted = true
+	existingRecipe.UpdatedAt = now
 
-	_, err = dynamoClient.UpdateItem(ctx, updateInput)
+	err = recipeDB.UpdateRecipe(existingRecipe)
 	if err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{

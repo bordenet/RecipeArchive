@@ -2,7 +2,7 @@
 
 **The ultimate recipe hoarding tool for digital food obsessives**
 
-Stop screenshotting recipes like a caveperson! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.
+Stop screenshotting recipes like it's the 90's! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.
 
 ## 🚀 Quick Start
 
@@ -12,9 +12,16 @@ Stop screenshotting recipes like a caveperson! RecipeArchive is your handy littl
 git clone https://github.com/yourusername/RecipeArchive
 cd RecipeArchive
 
+# 🔒 SECURITY FIRST: Set up environment variables
+cp .env.template .env
+# Edit .env with your actual credentials (NEVER commit this file!)
+
 # Setup everything automatically with our unified CLI
 recipe-cli setup
 ```
+
+### 🔐 Security Notice
+**CRITICAL**: This project uses `.env` files for sensitive credentials. The `.env` file is protected by `.gitignore` and should NEVER be committed to version control. Always use `.env.template` as a reference for setup.
 
 ### Local Development (Zero AWS Costs)
 ```bash
