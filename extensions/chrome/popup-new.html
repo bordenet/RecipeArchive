@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RecipeArchive</title>
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+    }
+    
+    h1 {
+      margin: 0 0 20px 0;
+      text-align: center;
+      color: #333;
+      font-size: 18px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    button:hover {
+      background: #0056CC;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    #message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      min-height: 20px;
+    }
+    
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .info {
+      background: #e2e3e5;
+      color: #383d41;
+      border: 1px solid #d1ecf1;
+    }
+    
+    .loading {
+      background: #e2e3e5;
+      color: #383d41;
+      border: 1px solid #d1ecf1;
+    }
+    
+    .recipe-preview {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .recipe-preview strong {
+      display: block;
+      margin-top: 8px;
+    }
+
+    /* Auth interface styles */
+    .auth-section {
+      margin-bottom: 15px;
+    }
+
+    .auth-button {
+      background: #28a745;
+    }
+
+    .auth-button:hover {
+      background: #218838;
+    }
+
+    .logout-button {
+      background: #dc3545;
+    }
+
+    .logout-button:hover {
+      background: #c82333;
+    }
+
+    .user-info {
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    /* Development mode toggle */
+    .dev-controls {
+      margin-top: 15px;
+      padding: 10px;
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      margin-top: 5px;
+    }
+
+    .toggle-container input[type="checkbox"] {
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍽️ RecipeArchive</h1>
+  
+  <!-- Auth section -->
+  <div id="authSection" class="auth-section">
+    <div id="userInfo" class="user-info" style="display: none;"></div>
+    <button id="authButton" class="auth-button">Sign In</button>
+    <button id="logoutButton" class="logout-button" style="display: none;">Sign Out</button>
+  </div>
+  
+  <!-- Main functionality -->
+  <button id="captureBtn" style="display: none;">Capture Recipe</button>
+  
+  <!-- Status/message area -->
+  <div id="message">Loading scripts...</div>
+  
+  <!-- Emergency dev bypass -->
+  <div style="margin-top: 10px; font-size: 12px;">
+    <label style="display: flex; align-items: center;">
+      <input type="checkbox" id="emergencyDevBypass" style="margin-right: 5px;">
+      <span>Development bypass (skip auth)</span>
+    </label>
+  </div>
+  
+  <!-- Development controls -->
+  <div id="devControls" class="dev-controls" style="display: none;">
+    <div>Development Mode</div>
+    <div class="toggle-container">
+      <input type="checkbox" id="devBypass">
+      <label for="devBypass">Bypass authentication</label>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="jwt-validator.js"></script>
+  <script src="config.js"></script>
+  <script src="auth-enhanced.js"></script>
+  <script src="auth-dashboard.js"></script>
+  <script src="cognito-auth.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

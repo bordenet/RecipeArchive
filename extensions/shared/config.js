@@ -33,10 +33,10 @@ const CONFIG = {
     clientId: '5grdn7qhf1el0ioqb6hkelr29s'  // Fixed: was userPoolClientId
   },
 
-  // Development test user (use environment variables for real values)
+  // Development test user (for testing only)
   DEFAULT_TEST_USER: {
-    email: process.env.DEV_TEST_EMAIL || 'test@example.com',
-    // Password stored in environment variable DEV_TEST_PASSWORD
+    email: 'test@example.com',
+    // Password should be set in localStorage for development testing
   },
 
   // Get current API endpoints based on environment
@@ -89,8 +89,15 @@ const CONFIG = {
 console.log('🔧 Recipe Archive Extension Config:', CONFIG.getStatus());
 
 // Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = CONFIG;
-} else if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined') {
   window.RecipeArchiveConfig = CONFIG;
+}
+
+// For testing/development environments that support module exports
+try {
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CONFIG;
+  }
+} catch (e) {
+  // Ignore module export errors in browser extension context
 }

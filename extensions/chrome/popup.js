@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* global CONFIG, SafariCognitoAuth */
 
 // Global extension API reference
 let extensionAPI;
@@ -226,7 +225,7 @@ function captureRecipe() {
   extensionAPI.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     if (!tabs || tabs.length === 0) {
       showMessage('No active tab found', 'error');
-      captureBtn.disabled = false;
+      domElements.captureBtn.disabled = false;
       return;
     }
     
@@ -234,7 +233,7 @@ function captureRecipe() {
     console.log('RecipeArchive Safari: Sending message to tab:', activeTab.id);
     
     extensionAPI.tabs.sendMessage(activeTab.id, { action: 'captureRecipe' }, async function(response) {
-      captureBtn.disabled = false;
+      domElements.captureBtn.disabled = false;
       
       if (extensionAPI.runtime.lastError) {
         console.error('RecipeArchive Safari: Runtime error:', extensionAPI.runtime.lastError);
@@ -357,7 +356,7 @@ async function sendRecipeToBackend(recipe) {
     if (typeof window !== 'undefined' && window.authErrorHandler) {
       window.authErrorHandler.logError(operation, error, {
         recipeTitle: recipe.title ? recipe.title.substring(0, 50) + '...' : 'Untitled',
-        hasToken: !!tokenResult?.data
+        hasToken: Boolean(tokenResult?.data)
       });
     }
     

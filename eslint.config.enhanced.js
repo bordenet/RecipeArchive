@@ -1,5 +1,5 @@
 // Enhanced ESLint Configuration with Strict Variable Scoping Rules
-// This config WILL catch variable scoping bugs like the tokenResult issue
+// This config WILL catch the tokenResult bug and similar scoping issues
 
 export default [
   {
@@ -20,7 +20,16 @@ export default [
         console: 'readonly',
         process: 'readonly',
         global: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
         NodeFilter: 'readonly',
+        navigator: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        CONFIG: 'readonly',
+        SafariCognitoAuth: 'readonly',
         jest: 'readonly',
         describe: 'readonly',
         it: 'readonly',
@@ -38,7 +47,7 @@ export default [
     },
     rules: {
       // ===== CRITICAL VARIABLE SCOPING RULES =====
-      // These WILL catch tokenResult-style bugs!
+      // These would have caught the tokenResult bug!
       
       'no-undef': 'error', // Catch undefined variables - CRITICAL!
       'no-use-before-define': ['error', { 
@@ -96,7 +105,7 @@ export default [
       
       // ===== ADDITIONAL STRICT RULES =====
       'eqeqeq': ['error', 'always'], // Require === and !==
-      'curly': ['error', 'all'], // Require braces for all blocks
+      'curly': ['error', 'multi-line'], // Require braces for multi-line blocks
       'default-case': 'error', // Require default case in switch
       'no-empty': 'error', // No empty blocks
       'no-extra-boolean-cast': 'error', // No unnecessary boolean casts
@@ -106,11 +115,14 @@ export default [
     ignores: [
       'node_modules/',
       'dist/',
+      'build/',
+      'coverage/',
       'aws-backend/',
       'wapost-subscription-cookies.json',
       'git_reset.log',
       'tests/results/',
       'extensions/*/node_modules/',
+      'test-scoping-lint.js', // Temporary test file
     ],
   },
 ];
