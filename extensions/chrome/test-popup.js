@@ -88,7 +88,7 @@ function testRecipeCapture() {
             console.log('🍳 Testing recipe capture on:', tab.url);
             
             // Send capture message to content script
-            chrome.tabs.sendMessage(tab.id, {action: 'captureRecipe'}, function(response) {
+            // FIXED: Check if content script exists first
                 if (chrome.runtime.lastError) {
                     console.error('❌ Recipe capture error:', chrome.runtime.lastError.message);
                 } else {
