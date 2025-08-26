@@ -19,7 +19,7 @@ class JWTValidator {
       const signature = parts[2];
 
       return { header, payload, signature };
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Failed to parse JWT: ' + error.message);
     }
   }
@@ -84,7 +84,7 @@ class JWTValidator {
         header: header,
         expiresIn: payload.exp ? payload.exp - now : null
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         valid: false,
         error: error.message
@@ -102,7 +102,7 @@ class JWTValidator {
 
       const now = Math.floor(Date.now() / 1000);
       return (payload.exp - now) <= thresholdSeconds;
-    } catch (error) {
+    } catch (_error) {
       return true; // Treat invalid tokens as expired
     }
   }
@@ -125,7 +125,7 @@ class JWTValidator {
         issuedAt: payload.iat,
         expiresAt: payload.exp
       };
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Failed to extract user info: ' + error.message);
     }
   }

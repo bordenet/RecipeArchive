@@ -32,7 +32,7 @@ const CognitoAuth = class CognitoAuth {
         success: true,
         data: response
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error.message || 'Sign up failed'
@@ -53,7 +53,7 @@ const CognitoAuth = class CognitoAuth {
         success: true,
         data: response
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error.message || 'Confirmation failed'
@@ -115,7 +115,7 @@ const CognitoAuth = class CognitoAuth {
         success: false,
         error: 'Unknown authentication response'
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error.message || 'Sign in failed'
@@ -134,7 +134,7 @@ const CognitoAuth = class CognitoAuth {
       this.user = null;
 
       return { success: true };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error.message || 'Sign out failed'
@@ -166,7 +166,7 @@ const CognitoAuth = class CognitoAuth {
         success: false,
         error: 'No authenticated user'
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error.message || 'Failed to get current user'
@@ -211,7 +211,7 @@ const CognitoAuth = class CognitoAuth {
         success: false,
         error: 'Token refresh failed'
       };
-    } catch (error) {
+    } catch (_error) {
       // If refresh fails, sign out
       await this.signOut();
       return {
@@ -277,7 +277,7 @@ const CognitoAuth = class CognitoAuth {
         name: decoded.name || decoded.email || 'Unknown User',
         email_verified: decoded.email_verified || false
       };
-    } catch (error) {
+    } catch (_error) {
       console.error('Error extracting user info:', error);
       return null;
     }
@@ -294,7 +294,7 @@ const CognitoAuth = class CognitoAuth {
       const currentTime = Math.floor(Date.now() / 1000);
 
       return decoded.exp > currentTime;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
