@@ -347,7 +347,7 @@ const captureRecipe = () => {
 
     const activeTab = tabs[0];
 
-    extensionAPI.tabs.sendMessage(activeTab.id, { action: 'extractRecipe' }, (response) => {
+    extensionAPI.tabs.sendMessage(activeTab.id, { action: 'captureRecipe' }, (response) => {
       if (extensionAPI.runtime.lastError) {
         showMessage(`Recipe capture failed: ${extensionAPI.runtime.lastError.message}`, true);
         return;

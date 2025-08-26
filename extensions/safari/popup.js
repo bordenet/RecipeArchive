@@ -309,6 +309,9 @@ async function sendRecipeToBackend(recipe) {
 
     // Enhanced request with retry logic
     const makeRequest = async () => {
+      console.log('🌐 Making API request to:', api.recipes);
+      console.log('🔑 Using token:', tokenResult.data);
+      
       const response = await fetch(api.recipes, {
         method: 'POST',
         headers: {
@@ -324,8 +327,12 @@ async function sendRecipeToBackend(recipe) {
         })
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', response.headers);
+
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ API Error Response:', errorText);
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
 
         try {
@@ -333,6 +340,7 @@ async function sendRecipeToBackend(recipe) {
           errorMessage = errorData.message || errorMessage;
         } catch (e) {
           // Use default message if parsing fails
+          console.warn('Could not parse error response as JSON');
         }
 
         const error = new Error(errorMessage);
