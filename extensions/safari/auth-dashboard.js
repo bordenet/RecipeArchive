@@ -10,8 +10,8 @@ class AuthDashboard {
 
   // Create and show the dashboard
   show() {
-    if (this.isVisible) return;
-    
+    if (this.isVisible) {return;}
+
     this.createDashboardUI();
     this.startRefresh();
     this.isVisible = true;
@@ -23,12 +23,12 @@ class AuthDashboard {
     if (dashboard) {
       dashboard.remove();
     }
-    
+
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
       this.refreshInterval = null;
     }
-    
+
     this.isVisible = false;
   }
 
@@ -89,7 +89,7 @@ class AuthDashboard {
   // Update dashboard status
   async updateStatus() {
     const content = document.getElementById('authStatusContent');
-    if (!content) return;
+    if (!content) {return;}
 
     try {
       const status = await this.collectAuthStatus();
@@ -134,13 +134,13 @@ class AuthDashboard {
     try {
       if (typeof SafariCognitoAuth !== 'undefined' && status.config.available) {
         const auth = new SafariCognitoAuth(CONFIG.getCognitoConfig());
-        
+
         // Get stored tokens
         const tokens = await auth._getStoredTokens();
         status.tokens = {
-          hasAccessToken: !!tokens.accessToken,
-          hasRefreshToken: !!tokens.refreshToken,
-          hasIdToken: !!tokens.idToken,
+          hasAccessToken: Boolean(tokens.accessToken),
+          hasRefreshToken: Boolean(tokens.refreshToken),
+          hasIdToken: Boolean(tokens.idToken),
           expiresAt: tokens.expiresAt ? new Date(tokens.expiresAt).toISOString() : 'not set',
           isExpired: tokens.expiresAt ? Date.now() > tokens.expiresAt : 'unknown'
         };
@@ -177,7 +177,7 @@ class AuthDashboard {
 
     // Environment info
     status.environment = {
-      userAgent: navigator.userAgent.substring(0, 100) + '...',
+      userAgent: `${navigator.userAgent.substring(0, 100) }...`,
       url: window.location.href,
       storage: {
         localStorage: typeof localStorage !== 'undefined',
@@ -242,7 +242,7 @@ class AuthDashboard {
 
       // Clear local storage
       localStorage.removeItem('recipeArchive.devBypass');
-      
+
       // Clear error logs
       if (typeof window !== 'undefined' && window.authErrorHandler) {
         window.authErrorHandler.clearLog();
@@ -251,7 +251,7 @@ class AuthDashboard {
       alert('Authentication data cleared successfully');
       this.updateStatus();
     } catch (error) {
-      alert('Error clearing auth data: ' + error.message);
+      alert(`Error clearing auth data: ${ error.message}`);
     }
   }
 
@@ -266,16 +266,16 @@ class AuthDashboard {
 // Make available globally
 if (typeof window !== 'undefined') {
   window.AuthDashboard = AuthDashboard;
-  
+
   // Add keyboard shortcut to show dashboard (Cmd+Shift+A or Ctrl+Shift+A)
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
       e.preventDefault();
-      
+
       if (!window.authDashboardInstance) {
         window.authDashboardInstance = new AuthDashboard();
       }
-      
+
       if (window.authDashboardInstance.isVisible) {
         window.authDashboardInstance.hide();
       } else {

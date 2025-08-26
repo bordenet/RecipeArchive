@@ -20,7 +20,7 @@ class JWTValidator {
 
       return { header, payload, signature };
     } catch (error) {
-      throw new Error('Failed to parse JWT: ' + error.message);
+      throw new Error(`Failed to parse JWT: ${ error.message}`);
     }
   }
 
@@ -111,7 +111,7 @@ class JWTValidator {
   extractCognitoUserInfo(idToken) {
     try {
       const { payload } = this.parseJWT(idToken);
-      
+
       return {
         userId: payload.sub,
         email: payload.email,
@@ -126,7 +126,7 @@ class JWTValidator {
         expiresAt: payload.exp
       };
     } catch (error) {
-      throw new Error('Failed to extract user info: ' + error.message);
+      throw new Error(`Failed to extract user info: ${ error.message}`);
     }
   }
 
@@ -142,7 +142,7 @@ class JWTValidator {
 
     // Additional Cognito-specific validations
     const { payload } = validation;
-    
+
     if (payload.token_use !== 'access') {
       return {
         valid: false,
@@ -172,7 +172,7 @@ class JWTValidator {
 
     // Additional Cognito-specific validations
     const { payload } = validation;
-    
+
     if (payload.token_use !== 'id') {
       return {
         valid: false,
@@ -208,14 +208,14 @@ class JWTValidator {
     } else {
       const accessValidation = this.validateJWT(tokens.accessToken);
       if (!accessValidation.valid) {
-        errors.push('Invalid access token: ' + accessValidation.error);
+        errors.push(`Invalid access token: ${ accessValidation.error}`);
       }
     }
 
     if (tokens.idToken) {
       const idValidation = this.validateJWT(tokens.idToken);
       if (!idValidation.valid) {
-        errors.push('Invalid ID token: ' + idValidation.error);
+        errors.push(`Invalid ID token: ${ idValidation.error}`);
       }
     }
 

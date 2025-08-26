@@ -21,7 +21,7 @@ class AuthErrorHandler {
     };
 
     this.errorLog.push(errorEntry);
-    
+
     // Keep log size manageable
     if (this.errorLog.length > this.maxLogEntries) {
       this.errorLog.shift();
@@ -29,14 +29,14 @@ class AuthErrorHandler {
 
     // Log to console for debugging (without sensitive data)
     console.error(`Auth Error [${operation}]:`, error.message || error, context);
-    
+
     return errorEntry;
   }
 
   // Get user-friendly error message
   getUserFriendlyMessage(error) {
     const errorType = error.__type || error.name || 'UnknownError';
-    
+
     const errorMessages = {
       'NotAuthorizedException': 'Invalid email or password. Please check your credentials and try again.',
       'UserNotFoundException': 'No account found with this email address. Please sign up first.',
@@ -95,16 +95,16 @@ class AuthErrorHandler {
         return await operation();
       } catch (error) {
         this.logError(operationName, error, context);
-        
+
         if (this.shouldRetry(operationName, error)) {
           const attempt = this.incrementRetry(operationName);
           const delay = this.getRetryDelay(attempt);
-          
+
           console.log(`Retrying ${operationName} in ${delay}ms (attempt ${attempt}/${this.maxRetries})`);
           await this.delay(delay);
           continue;
         }
-        
+
         throw error;
       }
     }
@@ -146,23 +146,23 @@ class AuthSecurityValidator {
   // Validate email format and security
   validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (!email || typeof email !== 'string') {
       throw new Error('Email is required');
     }
-    
+
     if (!emailRegex.test(email)) {
       throw new Error('Invalid email format');
     }
-    
+
     if (email.length > 254) {
       throw new Error('Email address too long');
     }
-    
+
     if (this.containsSuspiciousContent(email)) {
       throw new Error('Invalid characters in email');
     }
-    
+
     return true;
   }
 
@@ -171,31 +171,31 @@ class AuthSecurityValidator {
     if (!password || typeof password !== 'string') {
       throw new Error('Password is required');
     }
-    
+
     if (password.length < 8) {
       throw new Error('Password must be at least 8 characters long');
     }
-    
+
     if (password.length > 128) {
       throw new Error('Password too long');
     }
-    
+
     if (!/[A-Z]/.test(password)) {
       throw new Error('Password must contain at least one uppercase letter');
     }
-    
+
     if (!/[a-z]/.test(password)) {
       throw new Error('Password must contain at least one lowercase letter');
     }
-    
+
     if (!/[0-9]/.test(password)) {
       throw new Error('Password must contain at least one number');
     }
-    
+
     if (this.containsSuspiciousContent(password)) {
       throw new Error('Password contains invalid characters');
     }
-    
+
     return true;
   }
 
@@ -209,11 +209,11 @@ class AuthSecurityValidator {
     if (!code || typeof code !== 'string') {
       throw new Error('Confirmation code is required');
     }
-    
+
     if (!/^\d{6}$/.test(code)) {
       throw new Error('Confirmation code must be 6 digits');
     }
-    
+
     return true;
   }
 }
@@ -235,7 +235,7 @@ class AuthPerformanceMonitor {
   // End timing and log results
   endTimer(operation, success = true) {
     const metric = this.metrics.get(operation);
-    if (!metric) return;
+    if (!metric) {return;}
 
     const duration = performance.now() - metric.startTime;
     const result = {
@@ -246,7 +246,7 @@ class AuthPerformanceMonitor {
     };
 
     console.log(`Auth Performance [${operation}]: ${duration.toFixed(2)}ms - ${success ? 'SUCCESS' : 'FAILED'}`);
-    
+
     this.metrics.delete(operation);
     return result;
   }
@@ -265,7 +265,7 @@ if (typeof window !== 'undefined') {
   window.AuthErrorHandler = AuthErrorHandler;
   window.AuthSecurityValidator = AuthSecurityValidator;
   window.AuthPerformanceMonitor = AuthPerformanceMonitor;
-  
+
   // Initialize global error handler for authentication
   window.authErrorHandler = new AuthErrorHandler();
   window.authSecurityValidator = new AuthSecurityValidator();

@@ -7,10 +7,10 @@ class CognitoAuth {
     this.userPoolId = config.userPoolId;
     this.clientId = config.clientId;
     this.baseUrl = `https://cognito-idp.${this.region}.amazonaws.com/`;
-    
+
     // Token storage keys
     this.ACCESS_TOKEN_KEY = 'cognito_access_token';
-    this.REFRESH_TOKEN_KEY = 'cognito_refresh_token';  
+    this.REFRESH_TOKEN_KEY = 'cognito_refresh_token';
     this.ID_TOKEN_KEY = 'cognito_id_token';
     this.USER_INFO_KEY = 'cognito_user_info';
     this.TOKEN_EXPIRES_KEY = 'cognito_token_expires';
@@ -19,14 +19,14 @@ class CognitoAuth {
   // Sign up a new user with enhanced security validation
   async signUp(email, password, attributes = {}) {
     const operation = 'signUp';
-    
+
     try {
       // Input validation and security checks
       if (typeof window !== 'undefined' && window.authSecurityValidator) {
         window.authSecurityValidator.validateEmail(email);
         window.authSecurityValidator.validatePassword(password);
       }
-      
+
       // Performance monitoring
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.startTimer(operation);
@@ -45,26 +45,26 @@ class CognitoAuth {
       // Execute with retry logic
       const response = await this._executeWithRetry(async () => {
         return await this._makeRequest('AWSCognitoIdentityProviderService.SignUp', params);
-      }, operation, { email: email.substring(0, 3) + '***' });
-      
+      }, operation, { email: `${email.substring(0, 3) }***` });
+
       // Performance success
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.endTimer(operation, true);
       }
-      
+
       return { success: true, data: response };
     } catch (error) {
       // Performance failure
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.endTimer(operation, false);
       }
-      
+
       // Enhanced error handling
       if (typeof window !== 'undefined' && window.authErrorHandler) {
         const userFriendlyMessage = window.authErrorHandler.getUserFriendlyMessage(error);
         return { success: false, error: userFriendlyMessage, originalError: error.message };
       }
-      
+
       return { success: false, error: error.message };
     }
   }
@@ -72,14 +72,14 @@ class CognitoAuth {
   // Confirm sign up with verification code
   async confirmSignUp(email, confirmationCode) {
     const operation = 'confirmSignUp';
-    
+
     try {
       // Input validation
       if (typeof window !== 'undefined' && window.authSecurityValidator) {
         window.authSecurityValidator.validateEmail(email);
         window.authSecurityValidator.validateConfirmationCode(confirmationCode);
       }
-      
+
       // Performance monitoring
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.startTimer(operation);
@@ -94,26 +94,26 @@ class CognitoAuth {
       // Execute with retry logic
       const response = await this._executeWithRetry(async () => {
         return await this._makeRequest('AWSCognitoIdentityProviderService.ConfirmSignUp', params);
-      }, operation, { email: email.substring(0, 3) + '***' });
-      
+      }, operation, { email: `${email.substring(0, 3) }***` });
+
       // Performance success
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.endTimer(operation, true);
       }
-      
+
       return { success: true, data: response };
     } catch (error) {
       // Performance failure
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.endTimer(operation, false);
       }
-      
+
       // Enhanced error handling
       if (typeof window !== 'undefined' && window.authErrorHandler) {
         const userFriendlyMessage = window.authErrorHandler.getUserFriendlyMessage(error);
         return { success: false, error: userFriendlyMessage, originalError: error.message };
       }
-      
+
       return { success: false, error: error.message };
     }
   }
@@ -121,14 +121,14 @@ class CognitoAuth {
   // Sign in user with enhanced security and error handling
   async signIn(email, password) {
     const operation = 'signIn';
-    
+
     try {
       // Input validation and security checks
       if (typeof window !== 'undefined' && window.authSecurityValidator) {
         window.authSecurityValidator.validateEmail(email);
         window.authSecurityValidator.validatePassword(password);
       }
-      
+
       // Performance monitoring
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.startTimer(operation);
@@ -146,33 +146,33 @@ class CognitoAuth {
       // Execute with retry logic
       const response = await this._executeWithRetry(async () => {
         return await this._makeRequest('AWSCognitoIdentityProviderService.InitiateAuth', params);
-      }, operation, { email: email.substring(0, 3) + '***' }); // Log only partial email
-      
+      }, operation, { email: `${email.substring(0, 3) }***` }); // Log only partial email
+
       if (response.AuthenticationResult) {
         await this._storeTokens(response.AuthenticationResult);
         const userInfo = await this._extractUserInfo(response.AuthenticationResult.IdToken);
-        
+
         // Performance success
         if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
           window.authPerformanceMonitor.endTimer(operation, true);
         }
-        
+
         return { success: true, data: { user: userInfo, tokens: response.AuthenticationResult } };
-      } else {
-        throw new Error('Authentication failed - no authentication result');
       }
+        throw new Error('Authentication failed - no authentication result');
+
     } catch (error) {
       // Performance failure
       if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
         window.authPerformanceMonitor.endTimer(operation, false);
       }
-      
+
       // Enhanced error handling
       if (typeof window !== 'undefined' && window.authErrorHandler) {
         const userFriendlyMessage = window.authErrorHandler.getUserFriendlyMessage(error);
         return { success: false, error: userFriendlyMessage, originalError: error.message };
       }
-      
+
       return { success: false, error: error.message };
     }
   }
@@ -181,15 +181,15 @@ class CognitoAuth {
   async signOut() {
     try {
       const tokens = await this._getStoredTokens();
-      
+
       if (tokens.accessToken) {
         const params = {
           AccessToken: tokens.accessToken
         };
-        
+
         await this._makeRequest('AWSCognitoIdentityProviderService.GlobalSignOut', params);
       }
-      
+
       await this._clearStoredTokens();
       return { success: true };
     } catch (error) {
@@ -203,16 +203,16 @@ class CognitoAuth {
   async getCurrentUser() {
     try {
       console.log('SafariCognitoAuth: Starting getCurrentUser()');
-      
+
       // Add timeout wrapper for storage operations
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Storage operation timed out')), 5000)
       );
-      
+
       const checkUser = async () => {
         console.log('SafariCognitoAuth: Getting stored tokens');
         const tokens = await this._getStoredTokens();
-        
+
         if (!tokens.accessToken) {
           console.log('SafariCognitoAuth: No access token found');
           return { success: false, error: 'No authentication token found' };
@@ -236,7 +236,7 @@ class CognitoAuth {
         console.log('SafariCognitoAuth: User info retrieved', userInfo);
         return { success: true, data: userInfo };
       };
-      
+
       return await Promise.race([checkUser(), timeoutPromise]);
     } catch (error) {
       console.error('SafariCognitoAuth: getCurrentUser error:', error);
@@ -248,7 +248,7 @@ class CognitoAuth {
   async getAccessToken() {
     try {
       const tokens = await this._getStoredTokens();
-      
+
       if (!tokens.accessToken) {
         return { success: false, error: 'No access token found' };
       }
@@ -258,7 +258,7 @@ class CognitoAuth {
         if (!refreshResult.success) {
           return { success: false, error: 'Token expired and refresh failed' };
         }
-        
+
         // Get updated tokens
         const newTokens = await this._getStoredTokens();
         return { success: true, data: newTokens.accessToken };
@@ -274,7 +274,7 @@ class CognitoAuth {
   async getIdToken() {
     try {
       const tokens = await this._getStoredTokens();
-      
+
       if (!tokens.idToken) {
         return { success: false, error: 'No ID token found' };
       }
@@ -284,7 +284,7 @@ class CognitoAuth {
         if (!refreshResult.success) {
           return { success: false, error: 'Token expired and refresh failed' };
         }
-        
+
         // Get updated tokens
         const newTokens = await this._getStoredTokens();
         return { success: true, data: newTokens.idToken };
@@ -300,7 +300,7 @@ class CognitoAuth {
   async _refreshTokens() {
     try {
       const tokens = await this._getStoredTokens();
-      
+
       if (!tokens.refreshToken) {
         return { success: false, error: 'No refresh token available' };
       }
@@ -314,18 +314,18 @@ class CognitoAuth {
       };
 
       const response = await this._makeRequest('AWSCognitoIdentityProviderService.InitiateAuth', params);
-      
+
       if (response.AuthenticationResult) {
         // Preserve refresh token if not returned
         if (!response.AuthenticationResult.RefreshToken) {
           response.AuthenticationResult.RefreshToken = tokens.refreshToken;
         }
-        
+
         await this._storeTokens(response.AuthenticationResult);
         return { success: true, data: response.AuthenticationResult };
-      } else {
-        return { success: false, error: 'Token refresh failed' };
       }
+        return { success: false, error: 'Token refresh failed' };
+
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -335,11 +335,11 @@ class CognitoAuth {
   async _isTokenValid() {
     try {
       const expiresAt = await this._getStorageItem(this.TOKEN_EXPIRES_KEY);
-      if (!expiresAt) return false;
-      
+      if (!expiresAt) {return false;}
+
       const now = Date.now();
       const expiry = parseInt(expiresAt);
-      
+
       // Add 5 minute buffer for safety
       return now < (expiry - 300000);
     } catch (error) {
@@ -353,7 +353,7 @@ class CognitoAuth {
     try {
       await this._setStorageItem(this.ACCESS_TOKEN_KEY, authResult.AccessToken);
       await this._setStorageItem(this.ID_TOKEN_KEY, authResult.IdToken);
-      
+
       if (authResult.RefreshToken) {
         await this._setStorageItem(this.REFRESH_TOKEN_KEY, authResult.RefreshToken);
       }
@@ -399,32 +399,32 @@ class CognitoAuth {
     if (typeof window !== 'undefined' && window.authErrorHandler) {
       return await window.authErrorHandler.executeWithRetry(operation, operationName, context);
     }
-    
+
     // Fallback retry logic if enhanced error handler not available
     let lastError;
     const maxRetries = 3;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error;
-        
+
         // Check if we should retry
         const retryableErrors = ['NetworkError', 'TimeoutError', 'ServiceUnavailableException'];
         const errorType = error.__type || error.name || 'UnknownError';
-        
+
         if (attempt < maxRetries && retryableErrors.includes(errorType)) {
           const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
           console.log(`Retrying ${operationName} in ${delay}ms (attempt ${attempt}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
-        
+
         throw error;
       }
     }
-    
+
     throw lastError;
   }
 
@@ -444,14 +444,14 @@ class CognitoAuth {
     if (!response.ok) {
       const errorData = await response.text();
       let errorMessage = `HTTP ${response.status}`;
-      
+
       try {
         const errorJson = JSON.parse(errorData);
         errorMessage = errorJson.message || errorJson.__type || errorMessage;
       } catch (e) {
         // If JSON parsing fails, use HTTP status
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -460,8 +460,8 @@ class CognitoAuth {
 
   // Safari-compatible storage methods
   _getExtensionAPI() {
-    if (typeof browser !== 'undefined') return browser;
-    if (typeof chrome !== 'undefined') return chrome;
+    if (typeof browser !== 'undefined') {return browser;}
+    if (typeof chrome !== 'undefined') {return chrome;}
     return null;
   }
 
@@ -473,7 +473,7 @@ class CognitoAuth {
         const data = {};
         data[key] = value;
         const setPromise = extensionAPI.storage.local.set(data);
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Storage set timeout')), 3000)
         );
         await Promise.race([setPromise, timeoutPromise]);
@@ -494,17 +494,17 @@ class CognitoAuth {
       const extensionAPI = this._getExtensionAPI();
       if (extensionAPI && extensionAPI.storage) {
         const getPromise = extensionAPI.storage.local.get([key]);
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Storage get timeout')), 3000)
         );
         const result = await Promise.race([getPromise, timeoutPromise]);
         console.log(`SafariCognitoAuth: Got ${key} via extension API:`, result[key] ? 'found' : 'not found');
         return result[key] || null;
-      } else {
+      }
         const result = localStorage.getItem(key);
         console.log(`SafariCognitoAuth: Got ${key} via localStorage:`, result ? 'found' : 'not found');
         return result;
-      }
+
     } catch (error) {
       console.error('Storage get error:', error);
       return localStorage.getItem(key);

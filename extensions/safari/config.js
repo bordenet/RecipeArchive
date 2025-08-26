@@ -10,10 +10,10 @@ const CONFIG = {
       if (typeof localStorage !== 'undefined') {
         const isDevelopment = localStorage.getItem('recipeArchive.dev') !== 'false';
         return isDevelopment ? 'development' : 'production';
-      } else {
+      }
         // Fallback if localStorage is not available
         return 'development';
-      }
+
     } catch (error) {
       console.warn('CONFIG: Could not access localStorage, defaulting to development mode');
       return 'development';
@@ -40,7 +40,7 @@ const CONFIG = {
   COGNITO: {
     region: 'us-west-2',
     userPoolId: 'us-west-2_qJ1i9RhxD',
-    clientId: '5grdn7qhf1el0ioqb6hkelr29s'  // Fixed: was userPoolClientId
+    clientId: '5grdn7qhf1el0ioqb6hkelr29s' // Fixed: was userPoolClientId
   },
 
   // Development test user (use environment variables for real values)

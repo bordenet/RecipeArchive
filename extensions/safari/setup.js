@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async () => {
   const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
   const saveButton = document.getElementById('saveAuth');
@@ -8,14 +8,14 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Load existing credentials if any
   try {
     const stored = await chrome.storage.local.get(['username', 'password']);
-    if (stored.username) usernameInput.value = stored.username;
-    if (stored.password) passwordInput.value = stored.password;
+    if (stored.username) {usernameInput.value = stored.username;}
+    if (stored.password) {passwordInput.value = stored.password;}
   } catch (error) {
     console.error('Error loading stored credentials:', error);
   }
 
   // Save credentials
-  saveButton.addEventListener('click', async function () {
+  saveButton.addEventListener('click', async () => {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       }
     } catch (error) {
       console.error('Error saving credentials:', error);
-      showStatus('Error saving credentials: ' + error.message, 'error');
+      showStatus(`Error saving credentials: ${ error.message}`, 'error');
     } finally {
       saveButton.disabled = false;
       saveButton.textContent = 'Save Credentials';
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   });
 
   // Back to main
-  backLink.addEventListener('click', function (e) {
+  backLink.addEventListener('click', (e) => {
     e.preventDefault();
     window.location.href = 'popup.html';
   });
@@ -72,14 +72,14 @@ document.addEventListener('DOMContentLoaded', async function () {
       const config = CONFIG.getCognitoConfig();
       const cognitoAuth = new ChromeCognitoAuth(config);
       const result = await cognitoAuth.signIn(username, password);
-      
+
       if (result.success) {
         console.log('Cognito authentication successful');
         return true;
-      } else {
+      }
         console.error('Cognito authentication failed:', result.error);
         return false;
-      }
+
     } catch (error) {
       console.error('Authentication error:', error);
       return false;
@@ -99,7 +99,7 @@ window.AuthUtils = {
       return {
         username: stored.username || null,
         password: stored.password || null,
-        isConfigured: !!stored.authConfigured,
+        isConfigured: Boolean(stored.authConfigured),
       };
     } catch (error) {
       console.error('Error getting stored credentials:', error);
@@ -122,7 +122,7 @@ window.AuthUtils = {
   },
 
   createBasicAuthHeader(username, password) {
-    const credentials = btoa(username + ':' + password);
-    return 'Basic ' + credentials;
+    const credentials = btoa(`${username }:${ password}`);
+    return `Basic ${ credentials}`;
   },
 };

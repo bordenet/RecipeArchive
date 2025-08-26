@@ -69,6 +69,11 @@ class CognitoAuth {
       if (response.AuthenticationResult) {
         await this._storeTokens(response.AuthenticationResult);
         const userInfo = await this._extractUserInfo(response.AuthenticationResult.IdToken);
+        
+        if (!userInfo) {
+          return { success: false, error: 'Failed to extract user information from token' };
+        }
+        
         await this._storeUserInfo(userInfo);
         return { success: true, data: userInfo };
       } else {
@@ -211,27 +216,43 @@ class CognitoAuth {
   // Extract user info from ID token with proper validation
   async _extractUserInfo(idToken) {
     try {
+      // Defensive check for required dependencies
+      if (typeof JWTValidator === 'undefined') {
+        throw new Error('JWTValidator is not available. Ensure jwt-validator.js is loaded.');
+      }
+      
+      if (!idToken || typeof idToken !== 'string') {
+        throw new Error('Invalid ID token: token must be a non-empty string');
+      }
+      
       // Initialize JWT validator
       const jwtValidator = new JWTValidator();
       
       // Validate ID token structure and claims
       const validation = jwtValidator.validateCognitoIdToken(idToken, this.clientId);
-      if (!validation.valid) {
-        throw new Error('Invalid ID token: ' + validation.error);
+      if (!validation || !validation.valid) {
+        const errorMsg = validation?.error || 'Unknown validation error';
+        throw new Error('Invalid ID token: ' + errorMsg);
       }
       
       // Extract user information using validated payload
       const userInfo = jwtValidator.extractCognitoUserInfo(idToken);
       
+      // Ensure userInfo is valid before accessing properties
+      if (!userInfo) {
+        throw new Error('Failed to extract user info from token');
+      }
+      
+      // Defensive property access with fallbacks
       return {
-        id: userInfo.userId,
-        email: userInfo.email,
-        emailVerified: userInfo.emailVerified,
-        givenName: userInfo.givenName,
-        familyName: userInfo.familyName,
-        name: userInfo.name,
-        issuedAt: userInfo.issuedAt,
-        expiresAt: userInfo.expiresAt
+        id: userInfo.userId || null,
+        email: userInfo.email || null,
+        emailVerified: Boolean(userInfo.emailVerified),
+        givenName: userInfo.givenName || null,
+        familyName: userInfo.familyName || null,
+        name: userInfo.name || null,
+        issuedAt: userInfo.issuedAt || null,
+        expiresAt: userInfo.expiresAt || null
       };
     } catch (error) {
       console.error('Failed to extract user info from ID token:', error);

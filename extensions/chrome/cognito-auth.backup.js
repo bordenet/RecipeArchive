@@ -1,0 +1,1 @@
+../shared/cognito-auth.js
