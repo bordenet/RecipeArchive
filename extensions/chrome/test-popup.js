@@ -67,7 +67,7 @@ function addTestButton() {
         cursor: pointer;
     `;
     
-    testButton.onclick = function() {
+    testButton.onclick = function testButtonClick() {
         console.log('🧪 Manual test button clicked');
         testRecipeCapture();
     };
@@ -96,6 +96,11 @@ function testRecipeCapture() {
                     
                     // Show results in popup
                     showResults(response);
+                    
+                    // Send to backend if capture was successful
+                    if (response && response.status === 'success' && response.data) {
+                        sendToBackend(response.data);
+                    }
                 }
             });
         }
@@ -131,6 +136,76 @@ function showResults(response) {
     }
     
     document.body.appendChild(resultsDiv);
+}
+
+async function sendToBackend(recipeData) {
+    try {
+        console.log('📤 Sending recipe to backend...', recipeData);
+        
+        // Get API endpoint from config
+        const apiEndpoint = CONFIG.API_ENDPOINT || 'http://localhost:8080';
+        const url = `${apiEndpoint}/api/recipes`;
+        
+        // Prepare recipe data for backend
+        const backendData = {
+            title: recipeData.title || 'Untitled Recipe',
+            description: `Captured from ${recipeData.url || 'web page'}`,
+            ingredients: recipeData.ingredients || [],
+            instructions: recipeData.steps || [],
+            tags: ['chrome-extension', 'captured'],
+            source: 'chrome-extension',
+            capturedAt: new Date().toISOString()
+        };
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer dev-mock-token',
+                'X-Recipe-Source': 'chrome-extension',
+                'X-Recipe-Version': '1.0'
+            },
+            body: JSON.stringify(backendData)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Recipe saved to backend:', result);
+            
+            // Update UI to show backend success
+            const successDiv = document.createElement('div');
+            successDiv.innerHTML = '✅ Saved to backend!';
+            successDiv.style.cssText = `
+                background: #d4edda;
+                color: #155724;
+                padding: 5px 10px;
+                margin: 5px 0;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+            `;
+            document.body.appendChild(successDiv);
+            
+        } else {
+            throw new Error(`Backend responded with ${response.status}: ${response.statusText}`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Failed to send recipe to backend:', error);
+        
+        // Update UI to show backend error
+        const errorDiv = document.createElement('div');
+        errorDiv.innerHTML = `❌ Backend error: ${error.message}`;
+        errorDiv.style.cssText = `
+            background: #f8d7da;
+            color: #721c24;
+            padding: 5px 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        `;
+        document.body.appendChild(errorDiv);
+    }
 }
 
 console.log('🎯 Test popup script loaded');
