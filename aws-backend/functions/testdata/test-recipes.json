@@ -1,0 +1,491 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "userId": "test-user-001",
+    "title": "Perfect Chocolate Chip Cookies",
+    "ingredients": [
+      {
+        "text": "2¼ cups all-purpose flour",
+        "amount": 2.25,
+        "unit": "cups",
+        "ingredient": "all-purpose flour"
+      },
+      {
+        "text": "1 teaspoon baking soda",
+        "amount": 1,
+        "unit": "teaspoon",
+        "ingredient": "baking soda"
+      },
+      {
+        "text": "1 teaspoon salt",
+        "amount": 1,
+        "unit": "teaspoon",
+        "ingredient": "salt"
+      },
+      {
+        "text": "1 cup (2 sticks) butter, softened",
+        "amount": 1,
+        "unit": "cup",
+        "ingredient": "butter, softened"
+      },
+      {
+        "text": "¾ cup granulated sugar",
+        "amount": 0.75,
+        "unit": "cup",
+        "ingredient": "granulated sugar"
+      },
+      {
+        "text": "¾ cup packed brown sugar",
+        "amount": 0.75,
+        "unit": "cup",
+        "ingredient": "packed brown sugar"
+      },
+      {
+        "text": "2 large eggs",
+        "amount": 2,
+        "unit": "large",
+        "ingredient": "eggs"
+      },
+      {
+        "text": "2 teaspoons vanilla extract",
+        "amount": 2,
+        "unit": "teaspoons",
+        "ingredient": "vanilla extract"
+      },
+      {
+        "text": "2 cups chocolate chips",
+        "amount": 2,
+        "unit": "cups",
+        "ingredient": "chocolate chips"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "Preheat oven to 375°F (190°C)."
+      },
+      {
+        "stepNumber": 2,
+        "text": "In a medium bowl, combine flour, baking soda and salt; set aside."
+      },
+      {
+        "stepNumber": 3,
+        "text": "In a large bowl, beat butter and both sugars until light and fluffy, about 3 minutes."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Beat in eggs one at a time, then vanilla."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Gradually mix in flour mixture until just combined."
+      },
+      {
+        "stepNumber": 6,
+        "text": "Stir in chocolate chips."
+      },
+      {
+        "stepNumber": 7,
+        "text": "Drop rounded tablespoons of dough onto ungreased cookie sheets, spacing 2 inches apart."
+      },
+      {
+        "stepNumber": 8,
+        "text": "Bake 9-11 minutes until golden brown around edges. Cool on baking sheet 2 minutes before transferring to wire rack."
+      }
+    ],
+    "sourceUrl": "https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/",
+    "mainPhotoUrl": "https://example.com/photos/chocolate-chip-cookies.jpg",
+    "prepTimeMinutes": 15,
+    "cookTimeMinutes": 11,
+    "totalTimeMinutes": 26,
+    "servings": 48,
+    "yield": "48 cookies",
+    "createdAt": "2025-08-26T10:30:00Z",
+    "updatedAt": "2025-08-26T10:30:00Z",
+    "isDeleted": false,
+    "version": 1,
+    "webArchiveUrl": "https://example.com/archives/recipe001/page.html"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "userId": "test-user-001", 
+    "title": "Classic Margherita Pizza",
+    "ingredients": [
+      {
+        "text": "1 ball pizza dough (about 1 pound)",
+        "amount": 1,
+        "unit": "ball",
+        "ingredient": "pizza dough"
+      },
+      {
+        "text": "½ cup pizza sauce",
+        "amount": 0.5,
+        "unit": "cup",
+        "ingredient": "pizza sauce"
+      },
+      {
+        "text": "8 oz fresh mozzarella, sliced",
+        "amount": 8,
+        "unit": "oz",
+        "ingredient": "fresh mozzarella, sliced"
+      },
+      {
+        "text": "¼ cup fresh basil leaves",
+        "amount": 0.25,
+        "unit": "cup",
+        "ingredient": "fresh basil leaves"
+      },
+      {
+        "text": "2 tablespoons extra virgin olive oil",
+        "amount": 2,
+        "unit": "tablespoons",
+        "ingredient": "extra virgin olive oil"
+      },
+      {
+        "text": "Sea salt and freshly ground pepper to taste",
+        "amount": null,
+        "unit": "to taste",
+        "ingredient": "sea salt and freshly ground pepper"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "Preheat oven to 475°F (245°C). If using a pizza stone, place it in the oven while preheating."
+      },
+      {
+        "stepNumber": 2,
+        "text": "On a floured surface, roll out pizza dough to 12-inch circle."
+      },
+      {
+        "stepNumber": 3,
+        "text": "Transfer dough to pizza pan or parchment-lined baking sheet."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Spread pizza sauce evenly over dough, leaving 1-inch border for crust."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Distribute mozzarella slices evenly over sauce."
+      },
+      {
+        "stepNumber": 6,
+        "text": "Bake for 12-15 minutes until crust is golden and cheese is bubbly."
+      },
+      {
+        "stepNumber": 7,
+        "text": "Remove from oven and immediately top with fresh basil leaves."
+      },
+      {
+        "stepNumber": 8,
+        "text": "Drizzle with olive oil and season with salt and pepper. Slice and serve immediately."
+      }
+    ],
+    "sourceUrl": "https://www.foodnetwork.com/recipes/bobby-flay/pizza-margherita-recipe-1940425",
+    "prepTimeMinutes": 20,
+    "cookTimeMinutes": 15,
+    "totalTimeMinutes": 35,
+    "servings": 4,
+    "createdAt": "2025-08-26T11:15:00Z",
+    "updatedAt": "2025-08-26T11:15:00Z",
+    "isDeleted": false,
+    "version": 1
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440003",
+    "userId": "test-user-001",
+    "title": "Grandma's Chicken Noodle Soup",
+    "ingredients": [
+      {
+        "text": "1 whole chicken (3-4 lbs)",
+        "amount": 1,
+        "unit": "whole",
+        "ingredient": "chicken"
+      },
+      {
+        "text": "12 cups water",
+        "amount": 12,
+        "unit": "cups",
+        "ingredient": "water"
+      },
+      {
+        "text": "2 bay leaves",
+        "amount": 2,
+        "unit": "leaves",
+        "ingredient": "bay leaves"
+      },
+      {
+        "text": "1 large onion, diced",
+        "amount": 1,
+        "unit": "large",
+        "ingredient": "onion, diced"
+      },
+      {
+        "text": "3 carrots, sliced",
+        "amount": 3,
+        "unit": "carrots",
+        "ingredient": "carrots, sliced"
+      },
+      {
+        "text": "3 celery stalks, chopped",
+        "amount": 3,
+        "unit": "stalks",
+        "ingredient": "celery stalks, chopped"
+      },
+      {
+        "text": "8 oz wide egg noodles",
+        "amount": 8,
+        "unit": "oz",
+        "ingredient": "wide egg noodles"
+      },
+      {
+        "text": "2 tablespoons fresh parsley, chopped",
+        "amount": 2,
+        "unit": "tablespoons",
+        "ingredient": "fresh parsley, chopped"
+      },
+      {
+        "text": "Salt and pepper to taste",
+        "amount": null,
+        "unit": "to taste",
+        "ingredient": "salt and pepper"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "In a large stock pot, combine chicken, water, and bay leaves. Bring to a boil."
+      },
+      {
+        "stepNumber": 2,
+        "text": "Reduce heat and simmer for 1 hour until chicken is tender and cooked through."
+      },
+      {
+        "stepNumber": 3,
+        "text": "Remove chicken from pot and let cool. Remove and discard skin and bones, then shred meat into bite-sized pieces."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Strain the broth and return to pot. Bring to a simmer."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Add onion, carrots, and celery to the broth. Cook for 15 minutes until vegetables are tender."
+      },
+      {
+        "stepNumber": 6,
+        "text": "Add egg noodles and cook according to package directions, about 8-10 minutes."
+      },
+      {
+        "stepNumber": 7,
+        "text": "Return shredded chicken to pot and heat through, about 5 minutes."
+      },
+      {
+        "stepNumber": 8,
+        "text": "Remove bay leaves. Season with salt, pepper, and fresh parsley before serving."
+      }
+    ],
+    "sourceUrl": "https://www.tasteofhome.com/recipes/grandmas-chicken-noodle-soup/",
+    "prepTimeMinutes": 30,
+    "cookTimeMinutes": 90,
+    "totalTimeMinutes": 120,
+    "servings": 8,
+    "createdAt": "2025-08-26T12:00:00Z",
+    "updatedAt": "2025-08-26T12:00:00Z",
+    "isDeleted": false,
+    "version": 1
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440004",
+    "userId": "test-user-002",
+    "title": "Vegan Buddha Bowl",
+    "ingredients": [
+      {
+        "text": "1 cup quinoa",
+        "amount": 1,
+        "unit": "cup",
+        "ingredient": "quinoa"
+      },
+      {
+        "text": "2 cups vegetable broth",
+        "amount": 2,
+        "unit": "cups",
+        "ingredient": "vegetable broth"
+      },
+      {
+        "text": "1 sweet potato, cubed",
+        "amount": 1,
+        "unit": "sweet potato",
+        "ingredient": "sweet potato, cubed"
+      },
+      {
+        "text": "1 can (15 oz) chickpeas, drained",
+        "amount": 1,
+        "unit": "can",
+        "ingredient": "chickpeas, drained"
+      },
+      {
+        "text": "2 cups kale, massaged",
+        "amount": 2,
+        "unit": "cups",
+        "ingredient": "kale, massaged"
+      },
+      {
+        "text": "½ avocado, sliced",
+        "amount": 0.5,
+        "unit": "avocado",
+        "ingredient": "avocado, sliced"
+      },
+      {
+        "text": "¼ cup tahini",
+        "amount": 0.25,
+        "unit": "cup",
+        "ingredient": "tahini"
+      },
+      {
+        "text": "2 tablespoons lemon juice",
+        "amount": 2,
+        "unit": "tablespoons",
+        "ingredient": "lemon juice"
+      },
+      {
+        "text": "1 tablespoon maple syrup",
+        "amount": 1,
+        "unit": "tablespoon",
+        "ingredient": "maple syrup"
+      },
+      {
+        "text": "1 clove garlic, minced",
+        "amount": 1,
+        "unit": "clove",
+        "ingredient": "garlic, minced"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "Preheat oven to 400°F (200°C)."
+      },
+      {
+        "stepNumber": 2,
+        "text": "Cook quinoa in vegetable broth according to package directions, about 15 minutes."
+      },
+      {
+        "stepNumber": 3,
+        "text": "Toss cubed sweet potato with olive oil, salt, and pepper. Roast for 25-30 minutes until tender."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Roast chickpeas with olive oil and spices for 20-25 minutes until crispy."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Make tahini dressing by whisking together tahini, lemon juice, maple syrup, and garlic. Add water to thin as needed."
+      },
+      {
+        "stepNumber": 6,
+        "text": "Massage kale with a pinch of salt and lemon juice until softened."
+      },
+      {
+        "stepNumber": 7,
+        "text": "Assemble bowls with quinoa as base, then add roasted vegetables, chickpeas, and kale."
+      },
+      {
+        "stepNumber": 8,
+        "text": "Top with avocado slices and drizzle with tahini dressing."
+      }
+    ],
+    "sourceUrl": "https://minimalistbaker.com/simple-vegan-buddha-bowl/",
+    "mainPhotoUrl": "https://example.com/photos/buddha-bowl.jpg",
+    "prepTimeMinutes": 20,
+    "cookTimeMinutes": 30,
+    "totalTimeMinutes": 50,
+    "servings": 2,
+    "createdAt": "2025-08-26T13:30:00Z",
+    "updatedAt": "2025-08-26T13:30:00Z",
+    "isDeleted": false,
+    "version": 1,
+    "webArchiveUrl": "https://example.com/archives/recipe004/page.html"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440005",
+    "userId": "test-user-001",
+    "title": "Quick 5-Minute Hummus",
+    "ingredients": [
+      {
+        "text": "1 can (15 oz) chickpeas, drained and rinsed",
+        "amount": 1,
+        "unit": "can",
+        "ingredient": "chickpeas, drained and rinsed"
+      },
+      {
+        "text": "¼ cup tahini",
+        "amount": 0.25,
+        "unit": "cup",
+        "ingredient": "tahini"
+      },
+      {
+        "text": "2 tablespoons lemon juice",
+        "amount": 2,
+        "unit": "tablespoons",
+        "ingredient": "lemon juice"
+      },
+      {
+        "text": "1 clove garlic, minced",
+        "amount": 1,
+        "unit": "clove",
+        "ingredient": "garlic, minced"
+      },
+      {
+        "text": "2-3 tablespoons water",
+        "amount": 2.5,
+        "unit": "tablespoons",
+        "ingredient": "water"
+      },
+      {
+        "text": "½ teaspoon salt",
+        "amount": 0.5,
+        "unit": "teaspoon",
+        "ingredient": "salt"
+      },
+      {
+        "text": "Paprika and olive oil for garnish",
+        "amount": null,
+        "unit": "for garnish",
+        "ingredient": "paprika and olive oil"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "Add chickpeas, tahini, lemon juice, garlic, and salt to food processor."
+      },
+      {
+        "stepNumber": 2,
+        "text": "Process until smooth, about 2-3 minutes, scraping down sides as needed."
+      },
+      {
+        "stepNumber": 3,
+        "text": "Add water gradually while processing until desired consistency is reached."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Taste and adjust seasonings as needed."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Transfer to serving bowl and garnish with paprika and a drizzle of olive oil."
+      }
+    ],
+    "sourceUrl": "https://www.loveandlemons.com/hummus-recipe/",
+    "prepTimeMinutes": 5,
+    "totalTimeMinutes": 5,
+    "servings": 6,
+    "yield": "1½ cups",
+    "createdAt": "2025-08-26T14:00:00Z",
+    "updatedAt": "2025-08-26T14:00:00Z",
+    "isDeleted": false,
+    "version": 1
+  }
+]

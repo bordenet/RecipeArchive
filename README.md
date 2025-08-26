@@ -12,9 +12,16 @@ Stop screenshotting recipes like it's the 90's! RecipeArchive is your handy litt
 git clone https://github.com/yourusername/RecipeArchive
 cd RecipeArchive
 
+# 🔒 SECURITY FIRST: Set up environment variables
+cp .env.template .env
+# Edit .env with your actual credentials (NEVER commit this file!)
+
 # Setup everything automatically with our unified CLI
 recipe-cli setup
 ```
+
+### 🔐 Security Notice
+**CRITICAL**: This project uses `.env` files for sensitive credentials. The `.env` file is protected by `.gitignore` and should NEVER be committed to version control. Always use `.env.template` as a reference for setup.
 
 ### Local Development (Zero AWS Costs)
 ```bash
