@@ -44,7 +44,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Check for development bypass flag
   const devBypass = localStorage.getItem('recipeArchive.devBypass');
-  if (devBypass === 'true') {
+  
+  // Auto-enable development bypass for Safari in development environment
+  if (CONFIG && CONFIG.ENVIRONMENT === 'development' && devBypass !== 'true') {
+    console.log('🔧 Auto-enabling development bypass for Safari development mode');
+    localStorage.setItem('recipeArchive.devBypass', 'true');
+  }
+  
+  if (localStorage.getItem('recipeArchive.devBypass') === 'true') {
     console.log('🔧 Development bypass active - skipping auth');
     showMessage('Ready to capture recipes (dev bypass active)', 'success');
     showMainInterface('dev-user');
@@ -253,16 +260,13 @@ function captureRecipe() {
         showMessage('Recipe captured successfully!', 'success');
         console.log('Recipe data:', response.recipe);
 
-        // Send to backend if authenticated
-        const devBypass = localStorage.getItem('recipeArchive.devBypass');
-        if (devBypass !== 'true') {
-          try {
-            await sendRecipeToBackend(response.recipe);
-            showMessage('Recipe saved to your archive!', 'success');
-          } catch (error) {
-            console.error('Backend save error:', error);
-            showMessage(`Recipe captured but failed to save: ${ error.message}`, 'error');
-          }
+        // Send to backend (now supports dev bypass mode)
+        try {
+          await sendRecipeToBackend(response.recipe);
+          showMessage('Recipe saved to your archive!', 'success');
+        } catch (error) {
+          console.error('Backend save error:', error);
+          showMessage(`Recipe captured but failed to save: ${ error.message}`, 'error');
         }
       } else {
         console.error('RecipeArchive Safari: Capture failed:', response.error);
@@ -285,12 +289,22 @@ async function sendRecipeToBackend(recipe) {
     const config = window.RecipeArchiveConfig;
     const api = config.getCurrentAPI();
 
-    // Get auth token with enhanced error handling
-    const cognitoAuth = new SafariCognitoAuth(config.getCognitoConfig());
-    tokenResult = await cognitoAuth.getIdToken();
+    // Check for development bypass mode
+    const devBypass = localStorage.getItem('recipeArchive.devBypass');
+    if (devBypass === 'true') {
+      console.log('🔧 Development bypass active - using mock token for API request');
+      tokenResult = {
+        success: true,
+        data: 'dev-mock-token-safari'
+      };
+    } else {
+      // Get auth token with enhanced error handling
+      const cognitoAuth = new SafariCognitoAuth(config.getCognitoConfig());
+      tokenResult = await cognitoAuth.getIdToken();
 
-    if (!tokenResult.success) {
-      throw new Error(`Authentication required: ${ tokenResult.error || 'No token available'}`);
+      if (!tokenResult.success) {
+        throw new Error(`Authentication required: ${ tokenResult.error || 'No token available'}`);
+      }
     }
 
     // Enhanced request with retry logic

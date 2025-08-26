@@ -19,6 +19,8 @@ class DocOrganizer {
     this.rootDir = path.resolve(__dirname, '..');
     this.docsDir = path.join(this.rootDir, 'docs');
     this.techDocsDir = path.join(this.docsDir, 'technical');
+    this.toolsDir = path.join(this.rootDir, 'tools');
+    this.lintingDir = path.join(this.toolsDir, 'linting');
     
     // Patterns for documentation files that should be moved
     this.docPatterns = [
@@ -37,13 +39,25 @@ class DocOrganizer {
       /^DESIGN.*\.md$/i
     ];
     
+    // Patterns for config files that should be moved to tools/linting
+    this.configPatterns = [
+      /^eslint\.config\..*\.js$/,
+      /^linting-.*\.json$/,
+      /^.*\.eslintrc.*$/,
+      /^.*lint.*config.*\.(js|json|yaml|yml)$/i
+    ];
+    
     // Files to keep in root (project documentation)
     this.keepInRoot = [
       'README.md',
       'CLAUDE.md',
       'LICENSE.md',
       'CHANGELOG.md',
-      'CONTRIBUTING.md'
+      'CONTRIBUTING.md',
+      '.eslintrc.js', // Main eslint config stays in root
+      'eslint.config.js', // Main eslint config stays in root
+      'package.json',
+      'package-lock.json'
     ];
   }
 
@@ -62,6 +76,16 @@ class DocOrganizer {
     
     // Check if filename matches any documentation pattern
     return this.docPatterns.some(pattern => pattern.test(filename));
+  }
+
+  isConfigFile(filename) {
+    // Skip files that should stay in root
+    if (this.keepInRoot.includes(filename)) {
+      return false;
+    }
+    
+    // Check if filename matches any config pattern
+    return this.configPatterns.some(pattern => pattern.test(filename));
   }
 
   moveFile(sourcePath, targetPath) {
@@ -115,6 +139,41 @@ class DocOrganizer {
     return movedCount;
   }
 
+  organizeConfigFiles() {
+    console.log('\n🔧 Scanning for misplaced config files...\n');
+    
+    this.ensureDirectoryExists(this.toolsDir);
+    this.ensureDirectoryExists(this.lintingDir);
+    
+    const rootFiles = fs.readdirSync(this.rootDir);
+    const configFiles = rootFiles.filter(file => this.isConfigFile(file));
+    
+    let movedCount = 0;
+    
+    for (const filename of configFiles) {
+      const sourcePath = path.join(this.rootDir, filename);
+      const targetPath = path.join(this.lintingDir, filename);
+      
+      if (this.moveFile(sourcePath, targetPath)) {
+        movedCount++;
+      }
+    }
+    
+    console.log(`\n🔧 Config File Organization Summary:`);
+    console.log(`   📄 Scanned: ${configFiles.length} config files`);
+    console.log(`   📁 Moved: ${movedCount} files to tools/linting/`);
+    console.log(`   ✅ Root directory: ${configFiles.length - movedCount} essential configs remaining`);
+    
+    if (movedCount > 0) {
+      console.log(`\n💡 Moved config files are now organized in: tools/linting/`);
+      console.log(`   This keeps the root directory clean and focused.`);
+    } else {
+      console.log(`\n✨ All config files are already properly organized!`);
+    }
+    
+    return movedCount;
+  }
+
   generateReport() {
     const techDocsPath = this.techDocsDir;
     
@@ -138,12 +197,19 @@ class DocOrganizer {
 // Run the organizer
 if (require.main === module) {
   const organizer = new DocOrganizer();
-  const movedCount = organizer.organizeDocumentation();
+  const movedDocsCount = organizer.organizeDocumentation();
+  const movedConfigCount = organizer.organizeConfigFiles();
   organizer.generateReport();
   
-  if (movedCount > 0) {
+  const totalMoved = movedDocsCount + movedConfigCount;
+  if (totalMoved > 0) {
     console.log(`\n🔄 Remember to add moved files to git:`);
-    console.log(`   git add docs/technical/`);
+    if (movedDocsCount > 0) {
+      console.log(`   git add docs/technical/`);
+    }
+    if (movedConfigCount > 0) {
+      console.log(`   git add tools/linting/`);
+    }
     console.log(`   git add . # (to stage deletions from root)`);
   }
 }

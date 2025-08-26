@@ -26,32 +26,59 @@ const showMessage = (message, isError = false) => {
 };
 
 const showMainInterface = () => {
-  const authContainer = document.getElementById('auth-container');
-  const mainContainer = document.getElementById('main-container');
+  console.log('Showing main interface');
+  
+  // Hide auth button, show user info and capture button
+  const authButton = document.getElementById('authButton');
+  const logoutButton = document.getElementById('logoutButton');
+  const captureBtn = document.getElementById('captureBtn');
+  const userInfo = document.getElementById('userInfo');
 
-  if (authContainer) {
-    authContainer.style.display = 'none';
+  if (authButton) {
+    authButton.style.display = 'none';
   }
-  if (mainContainer) {
-    mainContainer.style.display = 'block';
+  if (logoutButton) {
+    logoutButton.style.display = 'block';
   }
+  if (captureBtn) {
+    captureBtn.style.display = 'block';
+  }
+  if (userInfo) {
+    userInfo.style.display = 'block';
+    userInfo.textContent = 'Welcome, Developer! (Development Mode)';
+  }
+  
+  console.log('Main interface shown successfully');
 };
 
 const showAuthRequired = () => {
-  const authContainer = document.getElementById('auth-container');
-  const mainContainer = document.getElementById('main-container');
+  console.log('Showing auth required interface');
+  
+  // Show auth button, hide user info and capture button
+  const authButton = document.getElementById('authButton');
+  const logoutButton = document.getElementById('logoutButton');
+  const captureBtn = document.getElementById('captureBtn');
+  const userInfo = document.getElementById('userInfo');
 
-  if (authContainer) {
-    authContainer.style.display = 'block';
+  if (authButton) {
+    authButton.style.display = 'block';
   }
-  if (mainContainer) {
-    mainContainer.style.display = 'none';
+  if (logoutButton) {
+    logoutButton.style.display = 'none';
   }
+  if (captureBtn) {
+    captureBtn.style.display = 'none';
+  }
+  if (userInfo) {
+    userInfo.style.display = 'none';
+  }
+  
+  console.log('Auth required interface shown successfully');
 };
 
 const setupDevControls = () => {
   const devSection = document.getElementById('dev-section');
-  if (devSection && CONFIG.environment === 'development') {
+  if (devSection && CONFIG.ENVIRONMENT === 'development') {
     devSection.style.display = 'block';
   }
 };
@@ -112,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const handleAuthClick = async () => {
+  console.log('handleAuthClick called');
+  console.log('cognitoAuth available:', !!cognitoAuth);
+  console.log('CONFIG.ENVIRONMENT:', CONFIG.ENVIRONMENT);
+  
   if (!cognitoAuth) {
     showMessage('Authentication not initialized', true);
     return;
@@ -121,6 +152,7 @@ const handleAuthClick = async () => {
 
   // For development mode, provide a simple authentication bypass
   if (CONFIG.ENVIRONMENT === 'development') {
+    console.log('Using development mode authentication');
     try {
       // Simulate successful authentication for development
       const mockUser = {
@@ -133,11 +165,13 @@ const handleAuthClick = async () => {
       localStorage.setItem('recipeArchive.dev.authenticated', 'true');
       localStorage.setItem('recipeArchive.dev.user', JSON.stringify(mockUser));
 
-      showMessage(`Welcome, ${mockUser.name}! (Development Mode)`);
+      console.log('Development authentication successful');
+      showMessage(`Authentication successful! Welcome, ${mockUser.name}!`);
       showMainInterface();
       setupDevControls();
       return;
     } catch (error) {
+      console.error('Development authentication error:', error);
       showMessage(`Development authentication failed: ${error.message}`, true);
       return;
     }
@@ -145,6 +179,7 @@ const handleAuthClick = async () => {
 
   // For production mode, implement proper OAuth flow
   try {
+    console.log('Using production mode authentication (not implemented)');
     // This would trigger the actual OAuth flow for production
     // For now, show instruction to user
     showMessage('Production authentication not yet implemented. Please use development mode.', true);
@@ -157,6 +192,7 @@ const handleAuthClick = async () => {
     //   showMessage(`Authentication failed: ${result.error}`, true);
     // }
   } catch (error) {
+    console.error('Production authentication error:', error);
     showMessage(`Authentication error: ${error.message}`, true);
   }
 };
@@ -255,6 +291,18 @@ const setupEventListeners = () => {
     });
   } else {
     console.warn('Sign Out button not found - checked IDs: logoutButton, sign-out-btn');
+  }
+
+  // Capture Recipe button
+  const captureButton = document.getElementById('captureBtn');
+  if (captureButton) {
+    console.log('Capture button found, attaching event listener');
+    captureButton.addEventListener('click', () => {
+      console.log('Capture button clicked');
+      captureRecipe();
+    });
+  } else {
+    console.warn('Capture button not found - checked ID: captureBtn');
   }
 };
 

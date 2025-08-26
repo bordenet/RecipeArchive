@@ -14,8 +14,8 @@ const CONFIG = {
   API: {
     development: {
       base: 'http://localhost:8080',
-      recipes: 'http://localhost:8080/recipes',
-      diagnostics: 'http://localhost:8080/diagnostics',
+      recipes: 'http://localhost:8080/api/recipes',
+      diagnostics: 'http://localhost:8080/api/diagnostics',
       health: 'http://localhost:8080/health'
     },
     production: {
