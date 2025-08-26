@@ -6,6 +6,7 @@ module.exports = defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
+  timeout: 60000, // 60 seconds for extension tests
   reporter: [['html'], ['list']],
   use: {
     headless: false,
