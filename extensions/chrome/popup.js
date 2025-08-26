@@ -67,6 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wait a bit for config.js to load and define CONFIG
   setTimeout(() => {
+    // Log CONFIG status for debugging
+    console.log('Chrome Extension CONFIG status:', {
+      available: typeof CONFIG !== 'undefined',
+      config: typeof CONFIG !== 'undefined' ? CONFIG.getStatus() : null
+    });
+
     // Validate CONFIG availability
     if (typeof CONFIG === 'undefined' || !CONFIG || !CONFIG.COGNITO) {
       showMessage('Configuration error: Missing Cognito settings', true);
@@ -84,15 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize SafariCognitoAuth with proper checks
     if (typeof SafariCognitoAuth === 'undefined') {
       showMessage('Authentication library not loaded', true);
+      console.error('SafariCognitoAuth not available');
       return;
     }
 
     try {
       cognitoAuth = new SafariCognitoAuth(CONFIG.COGNITO);
+      console.log('Authentication initialized successfully');
 
       // Check authentication status
       checkAuthStatus();
     } catch (error) {
+      console.error('Authentication initialization error:', error);
       showMessage(`Authentication initialization failed: ${error.message}`, true);
       showAuthRequired();
     }
@@ -102,15 +111,54 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 100); // Small delay to ensure config.js has loaded
 });
 
-const handleAuthClick = () => {
+const handleAuthClick = async () => {
   if (!cognitoAuth) {
     showMessage('Authentication not initialized', true);
     return;
   }
 
   showMessage('Starting authentication...');
-  // This would trigger the OAuth flow
-  // Implementation depends on your specific OAuth setup
+
+  // For development mode, provide a simple authentication bypass
+  if (CONFIG.ENVIRONMENT === 'development') {
+    try {
+      // Simulate successful authentication for development
+      const mockUser = {
+        name: 'Developer',
+        email: 'dev@localhost',
+        id: 'dev-user-local'
+      };
+
+      // Store mock authentication state
+      localStorage.setItem('recipeArchive.dev.authenticated', 'true');
+      localStorage.setItem('recipeArchive.dev.user', JSON.stringify(mockUser));
+
+      showMessage(`Welcome, ${mockUser.name}! (Development Mode)`);
+      showMainInterface();
+      setupDevControls();
+      return;
+    } catch (error) {
+      showMessage(`Development authentication failed: ${error.message}`, true);
+      return;
+    }
+  }
+
+  // For production mode, implement proper OAuth flow
+  try {
+    // This would trigger the actual OAuth flow for production
+    // For now, show instruction to user
+    showMessage('Production authentication not yet implemented. Please use development mode.', true);
+    
+    // TODO: Implement production OAuth flow
+    // const result = await cognitoAuth.initiateOAuth();
+    // if (result.success) {
+    //   showMainInterface();
+    // } else {
+    //   showMessage(`Authentication failed: ${result.error}`, true);
+    // }
+  } catch (error) {
+    showMessage(`Authentication error: ${error.message}`, true);
+  }
 };
 
 const handleSignOut = async () => {
@@ -120,6 +168,16 @@ const handleSignOut = async () => {
   }
 
   try {
+    // Handle development mode sign out
+    if (CONFIG.ENVIRONMENT === 'development') {
+      localStorage.removeItem('recipeArchive.dev.authenticated');
+      localStorage.removeItem('recipeArchive.dev.user');
+      showMessage('Signed out successfully (Development Mode)');
+      showAuthRequired();
+      return;
+    }
+
+    // Handle production sign out
     const result = await cognitoAuth.signOut();
 
     if (result.success) {
@@ -141,6 +199,21 @@ const checkAuthStatus = async () => {
   }
 
   try {
+    // Check for development mode authentication first
+    if (CONFIG.ENVIRONMENT === 'development') {
+      const isDevAuthenticated = localStorage.getItem('recipeArchive.dev.authenticated');
+      const devUserData = localStorage.getItem('recipeArchive.dev.user');
+      
+      if (isDevAuthenticated === 'true' && devUserData) {
+        const user = JSON.parse(devUserData);
+        showMessage(`Welcome, ${user.name}! (Development Mode)`);
+        showMainInterface();
+        setupDevControls();
+        return;
+      }
+    }
+
+    // Check production authentication
     const result = await cognitoAuth.getCurrentUser();
 
     if (result.success && result.user) {
@@ -148,7 +221,7 @@ const checkAuthStatus = async () => {
       showMainInterface();
       setupDevControls();
     } else {
-      showMessage(`Authentication check failed: ${result.error}`, true);
+      showMessage(`Authentication check failed: ${result.error || 'No authenticated user'}`, true);
       showAuthRequired();
     }
   } catch (error) {
@@ -158,20 +231,30 @@ const checkAuthStatus = async () => {
 };
 
 const setupEventListeners = () => {
+  console.log('Setting up event listeners...');
+  
   // Sign In button - check for both possible IDs
   const signInButton = document.getElementById('authButton') || document.getElementById('sign-in-btn');
   if (signInButton) {
+    console.log('Sign In button found, attaching event listener');
     signInButton.addEventListener('click', () => {
+      console.log('Sign In button clicked');
       handleAuthClick();
     });
+  } else {
+    console.error('Sign In button not found - checked IDs: authButton, sign-in-btn');
   }
 
   // Sign Out button - check for both possible IDs
   const signOutButton = document.getElementById('logoutButton') || document.getElementById('sign-out-btn');
   if (signOutButton) {
+    console.log('Sign Out button found, attaching event listener');
     signOutButton.addEventListener('click', () => {
+      console.log('Sign Out button clicked');
       handleSignOut();
     });
+  } else {
+    console.warn('Sign Out button not found - checked IDs: logoutButton, sign-out-btn');
   }
 };
 
