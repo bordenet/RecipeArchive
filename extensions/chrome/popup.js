@@ -2,17 +2,7 @@
 // Chrome Extension Popup Script
 // Handles the user interface and authentication flow
 
-// Configuration validation - use the actual config from config.js
-const CONFIG = window.RecipeArchiveConfig || {
-  cognito: {
-    region: 'us-west-2',
-    userPoolId: 'us-west-2_example',
-    clientId: 'example-client-id'
-  },
-  api: {
-    baseUrl: 'https://api.recipearchive.example.com'
-  }
-};
+// CONFIG is loaded from config.js - no need to redeclare it
 
 // Initialize extension API with defensive checks
 let extensionAPI = null;
@@ -68,36 +58,48 @@ const setupDevControls = () => {
 
 // DOM Content Loaded Handler
 document.addEventListener('DOMContentLoaded', () => {
-  // Validate CONFIG availability
-  if (!CONFIG || !CONFIG.cognito) {
-    showMessage('Configuration error: Missing Cognito settings', true);
-    return;
+  // Clear the loading message first
+  const messageDiv = document.getElementById('message');
+  if (messageDiv) {
+    messageDiv.style.display = 'none';
+    messageDiv.textContent = '';
   }
 
-  // Validate CONFIG.cognito properties
-  if (!CONFIG.cognito.userPoolId || !CONFIG.cognito.clientId) {
-    showMessage('Configuration error: Missing required Cognito parameters', true);
-    return;
-  }
+  // Wait a bit for config.js to load and define CONFIG
+  setTimeout(() => {
+    // Validate CONFIG availability
+    if (typeof CONFIG === 'undefined' || !CONFIG || !CONFIG.COGNITO) {
+      showMessage('Configuration error: Missing Cognito settings', true);
+      console.error('CONFIG not available or missing COGNITO:', typeof CONFIG !== 'undefined' ? CONFIG : 'undefined');
+      return;
+    }
 
-  // Initialize SafariCognitoAuth with proper checks
-  if (typeof SafariCognitoAuth === 'undefined') {
-    showMessage('Authentication library not loaded', true);
-    return;
-  }
+    // Validate CONFIG.COGNITO properties
+    if (!CONFIG.COGNITO.userPoolId || !CONFIG.COGNITO.clientId) {
+      showMessage('Configuration error: Missing required Cognito parameters', true);
+      console.error('CONFIG.COGNITO missing properties:', CONFIG.COGNITO);
+      return;
+    }
 
-  try {
-    cognitoAuth = new SafariCognitoAuth(CONFIG.cognito);
+    // Initialize SafariCognitoAuth with proper checks
+    if (typeof SafariCognitoAuth === 'undefined') {
+      showMessage('Authentication library not loaded', true);
+      return;
+    }
 
-    // Check authentication status
-    checkAuthStatus();
-  } catch (error) {
-    showMessage(`Authentication initialization failed: ${error.message}`, true);
-    showAuthRequired();
-  }
+    try {
+      cognitoAuth = new SafariCognitoAuth(CONFIG.COGNITO);
 
-  // Set up event listeners with error handling
-  setupEventListeners();
+      // Check authentication status
+      checkAuthStatus();
+    } catch (error) {
+      showMessage(`Authentication initialization failed: ${error.message}`, true);
+      showAuthRequired();
+    }
+
+    // Set up event listeners with error handling
+    setupEventListeners();
+  }, 100); // Small delay to ensure config.js has loaded
 });
 
 const handleAuthClick = () => {
@@ -156,16 +158,16 @@ const checkAuthStatus = async () => {
 };
 
 const setupEventListeners = () => {
-  // Sign In button
-  const signInButton = document.getElementById('sign-in-btn');
+  // Sign In button - check for both possible IDs
+  const signInButton = document.getElementById('authButton') || document.getElementById('sign-in-btn');
   if (signInButton) {
     signInButton.addEventListener('click', () => {
       handleAuthClick();
     });
   }
 
-  // Sign Out button
-  const signOutButton = document.getElementById('sign-out-btn');
+  // Sign Out button - check for both possible IDs
+  const signOutButton = document.getElementById('logoutButton') || document.getElementById('sign-out-btn');
   if (signOutButton) {
     signOutButton.addEventListener('click', () => {
       handleSignOut();
