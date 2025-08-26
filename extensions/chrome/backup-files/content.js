@@ -304,16 +304,38 @@ function extractSmittenKitchenRecipe() {
     return jsonLdResult;
   }
 
-  // Ingredients sections - try structured format first, then fallback
-  const ingredientsContainer = document.querySelector('div.jetpack-recipe-ingredients');
+  // Ingredients sections - try multiple selectors for Smitten Kitchen  
+  const ingredientsSelectors = [
+    'div.jetpack-recipe-ingredients', // Old format
+    '.recipe-ingredients', // Common class
+    '[data-recipe-ingredients]', // Data attribute
+    '.ingredients', // Simple class
+    'div:contains("Ingredients") + ul', // Adjacent to heading
+    'h3:contains("Ingredients") ~ ul', // Following heading
+  ];
+  
   let ingredientsSections = [];
+  let ingredientsContainer = null;
+  
+  // Try each selector until we find ingredients
+  for (const selector of ingredientsSelectors) {
+    try {
+      ingredientsContainer = document.querySelector(selector);
+      if (ingredientsContainer) {
+        console.log(`Found ingredients with selector: ${selector}`);
+        break;
+      }
+    } catch (_e) {
+      // Invalid selector, continue
+    }
+  }
   
   if (ingredientsContainer) {
     // Try to find sub-sections (Cake, Topping)
     ingredientsSections = extractSections(ingredientsContainer, 'ul', 'li');
     // Fallback: single section
     if (ingredientsSections.length === 0) {
-      const items = Array.from(ingredientsContainer.querySelectorAll('ul li'))
+      const items = Array.from(ingredientsContainer.querySelectorAll('ul li, li'))
         .map((li) => li.textContent.trim())
         .filter(Boolean);
       if (items.length > 0) {ingredientsSections.push({ title: null, items });}
@@ -335,14 +357,39 @@ function extractSmittenKitchenRecipe() {
     }
   }
 
-  // Steps sections - try structured format first, then fallback  
-  const stepsContainer = document.querySelector('div.jetpack-recipe-directions');
+  // Steps sections - try multiple selectors for Smitten Kitchen
+  const stepsSelectors = [
+    'div.jetpack-recipe-directions', // Old format
+    '.recipe-instructions', // Common class
+    '.recipe-directions', // Alternative class
+    '[data-recipe-instructions]', // Data attribute
+    '.instructions', // Simple class
+    'div:contains("Instructions") + ol', // Adjacent to heading
+    'h3:contains("Instructions") ~ ol', // Following heading
+    'div:contains("Directions") + ol', // Adjacent to heading
+    'h3:contains("Directions") ~ ol', // Following heading
+  ];
+  
   let stepsSections = [];
+  let stepsContainer = null;
+  
+  // Try each selector until we find steps
+  for (const selector of stepsSelectors) {
+    try {
+      stepsContainer = document.querySelector(selector);
+      if (stepsContainer) {
+        console.log(`Found steps with selector: ${selector}`);
+        break;
+      }
+    } catch (_e) {
+      // Invalid selector, continue
+    }
+  }
   
   if (stepsContainer) {
     stepsSections = extractSections(stepsContainer, 'ol', 'li');
     if (stepsSections.length === 0) {
-      const items = Array.from(stepsContainer.querySelectorAll('ol li'))
+      const items = Array.from(stepsContainer.querySelectorAll('ol li, li'))
         .map((li) => li.textContent.trim())
         .filter(Boolean);
       if (items.length > 0) {stepsSections.push({ title: null, items });}
