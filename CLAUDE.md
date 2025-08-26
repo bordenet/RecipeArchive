@@ -63,21 +63,21 @@
 
 This project is guided by **four comprehensive PRD documents** that define the complete product vision:
 
-#### 1. **Browser Extension PRD** (`BrowserExtension_PRD.md`)
+#### 1. **Browser Extension PRD** (`docs/requirements/BrowserExtension_PRD.md`)
 - **Core Mission**: One-click recipe capture with 95% accuracy in <3 seconds
 - **Target Sites**: Washington Post, Food & Wine, NYT Cooking, Smitten Kitchen, Love & Lemons, etc.
 - **Performance**: <3 second extraction, <500ms popup load, 95% success rate
 
-#### 2. **AWS Backend PRD** (`AWS_Backend_PRD.md`)
+#### 2. **AWS Backend PRD** (`docs/requirements/AWS_Backend_PRD.md`)
 - **Core Mission**: Secure, scalable, cost-effective recipe storage and sync
 - **Architecture**: Serverless (Lambda, DynamoDB, S3, API Gateway)
 - **Performance**: <300ms API response times, 99.9% uptime
 
-#### 3. **Website PRD** (`Website_PRD.md`)
+#### 3. **Website PRD** (`docs/requirements/Website_PRD.md`)
 - **Core Mission**: Clean, responsive web interface for recipe management
 - **Features**: Browse, search, filter recipes; CRUD operations; meal prep view
 
-#### 4. **iOS App PRD** (`iOSApp_PRD.md`)
+#### 4. **iOS App PRD** (`docs/requirements/iOSApp_PRD.md`)
 - **Core Mission**: Native iOS experience with offline-first design
 - **Platform**: iPhone and iPad support with size-optimized layouts
 

@@ -1,0 +1,49 @@
+#!/bin/sh
+# PRD Protection Hook - Prevents accidental deletion of critical Product Requirements Documents
+# This script ensures that the four foundational PRD documents cannot be deleted
+
+PRD_FILES=(
+  "docs/requirements/BrowserExtension_PRD.md"
+  "docs/requirements/AWS_Backend_PRD.md" 
+  "docs/requirements/Website_PRD.md"
+  "docs/requirements/iOSApp_PRD.md"
+)
+
+echo "🛡️  Checking PRD document protection..."
+
+# Check if any PRD files are being deleted
+for file in "${PRD_FILES[@]}"; do
+  if git diff --cached --name-status | grep -q "^D.*$file"; then
+    echo "❌ CRITICAL ERROR: Attempt to delete protected PRD document: $file"
+    echo "🚫 PRD documents are foundational requirements and cannot be deleted"
+    echo "💡 If you need to modify a PRD, edit the content instead of deleting"
+    echo "📋 Protected PRD documents:"
+    printf "   • %s\n" "${PRD_FILES[@]}"
+    exit 1
+  fi
+done
+
+# Check if PRD files exist and warn if any are missing
+missing_prds=()
+for file in "${PRD_FILES[@]}"; do
+  if [ ! -f "$file" ]; then
+    missing_prds+=("$file")
+  fi
+done
+
+if [ ${#missing_prds[@]} -gt 0 ]; then
+  echo "⚠️  WARNING: Missing critical PRD documents:"
+  printf "   • %s\n" "${missing_prds[@]}"
+  echo "🔧 These documents are required for development consistency"
+  echo "📝 Consider creating missing PRDs before committing"
+fi
+
+# Check if docs/requirements directory exists
+if [ ! -d "docs/requirements" ]; then
+  echo "❌ CRITICAL ERROR: docs/requirements directory is missing"
+  echo "🏗️  This directory must exist to house PRD documents"
+  echo "💡 Run: mkdir -p docs/requirements"
+  exit 1
+fi
+
+echo "✅ PRD document protection check passed"

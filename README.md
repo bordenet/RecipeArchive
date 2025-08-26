@@ -183,10 +183,10 @@ recipe-cli --help          # Show available commands
 ## 📚 Project Documentation
 
 ### 📋 Product Requirements Documents (PRDs)
-- **BrowserExtension_PRD.md** - Chrome & Safari extension specifications
-- **iOSApp_PRD.md** - Native mobile app requirements  
-- **Website_PRD.md** - Web application specifications
-- **AWS_Backend_PRD.md** - Cloud infrastructure requirements
+- **docs/requirements/BrowserExtension_PRD.md** - Chrome & Safari extension specifications
+- **docs/requirements/iOSApp_PRD.md** - Native mobile app requirements  
+- **docs/requirements/Website_PRD.md** - Web application specifications
+- **docs/requirements/AWS_Backend_PRD.md** - Cloud infrastructure requirements
 
 ### 🏗️ Architecture Decisions
 - **AUTH_ARCHITECTURE_DECISION.md** - AWS Cognito authentication strategy
