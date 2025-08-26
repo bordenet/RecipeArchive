@@ -181,11 +181,18 @@ function showForm(formName) {
 
 function showUserDashboard(user) {
   const userInfo = document.getElementById('user-info');
+  
+  // Add null checking for user object
+  if (!user) {
+    userInfo.innerHTML = '<p>Error: User information not available</p>';
+    return;
+  }
+  
   userInfo.innerHTML = `
-    <h3>${user.name || user.email}</h3>
-    <p><strong>Email:</strong> ${user.email}</p>
+    <h3>${user.name || user.email || 'Unknown User'}</h3>
+    <p><strong>Email:</strong> ${user.email || 'Not available'}</p>
     <p><strong>Status:</strong> ${user.emailVerified ? '✅ Verified' : '⚠️ Unverified'}</p>
-    <p><strong>User ID:</strong> ${user.id.substring(0, 8)}...</p>
+    <p><strong>User ID:</strong> ${user.id ? user.id.substring(0, 8) + '...' : 'Not available'}</p>
   `;
   showForm('user-dashboard');
 }

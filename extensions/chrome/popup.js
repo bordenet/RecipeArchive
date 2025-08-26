@@ -139,9 +139,9 @@ async function checkAuthStatus() {
     
     clearTimeout(authTimeout); // Clear timeout on success
     
-    if (userResult.success) {
+    if (userResult.success && userResult.data) {
       showMessage('Authentication successful!', 'success');
-      showMainInterface(userResult.data.email);
+      showMainInterface(userResult.data.email || userResult.data.id || 'Unknown User');
     } else {
       console.log('RecipeArchive Safari: No active session, calling showAuthRequired');
       showAuthRequired();
