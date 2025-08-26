@@ -2,7 +2,7 @@
 
 **The ultimate recipe hoarding tool for digital food obsessives**
 
-Stop screenshotting recipes like a caveperson! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.
+Stop screenshotting recipes like it's the 90's! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.
 
 ## 🚀 Quick Start
 
