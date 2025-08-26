@@ -3,10 +3,10 @@
 # This script ensures that the four foundational PRD documents cannot be deleted
 
 PRD_FILES=(
-  "docs/requirements/BrowserExtension_PRD.md"
-  "docs/requirements/AWS_Backend_PRD.md" 
-  "docs/requirements/Website_PRD.md"
-  "docs/requirements/iOSApp_PRD.md"
+  "docs/requirements/browser-extension.md"
+  "docs/requirements/aws-backend.md" 
+  "docs/requirements/website.md"
+  "docs/requirements/ios-app.md"
 )
 
 echo "🛡️  Checking PRD document protection..."
