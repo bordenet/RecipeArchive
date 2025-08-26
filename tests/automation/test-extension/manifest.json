@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Test Extension",
+  "version": "1.0.0",
+  "description": "Minimal test extension",
+  "permissions": ["storage", "activeTab"],
+  "background": {
+    "service_worker": "test-background.js"
+  },
+  "action": {
+    "default_popup": "test-popup.html"
+  }
+}

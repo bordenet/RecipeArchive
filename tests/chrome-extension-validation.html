@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Extension Test Validation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .warning { background: #fff3cd; color: #856404; }
+        .error { background: #f8d7da; color: #721c24; }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .recipe-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        #results {
+            white-space: pre-wrap;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Chrome Extension Test Validation</h1>
+    
+    <div class="test-section">
+        <h2>📋 Extension Status Check</h2>
+        <div id="extension-status"></div>
+        <button class="test-button" onclick="checkExtensionStatus()">Check Extension</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Page Context</h2>
+        <div id="page-info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🍳 Sample Recipe for Testing</h2>
+        <div class="recipe-card">
+            <h3 data-recipe="title">Chocolate Chip Cookies</h3>
+            <p data-recipe="description">Delicious homemade chocolate chip cookies that are crispy on the outside and chewy on the inside.</p>
+            
+            <h4>Ingredients:</h4>
+            <ul data-recipe="ingredients">
+                <li>2 1/4 cups all-purpose flour</li>
+                <li>1 tsp baking soda</li>
+                <li>1 tsp salt</li>
+                <li>1 cup butter, softened</li>
+                <li>3/4 cup granulated sugar</li>
+                <li>3/4 cup brown sugar</li>
+                <li>2 large eggs</li>
+                <li>2 tsp vanilla extract</li>
+                <li>2 cups chocolate chips</li>
+            </ul>
+            
+            <h4>Instructions:</h4>
+            <ol data-recipe="instructions">
+                <li>Preheat oven to 375°F (190°C)</li>
+                <li>Mix flour, baking soda, and salt in a bowl</li>
+                <li>Cream butter and sugars until fluffy</li>
+                <li>Beat in eggs and vanilla</li>
+                <li>Gradually blend in flour mixture</li>
+                <li>Stir in chocolate chips</li>
+                <li>Drop rounded tablespoons onto ungreased cookie sheets</li>
+                <li>Bake 9-11 minutes until golden brown</li>
+                <li>Cool on baking sheet for 2 minutes before removing</li>
+            </ol>
+            
+            <div data-recipe="metadata">
+                <p><strong>Prep Time:</strong> 15 minutes</p>
+                <p><strong>Cook Time:</strong> 10 minutes</p>
+                <p><strong>Servings:</strong> 48 cookies</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Extension Tests</h2>
+        <button class="test-button" onclick="testExtensionMessage()">Test Extension Message</button>
+        <button class="test-button" onclick="testRecipeCapture()">Test Recipe Capture</button>
+        <button class="test-button" onclick="checkBackendConnection()">Test Backend Connection</button>
+        <button class="test-button" onclick="runFullTest()">Run Full Test</button>
+        
+        <h3>📊 Test Results:</h3>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📖 Manual Test Instructions</h2>
+        <ol>
+            <li><strong>Load Extension:</strong> Go to chrome://extensions/, enable Developer mode, click "Load unpacked", select the Chrome extension directory</li>
+            <li><strong>Open This Page:</strong> Make sure you're on this page (http://localhost:8080/test-page)</li>
+            <li><strong>Test Extension:</strong> Click the extension icon in the toolbar</li>
+            <li><strong>Capture Recipe:</strong> In the popup, click "Capture Recipe" button</li>
+            <li><strong>Verify Results:</strong> Use the test buttons above to verify functionality</li>
+        </ol>
+    </div>
+
+    <script>
+        let results = document.getElementById('results');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            results.textContent += `[${timestamp}] ${message}\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function updateStatus(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function checkExtensionStatus() {
+            log('🔍 Checking extension status...');
+            
+            // Check if chrome.runtime is available
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                log('✅ Chrome runtime detected');
+                updateStatus('extension-status', '✅ Chrome runtime available - Extension context detected', 'success');
+                
+                // Try to get extension info
+                try {
+                    const extensionId = chrome.runtime.id;
+                    log(`📦 Extension ID: ${extensionId}`);
+                } catch (error) {
+                    log(`⚠️ Could not get extension ID: ${error.message}`);
+                }
+            } else {
+                log('❌ Chrome runtime not available');
+                updateStatus('extension-status', '❌ Chrome runtime not available - Extension may not be loaded', 'error');
+            }
+        }
+
+        function testExtensionMessage() {
+            log('📨 Testing extension message communication...');
+            
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                try {
+                    chrome.runtime.sendMessage({
+                        action: 'ping',
+                        source: 'test-page',
+                        timestamp: Date.now()
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            log(`❌ Extension message error: ${chrome.runtime.lastError.message}`);
+                        } else if (response) {
+                            log(`✅ Extension response: ${JSON.stringify(response)}`);
+                        } else {
+                            log('⚠️ No response from extension');
+                        }
+                    });
+                } catch (error) {
+                    log(`❌ Message send error: ${error.message}`);
+                }
+            } else {
+                log('❌ Cannot send message - Chrome runtime not available');
+            }
+        }
+
+        function testRecipeCapture() {
+            log('🍳 Testing recipe capture...');
+            
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                try {
+                    chrome.runtime.sendMessage({
+                        action: 'captureRecipe',
+                        source: 'test-page'
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            log(`❌ Recipe capture error: ${chrome.runtime.lastError.message}`);
+                        } else if (response) {
+                            log(`✅ Recipe captured: ${JSON.stringify(response, null, 2)}`);
+                        } else {
+                            log('⚠️ No response from recipe capture');
+                        }
+                    });
+                } catch (error) {
+                    log(`❌ Recipe capture error: ${error.message}`);
+                }
+            } else {
+                log('❌ Cannot capture recipe - Chrome runtime not available');
+            }
+        }
+
+        async function checkBackendConnection() {
+            log('🌐 Testing backend connection...');
+            
+            try {
+                const response = await fetch('http://localhost:8080/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Backend health: ${JSON.stringify(data)}`);
+                    
+                    // Check recipes endpoint
+                    const recipesResponse = await fetch('http://localhost:8080/api/recipes', {
+                        headers: {
+                            'Authorization': 'Bearer dev-mock-token'
+                        }
+                    });
+                    if (recipesResponse.ok) {
+                        const recipes = await recipesResponse.json();
+                        log(`📊 Current recipes count: ${recipes.count || 0}`);
+                    }
+                } else {
+                    log(`❌ Backend health check failed: ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Backend connection error: ${error.message}`);
+            }
+        }
+
+        async function runFullTest() {
+            log('🚀 Running full end-to-end test...');
+            log('================================');
+            
+            checkExtensionStatus();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            testExtensionMessage();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            testRecipeCapture();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await checkBackendConnection();
+            
+            log('================================');
+            log('✅ Full test complete');
+        }
+
+        // Initialize page info
+        function initPageInfo() {
+            const pageInfo = document.getElementById('page-info');
+            pageInfo.innerHTML = `
+                <div class="status success">
+                    <strong>URL:</strong> ${window.location.href}<br>
+                    <strong>Title:</strong> ${document.title}<br>
+                    <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+                </div>
+            `;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initPageInfo();
+            log('🎯 Test page loaded and ready');
+            log('📋 Use the buttons above to test extension functionality');
+        });
+    </script>
+</body>
+</html>
