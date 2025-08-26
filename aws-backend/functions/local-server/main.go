@@ -477,11 +477,11 @@ Recipe Count: %d
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"backupId":     backupID,
-		"downloadUrl":  mockDownloadURL,
-		"expiresAt":    time.Now().Add(24 * time.Hour).Format(time.RFC3339),
-		"recipeCount":  len(activeRecipes),
-		"sizeBytes":    int64(buf.Len()),
+		"backupId":    backupID,
+		"downloadUrl": mockDownloadURL,
+		"expiresAt":   time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+		"recipeCount": len(activeRecipes),
+		"sizeBytes":   int64(buf.Len()),
 	})
 }
 
