@@ -7,7 +7,7 @@ module.exports = defineConfig({
   retries: 0,
   workers: 1,
   timeout: 60000, // 60 seconds for extension tests
-  reporter: [['html'], ['list']],
+  reporter: [['list']], // Only use list reporter to prevent HTML report server from launching
   use: {
     headless: false,
     trace: 'on-first-retry',

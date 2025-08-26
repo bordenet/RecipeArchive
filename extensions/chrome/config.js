@@ -1,9 +1,11 @@
 // Configuration for Recipe Archive Browser Extensions
 // This handles switching between local development and production AWS endpoints
 
+/* global localStorage */
+
 const CONFIG = {
   // Environment detection
-  ENVIRONMENT: (function() {
+  ENVIRONMENT: (function determineEnvironment() {
     // Check if we're in development mode
     // For initial testing, default to development mode
     const isDevelopment = localStorage.getItem('recipeArchive.dev') !== 'false';

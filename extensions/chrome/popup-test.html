@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RecipeArchive Test</title>
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      text-align: center;
+      color: #333;
+      font-size: 18px;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      background: #e3f2fd;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍳 RecipeArchive Test</h1>
+  
+  <div class="status">
+    <strong>Extension Status:</strong> Loading...
+  </div>
+  
+  <div id="instructions">
+    <p>This is a test version of the popup to verify basic functionality.</p>
+    <p>Check the browser console for detailed test results.</p>
+  </div>
+  
+  <!-- Load scripts in correct order -->
+  <script src="config.js"></script>
+  <script src="test-popup.js"></script>
+</body>
+</html>
