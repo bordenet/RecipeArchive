@@ -1,0 +1,9 @@
+{
+  "auth": {
+    "username": "your-username",
+    "password": "your-password"
+  },
+  "api": {
+    "baseUrl": "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod"
+  }
+}

@@ -1,0 +1,4 @@
+# Run linting, security scanning, and Go unit tests (fast checks only)
+npm run security:scan
+npm run lint
+npm run test:go

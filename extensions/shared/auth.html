@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RecipeArchive Authentication</title>
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif      <button class="btn btn-primary" data-action="go-to-popup">
+        🍽️ Go to Recipe Capture
+      </button>
+      <button class="btn btn-secondary" data-action="sign-out">
+        Sign Out
+      </button>  background: #f9f9f9;
+      margin: 0;
+    }
+    
+    .auth-container {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      margin: 0 0 20px 0;
+      text-align: center;
+      color: #333;
+      font-size: 24px;
+    }
+    
+    .auth-form {
+      display: none;
+    }
+    
+    .auth-form.active {
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #007AFF;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 8px 0;
+    }
+    
+    .btn-primary {
+      background: #007AFF;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #0056CC;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    
+    .success-message {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    
+    .info-message {
+      background: #e3f2fd;
+      color: #1565c0;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    
+    .link-btn {
+      background: none;
+      border: none;
+      color: #007AFF;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 14px;
+      padding: 0;
+      margin: 8px 0;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .user-info {
+      background: #f8f9fa;
+      padding: 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+    }
+    
+    .user-info h3 {
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+    
+    .user-info p {
+      margin: 4px 0;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .environment-toggle {
+      margin-top: 20px;
+      padding: 12px;
+      background: #fff3cd;
+      border-radius: 6px;
+      font-size: 12px;
+      text-align: center;
+    }
+    
+    .environment-toggle button {
+      background: #ffc107;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h1>🍽️ RecipeArchive</h1>
+    
+    <!-- Loading State -->
+    <div id="loading" class="text-center">
+      <p>Checking authentication...</p>
+    </div>
+    
+    <!-- Sign In Form -->
+    <div id="signin-form" class="auth-form">
+      <h2>Sign In</h2>
+      <form id="signin">
+        <div class="form-group">
+          <label for="signin-email">Email:</label>
+          <input type="email" id="signin-email" required>
+        </div>
+        <div class="form-group">
+          <label for="signin-password">Password:</label>
+          <input type="password" id="signin-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign In</button>
+      </form>
+      <div class="text-center">
+        <button class="link-btn" data-show-form="signup">Don't have an account? Sign Up</button>
+      </div>
+    </div>
+    
+    <!-- Sign Up Form -->
+    <div id="signup-form" class="auth-form">
+      <h2>Create Account</h2>
+      <form id="signup">
+        <div class="form-group">
+          <label for="signup-email">Email:</label>
+          <input type="email" id="signup-email" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password:</label>
+          <input type="password" id="signup-password" required minlength="8">
+          <small style="color: #666;">At least 8 characters with uppercase, lowercase, and number</small>
+        </div>
+        <div class="form-group">
+          <label for="signup-name">Name (optional):</label>
+          <input type="text" id="signup-name">
+        </div>
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </form>
+      <div class="text-center">
+        <button class="link-btn" data-show-form="signin">Already have an account? Sign In</button>
+      </div>
+    </div>
+    
+    <!-- Confirmation Form -->
+    <div id="confirm-form" class="auth-form">
+      <h2>Verify Email</h2>
+      <div class="info-message">
+        Please check your email for a verification code.
+      </div>
+      <form id="confirm">
+        <div class="form-group">
+          <label for="confirm-email">Email:</label>
+          <input type="email" id="confirm-email" readonly>
+        </div>
+        <div class="form-group">
+          <label for="confirm-code">Verification Code:</label>
+          <input type="text" id="confirm-code" required maxlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary">Verify</button>
+      </form>
+      <div class="text-center">
+        <button class="link-btn" data-show-form="signin">Back to Sign In</button>
+      </div>
+    </div>
+    
+    <!-- User Dashboard -->
+    <div id="user-dashboard" class="auth-form">
+      <h2>Welcome!</h2>
+      <div class="user-info" id="user-info">
+        <!-- User info will be populated here -->
+      </div>
+      <button class="btn btn-primary" data-action="go-to-popup">
+        🍽️ Go to Recipe Capture
+      </button>
+      <button class="btn btn-secondary" data-action="sign-out">
+        Sign Out
+      </button>
+    </div>
+    
+    <!-- Messages -->
+    <div id="message-container"></div>
+    
+    <!-- Environment Toggle (Development Only) -->
+    <div id="env-toggle" class="environment-toggle" style="display: none;">
+      Current Environment: <span id="current-env"></span>
+      <button data-action="toggle-env">Switch</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="jwt-validator.js"></script>
+  <script src="cognito-auth.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>

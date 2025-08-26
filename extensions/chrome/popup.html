@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RecipeArchive</title>
+  <style>
+    body {
+      width: 350px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+    }
+    h1 {
+      margin: 0 0 15px 0;
+      text-align: center;
+      color: #333;
+      font-size: 20px;
+    }
+    #capture {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    #capture:hover {
+      background: #45a049;
+    }
+    #capture:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    #status {
+      border-radius: 6px;
+      background: white;
+      padding: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🍽️ RecipeArchive</h1>
+  <button id="capture">Capture Recipe</button>
+  
+  
+  <div id="status">Checking authentication...</div>
+  <script src="jwt-validator.js"></script>
+  <script src="config.js"></script>
+  <script src="cognito-auth.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

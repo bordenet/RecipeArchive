@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RecipeArchive Safari</title>
+  <style>
+    body {
+      width: 380px;
+      min-width: 350px;
+      padding: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    h1 {
+      margin: 0 0 15px 0;
+      text-align: center;
+      color: #333;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    #capture {
+      width: 100%;
+      padding: 12px;
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 15px;
+      transition: background-color 0.2s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    #capture:hover {
+      background: #0056CC;
+    }
+    #capture:active {
+      background: #004799;
+      transform: scale(0.98);
+    }
+    #capture:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #status {
+      border-radius: 8px;
+      background: white;
+      padding: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Safari mobile optimizations */
+    @media (max-width: 480px) {
+      body {
+        width: 100%;
+        min-width: 280px;
+        padding: 12px;
+      }
+      #capture {
+        font-size: 18px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+    }
+    
+    /* Dark mode support for Safari */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1c1c1e;
+        color: #ffffff;
+      }
+      #status {
+        background: #2c2c2e;
+        color: #ffffff;
+      }
+      h1 {
+        color: #ffffff;
+      }
+    }
+    
+    /* Touch target improvements for mobile Safari */
+    button, a, input[type="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+  </style>
+</head>
+<body>
+  <h1>🍽️ RecipeArchive</h1>
+  <button id="capture">Capture Recipe</button>
+  
+  
+  <div id="status"></div>
+  <script src="secure-storage.js"></script>
+  <script src="config.js"></script>
+  <script src="cognito-auth.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

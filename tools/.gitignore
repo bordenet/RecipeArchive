@@ -1,0 +1,13 @@
+# Go build artifacts
+bin/
+*.exe
+*.test
+*.out
+*.log
+
+# Extracted recipe outputs  
+extracted-*.json
+
+# Performance test artifacts
+performance-results/
+*.perf

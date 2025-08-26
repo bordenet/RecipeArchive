@@ -1,0 +1,239 @@
+# .gitignore for RecipeArchive Monorepo
+
+# SECURITY: Never commit credentials or secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+aws-credentials.json
+secrets.json
+config/secrets.yml
+*.pem
+*.key
+
+# AWS
+.aws/
+cdk.out/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Node.js / TypeScript / React
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+*.tscache
+extensions/chrome/node_modules/
+extensions/safari/node_modules/
+extensions/chrome/dist/
+extensions/safari/dist/
+aws-backend/node_modules/
+aws-backend/infrastructure/node_modules/
+aws-backend/functions/*/node_modules/
+
+# Go
+bin/
+dist/
+*.exe
+*.test
+*.out
+*.log
+coverage/
+vendor/
+*.a
+*.o
+__debug_bin*
+
+# AWS CDK Build Artifacts
+cdk.out/
+*.asset.*
+bootstrap
+*.zip
+
+# AWS Lambda Build Artifacts
+aws-backend/functions/bin/
+aws-backend/functions/dist/
+
+# Swift / iOS
+DerivedData/
+*.xcuserstate
+*.xcworkspace
+*.xcodeproj
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+*.xcassets
+*.swiftpm
+*.playground
+*.playgroundbook
+*.ipa
+*.dSYM
+Pods/
+Podfile.lock
+
+# Development Tools
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Browser Extensions
+chrome-extension-dist/
+safari-extension-dist/
+extension-package/
+*.crx
+*.xpi
+
+# Logs and temporary files
+logs/
+*.log
+/tmp/
+temp/
+.cache/
+
+# Test artifacts
+coverage/
+*.lcov
+tests/results/
+*test-results.json
+junit.xml
+test-output/
+
+# Package managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Build artifacts
+s3-uploads/
+mcp-server-dist/
+*.zip
+*.tar.gz
+
+# Local development data
+recipe-archives/
+local-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation builds
+docs/build/
+docs/.docusaurus/
+
+# CDK
+cdk.context.json
+
+# AWS Infrastructure Build Artifacts  
+aws-backend/infrastructure/cdk.out/
+aws-backend/infrastructure/.cache/
+
+# Runtime and process files
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache/
+
+# Next.js build output
+.next/
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Bower dependency directory (https://bower.io/)
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# End of .gitignore
+wapost-subscription-cookies.json
+# Sensitive authentication data
+wapost-subscription-cookies.json
+**/cookies.json
+**/auth-cookies.json
+
+# Test coverage and build artifacts
+coverage/
+dist/
+build/
+
+# IDE and temp files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -1,0 +1,13 @@
+{
+  "name": "recipe-archive-extension-integration-tests",
+  "version": "1.0.0",
+  "description": "Browser extension integration tests",
+  "scripts": {
+    "test": "node test-chrome-extension.js && node test-safari-extension.js",
+    "test:chrome": "node test-chrome-extension.js",
+    "test:safari": "node test-safari-extension.js"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

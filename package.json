@@ -1,0 +1,76 @@
+{
+  "name": "recipe-archive-monorepo",
+  "version": "1.0.0",
+  "description": "Cross-device recipe archiving platform with browser extensions, AWS backend, and native apps",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "cd tools && ./bin/recipe-cli test run",
+    "test:unit": "jest --testMatch='**/tests/unit/**/*.test.js'",
+    "test:integration": "jest --testMatch='**/tests/integration/**/*.test.js' --testTimeout=20000",
+    "test:coverage": "jest --coverage --testMatch='**/tests/**/*.test.js'",
+    "test:go": "cd aws-backend/functions/local-server && go test -v",
+    "dev:start": "cd tools && ./bin/recipe-cli dev start",
+    "dev:stop": "cd tools && ./bin/recipe-cli dev stop",
+    "validate": "cd tools && ./bin/recipe-cli validate env",
+    "deploy": "cd tools && ./bin/recipe-cli deploy aws",
+    "deploy:staging": "cd tools && ./bin/recipe-cli deploy aws staging",
+    "deploy:prod": "cd tools && ./bin/recipe-cli deploy aws prod",
+    "lint": "eslint extensions/ tests/ --max-warnings 0",
+    "lint:fix": "eslint extensions/ tests/ --fix",
+    "security:scan": "trufflehog git file://. --since-commit HEAD --only-verified --fail",
+    "security:scan-all": "trufflehog git file://. --only-verified --fail",
+    "security:clean": "echo '🚨 SECURITY VIOLATION DETECTED! Remove all PII/secrets before committing.' && exit 1",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^23.2.0",
+    "prettier": "^3.6.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "projects": [
+      {
+        "displayName": "Unit Tests - Browser",
+        "testEnvironment": "jsdom",
+        "setupFilesAfterEnv": [
+          "<rootDir>/tests/setup.js"
+        ],
+        "testMatch": [
+          "**/tests/unit/chrome/**/*.test.js",
+          "**/tests/unit/safari/**/*.test.js",
+          "**/tests/unit/shared/**/*.test.js"
+        ]
+      },
+      {
+        "displayName": "Integration Tests",
+        "testEnvironment": "node",
+        "setupFilesAfterEnv": [
+          "<rootDir>/tests/setup.js"
+        ],
+        "testMatch": [
+          "**/tests/integration/**/*.test.js"
+        ]
+      }
+    ],
+    "testTimeout": 20000
+  },
+  "author": "Matt Bordenet",
+  "license": "MIT",
+  "dependencies": {
+    "aws-cdk": "^2.1026.0",
+    "aws-cdk-lib": "^2.212.0"
+  }
+}

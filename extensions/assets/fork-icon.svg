@@ -1,0 +1,16 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="58" fill="#4CAF50"/>
+  
+  <!-- Fork handle -->
+  <rect x="60" y="70" width="8" height="45" fill="#8B4513" rx="4"/>
+  
+  <!-- Fork tines -->
+  <rect x="48" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  <rect x="58" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  <rect x="68" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  <rect x="78" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  
+  <!-- Fork base -->
+  <rect x="46" y="65" width="40" height="8" fill="#C0C0C0" rx="4"/>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "name": "recipe-archive-integration-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for RecipeArchive browser extensions",
+  "scripts": {
+    "test": "npm run test:comprehensive && npm run test:sites && npm run test:extensions",
+    "test:comprehensive": "node test-comprehensive-recipes.js",
+    "test:extraction": "node test-extraction-only.js",
+    "test:payload": "node test-payload-compatibility.js",
+    "test:sites": "npm run test:sites:wapost && npm run test:sites:food52 && npm run test:sites:lovelemons",
+    "test:sites:wapost": "cd sites && node test-washington-post.js",
+    "test:sites:food52": "cd sites && node test-food52-comprehensive.js",
+    "test:sites:lovelemons": "cd sites && node test-love-lemons-recipes.js",
+    "test:extensions": "cd extensions && node test-chrome-extension.js && node test-safari-extension.js"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0",
+    "jsdom": "^26.1.0"
+  }
+}
