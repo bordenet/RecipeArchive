@@ -252,16 +252,46 @@ cd functions/s3-manager && go build -o s3-manager main.go
 
 ## Environment Configuration
 
-### Environment Variables
-```bash
-# Required for testing
-export DYNAMODB_TABLE_NAME="RecipeArchive-Recipes-Dev"
-export S3_BUCKET_NAME="recipe-archive-dev"
-export AWS_REGION="us-west-2"
+### 🔒 Secure Environment Setup
 
-# Optional for development
-export AWS_PROFILE="your-profile"
+**CRITICAL SECURITY**: This project uses environment variables to protect sensitive credentials. Never commit actual credentials to the GitHub repository.
+
+#### 1. Environment File Setup
+```bash
+# Copy the template to create your secure environment file
+cp .env.template .env
+
+# Edit .env with your actual credentials (this file is in .gitignore)
+# NEVER commit the actual .env file to version control
 ```
+
+#### 2. Required Environment Variables
+```bash
+# AWS Cognito Test User Credentials (for end-to-end testing)
+TEST_USER_EMAIL="your-test-email@example.com"
+TEST_USER_PASSWORD="YourSecurePassword123"
+
+# AWS Configuration
+AWS_REGION="us-west-2"
+COGNITO_USER_POOL_ID="your-cognito-user-pool-id"
+COGNITO_APP_CLIENT_ID="your-cognito-app-client-id"
+
+# S3 Configuration (using actual deployed bucket names)
+S3_BUCKET_NAME="recipearchive-storage-dev-990537043943"
+S3_TEMP_BUCKET_NAME="recipearchive-temp-dev-990537043943"
+
+# DynamoDB Configuration (deprecated - using S3 storage)
+DYNAMODB_TABLE_NAME="RecipeArchive-Recipes-Dev"
+
+# Local Development
+LOCAL_SERVER_PORT="8080"
+```
+
+#### 3. Test User Credentials
+For end-to-end testing, AWS Cognito test credentials are configured in the `.env` file:
+- Email and password are used for authentication testing
+- These credentials are **NEVER committed to the repository**
+- Use `.env.template` as a reference for setup
 
 ### Makefile Configuration
 The Makefile uses these default values for testing:
