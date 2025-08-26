@@ -1,7 +1,6 @@
 // Configuration for Recipe Archive Browser Extensions
 // This handles switching between local development and production AWS endpoints
 
-/* global localStorage */
 
 const CONFIG = {
   // Environment detection
@@ -97,10 +96,3 @@ if (typeof window !== 'undefined') {
 }
 
 // For testing/development environments that support module exports
-try {
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = CONFIG;
-  }
-} catch (e) {
-  // Ignore module export errors in browser extension context
-}

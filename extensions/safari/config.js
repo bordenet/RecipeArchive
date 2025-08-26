@@ -120,8 +120,12 @@ const CONFIG = {
 console.log('🔧 Recipe Archive Extension Config:', CONFIG.getStatus());
 
 // Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = CONFIG;
-} else if (typeof window !== 'undefined') {
+
+// Log current configuration on load
+console.log('🔧 Recipe Archive Extension Config:', CONFIG.getStatus());
+
+// Export for use in other files
+if (typeof window !== 'undefined') {
   window.RecipeArchiveConfig = CONFIG;
+  window.CONFIG = CONFIG; // Also expose as CONFIG for compatibility
 }

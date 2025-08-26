@@ -11,7 +11,7 @@ function extractFullTextContent() {
   function extractTextFromElement(element) {
     // Skip non-visible elements by tag type (faster than computed style)
     const tagName = element.tagName?.toLowerCase();
-    if (!tagName) return;
+    if (!tagName) {return;}
     
     if (
       tagName === 'script' ||
@@ -111,9 +111,9 @@ function extractRecipeFromJsonLd() {
           if (item.recipeInstructions) {
             const stepItems = item.recipeInstructions
               .map((instruction) => {
-                if (typeof instruction === 'string') return instruction;
-                if (instruction.text) return instruction.text;
-                if (instruction.name) return instruction.name;
+                if (typeof instruction === 'string') {return instruction;}
+                if (instruction.text) {return instruction.text;}
+                if (instruction.name) {return instruction.name;}
                 return '';
               })
               .filter(Boolean);
@@ -129,8 +129,8 @@ function extractRecipeFromJsonLd() {
           if (item.image) {
             if (Array.isArray(item.image)) {
               photos = item.image.map(img => {
-                if (typeof img === 'string') return img;
-                if (img && img.url) return img.url;
+                if (typeof img === 'string') {return img;}
+                if (img && img.url) {return img.url;}
                 return null;
               }).filter(url => url);
             } else if (typeof item.image === 'string') {
@@ -197,7 +197,7 @@ function extractLoveLemonsRecipe() {
 
   // First try JSON-LD
   const jsonLdResult = extractRecipeFromJsonLd();
-  if (jsonLdResult) return jsonLdResult;
+  if (jsonLdResult) {return jsonLdResult;}
 
   // Manual extraction for Love & Lemons
   const title =
@@ -261,7 +261,7 @@ function extractLoveLemonsRecipe() {
         img.alt?.includes('recipe') ||
         img.src.includes('recipe'))
     ) {
-      if (!photos.includes(img.src)) photos.push(img.src);
+      if (!photos.includes(img.src)) {photos.push(img.src);}
     }
   });
 
@@ -316,7 +316,7 @@ function extractSmittenKitchenRecipe() {
       const items = Array.from(ingredientsContainer.querySelectorAll('ul li'))
         .map((li) => li.textContent.trim())
         .filter(Boolean);
-      if (items.length > 0) ingredientsSections.push({ title: null, items });
+      if (items.length > 0) {ingredientsSections.push({ title: null, items });}
     }
   } else {
     // Fallback: look for ingredients in narrative format
@@ -345,7 +345,7 @@ function extractSmittenKitchenRecipe() {
       const items = Array.from(stepsContainer.querySelectorAll('ol li'))
         .map((li) => li.textContent.trim())
         .filter(Boolean);
-      if (items.length > 0) stepsSections.push({ title: null, items });
+      if (items.length > 0) {stepsSections.push({ title: null, items });}
     }
   } else {
     // Fallback: extract step-like content from paragraphs
@@ -367,22 +367,22 @@ function extractSmittenKitchenRecipe() {
   const servingMatch = document.body.innerText.match(
     /(serves|yield[s]?|makes)\s*:?\s*(\d+[\w\s]*)/i
   );
-  if (servingMatch) servingSize = servingMatch[2].trim();
+  if (servingMatch) {servingSize = servingMatch[2].trim();}
 
   // Time (active + inactive)
   let time = null;
   const timeMatch = document.body.innerText.match(
     /(total time|prep time|active time|inactive time|cook time)\s*:?\s*([\d\w\s,:]+)/i
   );
-  if (timeMatch) time = timeMatch[2].trim();
+  if (timeMatch) {time = timeMatch[2].trim();}
 
   // Photos (image URLs)
-  let photos = [];
+  const photos = [];
   const recipeImages = document.querySelectorAll(
     'div.jetpack-recipe img, .entry-content img'
   );
   recipeImages.forEach((img) => {
-    if (img.src && !photos.includes(img.src)) photos.push(img.src);
+    if (img.src && !photos.includes(img.src)) {photos.push(img.src);}
   });
 
   // Attribution URL
@@ -825,7 +825,7 @@ function createRecipePayload(title, ingredients, steps, source) {
         img.alt?.includes('recipe') ||
         img.src.includes('recipe'))
     ) {
-      if (!photos.includes(img.src)) photos.push(img.src);
+      if (!photos.includes(img.src)) {photos.push(img.src);}
     }
   });
 
@@ -917,7 +917,7 @@ function extractRecipeGenericFallback() {
       img.src &&
       (img.className?.includes('recipe') || img.alt?.includes('recipe'))
     ) {
-      if (!photos.includes(img.src)) photos.push(img.src);
+      if (!photos.includes(img.src)) {photos.push(img.src);}
     }
   });
 
@@ -1190,7 +1190,7 @@ function captureDiagnosticData() {
     // Analyze extraction success
     extractionResult.analysis = {
       foundTitle:
-        !!extractionResult.data.title && extractionResult.data.title.length > 0,
+        Boolean(extractionResult.data.title) && extractionResult.data.title.length > 0,
       foundIngredients:
         extractionResult.data.ingredients &&
         extractionResult.data.ingredients.some(
@@ -1361,8 +1361,8 @@ function analyzeJsonLdData() {
           analysis.recipes.push({
             scriptIndex: index,
             name: item.name || 'No name',
-            hasIngredients: !!item.recipeIngredient,
-            hasInstructions: !!item.recipeInstructions,
+            hasIngredients: Boolean(item.recipeIngredient),
+            hasInstructions: Boolean(item.recipeInstructions),
             ingredientCount: Array.isArray(item.recipeIngredient)
               ? item.recipeIngredient.length
               : 0,

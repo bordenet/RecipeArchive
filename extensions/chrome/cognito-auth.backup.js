@@ -173,7 +173,7 @@ class CognitoAuth {
   async _isTokenValid() {
     try {
       const accessToken = await this._getStoredToken(this.ACCESS_TOKEN_KEY);
-      if (!accessToken) return false;
+      if (!accessToken) {return false;}
 
       // Use JWT validator for proper token validation
       const jwtValidator = new JWTValidator();

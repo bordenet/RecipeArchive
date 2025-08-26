@@ -235,7 +235,7 @@ class AuthPerformanceMonitor {
   // End timing and log results
   endTimer(operation, success = true) {
     const metric = this.metrics.get(operation);
-    if (!metric) return;
+    if (!metric) {return;}
 
     const duration = performance.now() - metric.startTime;
     const result = {

@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', async function initializePopup() {
   
   // Cross-browser compatibility
   extensionAPI = (function getBrowserAPI() {
-    if (typeof browser !== 'undefined') return browser;
-    if (typeof chrome !== 'undefined') return chrome;
+    if (typeof browser !== 'undefined') {return browser;}
+    if (typeof chrome !== 'undefined') {return chrome;}
     return null;
   })();
   

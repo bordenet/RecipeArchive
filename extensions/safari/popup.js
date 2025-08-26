@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* global CONFIG, SafariCognitoAuth */
 
 // Global extension API reference
 let extensionAPI;

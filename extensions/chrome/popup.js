@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const handleAuthClick = async () => {
   console.log('handleAuthClick called');
-  console.log('cognitoAuth available:', !!cognitoAuth);
+  console.log('cognitoAuth available:', Boolean(cognitoAuth));
   console.log('CONFIG.ENVIRONMENT:', CONFIG.ENVIRONMENT);
   
   if (!cognitoAuth) {

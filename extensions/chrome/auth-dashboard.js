@@ -10,7 +10,7 @@ class AuthDashboard {
 
   // Create and show the dashboard
   show() {
-    if (this.isVisible) return;
+    if (this.isVisible) {return;}
     
     this.createDashboardUI();
     this.startRefresh();
@@ -89,7 +89,7 @@ class AuthDashboard {
   // Update dashboard status
   async updateStatus() {
     const content = document.getElementById('authStatusContent');
-    if (!content) return;
+    if (!content) {return;}
 
     try {
       const status = await this.collectAuthStatus();
@@ -138,9 +138,9 @@ class AuthDashboard {
         // Get stored tokens
         const tokens = await auth._getStoredTokens();
         status.tokens = {
-          hasAccessToken: !!tokens.accessToken,
-          hasRefreshToken: !!tokens.refreshToken,
-          hasIdToken: !!tokens.idToken,
+          hasAccessToken: Boolean(tokens.accessToken),
+          hasRefreshToken: Boolean(tokens.refreshToken),
+          hasIdToken: Boolean(tokens.idToken),
           expiresAt: tokens.expiresAt ? new Date(tokens.expiresAt).toISOString() : 'not set',
           isExpired: tokens.expiresAt ? Date.now() > tokens.expiresAt : 'unknown'
         };

@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Load existing credentials if any
   try {
     const stored = await chrome.storage.local.get(['username', 'password']);
-    if (stored.username) usernameInput.value = stored.username;
-    if (stored.password) passwordInput.value = stored.password;
+    if (stored.username) {usernameInput.value = stored.username;}
+    if (stored.password) {passwordInput.value = stored.password;}
   } catch (error) {
     console.error('Error loading stored credentials:', error);
   }
@@ -99,7 +99,7 @@ window.AuthUtils = {
       return {
         username: stored.username || null,
         password: stored.password || null,
-        isConfigured: !!stored.authConfigured,
+        isConfigured: Boolean(stored.authConfigured),
       };
     } catch (error) {
       console.error('Error getting stored credentials:', error);
