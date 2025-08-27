@@ -3,9 +3,11 @@
 
 console.log("🎯 RecipeArchive Safari content script starting...");
 
-// Safari Web Extensions: Prevent duplicate injection
+// Safari Web Extensions: Prevent duplicate injection but always ensure message listeners
 if (typeof window.RecipeArchiveContentScript !== 'undefined') {
-  console.log("🎯 RecipeArchive content script already loaded, skipping");
+  console.log("🎯 RecipeArchive content script already loaded, but ensuring message listeners...");
+  // Still set up message listeners in case they were lost
+  initializeContentScript();
 } else {
   window.RecipeArchiveContentScript = true;
   console.log("🎯 RecipeArchive content script starting initialization...");
@@ -26,6 +28,12 @@ if (typeof window.RecipeArchiveContentScript !== 'undefined') {
 function initializeContentScript() {
   try {
     console.log("✅ RecipeArchive Safari content script initialized");
+    
+    // Prevent multiple message listeners
+    if (window.RecipeArchiveMessageListenerAdded) {
+      console.log("🔧 Message listeners already added, skipping");
+      return;
+    }
     
     // Safari Web Extensions: Register message listeners for both APIs
     let messageHandlerRegistered = false;
@@ -49,6 +57,8 @@ function initializeContentScript() {
       return;
     }
     
+    // Mark that listeners have been added
+    window.RecipeArchiveMessageListenerAdded = true;
     console.log("✅ RecipeArchive message listener registered");
     console.log("🔧 Using browser API available:", typeof browser !== "undefined");
     console.log("🔧 Using chrome API available:", typeof chrome !== "undefined");
