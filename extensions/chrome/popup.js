@@ -277,193 +277,32 @@ async function captureRecipe() {
             return;
         }
 
-        // Inject content script to extract recipe data
-        const results = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            function: function() {
-                // Self-contained recipe extraction with all helper functions
-                
-                function extractRecipeFromPage() {
-                    const url = window.location.href;
-                    console.log("🔍 Extracting recipe from:", url);
-                    
-                    // Try JSON-LD first (works for most modern recipe sites including Food Network)
-                    const jsonLdRecipe = extractRecipeFromJsonLd();
-                    if (jsonLdRecipe && jsonLdRecipe.ingredients && jsonLdRecipe.ingredients.length > 0) {
-                        console.log("✅ Found JSON-LD recipe with ingredients");
-                        return jsonLdRecipe;
-                    }
-                    
-                    // Try Food Network specific extraction
-                    if (url.includes('foodnetwork.com')) {
-                        const foodNetworkRecipe = extractFoodNetworkRecipe();
-                        if (foodNetworkRecipe && foodNetworkRecipe.ingredients && foodNetworkRecipe.ingredients.length > 0) {
-                            console.log("✅ Found Food Network recipe");
-                            return foodNetworkRecipe;
-                        }
-                    }
-                    
-                    // Generic fallback extraction
-                    const recipe = {
-                        title: "",
-                        ingredients: [],
-                        instructions: [],
-                        url: window.location.href,
-                        extractedAt: new Date().toISOString()
-                    };
-
-                    // Try to extract title
-                    const titleSelectors = [
-                        'h1[class*="recipe"]',
-                        '.recipe-title',
-                        '.entry-title',
-                        'h1',
-                        '.post-title'
-                    ];
-                    
-                    for (const selector of titleSelectors) {
-                        const element = document.querySelector(selector);
-                        if (element && element.textContent.trim()) {
-                            recipe.title = element.textContent.trim();
-                            break;
-                        }
-                    }
-
-                    // Try to extract ingredients with more selectors
-                    const ingredientSelectors = [
-                        '.recipe-ingredient',
-                        '.ingredients li',
-                        '[class*="ingredient"] li',
-                        '.recipe-ingredients li',
-                        '.o-RecipeIngredients__a-Ingredient',
-                        '.o-Ingredients__a-Ingredient',
-                        '[data-module="IngredientsList"] li',
-                        '.recipe-summary ul li'
-                    ];
-                    
-                    for (const selector of ingredientSelectors) {
-                        const elements = document.querySelectorAll(selector);
-                        if (elements.length > 0) {
-                            recipe.ingredients = Array.from(elements).map(el => el.textContent.trim()).filter(text => text);
-                            if (recipe.ingredients.length > 0) break;
-                        }
-                    }
-
-                    // Try to extract instructions with more selectors
-                    const instructionSelectors = [
-                        '.recipe-instruction',
-                        '.instructions li',
-                        '.directions li',
-                        '.recipe-instructions li',
-                        '.recipe-directions li',
-                        '.o-Method__m-Step',
-                        '.recipe-instructions .o-Method__m-Step',
-                        '[data-module="InstructionsList"] li',
-                        '.recipe-instructions ol li'
-                    ];
-                    
-                    for (const selector of instructionSelectors) {
-                        const elements = document.querySelectorAll(selector);
-                        if (elements.length > 0) {
-                            recipe.instructions = Array.from(elements).map(el => el.textContent.trim()).filter(text => text);
-                            if (recipe.instructions.length > 0) break;
-                        }
-                    }
-
-                    return recipe;
+        // Use content script message system to leverage TypeScript parsers
+        // Content script is automatically loaded via manifest.json
+        showStatus("🔍 Extracting recipe...", "#e3f2fd");
+        
+        // Give content script a moment to initialize (it loads TypeScript parser bundle)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Send capture message directly (content script is configured to load automatically)
+        const response = await new Promise((resolve) => {
+            chrome.tabs.sendMessage(tab.id, { action: "captureRecipe" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Content script communication error:", chrome.runtime.lastError);
+                    resolve({ status: "error", error: chrome.runtime.lastError.message });
+                } else {
+                    resolve(response);
                 }
-
-                function extractRecipeFromJsonLd() {
-                    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-                    
-                    for (const script of jsonLdScripts) {
-                        try {
-                            const jsonData = JSON.parse(script.textContent);
-                            let recipeData = null;
-                            
-                            if (jsonData['@type'] === 'Recipe') {
-                                recipeData = jsonData;
-                            } else if (Array.isArray(jsonData)) {
-                                recipeData = jsonData.find(item => item && item['@type'] === 'Recipe');
-                            } else if (jsonData['@graph']) {
-                                recipeData = jsonData['@graph'].find(item => item && item['@type'] === 'Recipe');
-                            }
-                            
-                            if (recipeData && recipeData.name) {
-                                const ingredients = recipeData.recipeIngredient || [];
-                                const instructions = recipeData.recipeInstructions ? 
-                                    recipeData.recipeInstructions.map(instruction => {
-                                        if (typeof instruction === 'string') return instruction;
-                                        if (instruction.text) return instruction.text;
-                                        if (instruction.name) return instruction.name;
-                                        return '';
-                                    }).filter(Boolean) : [];
-                                
-                                return {
-                                    title: recipeData.name,
-                                    ingredients: ingredients,
-                                    instructions: instructions,
-                                    url: window.location.href,
-                                    extractedAt: new Date().toISOString(),
-                                    servingSize: recipeData.recipeYield || recipeData.yield || null,
-                                    cookTime: recipeData.totalTime || recipeData.cookTime || recipeData.prepTime || null,
-                                    source: 'json-ld'
-                                };
-                            }
-                        } catch (e) {
-                            console.log("JSON-LD parsing failed:", e.message);
-                        }
-                    }
-                    return null;
-                }
-
-                function extractFoodNetworkRecipe() {
-                    console.log("🍳 Food Network specific extraction...");
-                    
-                    const title = document.querySelector('h1.o-AssetTitle__a-HeadlineText, h1')?.textContent?.trim() || document.title;
-                    
-                    // Food Network ingredient selectors
-                    const ingredientElements = document.querySelectorAll(
-                        '.o-RecipeIngredients__a-Ingredient, ' +
-                        '.o-Ingredients__a-Ingredient, ' +
-                        '[data-module="IngredientsList"] li, ' +
-                        '.recipe-ingredients li, ' +
-                        '.o-RecipeIngredients li'
-                    );
-                    
-                    const ingredients = Array.from(ingredientElements)
-                        .map(el => el.textContent?.trim())
-                        .filter(text => text && text.length > 2);
-                    
-                    // Food Network instruction selectors
-                    const stepElements = document.querySelectorAll(
-                        '.o-Method__m-Step, ' +
-                        '.recipe-instructions .o-Method__m-Step, ' +
-                        '[data-module="InstructionsList"] li, ' +
-                        '.recipe-instructions ol li, ' +
-                        '.recipe-instructions li'
-                    );
-                    
-                    const instructions = Array.from(stepElements)
-                        .map(el => el.textContent?.trim())
-                        .filter(text => text && text.length > 10);
-                    
-                    console.log(`🔍 Found ${ingredients.length} ingredients and ${instructions.length} instructions`);
-                    
-                    return {
-                        title,
-                        ingredients: ingredients,
-                        instructions: instructions,
-                        url: window.location.href,
-                        extractedAt: new Date().toISOString(),
-                        source: 'food-network-specific'
-                    };
-                }
-                
-                // Execute the main extraction function
-                return extractRecipeFromPage();
-            }
+            });
         });
+
+        if (response.status === "error") {
+            console.error("Content script error:", response.error);
+            showStatus("❌ Error communicating with content script", "#ffebee");
+            return;
+        }
+
+        const results = [{ result: response.data }];
 
         if (!results || !results[0] || !results[0].result) {
             showStatus("❌ Could not extract recipe data", "#ffebee");

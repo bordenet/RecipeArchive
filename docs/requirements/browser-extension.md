@@ -101,17 +101,94 @@ function shouldPushToAWS(recipeData) {
 | Servings          | Optional | If available on page            | Scaling reference       |
 | Full Page Archive | Required | Complete HTML/PDF backup        | Fallback reference      |
 
-### 3.2 Supported Websites (MVP Priority)
+### 3.2 Supported Websites
 
-Must achieve 95% extraction success on:
+**CRITICAL**: This section defines the authoritative list of websites that RecipeArchive must support. Any deviation requires PRD update to maintain implementation alignment.
 
-- Washington Post Recipes
-- Food & Wine
-- New York Times Cooking
-- Smitten Kitchen
-- Love & Lemons
-- Damn Delicious
-- Serious Eats
+#### 3.2.1 Currently Implemented Sites (Tier 1 - Production Ready)
+
+These sites have **dedicated TypeScript parsers** with comprehensive test coverage:
+
+| Website | URL Pattern | Parser Status | Special Requirements |
+|---------|-------------|---------------|---------------------|
+| **Smitten Kitchen** | `smittenkitchen.com` | ✅ Complete | JSON-LD + DOM fallback |
+| **Food Network** | `foodnetwork.com` | ✅ Complete | Complex CSS selectors |
+| **NYT Cooking** | `cooking.nytimes.com` | ✅ Complete | data-testid attributes |
+
+**Parser Location**: `extensions/shared/parsers/sites/`
+**Test Coverage**: Unit tests + integration tests
+**Success Rate Target**: 95% extraction accuracy
+
+#### 3.2.2 Previously Implemented Sites (Legacy - Requires Migration)
+
+These sites had working parsers in the legacy system that need to be **migrated to the new TypeScript parser architecture**:
+
+| Website | URL Pattern | Legacy Status | Migration Priority | Special Notes |
+|---------|-------------|---------------|-------------------|---------------|
+| **Washington Post** | `washingtonpost.com` | 🔄 Legacy Complete | HIGH | **Cookie-based auth required for tests** |
+| **Love & Lemons** | `loveandlemons.com` | 🔄 Legacy Complete | HIGH | Complex ingredient grouping |
+| **Food52** | `food52.com` | 🔄 Legacy Complete | MEDIUM | Multiple recipe formats |
+| **AllRecipes** | `allrecipes.com` | 🔄 Legacy Complete | MEDIUM | Community-generated content |
+| **Epicurious** | `epicurious.com` | 🔄 Legacy Complete | MEDIUM | Condé Nast network |
+
+**Required Action**: Create TypeScript parsers in `extensions/shared/parsers/sites/` for each legacy site
+**Legacy Code Location**: `extensions/chrome/backup-files/content.js` (lines 174-895)
+**Test Infrastructure**: Comprehensive test suites already exist in `tests/integration/sites/`
+
+#### 3.2.3 PRD-Defined Target Sites (Future Implementation)
+
+These sites are specified in the original PRD but not yet implemented:
+
+| Website | URL Pattern | Implementation Status | Priority | Business Value |
+|---------|-------------|----------------------|----------|----------------|
+| **Food & Wine** | `foodandwine.com` | 📋 Not Started | HIGH | Popular cooking magazine |
+| **Damn Delicious** | `damndelicious.net` | 📋 Not Started | MEDIUM | High-traffic food blog |
+| **Serious Eats** | `seriouseats.com` | 📋 Not Started | HIGH | Technical cooking focus |
+
+#### 3.2.4 Universal Fallback Strategy
+
+For **all other websites** not listed above:
+
+1. **JSON-LD Extraction**: Automatic structured data parsing (covers 80% of recipe sites)
+2. **Generic DOM Parsing**: Basic ingredient/instruction detection  
+3. **Failed Parse API**: Automatic diagnostic submission for parser development
+
+#### 3.2.5 Implementation Requirements
+
+**Parser Architecture Standards:**
+- Each site must have a dedicated TypeScript class extending `BaseParser`
+- Site-specific selectors with JSON-LD fallback
+- Comprehensive validation using `validateRecipe()`
+- Unit tests with mock HTML fixtures
+- Integration tests with real site data
+
+**Quality Gates:**
+- 95% extraction success rate on title, ingredients, instructions
+- <3 second parsing time
+- Graceful fallback to JSON-LD when site-specific parsing fails
+- Automatic failed-parse submission for continuous improvement
+
+**Migration Checklist for Legacy Sites:**
+- [ ] Create TypeScript parser class in `extensions/shared/parsers/sites/`
+- [ ] Add parser to registry in `parser-registry.ts`
+- [ ] Write unit tests with HTML fixtures
+- [ ] Verify integration tests still pass
+- [ ] Update browser extension bundles
+- [ ] Remove legacy inline parser code
+
+#### 3.2.6 Success Metrics
+
+**Per-Site Targets:**
+- **Extraction Success Rate**: ≥95% for required fields (title, ingredients, instructions)
+- **Processing Time**: ≤3 seconds for complete extraction
+- **Error Rate**: ≤5% of extraction attempts
+
+**Overall Coverage:**
+- **Tier 1 Sites**: 100% functional with dedicated parsers
+- **Legacy Migration**: Complete within 2 weeks of this PRD update  
+- **Future Sites**: Implemented based on user feedback and usage analytics
+
+This comprehensive website support strategy ensures RecipeArchive maintains robust recipe extraction capabilities while providing a clear roadmap for expanding site coverage.
 
 ### 3.3 Diagnostic Mode for Parser Improvement
 

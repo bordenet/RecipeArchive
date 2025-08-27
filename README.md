@@ -49,6 +49,23 @@ recipe-cli deploy aws
 
 A cross-platform recipe archiving system currently featuring:
 
+### 🌐 Recipe Site Support
+
+🔵 **Currently Implemented:**
+- [Smitten Kitchen](https://smittenkitchen.com) - Full support with structured data extraction
+
+🔄 **Previously Supported (August 24, 2025):**
+- Love & Lemons 
+- Food52
+- Food Network
+- AllRecipes
+- Epicurious
+- Washington Post (with paywall support)
+
+*These sites were supported but need reimplementation in the new parser architecture. Work is underway to restore full functionality.*
+
+````
+
 - 🔌 **Browser Extensions** - Chrome & Safari extensions for one-click recipe archiving (PRODUCTION READY)
 - ☁️ **AWS Backend** - Go-based serverless backend with local development server (LOCAL DEVELOPMENT COMPLETE)
 
