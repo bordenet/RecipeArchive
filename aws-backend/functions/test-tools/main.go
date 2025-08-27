@@ -29,15 +29,15 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to load AWS config: %v", err)
 	}
-	
+
 	s3Client = s3.NewFromConfig(cfg)
-	
+
 	// Get configuration from environment variables or use defaults for testing
 	bucketName = os.Getenv("S3_BUCKET_NAME")
 	if bucketName == "" {
 		bucketName = "recipe-archive-dev" // Default for testing
 	}
-	
+
 	// Initialize S3-based recipe storage
 	recipeDB = db.NewS3RecipeDB(s3Client, bucketName)
 }
@@ -202,20 +202,20 @@ func validateCRUD(ctx context.Context, userID string) error {
 	// Test CREATE
 	fmt.Println("\\n1️⃣ Testing CREATE operation...")
 	testRecipe := models.Recipe{
-		ID:           "test-crud-recipe-001",
-		UserID:       userID,
-		Title:        "CRUD Test Recipe",
+		ID:     "test-crud-recipe-001",
+		UserID: userID,
+		Title:  "CRUD Test Recipe",
 		Ingredients: []models.Ingredient{
 			{Text: "1 cup test ingredient", Amount: aws.Float64(1), Unit: aws.String("cup"), Ingredient: aws.String("test ingredient")},
 		},
 		Instructions: []models.Instruction{
 			{StepNumber: 1, Text: "Test instruction step 1"},
 		},
-		SourceURL:   "https://example.com/crud-test",
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
-		IsDeleted:   false,
-		Version:     1,
+		SourceURL: "https://example.com/crud-test",
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		IsDeleted: false,
+		Version:   1,
 	}
 
 	// Create the recipe using S3 storage

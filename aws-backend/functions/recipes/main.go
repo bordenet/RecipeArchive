@@ -477,9 +477,9 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		TotalTimeMinutes: updateRecipe.TotalTimeMinutes,
 		Servings:         updateRecipe.Servings,
 		Yield:            updateRecipe.Yield,
-		CreatedAt:        existingRecipe.CreatedAt, // Preserve original creation time
-		UpdatedAt:        now,                      // Update timestamp
-		IsDeleted:        false,                    // Ensure not deleted
+		CreatedAt:        existingRecipe.CreatedAt,   // Preserve original creation time
+		UpdatedAt:        now,                        // Update timestamp
+		IsDeleted:        false,                      // Ensure not deleted
 		Version:          existingRecipe.Version + 1, // Increment version
 	}
 

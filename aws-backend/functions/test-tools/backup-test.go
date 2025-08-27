@@ -19,9 +19,9 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 	fmt.Println("\n1️⃣ Setting up test recipes...")
 	testRecipes := []models.Recipe{
 		{
-			ID:       "backup-test-001",
-			UserID:   userID,
-			Title:    "Backup Test Recipe 1",
+			ID:     "backup-test-001",
+			UserID: userID,
+			Title:  "Backup Test Recipe 1",
 			Ingredients: []models.Ingredient{
 				{Text: "1 cup test ingredient", Amount: aws.Float64(1), Unit: aws.String("cup"), Ingredient: aws.String("test ingredient")},
 			},
@@ -35,9 +35,9 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 			Version:   1,
 		},
 		{
-			ID:       "backup-test-002",
-			UserID:   userID,
-			Title:    "Backup Test Recipe 2",
+			ID:     "backup-test-002",
+			UserID: userID,
+			Title:  "Backup Test Recipe 2",
 			Ingredients: []models.Ingredient{
 				{Text: "2 cups another ingredient", Amount: aws.Float64(2), Unit: aws.String("cups"), Ingredient: aws.String("another ingredient")},
 			},
@@ -63,7 +63,7 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 
 	// Step 2: Test backup creation (simulate API call)
 	fmt.Println("\n2️⃣ Testing backup creation...")
-	
+
 	// Get all recipes (simulating what backup function does)
 	allRecipes, err := recipeDB.ListRecipes(userID)
 	if err != nil {
@@ -86,27 +86,27 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 
 	// Step 3: Test backup file storage structure
 	fmt.Println("\n3️⃣ Testing backup S3 structure...")
-	
+
 	backupID := fmt.Sprintf("test_backup_%s_%d", userID, time.Now().Unix())
 	backupKey := fmt.Sprintf("backups/%s/%s.zip", userID, backupID)
-	
+
 	fmt.Printf("  ✓ Backup would be stored at: s3://%s/%s\n", bucketName, backupKey)
-	
+
 	// Verify backup directory structure
 	expectedPaths := []string{
 		fmt.Sprintf("backups/%s/", userID),
 	}
-	
+
 	for _, path := range expectedPaths {
 		fmt.Printf("  ✓ Backup path structure valid: %s\n", path)
 	}
 
 	// Step 4: Test backup listing functionality
 	fmt.Println("\n4️⃣ Testing backup listing...")
-	
+
 	// List existing backups in S3
 	prefix := fmt.Sprintf("backups/%s/", userID)
-	
+
 	listInput := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(prefix),
@@ -127,7 +127,7 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 
 	// Step 5: Test backup metadata structure
 	fmt.Println("\n5️⃣ Testing backup metadata structure...")
-	
+
 	type BackupManifest struct {
 		BackupID      string    `json:"backupId"`
 		UserID        string    `json:"userId"`
@@ -136,7 +136,7 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 		BackupVersion string    `json:"backupVersion"`
 		Description   string    `json:"description"`
 	}
-	
+
 	manifest := BackupManifest{
 		BackupID:      backupID,
 		UserID:        userID,
@@ -145,7 +145,7 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 		BackupVersion: "1.0",
 		Description:   fmt.Sprintf("Test backup created on %s", time.Now().UTC().Format("2006-01-02 15:04:05")),
 	}
-	
+
 	fmt.Printf("  ✓ Backup manifest structure valid:\n")
 	fmt.Printf("    - Backup ID: %s\n", manifest.BackupID)
 	fmt.Printf("    - Recipe Count: %d\n", manifest.RecipeCount)
@@ -154,12 +154,12 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 
 	// Step 6: Clean up test recipes
 	fmt.Println("\n6️⃣ Cleaning up test data...")
-	
+
 	for _, recipe := range testRecipes {
 		// Soft delete test recipes
 		recipe.IsDeleted = true
 		recipe.UpdatedAt = time.Now().UTC()
-		
+
 		err := recipeDB.UpdateRecipe(&recipe)
 		if err != nil {
 			fmt.Printf("  ⚠️ Failed to clean up test recipe %s: %v\n", recipe.ID, err)
@@ -175,7 +175,7 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 	fmt.Println("  ✓ Backup metadata structure confirmed")
 	fmt.Println("  ✓ S3 backup listing functionality tested")
 	fmt.Println("  ✓ Test data cleaned up")
-	
+
 	fmt.Println("\n🎯 Backup API Capabilities:")
 	fmt.Println("  📦 Creates zip files with all active recipes")
 	fmt.Println("  📋 Includes backup manifest with metadata")
@@ -191,18 +191,18 @@ func testBackupFunctionality(ctx context.Context, userID string) error {
 func runBackupTest() {
 	ctx := context.Background()
 	testUserID := "test-user-backup"
-	
+
 	fmt.Println("🚀 Starting Backup API Functionality Test")
 	fmt.Println("=========================================")
 	fmt.Printf("Test User ID: %s\n", testUserID)
 	fmt.Printf("S3 Bucket: %s\n", bucketName)
-	
+
 	err := testBackupFunctionality(ctx, testUserID)
 	if err != nil {
 		fmt.Printf("❌ Backup test failed: %v\n", err)
 		return
 	}
-	
+
 	fmt.Println("\n🎉 All backup tests passed!")
 	fmt.Println("\n📚 Next Steps:")
 	fmt.Println("  1. Deploy backup Lambda function")

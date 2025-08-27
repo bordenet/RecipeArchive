@@ -7,9 +7,10 @@ import (
 	"io"
 	"strings"
 
+	"recipe-archive/models"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"recipe-archive/models"
 )
 
 // S3RecipeDB implements RecipeDB using S3 for simple, cost-effective storage

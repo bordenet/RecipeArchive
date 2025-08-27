@@ -10,12 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"recipe-archive/models"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/golang-jwt/jwt/v5"
-	"recipe-archive/models"
 )
 
 // Import the models package (will be relative import)
