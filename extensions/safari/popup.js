@@ -21,15 +21,17 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function initializeExtensionAPI() {
-    // Cross-browser compatibility for Safari
+    // Safari Web Extensions use the browser API, not chrome API
     if (typeof browser !== "undefined") {
         extensionAPI = browser;
+        console.log("🦏 Using Safari browser API");
     } else if (typeof chrome !== "undefined") {
         extensionAPI = chrome;
+        console.log("🌐 Using Chrome API");
     }
     
     if (!extensionAPI) {
-        console.error("No extension API available");
+        console.error("❌ No extension API available");
         showStatus("Extension API not available", "#ffebee");
         return false;
     }
@@ -177,26 +179,29 @@ function captureRecipe() {
         
         try {
             // Check if content script is already loaded before injecting
-            extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}, function(pingResponse) {
-                if (extensionAPI.runtime.lastError || !pingResponse) {
-                    // Content script not loaded, inject it
-                    if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
-                        extensionAPI.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            files: ["content.js"]
-                        }).then(() => {
-                            console.log("✅ Content script injected");
-                            sendCaptureMessage(tab.id);
-                        }).catch(error => {
-                            console.error("❌ Script injection failed:", error);
-                            showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
-                        });
-                    } else {
-                        showStatus("❌ Scripting API not available", "#ffebee");
-                    }
+            console.log("🔍 Checking for existing content script...");
+            
+            // Safari prefers promises over callbacks
+            extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}).then(pingResponse => {
+                console.log("✅ Content script already loaded, ping response:", pingResponse);
+                sendCaptureMessage(tab.id);
+            }).catch(pingError => {
+                console.log("📥 Content script not loaded, injecting...", pingError);
+                // Content script not loaded, inject it
+                if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
+                    extensionAPI.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ["content.js"]
+                    }).then(() => {
+                        console.log("✅ Content script injected");
+                        // Wait a moment for script to initialize
+                        setTimeout(() => sendCaptureMessage(tab.id), 100);
+                    }).catch(error => {
+                        console.error("❌ Script injection failed:", error);
+                        showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
+                    });
                 } else {
-                    console.log("✅ Content script already loaded");
-                    sendCaptureMessage(tab.id);
+                    showStatus("❌ Scripting API not available", "#ffebee");
                 }
             });
             
@@ -208,13 +213,11 @@ function captureRecipe() {
 }
 
 function sendCaptureMessage(tabId) {
-    // Send message to content script
-    extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}, function(response) {
-        if (extensionAPI.runtime.lastError) {
-            console.error("❌ Content script error:", extensionAPI.runtime.lastError.message);
-            showStatus("❌ Error: " + extensionAPI.runtime.lastError.message, "#ffebee");
-            return;
-        }
+    // Send message to content script - Safari prefers promises
+    console.log("📤 Sending capture message to tab:", tabId);
+    
+    extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}).then(response => {
+        console.log("📨 Response received:", response);
         
         if (response && response.status === "success") {
             console.log("✅ Recipe data received:", response);
@@ -224,8 +227,11 @@ function sendCaptureMessage(tabId) {
             sendToBackend(response.data);
         } else {
             console.error("❌ Capture failed:", response);
-            showStatus("❌ Capture failed: " + (response ? response.message : "No response"), "#ffebee");
+            showStatus("❌ Capture failed: " + (response ? response.message : "Invalid response"), "#ffebee");
         }
+    }).catch(error => {
+        console.error("❌ Message sending failed:", error);
+        showStatus("❌ Message failed: " + error.message, "#ffebee");
     });
 }
 

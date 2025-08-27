@@ -30,8 +30,10 @@ function initializeContentScript() {
       // Chrome doesn't have a removeListener method, so we just ensure we don't add duplicates
     }
     
-    // Simple message listener for testing
-    chrome.runtime.onMessage.addListener(function messageListener(request, sender, sendResponse) {
+    // Simple message listener for testing - Safari uses browser API
+    const runtimeAPI = (typeof browser !== "undefined") ? browser.runtime : chrome.runtime;
+    
+    runtimeAPI.onMessage.addListener(function messageListener(request, sender, sendResponse) {
       try {
         console.log("📨 RecipeArchive received message:", request);
         
