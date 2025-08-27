@@ -37,7 +37,7 @@ func init() {
 	s3Client = s3.NewFromConfig(cfg)
 
 	// Get S3 bucket name from environment variable
-	bucketName = os.Getenv("S3_BUCKET_NAME")
+	bucketName = os.Getenv("S3_STORAGE_BUCKET")
 	if bucketName == "" {
 		bucketName = "recipe-archive-dev" // fallback for testing
 	}

@@ -33,7 +33,7 @@ func init() {
 	s3Client = s3.NewFromConfig(cfg)
 
 	// Get configuration from environment variables or use defaults for testing
-	bucketName = os.Getenv("S3_BUCKET_NAME")
+	bucketName = os.Getenv("S3_STORAGE_BUCKET")
 	if bucketName == "" {
 		bucketName = "recipe-archive-dev" // Default for testing
 	}

@@ -30,8 +30,8 @@ func init() {
 		panic(fmt.Sprintf("Failed to load AWS config: %v", err))
 	}
 
-	// Get S3 bucket name from environment variable
-	bucketName = os.Getenv("S3_BUCKET_NAME")
+	// Get S3 bucket name from environment variable (matches CDK variable name)
+	bucketName = os.Getenv("S3_STORAGE_BUCKET")
 	if bucketName == "" {
 		bucketName = "recipe-archive-dev" // fallback for local testing
 	}

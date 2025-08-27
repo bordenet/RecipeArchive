@@ -3,7 +3,7 @@
 # Configuration
 TEST_USER_ID := test-user-001
 DYNAMODB_TABLE_NAME := RecipeArchive-Recipes-Dev  
-S3_BUCKET_NAME := recipearchive-storage-dev-990537043943
+S3_STORAGE_BUCKET := recipearchive-storage-dev-990537043943
 TEST_DATA_FILE := functions/testdata/test-recipes.json
 
 # Build variables
@@ -40,7 +40,7 @@ help:
 	@echo "Configuration:"
 	@echo "  TEST_USER_ID      = $(TEST_USER_ID)"
 	@echo "  DYNAMODB_TABLE    = $(DYNAMODB_TABLE_NAME)"
-	@echo "  S3_BUCKET         = $(S3_BUCKET_NAME)"
+	@echo "  S3_BUCKET         = $(S3_STORAGE_BUCKET)"
 
 # Build the test tools binary
 build: $(TEST_TOOLS_BINARY)
@@ -59,7 +59,7 @@ load-test-data: build
 	@echo "📥 Loading test data into DynamoDB..."
 	cd $(TEST_TOOLS_DIR) && \
 		DYNAMODB_TABLE_NAME=$(DYNAMODB_TABLE_NAME) \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=load-test-data -test-data=../testdata/test-recipes.json
 
 # List all recipes for the test user
@@ -67,7 +67,7 @@ list-recipes: build
 	@echo "📋 Listing recipes for test user..."
 	cd $(TEST_TOOLS_DIR) && \
 		DYNAMODB_TABLE_NAME=$(DYNAMODB_TABLE_NAME) \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=list-recipes -user-id=$(TEST_USER_ID)
 
 # Run CRUD validation tests
@@ -75,7 +75,7 @@ validate-crud: build
 	@echo "🧪 Running CRUD validation tests..."
 	cd $(TEST_TOOLS_DIR) && \
 		DYNAMODB_TABLE_NAME=$(DYNAMODB_TABLE_NAME) \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=validate-crud -user-id=$(TEST_USER_ID)
 
 # Clean up all test data (S3 + DynamoDB)
@@ -86,7 +86,7 @@ cleanup-s3: build
 	@echo "🧹 Cleaning up S3 bucket..."
 	cd $(TEST_TOOLS_DIR) && \
 		DYNAMODB_TABLE_NAME=$(DYNAMODB_TABLE_NAME) \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=cleanup-s3
 
 # Clean up DynamoDB test data
@@ -94,21 +94,21 @@ cleanup-dynamodb: build
 	@echo "🧹 Cleaning up DynamoDB test data..."
 	cd $(TEST_TOOLS_DIR) && \
 		DYNAMODB_TABLE_NAME=$(DYNAMODB_TABLE_NAME) \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=cleanup-dynamodb -user-id=$(TEST_USER_ID)
 
 # Test URL-based recipe overwrite behavior
 test-url-overwrite: build
 	@echo "🔄 Testing URL-based recipe overwrite behavior..."
 	cd $(TEST_TOOLS_DIR) && \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=test-url-overwrite
 
 # Test backup functionality
 test-backup: build
 	@echo "📦 Testing backup functionality..."
 	cd $(TEST_TOOLS_DIR) && \
-		S3_BUCKET_NAME=$(S3_BUCKET_NAME) \
+		S3_STORAGE_BUCKET=$(S3_STORAGE_BUCKET) \
 		./test-tools -action=test-backup -user-id=$(TEST_USER_ID)
 
 # Run complete test suite
@@ -146,7 +146,7 @@ check-env:
 	@echo "   AWS Region: $${AWS_REGION:-default}"
 	@echo "   AWS Profile: $${AWS_PROFILE:-default}"
 	@echo "   DynamoDB Table: $(DYNAMODB_TABLE_NAME)"
-	@echo "   S3 Bucket: $(S3_BUCKET_NAME)"
+	@echo "   S3 Bucket: $(S3_STORAGE_BUCKET)"
 
 # Quick test - just validate CRUD without full setup
 quick-test: build validate-crud
