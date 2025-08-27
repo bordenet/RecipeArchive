@@ -201,9 +201,22 @@ async function handleSignIn() {
 }
 
 function signOut() {
+    console.log("🔧 Signing out - clearing all auth data");
     isSignedIn = false;
     currentUser = null;
     localStorage.removeItem("recipeArchive.auth");
+    // Also clear any legacy auth keys that might exist
+    localStorage.removeItem("recipeArchive.user");
+    localStorage.removeItem("recipeArchive.token");
+    CONFIG.enableDevelopment(); // Switch back to dev mode
+    renderUI();
+}
+
+function forceAuthRefresh() {
+    console.log("🔧 Forcing auth refresh - clearing cached tokens");
+    localStorage.removeItem("recipeArchive.auth");
+    isSignedIn = false;
+    currentUser = null;
     renderUI();
 }
 
@@ -609,6 +622,13 @@ async function sendToAWSBackend(recipeData) {
         try {
             const auth = JSON.parse(authData);
             userToken = auth.token || auth.accessToken || auth.idToken;
+            console.log("🔧 Retrieved auth data:", {
+                email: auth.email,
+                provider: auth.provider,
+                tokenType: auth.tokenType,
+                tokenPreview: userToken ? userToken.substring(0, 50) + "..." : "null",
+                issuedAt: new Date(auth.issuedAt).toISOString()
+            });
         } catch {
             return {
                 success: false,
