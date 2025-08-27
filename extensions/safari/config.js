@@ -30,8 +30,8 @@ const CONFIG = {
     },
     production: {
       base: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod",
-      recipes: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/recipes",
-      diagnostics: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/diagnostics",
+      recipes: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/v1/recipes",
+      diagnostics: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/v1/diagnostics",
       health: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/health"
     }
   },
