@@ -10,8 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"recipe-archive/models"
+
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/bordenet/recipe-archive/models"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -166,9 +170,26 @@ func ParseRequestBody(request events.APIGatewayProxyRequest, target interface{})
 
 // GeneratePresignedURL generates a presigned URL for S3 object access
 func GeneratePresignedURL(key string, expiration time.Duration) (string, error) {
-	// TODO: Implement S3 presigned URL generation
-	// This is a placeholder - implement using AWS SDK
-	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", S3BucketName, Region, key), nil
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return "", fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	s3Client := s3.NewFromConfig(cfg)
+	presignClient := s3.NewPresignClient(s3Client)
+
+	presignResult, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String(S3BucketName),
+		Key:    aws.String(key),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = expiration
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+
+	return presignResult.URL, nil
 }
 
 // HandleCORS handles CORS preflight requests

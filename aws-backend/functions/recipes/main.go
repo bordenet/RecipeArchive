@@ -16,9 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 
-	"github.com/bordenet/recipe-archive/db"
-	"github.com/bordenet/recipe-archive/models"
-	"github.com/bordenet/recipe-archive/utils"
+	"recipe-archive/db"
+	"recipe-archive/models"
+	"recipe-archive/utils"
 )
 
 var recipeDB db.RecipeDB
@@ -477,9 +477,9 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		TotalTimeMinutes: updateRecipe.TotalTimeMinutes,
 		Servings:         updateRecipe.Servings,
 		Yield:            updateRecipe.Yield,
-		CreatedAt:        existingRecipe.CreatedAt, // Preserve original creation time
-		UpdatedAt:        now,                      // Update timestamp
-		IsDeleted:        false,                    // Ensure not deleted
+		CreatedAt:        existingRecipe.CreatedAt,   // Preserve original creation time
+		UpdatedAt:        now,                        // Update timestamp
+		IsDeleted:        false,                      // Ensure not deleted
 		Version:          existingRecipe.Version + 1, // Increment version
 	}
 
