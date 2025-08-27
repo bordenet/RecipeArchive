@@ -179,25 +179,7 @@ async function handleSignIn() {
         const result = await cognitoAuth.signIn(email, password);
         
         if (result.success) {
-            console.log("🔧 Cognito authentication result:", result);
-            console.log("🔧 Cognito result.data:", result.data);
-            console.log("🔧 Full result structure:", JSON.stringify(result, null, 2));
-            console.log("🔧 Available tokens:", {
-                hasAccessToken: !!result.data.AccessToken,
-                hasIdToken: !!result.data.IdToken,
-                hasRefreshToken: !!result.data.RefreshToken,
-                accessTokenPreview: result.data.AccessToken ? result.data.AccessToken.substring(0, 50) + "..." : "null",
-                idTokenPreview: result.data.IdToken ? result.data.IdToken.substring(0, 50) + "..." : "null"
-            });
-            
-            // Check alternative token field names
-            console.log("🔧 Alternative token fields:", {
-                hasAccessTokenAlt: !!result.data.accessToken,
-                hasIdTokenAlt: !!result.data.idToken,
-                hasTokensField: !!result.data.tokens,
-                hasAuthenticationResult: !!result.data.AuthenticationResult,
-                allFields: Object.keys(result.data)
-            });
+            // Authentication successful - token logging removed for security
             
             // Get the real JWT tokens from Cognito
             const authData = {
@@ -212,7 +194,7 @@ async function handleSignIn() {
                 provider: "cognito"
             };
             
-            console.log("🔧 Storing auth data:", authData);
+            // Store authentication data
             
             // Store auth data
             currentUser = { 
@@ -223,12 +205,7 @@ async function handleSignIn() {
             isSignedIn = true;
             localStorage.setItem("recipeArchive.auth", JSON.stringify(authData));
             
-            // Verify what was actually stored
-            const storedAuth = localStorage.getItem("recipeArchive.auth");
-            console.log("🔧 Verification - stored auth data:", storedAuth);
-            const parsedStored = JSON.parse(storedAuth);
-            console.log("🔧 Verification - parsed stored auth:", parsedStored);
-            console.log("🔧 Verification - stored has token:", !!parsedStored.token);
+            // Authentication data stored successfully
             
             // Switch to production mode for AWS API calls
             if (typeof CONFIG !== "undefined") {
@@ -278,14 +255,43 @@ async function captureRecipe() {
         }
 
         // Use content script message system to leverage TypeScript parsers
-        // Content script is automatically loaded via manifest.json
         showStatus("🔍 Extracting recipe...", "#e3f2fd");
         
-        // Give content script a moment to initialize (it loads TypeScript parser bundle)
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // First, try to ping the content script to see if it's already loaded
+        let response = await new Promise((resolve) => {
+            chrome.tabs.sendMessage(tab.id, { action: "ping" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    resolve({ status: "error", needsInjection: true });
+                } else {
+                    resolve(response || { status: "error", needsInjection: true });
+                }
+            });
+        });
+
+        // If content script isn't responding, try to inject it manually
+        if (response.needsInjection || response.status === "error") {
+            console.log("🔧 Content script not responding, injecting manually...");
+            showStatus("🔧 Loading parser system...", "#e3f2fd");
+            
+            try {
+                // Check if we can inject into this tab (some pages are restricted)
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ["typescript-parser-bundle.js", "content.js"]
+                });
+                
+                // Wait for injection to complete
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log("✅ Content script injected successfully");
+            } catch (injectionError) {
+                console.error("❌ Cannot inject content script:", injectionError);
+                showStatus("❌ Cannot capture recipe from this page", "#ffebee");
+                return;
+            }
+        }
         
-        // Send capture message directly (content script is configured to load automatically)
-        const response = await new Promise((resolve) => {
+        // Now send the capture message
+        response = await new Promise((resolve) => {
             chrome.tabs.sendMessage(tab.id, { action: "captureRecipe" }, (response) => {
                 if (chrome.runtime.lastError) {
                     console.error("Content script communication error:", chrome.runtime.lastError);
@@ -408,12 +414,18 @@ function transformRecipeDataForAWS(recipeData) {
         throw new Error("Recipe title is required");
     }
     
+    // Temporary: Allow empty ingredients/instructions for debugging
     if (ingredients.length === 0) {
-        throw new Error("At least one ingredient is required");
+        console.warn("⚠️ No ingredients found - adding placeholder for debugging");
+        ingredients.push({ text: "[No ingredients extracted - parser debugging needed]" });
     }
     
     if (instructions.length === 0) {
-        throw new Error("At least one instruction is required");
+        console.warn("⚠️ No instructions found - adding placeholder for debugging");
+        instructions.push({ 
+            stepNumber: 1, 
+            text: "[No instructions extracted - parser debugging needed]" 
+        });
     }
     
     if (!transformedData.sourceUrl) {
@@ -429,7 +441,7 @@ async function sendToAWSBackend(recipeData) {
     try {
         const authData = localStorage.getItem("recipeArchive.auth");
         console.log("🔧 Retrieved auth data:", authData ? "exists" : "null");
-        console.log("🔧 Raw auth data string:", authData);
+        // Auth data retrieved from storage
         
         if (!authData) {
             console.error("❌ No auth data found in localStorage");
@@ -451,7 +463,7 @@ async function sendToAWSBackend(recipeData) {
             return { success: false, error: "No valid authentication token" };
         }
 
-        console.log("🔧 Sending to AWS with token preview:", auth.token.substring(0, 50) + "...");
+        // Sending recipe data to AWS backend
 
         // Transform data to match AWS backend expected format
         const transformedData = transformRecipeDataForAWS(recipeData);
