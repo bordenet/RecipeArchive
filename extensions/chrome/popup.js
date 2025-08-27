@@ -179,25 +179,7 @@ async function handleSignIn() {
         const result = await cognitoAuth.signIn(email, password);
         
         if (result.success) {
-            console.log("🔧 Cognito authentication result:", result);
-            console.log("🔧 Cognito result.data:", result.data);
-            console.log("🔧 Full result structure:", JSON.stringify(result, null, 2));
-            console.log("🔧 Available tokens:", {
-                hasAccessToken: !!result.data.AccessToken,
-                hasIdToken: !!result.data.IdToken,
-                hasRefreshToken: !!result.data.RefreshToken,
-                accessTokenPreview: result.data.AccessToken ? result.data.AccessToken.substring(0, 50) + "..." : "null",
-                idTokenPreview: result.data.IdToken ? result.data.IdToken.substring(0, 50) + "..." : "null"
-            });
-            
-            // Check alternative token field names
-            console.log("🔧 Alternative token fields:", {
-                hasAccessTokenAlt: !!result.data.accessToken,
-                hasIdTokenAlt: !!result.data.idToken,
-                hasTokensField: !!result.data.tokens,
-                hasAuthenticationResult: !!result.data.AuthenticationResult,
-                allFields: Object.keys(result.data)
-            });
+            // Authentication successful - token logging removed for security
             
             // Get the real JWT tokens from Cognito
             const authData = {
@@ -212,7 +194,7 @@ async function handleSignIn() {
                 provider: "cognito"
             };
             
-            console.log("🔧 Storing auth data:", authData);
+            // Store authentication data
             
             // Store auth data
             currentUser = { 
@@ -223,12 +205,7 @@ async function handleSignIn() {
             isSignedIn = true;
             localStorage.setItem("recipeArchive.auth", JSON.stringify(authData));
             
-            // Verify what was actually stored
-            const storedAuth = localStorage.getItem("recipeArchive.auth");
-            console.log("🔧 Verification - stored auth data:", storedAuth);
-            const parsedStored = JSON.parse(storedAuth);
-            console.log("🔧 Verification - parsed stored auth:", parsedStored);
-            console.log("🔧 Verification - stored has token:", !!parsedStored.token);
+            // Authentication data stored successfully
             
             // Switch to production mode for AWS API calls
             if (typeof CONFIG !== "undefined") {
@@ -277,193 +254,61 @@ async function captureRecipe() {
             return;
         }
 
-        // Inject content script to extract recipe data
-        const results = await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            function: function() {
-                // Self-contained recipe extraction with all helper functions
-                
-                function extractRecipeFromPage() {
-                    const url = window.location.href;
-                    console.log("🔍 Extracting recipe from:", url);
-                    
-                    // Try JSON-LD first (works for most modern recipe sites including Food Network)
-                    const jsonLdRecipe = extractRecipeFromJsonLd();
-                    if (jsonLdRecipe && jsonLdRecipe.ingredients && jsonLdRecipe.ingredients.length > 0) {
-                        console.log("✅ Found JSON-LD recipe with ingredients");
-                        return jsonLdRecipe;
-                    }
-                    
-                    // Try Food Network specific extraction
-                    if (url.includes('foodnetwork.com')) {
-                        const foodNetworkRecipe = extractFoodNetworkRecipe();
-                        if (foodNetworkRecipe && foodNetworkRecipe.ingredients && foodNetworkRecipe.ingredients.length > 0) {
-                            console.log("✅ Found Food Network recipe");
-                            return foodNetworkRecipe;
-                        }
-                    }
-                    
-                    // Generic fallback extraction
-                    const recipe = {
-                        title: "",
-                        ingredients: [],
-                        instructions: [],
-                        url: window.location.href,
-                        extractedAt: new Date().toISOString()
-                    };
-
-                    // Try to extract title
-                    const titleSelectors = [
-                        'h1[class*="recipe"]',
-                        '.recipe-title',
-                        '.entry-title',
-                        'h1',
-                        '.post-title'
-                    ];
-                    
-                    for (const selector of titleSelectors) {
-                        const element = document.querySelector(selector);
-                        if (element && element.textContent.trim()) {
-                            recipe.title = element.textContent.trim();
-                            break;
-                        }
-                    }
-
-                    // Try to extract ingredients with more selectors
-                    const ingredientSelectors = [
-                        '.recipe-ingredient',
-                        '.ingredients li',
-                        '[class*="ingredient"] li',
-                        '.recipe-ingredients li',
-                        '.o-RecipeIngredients__a-Ingredient',
-                        '.o-Ingredients__a-Ingredient',
-                        '[data-module="IngredientsList"] li',
-                        '.recipe-summary ul li'
-                    ];
-                    
-                    for (const selector of ingredientSelectors) {
-                        const elements = document.querySelectorAll(selector);
-                        if (elements.length > 0) {
-                            recipe.ingredients = Array.from(elements).map(el => el.textContent.trim()).filter(text => text);
-                            if (recipe.ingredients.length > 0) break;
-                        }
-                    }
-
-                    // Try to extract instructions with more selectors
-                    const instructionSelectors = [
-                        '.recipe-instruction',
-                        '.instructions li',
-                        '.directions li',
-                        '.recipe-instructions li',
-                        '.recipe-directions li',
-                        '.o-Method__m-Step',
-                        '.recipe-instructions .o-Method__m-Step',
-                        '[data-module="InstructionsList"] li',
-                        '.recipe-instructions ol li'
-                    ];
-                    
-                    for (const selector of instructionSelectors) {
-                        const elements = document.querySelectorAll(selector);
-                        if (elements.length > 0) {
-                            recipe.instructions = Array.from(elements).map(el => el.textContent.trim()).filter(text => text);
-                            if (recipe.instructions.length > 0) break;
-                        }
-                    }
-
-                    return recipe;
+        // Use content script message system to leverage TypeScript parsers
+        showStatus("🔍 Extracting recipe...", "#e3f2fd");
+        
+        // First, try to ping the content script to see if it's already loaded
+        let response = await new Promise((resolve) => {
+            chrome.tabs.sendMessage(tab.id, { action: "ping" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    resolve({ status: "error", needsInjection: true });
+                } else {
+                    resolve(response || { status: "error", needsInjection: true });
                 }
-
-                function extractRecipeFromJsonLd() {
-                    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-                    
-                    for (const script of jsonLdScripts) {
-                        try {
-                            const jsonData = JSON.parse(script.textContent);
-                            let recipeData = null;
-                            
-                            if (jsonData['@type'] === 'Recipe') {
-                                recipeData = jsonData;
-                            } else if (Array.isArray(jsonData)) {
-                                recipeData = jsonData.find(item => item && item['@type'] === 'Recipe');
-                            } else if (jsonData['@graph']) {
-                                recipeData = jsonData['@graph'].find(item => item && item['@type'] === 'Recipe');
-                            }
-                            
-                            if (recipeData && recipeData.name) {
-                                const ingredients = recipeData.recipeIngredient || [];
-                                const instructions = recipeData.recipeInstructions ? 
-                                    recipeData.recipeInstructions.map(instruction => {
-                                        if (typeof instruction === 'string') return instruction;
-                                        if (instruction.text) return instruction.text;
-                                        if (instruction.name) return instruction.name;
-                                        return '';
-                                    }).filter(Boolean) : [];
-                                
-                                return {
-                                    title: recipeData.name,
-                                    ingredients: ingredients,
-                                    instructions: instructions,
-                                    url: window.location.href,
-                                    extractedAt: new Date().toISOString(),
-                                    servingSize: recipeData.recipeYield || recipeData.yield || null,
-                                    cookTime: recipeData.totalTime || recipeData.cookTime || recipeData.prepTime || null,
-                                    source: 'json-ld'
-                                };
-                            }
-                        } catch (e) {
-                            console.log("JSON-LD parsing failed:", e.message);
-                        }
-                    }
-                    return null;
-                }
-
-                function extractFoodNetworkRecipe() {
-                    console.log("🍳 Food Network specific extraction...");
-                    
-                    const title = document.querySelector('h1.o-AssetTitle__a-HeadlineText, h1')?.textContent?.trim() || document.title;
-                    
-                    // Food Network ingredient selectors
-                    const ingredientElements = document.querySelectorAll(
-                        '.o-RecipeIngredients__a-Ingredient, ' +
-                        '.o-Ingredients__a-Ingredient, ' +
-                        '[data-module="IngredientsList"] li, ' +
-                        '.recipe-ingredients li, ' +
-                        '.o-RecipeIngredients li'
-                    );
-                    
-                    const ingredients = Array.from(ingredientElements)
-                        .map(el => el.textContent?.trim())
-                        .filter(text => text && text.length > 2);
-                    
-                    // Food Network instruction selectors
-                    const stepElements = document.querySelectorAll(
-                        '.o-Method__m-Step, ' +
-                        '.recipe-instructions .o-Method__m-Step, ' +
-                        '[data-module="InstructionsList"] li, ' +
-                        '.recipe-instructions ol li, ' +
-                        '.recipe-instructions li'
-                    );
-                    
-                    const instructions = Array.from(stepElements)
-                        .map(el => el.textContent?.trim())
-                        .filter(text => text && text.length > 10);
-                    
-                    console.log(`🔍 Found ${ingredients.length} ingredients and ${instructions.length} instructions`);
-                    
-                    return {
-                        title,
-                        ingredients: ingredients,
-                        instructions: instructions,
-                        url: window.location.href,
-                        extractedAt: new Date().toISOString(),
-                        source: 'food-network-specific'
-                    };
-                }
-                
-                // Execute the main extraction function
-                return extractRecipeFromPage();
-            }
+            });
         });
+
+        // If content script isn't responding, try to inject it manually
+        if (response.needsInjection || response.status === "error") {
+            console.log("🔧 Content script not responding, injecting manually...");
+            showStatus("🔧 Loading parser system...", "#e3f2fd");
+            
+            try {
+                // Check if we can inject into this tab (some pages are restricted)
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ["typescript-parser-bundle.js", "content.js"]
+                });
+                
+                // Wait for injection to complete
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log("✅ Content script injected successfully");
+            } catch (injectionError) {
+                console.error("❌ Cannot inject content script:", injectionError);
+                showStatus("❌ Cannot capture recipe from this page", "#ffebee");
+                return;
+            }
+        }
+        
+        // Now send the capture message
+        response = await new Promise((resolve) => {
+            chrome.tabs.sendMessage(tab.id, { action: "captureRecipe" }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Content script communication error:", chrome.runtime.lastError);
+                    resolve({ status: "error", error: chrome.runtime.lastError.message });
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        if (response.status === "error") {
+            console.error("Content script error:", response.error);
+            showStatus("❌ Error communicating with content script", "#ffebee");
+            return;
+        }
+
+        const results = [{ result: response.data }];
 
         if (!results || !results[0] || !results[0].result) {
             showStatus("❌ Could not extract recipe data", "#ffebee");
@@ -569,12 +414,13 @@ function transformRecipeDataForAWS(recipeData) {
         throw new Error("Recipe title is required");
     }
     
+    // Validate that we actually found recipe content
     if (ingredients.length === 0) {
-        throw new Error("At least one ingredient is required");
+        throw new Error("No ingredients found on this page. This may not be a recipe page, or the page format has changed.");
     }
     
     if (instructions.length === 0) {
-        throw new Error("At least one instruction is required");
+        throw new Error("No cooking instructions found on this page. This may not be a recipe page, or the page format has changed.");
     }
     
     if (!transformedData.sourceUrl) {
@@ -590,7 +436,7 @@ async function sendToAWSBackend(recipeData) {
     try {
         const authData = localStorage.getItem("recipeArchive.auth");
         console.log("🔧 Retrieved auth data:", authData ? "exists" : "null");
-        console.log("🔧 Raw auth data string:", authData);
+        // Auth data retrieved from storage
         
         if (!authData) {
             console.error("❌ No auth data found in localStorage");
@@ -612,7 +458,7 @@ async function sendToAWSBackend(recipeData) {
             return { success: false, error: "No valid authentication token" };
         }
 
-        console.log("🔧 Sending to AWS with token preview:", auth.token.substring(0, 50) + "...");
+        // Sending recipe data to AWS backend
 
         // Transform data to match AWS backend expected format
         const transformedData = transformRecipeDataForAWS(recipeData);

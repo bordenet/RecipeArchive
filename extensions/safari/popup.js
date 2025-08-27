@@ -188,15 +188,7 @@ async function handleSignIn() {
         const result = await cognitoAuth.signIn(email, password);
         
         if (result.success) {
-            console.log("🔧 Cognito authentication result:", result);
-            console.log("🔧 Cognito result.data:", result.data);
-            console.log("🔧 Available tokens:", {
-                hasAccessToken: !!result.data.AccessToken,
-                hasIdToken: !!result.data.IdToken,
-                hasRefreshToken: !!result.data.RefreshToken,
-                accessTokenPreview: result.data.AccessToken ? result.data.AccessToken.substring(0, 50) + "..." : "null",
-                idTokenPreview: result.data.IdToken ? result.data.IdToken.substring(0, 50) + "..." : "null"
-            });
+            // Authentication successful - token logging removed for security
             
             // Get the real JWT tokens from Cognito
             const authData = {
@@ -256,7 +248,7 @@ function signOut() {
 }
 
 function forceAuthRefresh() { // eslint-disable-line no-unused-vars
-    console.log("🔧 Forcing auth refresh - clearing cached tokens");
+    // Clearing cached authentication tokens
     localStorage.removeItem("recipeArchive.auth");
     isSignedIn = false;
     currentUser = null;
@@ -848,12 +840,13 @@ function transformRecipeDataForAWS(recipeData) {
         throw new Error("Recipe title is required");
     }
     
+    // Validate that we actually found recipe content
     if (ingredients.length === 0) {
-        throw new Error("At least one ingredient is required");
+        throw new Error("No ingredients found on this page. This may not be a recipe page, or the page format has changed.");
     }
     
     if (instructions.length === 0) {
-        throw new Error("At least one instruction is required");
+        throw new Error("No cooking instructions found on this page. This may not be a recipe page, or the page format has changed.");
     }
     
     if (!transformedData.sourceUrl) {
@@ -924,10 +917,7 @@ async function sendToAWSBackend(recipeData) {
         console.log("🔧 Transformed recipe data for AWS:", transformedData);
         
         // Use proper AWS API authentication format (same as Chrome extension)
-        console.log("🔧 Using Bearer token authentication for AWS API");
-        console.log("🔧 Full token for debugging:", userToken);
-        console.log("🔧 Token parts:", userToken.split(".").length);
-        console.log("🔧 Token header:", userToken.split(".")[0] ? atob(userToken.split(".")[0]) : "no header");
+        // Using Bearer token authentication for AWS API
         
         const response = await fetch(awsAPI.recipes, {
             method: "POST",

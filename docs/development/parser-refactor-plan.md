@@ -30,23 +30,37 @@ extensions/
 ### 2. Mandatory Fields Interface
 ```typescript
 interface Recipe {
-  title: string;          // Required
-  url: string;           // Required
-  author: string;        // Required
-  ingredients: string[]; // Required
-  instructions: string[];// Required
-  imageUrl?: string;    // Optional
-  prepTime?: string;    // Optional
-  cookTime?: string;    // Optional
-  totalTime?: string;   // Optional
-  servings?: string;    // Optional
-  notes?: string[];     // Optional
+  // Required Fields - Must be present and valid for AWS backend acceptance
+  title: string;           // Required, max 200 chars
+  sourceUrl: string;       // Required, valid URL format
+  ingredients: string[];   // Required, non-empty list with valid ingredient names
+  instructions: string[];  // Required, non-empty list with valid steps
+  
+  // Optional Fields - Should be included when available but not required for validation
+  author?: string;         // Recommended for attribution
+  imageUrl?: string;      // URL to recipe image
+  prepTime?: string;      // ISO 8601 duration preferred
+  cookTime?: string;      // ISO 8601 duration preferred
+  totalTime?: string;     // ISO 8601 duration preferred
+  servings?: string;      // Number or descriptive text
+  notes?: string[];       // Additional recipe notes/tips
+  tags?: string[];        // Recipe categories/keywords
 }
 
 interface ValidationResult {
   isValid: boolean;
-  missingFields: string[];
-  warnings: string[];
+  missingFields: string[];   // Required fields that are missing
+  invalidFields: string[];   // Fields that fail validation rules
+  warnings: string[];        // Non-critical issues to report
+  
+  // Field-specific validation details
+  fieldErrors: {
+    [key: string]: {
+      code: string;          // Error code (e.g., 'MISSING', 'TOO_LONG', 'INVALID_FORMAT')
+      message: string;       // Human-readable error message
+      value?: any;          // The invalid value (for debugging)
+    }
+  };
 }
 ```
 
@@ -97,11 +111,53 @@ Using live snapshots from:
    - Historical recipes with known structure changes
 
 #### D. Validation Tests
-- Missing required fields
-- Malformed data
-- Empty/null handling
-- Special character handling
-- Multi-language content
+
+1. Required Field Validation
+   - Title validation
+     - Present and non-empty
+     - Max length 200 characters
+     - Sanitized of HTML/dangerous content
+   
+   - Source URL validation
+     - Present and non-empty
+     - Valid URL format
+     - Resolves to supported domain
+   
+   - Ingredients validation
+     - Non-empty array
+     - Each ingredient has required components
+     - No malformed quantities/units
+     - No HTML/dangerous content
+   
+   - Instructions validation
+     - Non-empty array
+     - Each step is meaningful (min length)
+     - Proper step ordering
+     - No HTML/dangerous content
+
+2. Data Integrity Tests
+   - Malformed JSON handling
+   - Empty/null field handling
+   - Special character sanitization
+   - HTML entity conversion
+   - Multi-language content support
+   - UTF-8 encoding validation
+
+3. Security Validation
+   - XSS prevention
+   - URL sanitization
+   - Size limit enforcement
+   - Content type validation
+   - Input fuzzing tests
+
+4. Edge Cases
+   - Minimum valid recipe (only required fields)
+   - Maximum field lengths
+   - Empty containers ([], {}, "")
+   - Whitespace-only content
+   - Invalid UTF-8 sequences
+   - Control characters
+   - Long Unicode strings
 
 ### 3. Test Fixtures
 
@@ -165,11 +221,43 @@ done
 4. Add telemetry for parser success/failure
 
 ## Success Metrics
-1. 100% extraction of mandatory fields
-2. All existing test cases passing
-3. No manual intervention needed for parser updates
-4. Clear error reporting for failed parses
-5. Automated validation of new recipe URLs
+
+### 1. Validation Coverage
+- 100% validation of AWS backend requirements
+- All required fields tested:
+  - title (presence, max length, content)
+  - sourceUrl (presence, format, resolution)
+  - ingredients (structure, content, sanitization)
+  - instructions (structure, content, sanitization)
+- No uncaught validation errors in production
+
+### 2. Test Coverage
+- Unit tests for each validation rule
+- Integration tests for complete validation flow
+- Regression tests for known edge cases
+- Security tests for all sanitization rules
+- Performance tests for large recipes
+
+### 3. Error Reporting
+- Detailed error messages for each validation failure
+- Stack traces preserved for debugging
+- Error aggregation for pattern analysis
+- User-friendly error summaries
+- Error rate monitoring
+
+### 4. Automation
+- Pre-commit validation hooks
+- Continuous integration checks
+- Automated test data updates
+- Parser success rate monitoring
+- Regular validation against live sites
+
+### 5. Performance
+- Validation completes in <100ms
+- No memory leaks in validation logic
+- Efficient handling of large recipes
+- Reasonable error recovery time
+- Low false positive rate (<0.1%)
 
 ## Questions for Review
 1. Should we maintain backward compatibility with existing parser interfaces?
