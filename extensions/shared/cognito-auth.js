@@ -1,19 +1,20 @@
 // Cognito Authentication Module for RecipeArchive Browser Extensions
 // This handles user authentication with AWS Cognito
 
-class CognitoAuth {
+// Make sure CognitoAuth is available globally for the popup
+window.CognitoAuth = class CognitoAuth {
   constructor(config) {
-    this.region = config.region || 'us-west-2';
+    this.region = config.region || "us-west-2";
     this.userPoolId = config.userPoolId;
     this.clientId = config.clientId;
     this.baseUrl = `https://cognito-idp.${this.region}.amazonaws.com/`;
     
     // Token storage keys
-    this.ACCESS_TOKEN_KEY = 'cognito_access_token';
-    this.REFRESH_TOKEN_KEY = 'cognito_refresh_token';  
-    this.ID_TOKEN_KEY = 'cognito_id_token';
-    this.USER_INFO_KEY = 'cognito_user_info';
-    this.TOKEN_EXPIRES_KEY = 'cognito_token_expires';
+    this.ACCESS_TOKEN_KEY = "cognito_access_token";
+    this.REFRESH_TOKEN_KEY = "cognito_refresh_token";  
+    this.ID_TOKEN_KEY = "cognito_id_token";
+    this.USER_INFO_KEY = "cognito_user_info";
+    this.TOKEN_EXPIRES_KEY = "cognito_token_expires";
   }
 
   // Sign up a new user
@@ -23,13 +24,13 @@ class CognitoAuth {
       Username: email,
       Password: password,
       UserAttributes: [
-        { Name: 'email', Value: email },
+        { Name: "email", Value: email },
         ...Object.entries(attributes).map(([key, value]) => ({ Name: key, Value: value }))
       ]
     };
 
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.SignUp', params);
+      const response = await this._makeRequest("AWSCognitoIdentityProviderService.SignUp", params);
       return { success: true, data: response };
     } catch (error) {
       return { success: false, error: error.message };
@@ -45,7 +46,7 @@ class CognitoAuth {
     };
 
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.ConfirmSignUp', params);
+      const response = await this._makeRequest("AWSCognitoIdentityProviderService.ConfirmSignUp", params);
       return { success: true, data: response };
     } catch (error) {
       return { success: false, error: error.message };
@@ -65,7 +66,7 @@ class CognitoAuth {
   async _signInWithPassword(email, password) {
     // Check if the User Pool supports USER_PASSWORD_AUTH
     const params = {
-      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthFlow: "USER_PASSWORD_AUTH",
       ClientId: this.clientId,
       AuthParameters: {
         USERNAME: email,
