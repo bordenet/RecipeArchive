@@ -1,28 +1,146 @@
 // RecipeArchive popup with full backend integration
 console.log("RecipeArchive popup loading");
 
+// State management
+let isSignedIn = false;
+let currentUser = null;
+
 document.addEventListener("DOMContentLoaded", function() {
     const container = document.createElement("div");
-    container.style.cssText = "padding: 20px; min-width: 300px; font-family: Arial, sans-serif;";
-    
-    container.innerHTML = `
-        <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333;">RecipeArchive</h1>
-        <button id="capture" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
-        <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 12px; display: none;"></div>
-    `;
+    container.style.cssText = "padding: 20px; min-width: 320px; font-family: Arial, sans-serif;";
+    container.id = "main-container";
     
     document.body.appendChild(container);
     
-    document.getElementById("capture").onclick = function() {
-        captureRecipe();
-    };
+    // Check authentication status on load
+    checkAuthenticationStatus();
 });
 
+function checkAuthenticationStatus() {
+    // Check if user is signed in (from storage or session)
+    // For now, simulate checking - replace with real AWS Cognito check
+    const storedAuth = localStorage.getItem('recipeArchive.auth');
+    if (storedAuth) {
+        try {
+            currentUser = JSON.parse(storedAuth);
+            isSignedIn = true;
+        } catch(e) {
+            isSignedIn = false;
+        }
+    }
+    
+    renderUI();
+}
+
+function renderUI() {
+    const container = document.getElementById("main-container");
+    
+    if (isSignedIn) {
+        // Signed in UI - show capture functionality
+        container.innerHTML = `
+            <div style="position: relative;">
+                <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333;">RecipeArchive</h1>
+                <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
+            </div>
+            <div style="margin-bottom: 15px; padding: 10px; background: #e8f5e8; border-radius: 4px; font-size: 12px;">
+                ✅ Signed in as ${currentUser ? currentUser.email : 'user'}
+            </div>
+            <button id="capture" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
+            <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 12px; display: none;"></div>
+        `;
+        
+        // Attach event listeners for signed-in state
+        document.getElementById("capture").onclick = function() {
+            captureRecipe();
+        };
+        
+        document.getElementById("signout-link").onclick = function(e) {
+            e.preventDefault();
+            signOut();
+        };
+        
+    } else {
+        // Not signed in UI - show sign in form
+        container.innerHTML = `
+            <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">RecipeArchive</h1>
+            <div style="margin-bottom: 20px; padding: 10px; background: #fff3e0; border-radius: 4px; font-size: 12px; text-align: center;">
+                Sign in to capture recipes
+            </div>
+            
+            <form id="signin-form">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px; color: #666;">Email</label>
+                    <input type="email" id="email" required 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px; color: #666;">Password</label>
+                    <input type="password" id="password" required 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 12px; color: #666; cursor: pointer;">
+                        <input type="checkbox" id="show-password" style="margin-right: 5px;"> Show password
+                    </label>
+                </div>
+                
+                <button type="submit" id="signin-btn" 
+                        style="width: 100%; padding: 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                    Sign In
+                </button>
+            </form>
+            
+            <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 12px; display: none;"></div>
+        `;
+        
+        // Attach event listeners for sign-in form
+        document.getElementById("signin-form").onsubmit = function(e) {
+            e.preventDefault();
+            handleSignIn();
+        };
+        
+        document.getElementById("show-password").onchange = function() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = this.checked ? "text" : "password";
+        };
+    }
+}
+
+function handleSignIn() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    
+    showStatus("Signing in...", "#e3f2fd");
+    
+    // TODO: Replace with real AWS Cognito authentication
+    // For now, simulate authentication
+    setTimeout(() => {
+        if (email && password) {
+            // Simulate successful sign in
+            currentUser = { email: email };
+            isSignedIn = true;
+            localStorage.setItem('recipeArchive.auth', JSON.stringify(currentUser));
+            renderUI();
+            showStatus("✅ Signed in successfully", "#e8f5e8");
+        } else {
+            showStatus("❌ Please enter email and password", "#ffebee");
+        }
+    }, 1000);
+}
+
+function signOut() {
+    isSignedIn = false;
+    currentUser = null;
+    localStorage.removeItem('recipeArchive.auth');
+    renderUI();
+}
+
 function captureRecipe() {
-    const statusDiv = document.getElementById("status");
     showStatus("Capturing recipe...", "#f0f0f0");
     
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.query({active: true, currentWindow: true}, async function(tabs) {
         if (!tabs || tabs.length === 0) {
             showStatus("❌ No active tab found", "#ffebee");
             return;
@@ -31,24 +149,39 @@ function captureRecipe() {
         const tab = tabs[0];
         console.log("🍳 Capturing recipe from:", tab.url);
         
-        chrome.tabs.sendMessage(tab.id, {action: "captureRecipe"}, function(response) {
-            if (chrome.runtime.lastError) {
-                console.error("❌ Content script error:", chrome.runtime.lastError.message);
-                showStatus("❌ Error: " + chrome.runtime.lastError.message, "#ffebee");
-                return;
-            }
+        try {
+            // Inject content script using Manifest V3 scripting API
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ["content.js"]
+            });
             
-            if (response && response.status === "success") {
-                console.log("✅ Recipe data received:", response);
-                showStatus("✅ Recipe captured: " + response.data.title, "#e8f5e8");
+            console.log("✅ Content script injected");
+            
+            // Now try to send message
+            chrome.tabs.sendMessage(tab.id, {action: "captureRecipe"}, function(response) {
+                if (chrome.runtime.lastError) {
+                    console.error("❌ Content script error:", chrome.runtime.lastError.message);
+                    showStatus("❌ Error: " + chrome.runtime.lastError.message, "#ffebee");
+                    return;
+                }
                 
-                // Send to backend
-                sendToBackend(response.data);
-            } else {
-                console.error("❌ Capture failed:", response);
-                showStatus("❌ Capture failed: " + (response ? response.message : "No response"), "#ffebee");
-            }
-        });
+                if (response && response.status === "success") {
+                    console.log("✅ Recipe data received:", response);
+                    showStatus("✅ Recipe captured: " + response.data.title, "#e8f5e8");
+                    
+                    // Send to backend
+                    sendToBackend(response.data);
+                } else {
+                    console.error("❌ Capture failed:", response);
+                    showStatus("❌ Capture failed: " + (response ? response.message : "No response"), "#ffebee");
+                }
+            });
+            
+        } catch (error) {
+            console.error("❌ Script injection failed:", error);
+            showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
+        }
     });
 }
 
@@ -91,281 +224,4 @@ async function sendToBackend(recipeData) {
         console.error("❌ Backend error:", error);
         showStatus("⚠️ Backend error: " + error.message, "#fff3cd");
     }
-}
-
-const handleSignOut = async () => {
-  if (!cognitoAuth) {
-    showMessage('Authentication not initialized', true);
-    return;
-  }
-
-  try {
-    // Handle development mode sign out
-    if (CONFIG.ENVIRONMENT === 'development') {
-      localStorage.removeItem('recipeArchive.dev.authenticated');
-      localStorage.removeItem('recipeArchive.dev.user');
-      showMessage('Signed out successfully (Development Mode)');
-      showAuthRequired();
-      return;
-    }
-
-    // Handle production sign out
-    const result = await cognitoAuth.signOut();
-
-    if (result.success) {
-      showMessage('Signed out successfully');
-      showAuthRequired();
-    } else {
-      showMessage(`Sign out failed: ${result.error}`, true);
-    }
-  } catch (error) {
-    showMessage(`Error during sign out: ${error.message}`, true);
-  }
-};
-
-const checkAuthStatus = async () => {
-  if (!cognitoAuth) {
-    showMessage('Authentication not initialized', true);
-    showAuthRequired();
-    return;
-  }
-
-  try {
-    // Check for development mode authentication first
-    if (CONFIG.ENVIRONMENT === 'development') {
-      const isDevAuthenticated = localStorage.getItem('recipeArchive.dev.authenticated');
-      const devUserData = localStorage.getItem('recipeArchive.dev.user');
-      
-      if (isDevAuthenticated === 'true' && devUserData) {
-        const user = JSON.parse(devUserData);
-        showMessage(`Welcome, ${user.name}! (Development Mode)`);
-        showMainInterface();
-        setupDevControls();
-        return;
-      }
-    }
-
-    // Check production authentication
-    const result = await cognitoAuth.getCurrentUser();
-
-    if (result.success && result.user) {
-      showMessage(`Welcome, ${result.user.name}!`);
-      showMainInterface();
-      setupDevControls();
-    } else {
-      showMessage(`Authentication check failed: ${result.error || 'No authenticated user'}`, true);
-      showAuthRequired();
-    }
-  } catch (error) {
-    showMessage(`Error checking authentication: ${error.message}`, true);
-    showAuthRequired();
-  }
-};
-
-const setupEventListeners = () => {
-  console.log('Setting up event listeners...');
-  
-  // Sign In button - check for both possible IDs
-  const signInButton = document.getElementById('authButton') || document.getElementById('sign-in-btn');
-  if (signInButton) {
-    console.log('Sign In button found, attaching event listener');
-    signInButton.addEventListener('click', () => {
-      console.log('Sign In button clicked');
-      handleAuthClick();
-    });
-  } else {
-    console.error('Sign In button not found - checked IDs: authButton, sign-in-btn');
-  }
-
-  // Sign Out button - check for both possible IDs
-  const signOutButton = document.getElementById('logoutButton') || document.getElementById('sign-out-btn');
-  if (signOutButton) {
-    console.log('Sign Out button found, attaching event listener');
-    signOutButton.addEventListener('click', () => {
-      console.log('Sign Out button clicked');
-      handleSignOut();
-    });
-  } else {
-    console.warn('Sign Out button not found - checked IDs: logoutButton, sign-out-btn');
-  }
-
-  // Capture Recipe button
-  const captureButton = document.getElementById('captureBtn');
-  if (captureButton) {
-    console.log('Capture button found, attaching event listener');
-    captureButton.addEventListener('click', () => {
-      console.log('Capture button clicked');
-      captureRecipe();
-    });
-  } else {
-    console.warn('Capture button not found - checked ID: captureBtn');
-  }
-};
-
-// Send captured recipe data to backend API
-const sendRecipeToBackend = async (recipeData) => {
-  try {
-    console.log('Sending recipe to backend:', recipeData);
-    
-    const apiConfig = CONFIG.getCurrentAPI();
-    const endpoint = apiConfig.recipes;
-    
-    // Get authentication token (mock for development, real for production)
-    let authToken = 'dev-token'; // Default for development mode
-    
-    // Try to get real auth token if in production mode
-    if (CONFIG.ENVIRONMENT === 'production' && cognitoAuth) {
-      try {
-        const session = await cognitoAuth.getCurrentSession();
-        if (session && session.accessToken) {
-          authToken = session.accessToken.jwtToken;
-        }
-      } catch (_error) {
-        console.warn('Could not get auth token, using dev token');
-      }
-    }
-    
-    // Prepare recipe payload for backend
-    const recipePayload = {
-      title: recipeData.title || 'Untitled Recipe',
-      description: recipeData.description || '',
-      ingredients: recipeData.ingredients || [],
-      instructions: recipeData.steps || recipeData.instructions || [],
-      tags: recipeData.tags || [],
-      sourceUrl: recipeData.attributionUrl || window.location?.href || '',
-      // Additional metadata
-      servingSize: recipeData.servingSize || null,
-      prepTime: recipeData.prepTime || null,
-      cookTime: recipeData.cookTime || null,
-      totalTime: recipeData.time || null,
-    };
-    
-    console.log('Sending to endpoint:', endpoint);
-    console.log('Recipe payload:', recipePayload);
-    
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-      },
-      body: JSON.stringify(recipePayload),
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log('Backend response:', result);
-    
-    return {
-      success: true,
-      data: result,
-    };
-    
-  } catch (error) {
-    console.error('Failed to send recipe to backend:', error);
-    return {
-      success: false,
-      error: error.message,
-    };
-  }
-};
-
-const captureRecipe = () => {
-  if (!extensionAPI) {
-    showMessage('Extension API not available', true);
-    return;
-  }
-
-  showMessage('Capturing recipe...');
-
-  extensionAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs || tabs.length === 0) {
-      showMessage('No active tab found', true);
-      return;
-    }
-
-    const activeTab = tabs[0];
-
-    extensionAPI.tabs.sendMessage(activeTab.id, { action: 'captureRecipe' }, (response) => {
-      if (extensionAPI.runtime.lastError) {
-        showMessage(`Recipe capture failed: ${extensionAPI.runtime.lastError.message}`, true);
-        return;
-      }
-
-      if (response && response.success) {
-        showMessage('Recipe captured successfully! Saving to archive...');
-
-        // Send to backend (async)
-        sendRecipeToBackend(response.data).then(sendResult => {
-          if (sendResult.success) {
-            showMessage('Recipe saved to your archive!');
-          } else {
-            showMessage(`Failed to save recipe: ${sendResult.error}`, true);
-          }
-        }).catch(error => {
-          showMessage(`Failed to save recipe: ${error.message}`, true);
-        });
-      } else {
-        showMessage(`Recipe extraction failed: ${response ? response.error : 'Unknown error'}`, true);
-      }
-    });
-  });
-};
-
-// Development functions
-const testExtraction = () => {
-  showMessage('Testing recipe extraction...');
-
-  const testData = {
-    title: 'Test Recipe',
-    ingredients: ['1 cup flour', '2 eggs'],
-    instructions: ['Mix ingredients', 'Bake for 30 minutes'],
-    source: window.location.href
-  };
-
-  sendRecipeToBackend(testData).then(result => {
-    if (result.success) {
-      showMessage('Test successful!');
-    } else {
-      showMessage(`Test failed: ${result.error}`, true);
-    }
-  }).catch(error => {
-    showMessage(`Test failed: ${error.message}`, true);
-  });
-};
-
-const clearStorage = () => {
-  if (!extensionAPI || !extensionAPI.storage) {
-    showMessage('Storage API not available', true);
-    return;
-  }
-
-  extensionAPI.storage.local.clear(() => {
-    showMessage('Storage cleared');
-    showAuthRequired();
-  });
-};
-
-const viewLogs = () => {
-  const logs = [
-    'Extension loaded',
-    `Config: ${JSON.stringify(CONFIG, null, 2)}`,
-    `Auth initialized: ${cognitoAuth ? 'Yes' : 'No'}`,
-    `Extension API: ${extensionAPI ? 'Available' : 'Not available'}`
-  ];
-
-  console.log('RecipeArchive Extension Logs:', logs);
-  showMessage('Logs printed to console (F12)');
-};
-
-// Make functions available globally for HTML onclick handlers
-if (typeof window !== 'undefined') {
-  window.captureRecipe = captureRecipe;
-  window.testExtraction = testExtraction;
-  window.clearStorage = clearStorage;
-  window.viewLogs = viewLogs;
 }

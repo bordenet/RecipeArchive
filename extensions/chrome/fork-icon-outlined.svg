@@ -1,0 +1,28 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- White outline background circle -->
+  <circle cx="64" cy="64" r="60" fill="white" stroke="white" stroke-width="4"/>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="58" fill="#4CAF50"/>
+  
+  <!-- Fork handle with white outline -->
+  <rect x="59" y="69" width="10" height="47" fill="white" rx="5"/>
+  <rect x="60" y="70" width="8" height="45" fill="#8B4513" rx="4"/>
+  
+  <!-- Fork tines with white outline -->
+  <rect x="47" y="14" width="8" height="62" fill="white" rx="4"/>
+  <rect x="48" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  
+  <rect x="57" y="14" width="8" height="62" fill="white" rx="4"/>
+  <rect x="58" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  
+  <rect x="67" y="14" width="8" height="62" fill="white" rx="4"/>
+  <rect x="68" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  
+  <rect x="77" y="14" width="8" height="62" fill="white" rx="4"/>
+  <rect x="78" y="15" width="6" height="60" fill="#C0C0C0" rx="3"/>
+  
+  <!-- Fork base with white outline -->
+  <rect x="45" y="64" width="42" height="10" fill="white" rx="5"/>
+  <rect x="46" y="65" width="40" height="8" fill="#C0C0C0" rx="4"/>
+</svg>

@@ -1,5 +1,5 @@
-console.log('🎯 Minimal background script loaded');
+console.log("🎯 Minimal background script loaded");
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('✅ Minimal extension installed');
+  console.log("✅ Minimal extension installed");
 });

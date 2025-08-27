@@ -1,15 +1,15 @@
 // Minimal content script for testing
-console.log('🎯 RecipeArchive content script loaded');
+console.log("🎯 RecipeArchive content script loaded");
 
 // Simple message listener
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  console.log('📨 Content script received message:', request);
+  console.log("📨 Content script received message:", request);
   
-  if (request.action === 'ping') {
-    sendResponse({ status: 'pong', url: window.location.href });
+  if (request.action === "ping") {
+    sendResponse({ status: "pong", url: window.location.href });
   }
   
   return true; // Indicate async response
 });
 
-console.log('✅ Content script setup complete');
+console.log("✅ Content script setup complete");
