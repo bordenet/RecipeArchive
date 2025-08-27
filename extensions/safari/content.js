@@ -35,20 +35,34 @@ function initializeContentScript() {
       return;
     }
     
-    // Safari Web Extensions: Register message listeners for both APIs
+    // Safari Web Extensions: Register message listeners - try multiple approaches
     let messageHandlerRegistered = false;
     
-    // Try browser API first (Safari)
+    // Approach 1: Try browser.runtime (standard Safari Web Extensions)
     if (typeof browser !== "undefined" && browser.runtime && browser.runtime.onMessage) {
       console.log("🔧 Registering browser.runtime message listener");
       browser.runtime.onMessage.addListener(handleMessage);
       messageHandlerRegistered = true;
     }
     
-    // Also try chrome API as fallback
+    // Approach 2: Try chrome.runtime (compatibility mode)
     if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
       console.log("🔧 Registering chrome.runtime message listener");
       chrome.runtime.onMessage.addListener(handleMessage);
+      messageHandlerRegistered = true;
+    }
+    
+    // Approach 3: Try window.browser (explicit global)
+    if (typeof window.browser !== "undefined" && window.browser.runtime && window.browser.runtime.onMessage) {
+      console.log("🔧 Registering window.browser.runtime message listener");
+      window.browser.runtime.onMessage.addListener(handleMessage);
+      messageHandlerRegistered = true;
+    }
+    
+    // Approach 4: Try window.chrome (explicit global)
+    if (typeof window.chrome !== "undefined" && window.chrome.runtime && window.chrome.runtime.onMessage) {
+      console.log("🔧 Registering window.chrome.runtime message listener");
+      window.chrome.runtime.onMessage.addListener(handleMessage);
       messageHandlerRegistered = true;
     }
     
@@ -56,6 +70,13 @@ function initializeContentScript() {
       console.error("❌ No runtime API available for message handling!");
       return;
     }
+    
+    // Approach 5: Safari Web Extensions fallback - custom event listener
+    console.log("🔧 Adding custom event listener for Safari fallback");
+    window.addEventListener('RecipeArchiveMessage', function(event) {
+      console.log("📨 Custom event received:", event.detail);
+      handleMessage(event.detail.request, event.detail.sender, event.detail.sendResponse);
+    });
     
     // Mark that listeners have been added
     window.RecipeArchiveMessageListenerAdded = true;
