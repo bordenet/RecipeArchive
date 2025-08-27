@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/models"
 )
 
 // LocalDB implements a file-based database for local development

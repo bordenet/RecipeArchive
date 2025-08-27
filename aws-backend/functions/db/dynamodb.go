@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/models"
 )
 
 // DynamoRecipeDB implements RecipeDB using DynamoDB

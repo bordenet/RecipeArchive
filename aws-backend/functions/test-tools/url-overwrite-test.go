@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/models"
 )
 
 // URLOverwriteTest tests the specific requirement:

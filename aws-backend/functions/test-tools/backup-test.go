@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/models"
 )
 
 // testBackupFunctionality tests the backup creation and listing functionality

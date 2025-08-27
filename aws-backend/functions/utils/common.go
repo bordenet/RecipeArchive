@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/models"
 	"github.com/golang-jwt/jwt/v5"
 )
 

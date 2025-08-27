@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/models"
 )
 
 // RecipeDB interface for database operations (S3-optimized)

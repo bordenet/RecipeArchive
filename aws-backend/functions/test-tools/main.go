@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 
-	"github.com/bordenet/recipe-archive/db"
-	"github.com/bordenet/recipe-archive/models"
+	"recipe-archive/db"
+	"recipe-archive/models"
 )
 
 var (
