@@ -161,12 +161,18 @@ async function handleSignIn() {
     try {
         // For now, use the provided test credentials for AWS Cognito
         if (email === "mattbordenet@hotmail.com" && password === "Recipe123") {
+            // Create a properly formatted JWT-like mock token (3 parts separated by dots)
+            const header = btoa('{"alg":"HS256","typ":"JWT"}');
+            const payload = btoa(`{"sub":"${email}","exp":${Math.floor(Date.now()/1000) + 3600},"iat":${Math.floor(Date.now()/1000)}}`);
+            const signature = btoa("mock-signature-" + Date.now());
+            const mockJWT = `${header}.${payload}.${signature}`;
+            
             // Simulate successful Cognito authentication
             const mockAuthData = {
                 email: email,
-                accessToken: "mock-cognito-access-token-" + Date.now(),
-                idToken: "mock-cognito-id-token-" + Date.now(),
-                refreshToken: "mock-cognito-refresh-token-" + Date.now(),
+                accessToken: mockJWT,
+                idToken: mockJWT,
+                refreshToken: "mock-refresh-" + Date.now(),
                 tokenType: "Bearer",
                 expiresIn: 3600,
                 issuedAt: Date.now(),
@@ -622,14 +628,14 @@ async function sendToAWSBackend(recipeData) {
         console.log("📤 Sending to AWS API:", awsAPI.recipes);
         console.log("📤 Recipe data:", recipeData.title);
         
-        // Try without authentication first to test API Gateway connectivity
-        console.log("🔧 Testing AWS API connectivity without auth headers");
+        // Use proper AWS API authentication format
+        console.log("🔧 Using Bearer token authentication for AWS API");
         
         const response = await fetch(awsAPI.recipes, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
-                // Temporarily removing auth headers to test connectivity
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${userToken}`
             },
             body: JSON.stringify({
                 title: recipeData.title || "Unknown Recipe",
