@@ -159,30 +159,37 @@ async function handleSignIn() {
     showStatus("Signing in to AWS Cognito...", "#e3f2fd");
     
     try {
-        // For now, use the provided test credentials for AWS Cognito
-        if (email === "mattbordenet@hotmail.com" && password === "Recipe123") {
-            // Create a properly formatted JWT-like mock token (3 parts separated by dots)
-            const header = btoa("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
-            const payload = btoa(`{"sub":"${email}","exp":${Math.floor(Date.now()/1000) + 3600},"iat":${Math.floor(Date.now()/1000)}}`);
-            const signature = btoa("mock-signature-" + Date.now());
-            const mockJWT = `${header}.${payload}.${signature}`;
-            
-            // Simulate successful Cognito authentication
-            const mockAuthData = {
+        // Initialize CognitoAuth with configuration
+        const cognitoAuth = new CognitoAuth({
+            region: 'us-west-2',
+            userPoolId: 'us-west-2_qJ1i9RhxD',
+            clientId: '5grdn7qhf1el0ioqb6hkelr29s'
+        });
+        
+        // Perform real Cognito authentication
+        const result = await cognitoAuth.signIn(email, password);
+        
+        if (result.success) {
+            // Get the real JWT tokens from Cognito
+            const authData = {
                 email: email,
-                accessToken: mockJWT,
-                idToken: mockJWT,
-                refreshToken: "mock-refresh-" + Date.now(),
+                accessToken: result.data.AccessToken,
+                idToken: result.data.IdToken,
+                refreshToken: result.data.RefreshToken,
                 tokenType: "Bearer",
-                expiresIn: 3600,
+                expiresIn: result.data.ExpiresIn || 3600,
                 issuedAt: Date.now(),
                 provider: "cognito"
             };
             
             // Store auth data
-            currentUser = { email: email };
+            currentUser = { 
+                email: email, 
+                token: result.data.IdToken,
+                accessToken: result.data.AccessToken
+            };
             isSignedIn = true;
-            localStorage.setItem("recipeArchive.auth", JSON.stringify(mockAuthData));
+            localStorage.setItem("recipeArchive.auth", JSON.stringify(authData));
             
             // Switch to production mode for AWS API calls
             CONFIG.enableProduction();
@@ -190,8 +197,8 @@ async function handleSignIn() {
             renderUI();
             showStatus("✅ Signed in to AWS Cognito successfully", "#e8f5e8");
         } else {
-            // For real Cognito authentication, we'd use AWS SDK here
-            showStatus("❌ Invalid credentials. Use mattbordenet@hotmail.com / Recipe123", "#ffebee");
+            showStatus("❌ Sign in failed: " + result.error, "#f8d7da");
+            console.error("❌ Cognito authentication failed:", result.error);
         }
         
     } catch (error) {
