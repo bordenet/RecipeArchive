@@ -1,428 +1,278 @@
-/* eslint-disable no-unused-vars */
+// RecipeArchive Safari popup with authentication-first UX
+console.log("RecipeArchive Safari popup loading");
 
-// Global extension API reference
-let extensionAPI;
+// State management
+let isSignedIn = false;
+let currentUser = null;
+let extensionAPI = null;
 
-// Cached DOM elements
-let domElements = {};
-
-// Safari RecipeArchive Extension - Popup Script with Authentication
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('RecipeArchive Safari: Popup loaded');
-
-  // Cache DOM elements
-  domElements = {
-    authSection: document.getElementById('authSection'),
-    captureBtn: document.getElementById('captureBtn'),
-    authButton: document.getElementById('authButton'),
-    logoutButton: document.getElementById('logoutButton'),
-    userInfo: document.getElementById('userInfo'),
-    message: document.getElementById('message'),
-    devControls: document.getElementById('devControls'),
-    devBypass: document.getElementById('devBypass'),
-    emergencyDevBypass: document.getElementById('emergencyDevBypass')
-  };
-
-  // Add debug indicator
-  showMessage('Popup loaded, checking extension API...', 'info');
-
-  // Cross-browser compatibility
-  extensionAPI = (function() {
-    if (typeof browser !== 'undefined') {return browser;}
-    if (typeof chrome !== 'undefined') {return chrome;}
-    return null;
-  })();
-
-  if (!extensionAPI) {
-    console.error('RecipeArchive Safari: No extension API available');
-    showMessage('Extension API not available', 'error');
-    return;
-  }
-
-  showMessage('Extension API found, checking dev bypass...', 'info');
-
-  // Check for development bypass flag
-  const devBypass = localStorage.getItem('recipeArchive.devBypass');
-  
-  // Auto-enable development bypass for Safari in development environment
-  if (CONFIG && CONFIG.ENVIRONMENT === 'development' && devBypass !== 'true') {
-    console.log('🔧 Auto-enabling development bypass for Safari development mode');
-    localStorage.setItem('recipeArchive.devBypass', 'true');
-  }
-  
-  if (localStorage.getItem('recipeArchive.devBypass') === 'true') {
-    console.log('🔧 Development bypass active - skipping auth');
-    showMessage('Ready to capture recipes (dev bypass active)', 'success');
-    showMainInterface('dev-user');
-    return;
-  }
-
-  showMessage('Loading configuration...', 'info');
-
-  // Make config available globally
-  try {
-    if (typeof CONFIG === 'undefined') {
-      throw new Error('CONFIG not loaded - check config.js script tag');
-    }
-    window.RecipeArchiveConfig = CONFIG;
-    console.log('RecipeArchive Safari: Config loaded', CONFIG);
-    showMessage('Configuration loaded, checking authentication...', 'info');
-
-    // Setup development controls after CONFIG is loaded
-    setupDevControls();
-  } catch (error) {
-    console.error('RecipeArchive Safari: Config error', error);
-    showMessage(`Configuration error: ${ error.message}`, 'error');
-    return;
-  }
-
-  // Check auth status
-  try {
-    console.log('RecipeArchive Safari: Starting auth check');
-    await checkAuthStatus();
-    console.log('RecipeArchive Safari: Auth check complete');
-  } catch (error) {
-    console.error('RecipeArchive Safari: Auth check failed', error);
-    showMessage(`Authentication check failed: ${ error.message}`, 'error');
-    showAuthRequired();
-  }
-
-  // Emergency dev bypass handler
-  domElements.emergencyDevBypass.addEventListener('change', (e) => {
-    if (e.target.checked) {
-      localStorage.setItem('recipeArchive.devBypass', 'true');
-      showMessage('Dev bypass enabled - reloading extension...', 'info');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    }
-  });
+document.addEventListener("DOMContentLoaded", function() {
+    const container = document.createElement("div");
+    container.style.cssText = "padding: 20px; min-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;";
+    container.id = "main-container";
+    
+    document.body.appendChild(container);
+    
+    // Initialize cross-browser extension API
+    initializeExtensionAPI();
+    
+    // Check authentication status on load
+    checkAuthenticationStatus();
 });
 
-async function checkAuthStatus() {
-  console.log('RecipeArchive Safari: checkAuthStatus called');
-
-  // Set up a timeout for the entire auth check process
-  const authTimeout = setTimeout(() => {
-    console.error('RecipeArchive Safari: Authentication check timed out');
-    showMessage('Authentication check timed out. Check emergency bypass or reload extension.', 'error');
-    showAuthRequired();
-  }, 10000); // 10 second timeout
-
-  try {
-    showMessage('Step 1: Getting configuration...', 'info');
-
-    const config = window.RecipeArchiveConfig;
-    if (!config) {
-      throw new Error('RecipeArchiveConfig not available - check config.js script tag');
+function initializeExtensionAPI() {
+    // Cross-browser compatibility for Safari
+    if (typeof browser !== 'undefined') {
+        extensionAPI = browser;
+    } else if (typeof chrome !== 'undefined') {
+        extensionAPI = chrome;
     }
-    console.log('RecipeArchive Safari: Config environment', config.ENVIRONMENT);
-
-    showMessage('Step 2: Getting Cognito configuration...', 'info');
-
-    // Always use Cognito for both dev and production
-    const cognitoConfig = config.getCognitoConfig();
-    console.log('RecipeArchive Safari: Cognito config', cognitoConfig);
-
-    showMessage('Step 3: Checking SafariCognitoAuth availability...', 'info');
-
-    // Check if SafariCognitoAuth is available
-    if (typeof SafariCognitoAuth === 'undefined') {
-      throw new Error('SafariCognitoAuth not loaded - check cognito-auth.js script tag');
+    
+    if (!extensionAPI) {
+        console.error('No extension API available');
+        showStatus('Extension API not available', '#ffebee');
+        return false;
     }
+    
+    return true;
+}
 
-    showMessage('Step 4: Initializing authentication...', 'info');
+function checkAuthenticationStatus() {
+    // Check if user is signed in (from storage or session)
+    // TODO: Replace with real AWS Cognito check
+    const storedAuth = localStorage.getItem('recipeArchive.auth');
+    if (storedAuth) {
+        try {
+            currentUser = JSON.parse(storedAuth);
+            isSignedIn = true;
+        } catch(e) {
+            isSignedIn = false;
+        }
+    }
+    
+    renderUI();
+}
 
-    // Create Safari-compatible Cognito auth
-    const cognitoAuth = new SafariCognitoAuth(cognitoConfig);
-    console.log('RecipeArchive Safari: SafariCognitoAuth initialized');
-
-    showMessage('Step 5: Checking for existing session...', 'info');
-
-    const userResult = await cognitoAuth.getCurrentUser();
-    console.log('RecipeArchive Safari: getCurrentUser result', userResult);
-
-    showMessage('Step 6: Processing authentication result...', 'info');
-
-    clearTimeout(authTimeout); // Clear timeout on success
-
-    if (userResult.success) {
-      showMessage('Authentication successful!', 'success');
-      showMainInterface(userResult.data.email);
+function renderUI() {
+    const container = document.getElementById("main-container");
+    
+    if (isSignedIn) {
+        // Signed in UI - show capture functionality
+        container.innerHTML = `
+            <div style="position: relative;">
+                <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333;">🍽️ RecipeArchive</h1>
+                <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
+            </div>
+            <div style="margin-bottom: 15px; padding: 10px; background: #e8f5e8; border-radius: 8px; font-size: 12px;">
+                ✅ Signed in as ${currentUser ? currentUser.email : 'user'}
+            </div>
+            <button id="capture" style="width: 100%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
+            <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 12px; display: none;"></div>
+        `;
+        
+        // Attach event listeners for signed-in state
+        document.getElementById("capture").onclick = function() {
+            captureRecipe();
+        };
+        
+        document.getElementById("signout-link").onclick = function(e) {
+            e.preventDefault();
+            signOut();
+        };
+        
     } else {
-      console.log('RecipeArchive Safari: No active session, calling showAuthRequired');
-      showAuthRequired();
+        // Not signed in UI - show sign in form
+        container.innerHTML = `
+            <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">🍽️ RecipeArchive</h1>
+            <div style="margin-bottom: 20px; padding: 10px; background: #fff3e0; border-radius: 8px; font-size: 12px; text-align: center;">
+                Sign in to capture recipes
+            </div>
+            
+            <form id="signin-form">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px; color: #666;">Email</label>
+                    <input type="email" id="email" required 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 12px; margin-bottom: 5px; color: #666;">Password</label>
+                    <input type="password" id="password" required 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 12px; color: #666; cursor: pointer;">
+                        <input type="checkbox" id="show-password" style="margin-right: 5px;"> Show password
+                    </label>
+                </div>
+                
+                <button type="submit" id="signin-btn" 
+                        style="width: 100%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                    Sign In
+                </button>
+            </form>
+            
+            <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 12px; display: none;"></div>
+        `;
+        
+        // Attach event listeners for sign-in form
+        document.getElementById("signin-form").onsubmit = function(e) {
+            e.preventDefault();
+            handleSignIn();
+        };
+        
+        document.getElementById("show-password").onchange = function() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = this.checked ? "text" : "password";
+        };
     }
-  } catch (error) {
-    clearTimeout(authTimeout); // Clear timeout on error
-    console.error('RecipeArchive Safari: Error checking auth status:', error);
-
-    // Use enhanced error handling if available
-    let errorMessage = error.message;
-    if (typeof window !== 'undefined' && window.authErrorHandler) {
-      window.authErrorHandler.logError('checkAuthStatus', error, {
-        context: 'popup-initialization',
-        url: window.location.href
-      });
-      errorMessage = window.authErrorHandler.getUserFriendlyMessage(error);
-    }
-
-    showMessage(`Authentication Error: ${errorMessage}`, 'error');
-    showAuthRequired();
-  }
 }
 
-function showAuthRequired() {
-  console.log('RecipeArchive Safari: showAuthRequired called');
-
-  // Show auth section, hide capture button
-  domElements.authSection.style.display = 'block';
-  domElements.captureBtn.style.display = 'none';
-  domElements.authButton.style.display = 'block';
-  domElements.logoutButton.style.display = 'none';
-
-  domElements.authButton.textContent = 'Sign In / Sign Up';
-  domElements.authButton.onclick = () => {
-    window.location.href = 'auth.html';
-  };
-
-  console.log('RecipeArchive Safari: About to show auth required message');
-  showMessage('Authentication required. Please sign in to capture recipes.', 'info');
-  console.log('RecipeArchive Safari: showAuthRequired complete');
+function handleSignIn() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    
+    showStatus("Signing in...", "#e3f2fd");
+    
+    // TODO: Replace with real AWS Cognito authentication
+    // For now, simulate authentication
+    setTimeout(() => {
+        if (email && password) {
+            // Simulate successful sign in
+            currentUser = { email: email };
+            isSignedIn = true;
+            localStorage.setItem('recipeArchive.auth', JSON.stringify(currentUser));
+            renderUI();
+            showStatus("✅ Signed in successfully", "#e8f5e8");
+        } else {
+            showStatus("❌ Please enter email and password", "#ffebee");
+        }
+    }, 1000);
 }
 
-function showMainInterface(username) {
-  // Show user info and capture functionality
-  domElements.authSection.style.display = 'block';
-  domElements.userInfo.style.display = 'block';
-  domElements.userInfo.textContent = `Welcome, ${username}`;
-
-  domElements.authButton.style.display = 'none';
-  domElements.logoutButton.style.display = 'block';
-  domElements.captureBtn.style.display = 'block';
-
-  // Setup logout handler
-  domElements.logoutButton.onclick = async () => {
-    try {
-      const cognitoAuth = new SafariCognitoAuth(CONFIG.getCognitoConfig());
-      await cognitoAuth.signOut();
-      showMessage('Signed out successfully', 'success');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } catch (error) {
-      console.error('Logout error:', error);
-      showMessage(`Error signing out: ${ error.message}`, 'error');
-    }
-  };
-
-  // Setup capture handler
-  domElements.captureBtn.addEventListener('click', () => {
-    console.log('RecipeArchive Safari: Capture button clicked');
-    captureRecipe();
-  });
-
-  showMessage('Ready to capture recipes!', 'success');
+function signOut() {
+    isSignedIn = false;
+    currentUser = null;
+    localStorage.removeItem('recipeArchive.auth');
+    renderUI();
 }
 
 function captureRecipe() {
-  showMessage('Extracting recipe...', 'info');
-  domElements.captureBtn.disabled = true;
-
-  extensionAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs || tabs.length === 0) {
-      showMessage('No active tab found', 'error');
-      domElements.captureBtn.disabled = false;
-      return;
+    if (!extensionAPI) {
+        showStatus("Extension API not available", "#ffebee");
+        return;
     }
-
-    const activeTab = tabs[0];
-    console.log('RecipeArchive Safari: Sending message to tab:', activeTab.id);
-
-    extensionAPI.tabs.sendMessage(activeTab.id, { action: 'captureRecipe' }, async (response) => {
-      domElements.captureBtn.disabled = false;
-
-      if (extensionAPI.runtime.lastError) {
-        console.error('RecipeArchive Safari: Runtime error:', extensionAPI.runtime.lastError);
-        showMessage(`Error: ${ extensionAPI.runtime.lastError.message}`, 'error');
-        return;
-      }
-
-      if (!response) {
-        console.error('RecipeArchive Safari: No response from content script');
-        showMessage('No response from page. Try refreshing the page.', 'error');
-        return;
-      }
-
-      if (response.success) {
-        console.log('RecipeArchive Safari: Recipe captured successfully');
-        showMessage('Recipe captured successfully!', 'success');
-        console.log('Recipe data:', response.recipe);
-
-        // Send to backend (now supports dev bypass mode)
+    
+    showStatus("Capturing recipe...", "#f0f0f0");
+    
+    extensionAPI.tabs.query({active: true, currentWindow: true}, async function(tabs) {
+        if (!tabs || tabs.length === 0) {
+            showStatus("❌ No active tab found", "#ffebee");
+            return;
+        }
+        
+        const tab = tabs[0];
+        console.log("🍳 Capturing recipe from:", tab.url);
+        
         try {
-          await sendRecipeToBackend(response.recipe);
-          showMessage('Recipe saved to your archive!', 'success');
+            // Check if content script is already loaded before injecting
+            extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}, function(pingResponse) {
+                if (extensionAPI.runtime.lastError || !pingResponse) {
+                    // Content script not loaded, inject it
+                    if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
+                        extensionAPI.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            files: ["content.js"]
+                        }).then(() => {
+                            console.log("✅ Content script injected");
+                            sendCaptureMessage(tab.id);
+                        }).catch(error => {
+                            console.error("❌ Script injection failed:", error);
+                            showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
+                        });
+                    } else {
+                        showStatus("❌ Scripting API not available", "#ffebee");
+                    }
+                } else {
+                    console.log("✅ Content script already loaded");
+                    sendCaptureMessage(tab.id);
+                }
+            });
+            
         } catch (error) {
-          console.error('Backend save error:', error);
-          showMessage(`Recipe captured but failed to save: ${ error.message}`, 'error');
+            console.error("❌ Script injection failed:", error);
+            showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
         }
-      } else {
-        console.error('RecipeArchive Safari: Capture failed:', response.error);
-        showMessage(`Error: ${ response.error}`, 'error');
-      }
     });
-  });
 }
 
-async function sendRecipeToBackend(recipe) {
-  const operation = 'sendRecipeToBackend';
-  let tokenResult = null; // Declare tokenResult at function scope
-
-  try {
-    // Performance monitoring
-    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
-      window.authPerformanceMonitor.startTimer(operation);
-    }
-
-    const config = window.RecipeArchiveConfig;
-    const api = config.getCurrentAPI();
-
-    // Check for development bypass mode
-    const devBypass = localStorage.getItem('recipeArchive.devBypass');
-    if (devBypass === 'true') {
-      console.log('🔧 Development bypass active - using mock token for API request');
-      tokenResult = {
-        success: true,
-        data: 'dev-mock-token-safari'
-      };
-    } else {
-      // Get auth token with enhanced error handling
-      const cognitoAuth = new SafariCognitoAuth(config.getCognitoConfig());
-      tokenResult = await cognitoAuth.getIdToken();
-
-      if (!tokenResult.success) {
-        throw new Error(`Authentication required: ${ tokenResult.error || 'No token available'}`);
-      }
-    }
-
-    // Enhanced request with retry logic
-    const makeRequest = async () => {
-      console.log('🌐 Making API request to:', api.recipes);
-      console.log('🔑 Using token:', tokenResult.data);
-      
-      const response = await fetch(api.recipes, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokenResult.data}`,
-          'X-Recipe-Source': 'safari-extension',
-          'X-Recipe-Version': '1.0'
-        },
-        body: JSON.stringify({
-          ...recipe,
-          capturedAt: new Date().toISOString(),
-          source: 'safari-extension'
-        })
-      });
-
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API Error Response:', errorText);
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.message || errorMessage;
-        } catch (e) {
-          // Use default message if parsing fails
-          console.warn('Could not parse error response as JSON');
+function sendCaptureMessage(tabId) {
+    // Send message to content script
+    extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}, function(response) {
+        if (extensionAPI.runtime.lastError) {
+            console.error("❌ Content script error:", extensionAPI.runtime.lastError.message);
+            showStatus("❌ Error: " + extensionAPI.runtime.lastError.message, "#ffebee");
+            return;
         }
-
-        const error = new Error(errorMessage);
-        error.status = response.status;
-        error.__type = response.status >= 500 ? 'ServiceUnavailableException' : 'ClientError';
-        throw error;
-      }
-
-      return await response.json();
-    };
-
-    // Execute with retry logic
-    let result;
-    if (typeof window !== 'undefined' && window.authErrorHandler) {
-      result = await window.authErrorHandler.executeWithRetry(makeRequest, operation, {
-        recipeTitle: recipe.title ? `${recipe.title.substring(0, 50) }...` : 'Untitled',
-        apiUrl: api.recipes
-      });
-    } else {
-      result = await makeRequest();
-    }
-
-    // Performance success
-    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
-      window.authPerformanceMonitor.endTimer(operation, true);
-    }
-
-    return result;
-  } catch (error) {
-    // Performance failure
-    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
-      window.authPerformanceMonitor.endTimer(operation, false);
-    }
-
-    // Enhanced error logging
-    if (typeof window !== 'undefined' && window.authErrorHandler) {
-      window.authErrorHandler.logError(operation, error, {
-        recipeTitle: recipe.title ? `${recipe.title.substring(0, 50) }...` : 'Untitled',
-        hasToken: Boolean(tokenResult?.data)
-      });
-    }
-
-    throw error;
-  }
+        
+        if (response && response.status === "success") {
+            console.log("✅ Recipe data received:", response);
+            showStatus("✅ Recipe captured: " + response.data.title, "#e8f5e8");
+            
+            // Send to backend
+            sendToBackend(response.data);
+        } else {
+            console.error("❌ Capture failed:", response);
+            showStatus("❌ Capture failed: " + (response ? response.message : "No response"), "#ffebee");
+        }
+    });
 }
 
-function setupDevControls() {
-  // Show dev controls in development
-  try {
-    if (typeof CONFIG !== 'undefined' && CONFIG.ENVIRONMENT === 'development') {
-      if (domElements.devControls) {
-        domElements.devControls.style.display = 'block';
-      }
+function showStatus(message, backgroundColor) {
+    const statusDiv = document.getElementById("status");
+    if (statusDiv) {
+        statusDiv.textContent = message;
+        statusDiv.style.background = backgroundColor;
+        statusDiv.style.display = "block";
+    }
+}
 
-      if (domElements.devBypass) {
-        domElements.devBypass.checked = localStorage.getItem('recipeArchive.devBypass') === 'true';
-
-        domElements.devBypass.addEventListener('change', (e) => {
-          localStorage.setItem('recipeArchive.devBypass', e.target.checked ? 'true' : 'false');
-          showMessage(e.target.checked ? 'Dev bypass enabled - reload extension' : 'Dev bypass disabled - reload extension', 'info');
+async function sendToBackend(recipeData) {
+    try {
+        console.log("📤 Sending to backend:", recipeData);
+        
+        // Get current API configuration
+        const apiConfig = CONFIG && CONFIG.getCurrentAPI ? CONFIG.getCurrentAPI() : {
+            recipes: "http://localhost:8080/api/recipes"
+        };
+        
+        const response = await fetch(apiConfig.recipes || "http://localhost:8080/api/recipes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer dev-mock-token"
+            },
+            body: JSON.stringify({
+                title: recipeData.title || "Unknown Recipe",
+                description: "Captured from " + recipeData.url,
+                ingredients: recipeData.ingredients || [],
+                instructions: recipeData.steps || [],
+                tags: ["safari-extension"],
+                source: "safari-extension"
+            })
         });
-      }
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log("✅ Backend success:", result);
+            showStatus("✅ Saved to backend! Recipe ID: " + (result.recipe ? result.recipe.id.substring(0, 8) : "unknown"), "#d4edda");
+        } else {
+            const errorText = await response.text();
+            throw new Error("Backend error " + response.status + ": " + errorText);
+        }
+    } catch (error) {
+        console.error("❌ Backend error:", error);
+        showStatus("⚠️ Backend error: " + error.message, "#fff3cd");
     }
-  } catch (error) {
-    console.error('RecipeArchive Safari: Error setting up dev controls:', error);
-  }
-}
-
-function showMessage(text, type) {
-  console.log(`RecipeArchive Safari: ${ type.toUpperCase() } - ${ text}`);
-
-  if (!domElements || !domElements.message) {
-    console.error('RecipeArchive Safari: domElements.message not available, falling back to direct DOM access');
-    const messageEl = document.getElementById('message');
-    if (messageEl) {
-      messageEl.textContent = text;
-      messageEl.className = `message ${ type}`;
-    } else {
-      console.error('RecipeArchive Safari: message element not found in DOM');
-    }
-    return;
-  }
-
-  domElements.message.textContent = text;
-  domElements.message.className = `message ${ type}`;
 }
