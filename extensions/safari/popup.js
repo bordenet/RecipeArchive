@@ -648,8 +648,11 @@ async function sendToAWSBackend(recipeData) {
         console.log("📤 Sending to AWS API:", awsAPI.recipes);
         console.log("📤 Recipe data:", recipeData.title);
         
-        // Use proper AWS API authentication format
+        // Use proper AWS API authentication format (same as Chrome extension)
         console.log("🔧 Using Bearer token authentication for AWS API");
+        console.log("🔧 Full token for debugging:", userToken);
+        console.log("🔧 Token parts:", userToken.split('.').length);
+        console.log("🔧 Token header:", userToken.split('.')[0] ? atob(userToken.split('.')[0]) : 'no header');
         
         const response = await fetch(awsAPI.recipes, {
             method: "POST",

@@ -103,11 +103,11 @@ function extractRecipeFromPage() {
   }
   
   // Site-specific extractors
-  if (url.includes('foodnetwork.com')) {
+  if (url.includes("foodnetwork.com")) {
     return extractFoodNetworkRecipe();
-  } else if (url.includes('smittenkitchen.com')) {
+  } else if (url.includes("smittenkitchen.com")) {
     return extractSmittenKitchenRecipe();
-  } else if (url.includes('loveandlemons.com')) {
+  } else if (url.includes("loveandlemons.com")) {
     return extractLoveLemonsRecipe();
   }
   
@@ -116,7 +116,7 @@ function extractRecipeFromPage() {
 }
 
 function extractRecipeFromJsonLd() {
-  const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+  const jsonLdScripts = document.querySelectorAll("script[type=\"application/ld+json\"]");
   
   for (const script of jsonLdScripts) {
     try {
@@ -124,12 +124,12 @@ function extractRecipeFromJsonLd() {
       let recipeData = null;
       
       // Handle different JSON-LD structures
-      if (jsonData['@type'] === 'Recipe') {
+      if (jsonData["@type"] === "Recipe") {
         recipeData = jsonData;
       } else if (Array.isArray(jsonData)) {
-        recipeData = jsonData.find(item => item && item['@type'] === 'Recipe');
-      } else if (jsonData['@graph']) {
-        recipeData = jsonData['@graph'].find(item => item && item['@type'] === 'Recipe');
+        recipeData = jsonData.find(item => item && item["@type"] === "Recipe");
+      } else if (jsonData["@graph"]) {
+        recipeData = jsonData["@graph"].find(item => item && item["@type"] === "Recipe");
       }
       
       if (recipeData && recipeData.name) {
@@ -141,10 +141,10 @@ function extractRecipeFromJsonLd() {
         if (recipeData.recipeInstructions) {
           const stepItems = recipeData.recipeInstructions
             .map(instruction => {
-              if (typeof instruction === 'string') return instruction;
+              if (typeof instruction === "string") return instruction;
               if (instruction.text) return instruction.text;
               if (instruction.name) return instruction.name;
-              return '';
+              return "";
             })
             .filter(Boolean);
           
@@ -162,11 +162,11 @@ function extractRecipeFromJsonLd() {
           servingSize: recipeData.recipeYield || recipeData.yield || null,
           time: recipeData.totalTime || recipeData.cookTime || recipeData.prepTime || null,
           photos: recipeData.image ? (Array.isArray(recipeData.image) ? recipeData.image : [recipeData.image]) : [],
-          source: 'json-ld'
+          source: "json-ld"
         };
       }
     } catch (e) {
-      console.log('JSON-LD parsing failed:', e.message);
+      console.log("JSON-LD parsing failed:", e.message);
     }
   }
   return null;
@@ -175,14 +175,14 @@ function extractRecipeFromJsonLd() {
 function extractFoodNetworkRecipe() {
   console.log("🍳 Extracting Food Network recipe...");
   
-  const title = document.querySelector('h1')?.textContent?.trim() || document.title;
+  const title = document.querySelector("h1")?.textContent?.trim() || document.title;
   
   // Extract ingredients - Food Network uses specific classes
   let ingredients = [];
   const ingredientSelectors = [
-    '.o-RecipeInfo__a-Ingredients li',
-    '.o-Ingredients__a-ListItem',
-    'section[aria-labelledby="recipe-ingredients-section"] li'
+    ".o-RecipeInfo__a-Ingredients li",
+    ".o-Ingredients__a-ListItem",
+    "section[aria-labelledby=\"recipe-ingredients-section\"] li"
   ];
   
   for (const selector of ingredientSelectors) {
@@ -193,13 +193,13 @@ function extractFoodNetworkRecipe() {
         .filter(text => 
           text && 
           text.length > 3 &&
-          !text.includes('Level:') &&
-          !text.includes('Total:') &&
-          !text.includes('Prep:') &&
-          !text.includes('Yield:') &&
-          !text.includes('Nutrition Info') &&
-          !text.includes('Save Recipe') &&
-          !text.includes('{')
+          !text.includes("Level:") &&
+          !text.includes("Total:") &&
+          !text.includes("Prep:") &&
+          !text.includes("Yield:") &&
+          !text.includes("Nutrition Info") &&
+          !text.includes("Save Recipe") &&
+          !text.includes("{")
         );
       
       if (items.length > 0) {
@@ -212,10 +212,10 @@ function extractFoodNetworkRecipe() {
   // Extract steps
   let steps = [];
   const stepSelectors = [
-    '.o-Method__m-Body li',
-    '.o-Method li',
-    '.recipe-directions li',
-    'section[aria-labelledby="recipe-instructions-section"] li'
+    ".o-Method__m-Body li",
+    ".o-Method li",
+    ".recipe-directions li",
+    "section[aria-labelledby=\"recipe-instructions-section\"] li"
   ];
   
   for (const selector of stepSelectors) {
@@ -238,24 +238,24 @@ function extractFoodNetworkRecipe() {
     timestamp: new Date().toISOString(),
     ingredients,
     steps,
-    source: 'food-network'
+    source: "food-network"
   };
 }
 
 function extractSmittenKitchenRecipe() {
   console.log("🍳 Extracting Smitten Kitchen recipe...");
   
-  const title = document.querySelector('.entry-title, h1')?.textContent?.trim() || document.title;
+  const title = document.querySelector(".entry-title, h1")?.textContent?.trim() || document.title;
   
   // Smitten Kitchen specific selectors
   const ingredients = extractListItems([
-    '.recipe-ingredients li',
-    '.recipe-summary ul li'
+    ".recipe-ingredients li",
+    ".recipe-summary ul li"
   ]);
   
   const steps = extractListItems([
-    '.recipe-instructions li',
-    '.recipe-instructions ol li'
+    ".recipe-instructions li",
+    ".recipe-instructions ol li"
   ]);
   
   return {
@@ -264,25 +264,25 @@ function extractSmittenKitchenRecipe() {
     timestamp: new Date().toISOString(),
     ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
     steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
-    source: 'smitten-kitchen'
+    source: "smitten-kitchen"
   };
 }
 
 function extractLoveLemonsRecipe() {
   console.log("🍳 Extracting Love & Lemons recipe...");
   
-  const title = document.querySelector('h1')?.textContent?.trim() || document.title;
+  const title = document.querySelector("h1")?.textContent?.trim() || document.title;
   
   // Love & Lemons specific selectors
   const ingredients = extractListItems([
-    '.recipe-ingredients li',
-    '.wp-block-group li',
-    '.entry-content ul li'
+    ".recipe-ingredients li",
+    ".wp-block-group li",
+    ".entry-content ul li"
   ], true); // Filter out navigation items
   
   const steps = extractListItems([
-    '.recipe-instructions li',
-    '.wp-block-list li'
+    ".recipe-instructions li",
+    ".wp-block-list li"
   ]);
   
   return {
@@ -291,27 +291,27 @@ function extractLoveLemonsRecipe() {
     timestamp: new Date().toISOString(),
     ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
     steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
-    source: 'love-lemons'
+    source: "love-lemons"
   };
 }
 
 function extractGenericRecipe() {
   console.log("🍳 Attempting generic recipe extraction...");
   
-  const title = document.querySelector('h1')?.textContent?.trim() || document.title;
+  const title = document.querySelector("h1")?.textContent?.trim() || document.title;
   
   // Generic selectors for ingredients and steps
   const ingredients = extractListItems([
-    '.ingredients li',
-    '.recipe-ingredients li',
-    'ul li'
+    ".ingredients li",
+    ".recipe-ingredients li",
+    "ul li"
   ], true);
   
   const steps = extractListItems([
-    '.instructions li',
-    '.recipe-instructions li',
-    '.directions li',
-    'ol li'
+    ".instructions li",
+    ".recipe-instructions li",
+    ".directions li",
+    "ol li"
   ]);
   
   return {
@@ -320,7 +320,7 @@ function extractGenericRecipe() {
     timestamp: new Date().toISOString(),
     ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
     steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
-    source: 'generic'
+    source: "generic"
   };
 }
 
@@ -334,12 +334,12 @@ function extractListItems(selectors, filterNavigation = false) {
       
       if (filterNavigation) {
         items = items.filter(text => 
-          !text.includes('RECIPES') &&
-          !text.includes('ABOUT') &&
-          !text.includes('NEWSLETTER') &&
-          !text.includes('Follow me') &&
-          !text.includes('Email') &&
-          !text.includes('Instagram') &&
+          !text.includes("RECIPES") &&
+          !text.includes("ABOUT") &&
+          !text.includes("NEWSLETTER") &&
+          !text.includes("Follow me") &&
+          !text.includes("Email") &&
+          !text.includes("Instagram") &&
           text.length < 200 // Exclude very long text blocks
         );
       }

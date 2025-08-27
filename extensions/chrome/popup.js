@@ -23,7 +23,7 @@ function checkAuthenticationStatus() {
         try {
             currentUser = JSON.parse(storedAuth);
             isSignedIn = true;
-        } catch(e) {
+        } catch {
             isSignedIn = false;
         }
     }
@@ -221,7 +221,7 @@ async function sendToBackends(recipeData) {
 async function sendToDevBackend(recipeData) {
     try {
         // Check if CONFIG is available
-        if (typeof CONFIG === 'undefined') {
+        if (typeof CONFIG === "undefined") {
             return {
                 success: false,
                 error: "Development backend not available on port 8081 (CONFIG not loaded)"
@@ -274,7 +274,7 @@ async function sendToDevBackend(recipeData) {
 async function sendToAWSBackend(recipeData) {
     try {
         // Check if CONFIG is available
-        if (typeof CONFIG === 'undefined') {
+        if (typeof CONFIG === "undefined") {
             return {
                 success: false,
                 error: "AWS backend not available (CONFIG not loaded)"
