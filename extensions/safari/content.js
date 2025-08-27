@@ -1,6 +1,8 @@
 // RecipeArchive Chrome Extension Content Script
 // Safe initialization with error handling
 
+console.log("🎯 RecipeArchive content script file executing...");
+
 // Prevent duplicate injection
 if (typeof window.RecipeArchiveContentScript !== "undefined") {
   console.log("🎯 RecipeArchive content script already loaded, skipping");
@@ -8,33 +10,27 @@ if (typeof window.RecipeArchiveContentScript !== "undefined") {
   window.RecipeArchiveContentScript = true;
   console.log("🎯 RecipeArchive content script starting...");
 
-  // Wrap everything in error handling
-  try {
-    // Wait for DOM to be ready
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initializeContentScript);
-    } else {
-      initializeContentScript();
-    }
-  } catch (error) {
-    console.error("❌ RecipeArchive content script initialization error:", error);
-  }
+  // Set up message listener immediately - don't wait for DOM
+  initializeContentScript();
   
   console.log("🎯 RecipeArchive content script loaded");
 }
 
 function initializeContentScript() {
+  console.log("🎯 initializeContentScript() called");
+  
   try {
     console.log("✅ RecipeArchive content script initialized");
-    
-    // Remove any existing listeners to prevent duplicates
-    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
-      // Chrome doesn't have a removeListener method, so we just ensure we don't add duplicates
-    }
     
     // Simple message listener for testing - Safari uses browser API
     const runtimeAPI = (typeof browser !== "undefined") ? browser.runtime : chrome.runtime;
     console.log("🔧 Using runtime API:", typeof browser !== "undefined" ? "browser (Safari)" : "chrome");
+    console.log("🔧 Runtime API object:", !!runtimeAPI);
+    
+    if (!runtimeAPI || !runtimeAPI.onMessage) {
+      console.error("❌ Runtime API not available!");
+      return;
+    }
     
     runtimeAPI.onMessage.addListener((request, sender, sendResponse) => {
       console.log("📨 RecipeArchive received message:", request);
