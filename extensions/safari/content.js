@@ -3,116 +3,137 @@
 
 console.log("🎯 RecipeArchive Safari content script starting...");
 
-// Wrap everything in error handling
-try {
-  // Wait for DOM to be ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeContentScript);
-  } else {
-    initializeContentScript();
+// Safari Web Extensions: Prevent duplicate injection
+if (typeof window.RecipeArchiveContentScript !== 'undefined') {
+  console.log("🎯 RecipeArchive content script already loaded, skipping");
+} else {
+  window.RecipeArchiveContentScript = true;
+  console.log("🎯 RecipeArchive content script starting initialization...");
+  
+  // Wrap everything in error handling
+  try {
+    // Wait for DOM to be ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initializeContentScript);
+    } else {
+      initializeContentScript();
+    }
+  } catch (error) {
+    console.error("❌ RecipeArchive content script initialization error:", error);
   }
-} catch (error) {
-  console.error("❌ RecipeArchive content script initialization error:", error);
 }
 
 function initializeContentScript() {
   try {
     console.log("✅ RecipeArchive Safari content script initialized");
     
-    // Simple message listener for testing - Safari uses browser API
-    const runtimeAPI = (typeof browser !== "undefined") ? browser.runtime : chrome.runtime;
+    // Safari Web Extensions: Register message listeners for both APIs
+    let messageHandlerRegistered = false;
     
-    if (!runtimeAPI || !runtimeAPI.onMessage) {
-      console.error("❌ Runtime API not available!");
+    // Try browser API first (Safari)
+    if (typeof browser !== "undefined" && browser.runtime && browser.runtime.onMessage) {
+      console.log("🔧 Registering browser.runtime message listener");
+      browser.runtime.onMessage.addListener(handleMessage);
+      messageHandlerRegistered = true;
+    }
+    
+    // Also try chrome API as fallback
+    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
+      console.log("🔧 Registering chrome.runtime message listener");
+      chrome.runtime.onMessage.addListener(handleMessage);
+      messageHandlerRegistered = true;
+    }
+    
+    if (!messageHandlerRegistered) {
+      console.error("❌ No runtime API available for message handling!");
       return;
     }
     
-    runtimeAPI.onMessage.addListener(function messageListener(request, sender, sendResponse) {
-      try {
-        console.log("📨 RecipeArchive received message:", request);
-        console.log("📨 Message sender:", sender);
-        console.log("📨 SendResponse function:", typeof sendResponse);
-        
-        if (request.action === "ping") {
-          const response = { 
-            status: "pong", 
-            url: window.location.href,
-            title: document.title 
-          };
-          console.log("📨 Ping response being sent:", response);
-          
-          // Safari Web Extensions: call sendResponse synchronously and return true
-          setTimeout(() => sendResponse(response), 0);
-          return true;
-        }
-        
-        if (request.action === "captureRecipe") {
-          console.log("🍳 Starting recipe capture...");
-          
-          try {
-            // Try to extract recipe data based on site
-            const recipeData = extractRecipeFromPage();
-            
-            let response;
-            if (recipeData && recipeData.ingredients && recipeData.ingredients.length > 0) {
-              console.log("✅ Recipe extracted:", recipeData);
-              response = { status: "success", data: recipeData };
-            } else {
-              console.log("⚠️ No recipe data found, sending basic info");
-              const basicRecipe = {
-                title: document.title || "Unknown Recipe",
-                url: window.location.href,
-                timestamp: new Date().toISOString(),
-                ingredients: [],
-                steps: [],
-                source: "no-recipe-found"
-              };
-              response = { status: "success", data: basicRecipe };
-            }
-            
-            console.log("📨 Capture response being sent:", response);
-            setTimeout(() => sendResponse(response), 0);
-            return true;
-            
-          } catch (extractError) {
-            console.error("❌ Recipe extraction error:", extractError);
-            const errorRecipe = {
-              title: document.title || "Unknown Recipe",
-              url: window.location.href,
-              timestamp: new Date().toISOString(),
-              ingredients: [],
-              steps: [],
-              source: "extraction-error",
-              error: extractError.message
-            };
-            const errorResponse = { status: "success", data: errorRecipe };
-            
-            console.log("📨 Error response being sent:", errorResponse);
-            setTimeout(() => sendResponse(errorResponse), 0);
-            return true;
-          }
-        }
-        
-        const unknownResponse = { status: "unknown_action", action: request.action };
-        console.log("❓ Unknown action response:", unknownResponse);
-        setTimeout(() => sendResponse(unknownResponse), 0);
-        return true;
-        
-      } catch (error) {
-        console.error("❌ RecipeArchive message handling error:", error);
-        const errorResponse = { status: "error", error: error.message };
-        setTimeout(() => sendResponse(errorResponse), 0);
-        return true;
-      }
-    });
-    
     console.log("✅ RecipeArchive message listener registered");
-    console.log("🔧 Using runtime API:", typeof browser !== "undefined" ? "browser (Safari)" : "chrome");
-    console.log("🔧 Runtime API object:", !!runtimeAPI);
-    console.log("🔧 onMessage available:", !!runtimeAPI.onMessage);
+    console.log("🔧 Using browser API available:", typeof browser !== "undefined");
+    console.log("🔧 Using chrome API available:", typeof chrome !== "undefined");
     
   } catch (error) {
     console.error("❌ RecipeArchive initialization error:", error);
+  }
+}
+
+function handleMessage(request, sender, sendResponse) {
+  try {
+    console.log("📨 RecipeArchive received message:", request);
+    console.log("📨 Message sender:", sender);
+    console.log("📨 SendResponse function:", typeof sendResponse);
+    
+    if (request.action === "ping") {
+      const response = { 
+        status: "pong", 
+        url: window.location.href,
+        title: document.title 
+      };
+      console.log("📨 Ping response being sent:", response);
+      
+      // Safari Web Extensions: call sendResponse synchronously and return true
+      setTimeout(() => sendResponse(response), 0);
+      return true;
+    }
+    
+    if (request.action === "captureRecipe") {
+      console.log("🍳 Starting recipe capture...");
+      
+      try {
+        // Try to extract recipe data based on site
+        const recipeData = extractRecipeFromPage();
+        
+        let response;
+        if (recipeData && recipeData.ingredients && recipeData.ingredients.length > 0) {
+          console.log("✅ Recipe extracted:", recipeData);
+          response = { status: "success", data: recipeData };
+        } else {
+          console.log("⚠️ No recipe data found, sending basic info");
+          const basicRecipe = {
+            title: document.title || "Unknown Recipe",
+            url: window.location.href,
+            timestamp: new Date().toISOString(),
+            ingredients: [],
+            steps: [],
+            source: "no-recipe-found"
+          };
+          response = { status: "success", data: basicRecipe };
+        }
+        
+        console.log("📨 Capture response being sent:", response);
+        setTimeout(() => sendResponse(response), 0);
+        return true;
+        
+      } catch (extractError) {
+        console.error("❌ Recipe extraction error:", extractError);
+        const errorRecipe = {
+          title: document.title || "Unknown Recipe",
+          url: window.location.href,
+          timestamp: new Date().toISOString(),
+          ingredients: [],
+          steps: [],
+          source: "extraction-error",
+          error: extractError.message
+        };
+        const errorResponse = { status: "success", data: errorRecipe };
+        
+        console.log("📨 Error response being sent:", errorResponse);
+        setTimeout(() => sendResponse(errorResponse), 0);
+        return true;
+      }
+    }
+    
+    const unknownResponse = { status: "unknown_action", action: request.action };
+    console.log("❓ Unknown action response:", unknownResponse);
+    setTimeout(() => sendResponse(unknownResponse), 0);
+    return true;
+    
+  } catch (error) {
+    console.error("❌ RecipeArchive message handling error:", error);
+    const errorResponse = { status: "error", error: error.message };
+    setTimeout(() => sendResponse(errorResponse), 0);
+    return true;
   }
 }
 
