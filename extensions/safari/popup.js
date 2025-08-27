@@ -622,12 +622,14 @@ async function sendToAWSBackend(recipeData) {
         console.log("📤 Sending to AWS API:", awsAPI.recipes);
         console.log("📤 Recipe data:", recipeData.title);
         
+        // Try without authentication first to test API Gateway connectivity
+        console.log("🔧 Testing AWS API connectivity without auth headers");
+        
         const response = await fetch(awsAPI.recipes, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${userToken}`,
-                "X-API-Key": userToken  // Some APIs use this header
+                "Content-Type": "application/json"
+                // Temporarily removing auth headers to test connectivity
             },
             body: JSON.stringify({
                 title: recipeData.title || "Unknown Recipe",
@@ -660,10 +662,22 @@ async function sendToAWSBackend(recipeData) {
             };
         } else {
             const errorText = await response.text();
-            console.error("❌ AWS API error:", response.status, errorText);
+            console.error("❌ AWS API error:", response.status, response.statusText);
+            console.error("❌ AWS API response:", errorText);
+            console.error("❌ AWS API headers:", Object.fromEntries(response.headers.entries()));
+            
+            // Try to parse as JSON for better error messages
+            let errorMessage = errorText;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.message || errorText;
+            } catch {
+                // Keep original text if not JSON
+            }
+            
             return {
                 success: false,
-                error: `AWS API error ${response.status}: ${errorText}`
+                error: `AWS API ${response.status}: ${errorMessage}`
             };
         }
         
