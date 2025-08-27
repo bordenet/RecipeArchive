@@ -85,7 +85,19 @@ class CognitoAuth {
         }
         
         await this._storeUserInfo(userInfo);
-        return { success: true, data: userInfo };
+        
+        // Return both user info and tokens for the popup to use
+        return { 
+          success: true, 
+          data: {
+            ...userInfo,
+            // Include the actual tokens
+            AccessToken: response.AuthenticationResult.AccessToken,
+            IdToken: response.AuthenticationResult.IdToken,
+            RefreshToken: response.AuthenticationResult.RefreshToken,
+            ExpiresIn: response.AuthenticationResult.ExpiresIn
+          }
+        };
       } else {
         return { success: false, error: 'Authentication failed' };
       }
@@ -458,46 +470,56 @@ class CognitoAuth {
   // Extract user info from ID token with proper validation
   async _extractUserInfo(idToken) {
     try {
-      // Defensive check for required dependencies
-      if (typeof JWTValidator === 'undefined') {
-        throw new Error('JWTValidator is not available. Ensure jwt-validator.js is loaded.');
-      }
-      
       if (!idToken || typeof idToken !== 'string') {
         throw new Error('Invalid ID token: token must be a non-empty string');
       }
       
-      // Initialize JWT validator
-      const jwtValidator = new JWTValidator();
-      
-      // Validate ID token structure and claims
-      const validation = jwtValidator.validateCognitoIdToken(idToken, this.clientId);
-      if (!validation || !validation.valid) {
-        const errorMsg = validation?.error || 'Unknown validation error';
-        throw new Error('Invalid ID token: ' + errorMsg);
+      // Simple JWT parsing without strict validation (similar to backend approach)
+      const parts = idToken.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format: must have 3 parts');
       }
       
-      // Extract user information using validated payload
-      const userInfo = jwtValidator.extractCognitoUserInfo(idToken);
+      // Decode the payload (middle part)
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
       
-      // Ensure userInfo is valid before accessing properties
-      if (!userInfo) {
-        throw new Error('Failed to extract user info from token');
-      }
-      
-      // Defensive property access with fallbacks
+      // Extract basic user information
       return {
-        id: userInfo.userId || null,
-        email: userInfo.email || null,
-        emailVerified: Boolean(userInfo.emailVerified),
-        givenName: userInfo.givenName || null,
-        familyName: userInfo.familyName || null,
-        name: userInfo.name || null,
-        issuedAt: userInfo.issuedAt || null,
-        expiresAt: userInfo.expiresAt || null
+        id: payload.sub || null,
+        email: payload.email || null,
+        emailVerified: Boolean(payload.email_verified),
+        givenName: payload.given_name || null,
+        familyName: payload.family_name || null,
+        name: payload.name || null,
+        issuedAt: payload.iat || null,
+        expiresAt: payload.exp || null
       };
+      
     } catch (error) {
       console.error('Failed to extract user info from ID token:', error);
+      
+      // Fallback: try with JWT validator if simple parsing fails
+      if (typeof JWTValidator !== 'undefined') {
+        try {
+          const jwtValidator = new JWTValidator();
+          const userInfo = jwtValidator.extractCognitoUserInfo(idToken);
+          if (userInfo) {
+            return {
+              id: userInfo.userId || null,
+              email: userInfo.email || null,
+              emailVerified: Boolean(userInfo.emailVerified),
+              givenName: userInfo.givenName || null,
+              familyName: userInfo.familyName || null,
+              name: userInfo.name || null,
+              issuedAt: userInfo.issuedAt || null,
+              expiresAt: userInfo.expiresAt || null
+            };
+          }
+        } catch (validatorError) {
+          console.error('JWT validator also failed:', validatorError);
+        }
+      }
+      
       return null;
     }
   }

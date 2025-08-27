@@ -1,34 +1,17 @@
 # RecipeArchive Project Guide
 
-## 🚀 Current Status: REAL AWS COGNITO AUTHENTICATION IMPLEMENTED ✅
+## 🚀 Current Status: AWS Backend 500 Error - Debugging Required
 
-**PROJECT STATUS: BOTH EXTENSIONS READY FOR PRODUCTION AWS**
+### ACTIVE ISSUE: HTTP 500 "Failed to create recipe"
+- **Problem**: Lambda function failing at `recipeDB.CreateRecipe(&recipe)` call
+- **Status**: Authentication working, recipe extraction working, data transformation implemented
+- **Next**: Debug S3 permissions, bucket configuration, or Go struct marshaling issues
 
-### Recent Major Achievements (August 27, 2025)
-
-**✅ REAL AWS Cognito Authentication System**
-- Enhanced shared authentication library (`extensions/shared/cognito-auth.js`) with OAuth2 + direct auth support
-- Added PKCE security for OAuth2 flow (code_challenge/code_verifier)
-- Configured Cognito hosted UI domain: `recipearchive.auth.us-west-2.amazoncognito.com`
-- Both extensions now use real JWT tokens (replacing mock tokens)
-- Cross-browser identity API support for OAuth2 popup flow
-
-**✅ Chrome Extension Production Ready**
-- Fixed CONFIG loading issue (added config.js to popup.html)
-- Implemented AWS-only backend flow (removed dual backend complexity)
-- Added feature flag for dev testing: `recipeArchive.enableDevTesting`
-- Real Cognito authentication with proper JWT token handling
-- API endpoint fixed: `/v1/recipes` (was missing `/v1/` prefix)
-
-**✅ Safari Extension Enhanced**  
-- Already production-ready with working AWS integration
-- API endpoint fixed: `/v1/recipes` for consistency
-- Real authentication ready to replace mock tokens
-
-**✅ Infrastructure Validation**
-- AWS API Gateway correctly rejects mock JWT tokens (401 Unauthorized) ✅ 
-- Cognito authorizer properly configured and working
-- Recipe extraction working on both extensions (tested with Smitten Kitchen)
+### Recent Technical Work
+- Fixed data transformation (`sourceURL` → `sourceUrl` field mapping)
+- Added JSON payload debugging to Chrome extension
+- Enhanced validation for required fields (title, ingredients, instructions, sourceUrl)
+- Improved optional field handling for AWS backend compatibility
 
 ---
 
@@ -321,18 +304,16 @@ recipe-cli test go                 # Go backend tests only
 recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 ```
 
-## Next Development Priorities (Updated December 2025)
+## Next Development Priorities
 
-### ⚡ IMMEDIATE NEXT STEPS 
-1. **Enable OAuth2 Authentication**: Configure Cognito hosted UI and enable OAuth2 flow in extensions
-2. **Test Real Authentication**: Replace mock JWT tokens with real Cognito OAuth2 tokens  
-3. **USER_PASSWORD_AUTH Config**: Optionally enable direct password auth in Cognito User Pool client settings
-4. **🚨 EVALUATE PLAYWRIGHT REMOVAL**: Remove Playwright test infrastructure (2000+ lines, 26MB dependencies, questionable value vs manual testing)
+### IMMEDIATE (Blocking)
+1. **Fix AWS HTTP 500 Error**: Debug Lambda function failure in `recipeDB.CreateRecipe(&recipe)`
+2. **Implement Failed-Parse API**: Fallback system for extraction failures (documented in `TODO-FAILED-PARSE-API.md`)
 
-### Short Term
-1. **Recipe Extraction Enhancement**: Support for additional recipe sites beyond Smitten Kitchen
-2. **Error Handling**: Improve user feedback for authentication and API errors
-3. **Extension Store Submission**: Submit both extensions to Chrome Web Store and Safari Extensions
+### Short Term  
+1. **Recipe Extraction Enhancement**: Support additional recipe sites
+2. **Extension Store Submission**: Chrome Web Store and Safari Extensions
+3. **Remove Playwright Infrastructure**: 2000+ lines, 26MB dependencies, minimal value
 
 ### Medium Term
 1. **Web Application**: React-based recipe management interface
@@ -366,10 +347,15 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 - Focused on production-ready code vs development artifacts
 
 ### Known Working Patterns
-- SafariCognitoAuth class for Safari extension authentication
-- Step-by-step status messages for debugging complex flows
-- Promise.race() for timeout protection
-- Cached DOM elements for performance optimization
+- Real Cognito authentication with JWT tokens (Chrome & Safari)
+- Recipe extraction from JSON-LD and site-specific selectors
+- Data transformation for AWS backend (`transformRecipeDataForAWS`)
+- S3-based JSON storage architecture (95% cost savings vs DynamoDB)
+
+### Critical Architecture Decisions
+- **S3-Only Storage**: Never use DynamoDB (cost and complexity)
+- **Failed-Parse API**: Planned fallback for extraction failures
+- **Security**: No PII/secrets in code, environment variables only
 
 ## 🚨 CRITICAL STORAGE ARCHITECTURE DECISION
 

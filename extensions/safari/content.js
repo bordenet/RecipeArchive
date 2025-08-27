@@ -257,18 +257,26 @@ function extractRecipeFromJsonLd() {
 function extractFoodNetworkRecipe() {
   console.log("🍳 Extracting Food Network recipe...");
   
-  const title = document.querySelector("h1")?.textContent?.trim() || document.title;
+  const title = document.querySelector("h1.o-AssetTitle__a-HeadlineText, h1")?.textContent?.trim() || document.title;
   
-  // Extract ingredients - Food Network uses specific classes
+  // Extract ingredients - Enhanced Food Network selectors
   let ingredients = [];
   const ingredientSelectors = [
+    ".o-RecipeIngredients__a-Ingredient",
+    ".o-Ingredients__a-Ingredient", 
     ".o-RecipeInfo__a-Ingredients li",
     ".o-Ingredients__a-ListItem",
+    "[data-module=\"IngredientsList\"] li",
+    ".recipe-ingredients li",
+    ".o-RecipeIngredients li",
     "section[aria-labelledby=\"recipe-ingredients-section\"] li"
   ];
   
   for (const selector of ingredientSelectors) {
+    console.log(`🔍 Trying ingredient selector: ${selector}`);
     const ingredientElements = document.querySelectorAll(selector);
+    console.log(`🔍 Found ${ingredientElements.length} elements for ${selector}`);
+    
     if (ingredientElements.length > 0) {
       const items = Array.from(ingredientElements)
         .map(el => el.textContent?.trim())
@@ -284,6 +292,8 @@ function extractFoodNetworkRecipe() {
           !text.includes("{")
         );
       
+      console.log(`🔍 Filtered to ${items.length} ingredients:`, items.slice(0, 3));
+      
       if (items.length > 0) {
         ingredients = [{ title: null, items }];
         break;
@@ -291,21 +301,31 @@ function extractFoodNetworkRecipe() {
     }
   }
   
-  // Extract steps
+  // Extract steps - Enhanced Food Network selectors
   let steps = [];
   const stepSelectors = [
+    ".o-Method__m-Step",
+    ".recipe-instructions .o-Method__m-Step",
     ".o-Method__m-Body li",
     ".o-Method li",
+    "[data-module=\"InstructionsList\"] li",
+    ".recipe-instructions ol li",
+    ".recipe-instructions li",
     ".recipe-directions li",
     "section[aria-labelledby=\"recipe-instructions-section\"] li"
   ];
   
   for (const selector of stepSelectors) {
+    console.log(`🔍 Trying step selector: ${selector}`);
     const stepElements = document.querySelectorAll(selector);
+    console.log(`🔍 Found ${stepElements.length} step elements for ${selector}`);
+    
     if (stepElements.length > 0) {
       const items = Array.from(stepElements)
         .map(el => el.textContent?.trim())
         .filter(text => text && text.length > 10);
+      
+      console.log(`🔍 Filtered to ${items.length} steps:`, items.slice(0, 2));
       
       if (items.length > 0) {
         steps = [{ title: null, items }];
@@ -313,6 +333,8 @@ function extractFoodNetworkRecipe() {
       }
     }
   }
+  
+  console.log(`🔍 Food Network extraction result: ${ingredients.length} ingredient groups, ${steps.length} step groups`);
   
   return {
     title,

@@ -99,6 +99,9 @@ function renderUI() {
         };
         
     } else {
+        // Load saved credentials
+        const savedCreds = loadCredentials();
+        
         // Not signed in UI - show sign in form
         container.innerHTML = `
             <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">🍽️ RecipeArchive</h1>
@@ -109,13 +112,13 @@ function renderUI() {
             <form id="signin-form">
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 12px; margin-bottom: 5px; color: #666;">Email</label>
-                    <input type="email" id="email" required 
+                    <input type="email" id="email" required value="${savedCreds.email}"
                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
                 </div>
                 
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; font-size: 12px; margin-bottom: 5px; color: #666;">Password</label>
-                    <input type="password" id="password" required 
+                    <input type="password" id="password" required value="${savedCreds.password}"
                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
                 </div>
                 
@@ -131,6 +134,10 @@ function renderUI() {
                 </button>
             </form>
             
+            ${savedCreds.email ? `<div style="margin-top: 10px; text-align: center;">
+                <a href="#" id="clear-credentials" style="font-size: 12px; color: #666; text-decoration: none;">Clear saved credentials</a>
+            </div>` : ''}
+            
             <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 12px; display: none;"></div>
         `;
         
@@ -144,6 +151,17 @@ function renderUI() {
             const passwordField = document.getElementById("password");
             passwordField.type = this.checked ? "text" : "password";
         };
+        
+        // Add clear credentials handler if the link exists
+        const clearCredentialsLink = document.getElementById("clear-credentials");
+        if (clearCredentialsLink) {
+            clearCredentialsLink.onclick = function(e) {
+                e.preventDefault();
+                clearCredentials();
+                renderUI(); // Re-render to show empty form
+                showStatus("✅ Saved credentials cleared", "#e8f5e8");
+            };
+        }
     }
 }
 
@@ -159,8 +177,8 @@ async function handleSignIn() {
     showStatus("Signing in to AWS Cognito...", "#e3f2fd");
     
     try {
-        // Initialize CognitoAuth with configuration
-        const cognitoAuth = new CognitoAuth({
+        // Initialize SafariCognitoAuth with configuration (Safari-specific implementation)
+        const cognitoAuth = new SafariCognitoAuth({
             region: 'us-west-2',
             userPoolId: 'us-west-2_qJ1i9RhxD',
             clientId: '5grdn7qhf1el0ioqb6hkelr29s'
@@ -170,9 +188,20 @@ async function handleSignIn() {
         const result = await cognitoAuth.signIn(email, password);
         
         if (result.success) {
+            console.log("🔧 Cognito authentication result:", result);
+            console.log("🔧 Cognito result.data:", result.data);
+            console.log("🔧 Available tokens:", {
+                hasAccessToken: !!result.data.AccessToken,
+                hasIdToken: !!result.data.IdToken,
+                hasRefreshToken: !!result.data.RefreshToken,
+                accessTokenPreview: result.data.AccessToken ? result.data.AccessToken.substring(0, 50) + "..." : "null",
+                idTokenPreview: result.data.IdToken ? result.data.IdToken.substring(0, 50) + "..." : "null"
+            });
+            
             // Get the real JWT tokens from Cognito
             const authData = {
                 email: email,
+                token: result.data.IdToken,           // Primary token field
                 accessToken: result.data.AccessToken,
                 idToken: result.data.IdToken,
                 refreshToken: result.data.RefreshToken,
@@ -181,6 +210,8 @@ async function handleSignIn() {
                 issuedAt: Date.now(),
                 provider: "cognito"
             };
+            
+            console.log("🔧 Storing auth data:", authData);
             
             // Store auth data
             currentUser = { 
@@ -193,6 +224,9 @@ async function handleSignIn() {
             
             // Switch to production mode for AWS API calls
             CONFIG.enableProduction();
+            
+            // Save credentials for future use
+            saveCredentials(email, password);
             
             renderUI();
             showStatus("✅ Signed in to AWS Cognito successfully", "#e8f5e8");
@@ -215,6 +249,8 @@ function signOut() {
     // Also clear any legacy auth keys that might exist
     localStorage.removeItem("recipeArchive.user");
     localStorage.removeItem("recipeArchive.token");
+    // Note: Keeping saved credentials for convenience
+    // Users can clear them manually if desired
     CONFIG.enableDevelopment(); // Switch back to dev mode
     renderUI();
 }
@@ -331,8 +367,8 @@ async function captureRecipeDirectly(tabId) {
                     
                     // Try JSON-LD first (works for most modern recipe sites)
                     const jsonLdRecipe = extractRecipeFromJsonLd();
-                    if (jsonLdRecipe) {
-                        console.log("✅ Found JSON-LD recipe data");
+                    if (jsonLdRecipe && jsonLdRecipe.ingredients && jsonLdRecipe.ingredients.length > 0) {
+                        console.log("✅ Found JSON-LD recipe data with ingredients");
                         return jsonLdRecipe;
                     }
                     
@@ -341,7 +377,23 @@ async function captureRecipeDirectly(tabId) {
                         return extractSmittenKitchenRecipe();
                     }
                     
-                    // Generic fallback
+                    // Try Food Network specific extraction
+                    if (url.includes('foodnetwork.com')) {
+                        const foodNetworkRecipe = extractFoodNetworkRecipe();
+                        if (foodNetworkRecipe && foodNetworkRecipe.ingredients && foodNetworkRecipe.ingredients.length > 0) {
+                            console.log("✅ Found Food Network recipe");
+                            return foodNetworkRecipe;
+                        }
+                    }
+                    
+                    // Generic fallback with better selectors
+                    const fallbackRecipe = extractGenericRecipe();
+                    if (fallbackRecipe && fallbackRecipe.ingredients && fallbackRecipe.ingredients.length > 0) {
+                        console.log("✅ Found recipe with generic extraction");
+                        return fallbackRecipe;
+                    }
+                    
+                    // Minimal fallback
                     return {
                         title: document.title || "Unknown Recipe",
                         url: window.location.href,
@@ -349,6 +401,113 @@ async function captureRecipeDirectly(tabId) {
                         ingredients: [],
                         steps: [],
                         source: "safari-direct-fallback"
+                    };
+                }
+                
+                function extractFoodNetworkRecipe() {
+                    console.log("🍳 Food Network specific extraction...");
+                    
+                    const title = document.querySelector('h1.o-AssetTitle__a-HeadlineText, h1')?.textContent?.trim() || document.title;
+                    
+                    // Food Network ingredient selectors
+                    const ingredientElements = document.querySelectorAll(
+                        '.o-RecipeIngredients__a-Ingredient, ' +
+                        '.o-Ingredients__a-Ingredient, ' +
+                        '[data-module="IngredientsList"] li, ' +
+                        '.recipe-ingredients li, ' +
+                        '.o-RecipeIngredients li'
+                    );
+                    
+                    const ingredients = Array.from(ingredientElements)
+                        .map(el => el.textContent?.trim())
+                        .filter(text => text && text.length > 2);
+                    
+                    // Food Network instruction selectors
+                    const stepElements = document.querySelectorAll(
+                        '.o-Method__m-Step, ' +
+                        '.recipe-instructions .o-Method__m-Step, ' +
+                        '[data-module="InstructionsList"] li, ' +
+                        '.recipe-instructions ol li, ' +
+                        '.recipe-instructions li'
+                    );
+                    
+                    const steps = Array.from(stepElements)
+                        .map(el => el.textContent?.trim())
+                        .filter(text => text && text.length > 10);
+                    
+                    console.log(`🔍 Found ${ingredients.length} ingredients and ${steps.length} steps`);
+                    
+                    return {
+                        title,
+                        url: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
+                        steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
+                        source: "safari-direct-food-network"
+                    };
+                }
+                
+                function extractGenericRecipe() {
+                    console.log("🔍 Generic recipe extraction...");
+                    
+                    const title = document.querySelector('h1[class*="recipe"], .recipe-title, .entry-title, h1')?.textContent?.trim() || document.title;
+                    
+                    // Enhanced ingredient selectors
+                    const ingredientSelectors = [
+                        '.recipe-ingredient',
+                        '.ingredients li',
+                        '[class*="ingredient"] li',
+                        '.recipe-ingredients li',
+                        '.o-RecipeIngredients__a-Ingredient',
+                        '.o-Ingredients__a-Ingredient',
+                        '[data-module="IngredientsList"] li',
+                        '.recipe-summary ul li'
+                    ];
+                    
+                    let ingredients = [];
+                    for (const selector of ingredientSelectors) {
+                        const elements = document.querySelectorAll(selector);
+                        if (elements.length > 0) {
+                            ingredients = Array.from(elements)
+                                .map(el => el.textContent?.trim())
+                                .filter(text => text && text.length > 2);
+                            if (ingredients.length > 0) break;
+                        }
+                    }
+                    
+                    // Enhanced instruction selectors
+                    const instructionSelectors = [
+                        '.recipe-instruction',
+                        '.instructions li',
+                        '.directions li',
+                        '.recipe-instructions li',
+                        '.recipe-directions li',
+                        '.o-Method__m-Step',
+                        '.recipe-instructions .o-Method__m-Step',
+                        '[data-module="InstructionsList"] li',
+                        '.recipe-instructions ol li'
+                    ];
+                    
+                    let steps = [];
+                    for (const selector of instructionSelectors) {
+                        const elements = document.querySelectorAll(selector);
+                        if (elements.length > 0) {
+                            steps = Array.from(elements)
+                                .map(el => el.textContent?.trim())
+                                .filter(text => text && text.length > 10);
+                            if (steps.length > 0) break;
+                        }
+                    }
+                    
+                    console.log(`🔍 Generic extraction found ${ingredients.length} ingredients and ${steps.length} steps`);
+                    
+                    return {
+                        title,
+                        url: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
+                        steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
+                        source: "safari-direct-generic"
                     };
                 }
                 
@@ -605,6 +764,105 @@ async function sendToDevBackend(recipeData) {
     }
 }
 
+function transformRecipeDataForAWS(recipeData) {
+    // Transform Safari extension format to AWS backend expected format
+    const ingredients = [];
+    const instructions = [];
+    
+    // Transform ingredients from Safari format: [{ title: null, items: ["text1", "text2"] }]
+    // To AWS format: [{ text: "text1" }, { text: "text2" }]
+    if (recipeData.ingredients && Array.isArray(recipeData.ingredients)) {
+        recipeData.ingredients.forEach(group => {
+            if (group.items && Array.isArray(group.items)) {
+                group.items.forEach(item => {
+                    if (item && typeof item === 'string' && item.trim()) {
+                        ingredients.push({ text: item.trim() });
+                    }
+                });
+            }
+        });
+    }
+    
+    // Transform instructions/steps from Safari format: [{ title: null, items: ["step1", "step2"] }]
+    // To AWS format: [{ stepNumber: 1, text: "step1" }, { stepNumber: 2, text: "step2" }]
+    if (recipeData.steps && Array.isArray(recipeData.steps)) {
+        let stepNumber = 1;
+        recipeData.steps.forEach(group => {
+            if (group.items && Array.isArray(group.items)) {
+                group.items.forEach(item => {
+                    if (item && typeof item === 'string' && item.trim()) {
+                        instructions.push({ 
+                            stepNumber: stepNumber++, 
+                            text: item.trim() 
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
+    // Build the AWS-compatible recipe data
+    const transformedData = {
+        title: recipeData.title || "Unknown Recipe",
+        ingredients: ingredients,
+        instructions: instructions,
+        sourceUrl: recipeData.url || recipeData.sourceUrl || window.location.href
+    };
+    
+    // Add optional fields if they exist
+    if (recipeData.servingSize) {
+        const servings = parseInt(recipeData.servingSize);
+        if (servings && servings > 0) {
+            transformedData.servings = servings;
+        }
+    }
+    
+    if (recipeData.time) {
+        // Try to parse time strings to minutes
+        const timeStr = recipeData.time.toString().toLowerCase();
+        if (timeStr.includes('min')) {
+            const minutes = parseInt(timeStr.match(/\d+/)?.[0]);
+            if (minutes && minutes > 0) {
+                transformedData.totalTimeMinutes = minutes;
+            }
+        }
+    }
+    
+    if (recipeData.photos && Array.isArray(recipeData.photos) && recipeData.photos.length > 0) {
+        transformedData.mainPhotoUrl = recipeData.photos[0];
+    }
+    
+    // Ensure sourceUrl is a valid URL - AWS backend validates this
+    try {
+        new URL(transformedData.sourceUrl);
+    } catch (e) {
+        // If the sourceUrl is invalid, use current page URL as fallback
+        transformedData.sourceUrl = window.location.href;
+    }
+    
+    console.log("🔧 Transformed ingredients:", ingredients.length, "items");
+    console.log("🔧 Transformed instructions:", instructions.length, "steps");
+    
+    // Validate required fields for AWS backend
+    if (!transformedData.title || transformedData.title.trim() === "") {
+        throw new Error("Recipe title is required");
+    }
+    
+    if (ingredients.length === 0) {
+        throw new Error("At least one ingredient is required");
+    }
+    
+    if (instructions.length === 0) {
+        throw new Error("At least one instruction is required");
+    }
+    
+    if (!transformedData.sourceUrl) {
+        throw new Error("Source URL is required");
+    }
+
+    return transformedData;
+}
+
 async function sendToAWSBackend(recipeData) {
     try {
         if (typeof CONFIG === "undefined") {
@@ -636,7 +894,11 @@ async function sendToAWSBackend(recipeData) {
                 issuedAt: new Date(auth.issuedAt).toISOString(),
                 hasToken: !!auth.token,
                 hasAccessToken: !!auth.accessToken,
-                hasIdToken: !!auth.idToken
+                hasIdToken: !!auth.idToken,
+                tokenValue: auth.token ? "HAS_TOKEN" : "NO_TOKEN",
+                accessTokenValue: auth.accessToken ? "HAS_ACCESS_TOKEN" : "NO_ACCESS_TOKEN", 
+                idTokenValue: auth.idToken ? "HAS_ID_TOKEN" : "NO_ID_TOKEN",
+                finalUserToken: userToken ? "FOUND_USER_TOKEN" : "NO_USER_TOKEN"
             });
         } catch {
             return {
@@ -657,6 +919,10 @@ async function sendToAWSBackend(recipeData) {
         console.log("📤 Sending to AWS API:", awsAPI.recipes);
         console.log("📤 Recipe data:", recipeData.title);
         
+        // Transform data to match AWS backend expected format
+        const transformedData = transformRecipeDataForAWS(recipeData);
+        console.log("🔧 Transformed recipe data for AWS:", transformedData);
+        
         // Use proper AWS API authentication format (same as Chrome extension)
         console.log("🔧 Using Bearer token authentication for AWS API");
         console.log("🔧 Full token for debugging:", userToken);
@@ -669,24 +935,7 @@ async function sendToAWSBackend(recipeData) {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${userToken}`
             },
-            body: JSON.stringify({
-                title: recipeData.title || "Unknown Recipe",
-                description: `Captured from ${recipeData.url}`,
-                ingredients: recipeData.ingredients || [],
-                instructions: recipeData.steps || [],
-                servingSize: recipeData.servingSize,
-                prepTime: recipeData.time,
-                photos: recipeData.photos || [],
-                sourceUrl: recipeData.url,
-                extractedAt: recipeData.timestamp,
-                extractionSource: recipeData.source,
-                tags: ["safari-extension", "captured"],
-                metadata: {
-                    userAgent: navigator.userAgent,
-                    extensionVersion: "0.3.0",
-                    captureMethod: "safari-direct-execution"
-                }
-            })
+            body: JSON.stringify(transformedData)
         });
         
         if (response.ok) {
@@ -726,4 +975,24 @@ async function sendToAWSBackend(recipeData) {
             error: `AWS connection failed: ${error.message}`
         };
     }
+}
+
+// Credential management functions for convenience
+function saveCredentials(email, password) {
+    const credentials = { email, password };
+    localStorage.setItem("recipeArchive.credentials", JSON.stringify(credentials));
+}
+
+function loadCredentials() {
+    try {
+        const saved = localStorage.getItem("recipeArchive.credentials");
+        return saved ? JSON.parse(saved) : { email: "", password: "" };
+    } catch (error) {
+        console.error("Error loading credentials:", error);
+        return { email: "", password: "" };
+    }
+}
+
+function clearCredentials() {
+    localStorage.removeItem("recipeArchive.credentials");
 }

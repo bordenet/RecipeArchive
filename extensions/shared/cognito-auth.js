@@ -85,7 +85,19 @@ class CognitoAuth {
         }
         
         await this._storeUserInfo(userInfo);
-        return { success: true, data: userInfo };
+        
+        // Return both user info and tokens for the popup to use
+        return { 
+          success: true, 
+          data: {
+            ...userInfo,
+            // Include the actual tokens
+            AccessToken: response.AuthenticationResult.AccessToken,
+            IdToken: response.AuthenticationResult.IdToken,
+            RefreshToken: response.AuthenticationResult.RefreshToken,
+            ExpiresIn: response.AuthenticationResult.ExpiresIn
+          }
+        };
       } else {
         return { success: false, error: 'Authentication failed' };
       }
