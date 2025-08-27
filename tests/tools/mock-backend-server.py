@@ -85,7 +85,7 @@ class RecipeArchiveHandler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
 if __name__ == "__main__":
-    PORT = 8081
+    PORT = 8082
     
     print(f"""
 🍳 RecipeArchive Mock Backend Server

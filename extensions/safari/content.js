@@ -32,28 +32,24 @@ function initializeContentScript() {
     
     // Simple message listener for testing - Safari uses browser API
     const runtimeAPI = (typeof browser !== "undefined") ? browser.runtime : chrome.runtime;
+    console.log("🔧 Using runtime API:", typeof browser !== "undefined" ? "browser (Safari)" : "chrome");
     
-    runtimeAPI.onMessage.addListener(function messageListener(request, sender, sendResponse) {
+    runtimeAPI.onMessage.addListener((request, sender, sendResponse) => {
+      console.log("📨 RecipeArchive received message:", request);
+      console.log("📨 Sender:", sender);
+      console.log("📨 SendResponse function:", typeof sendResponse);
+      
       try {
-        console.log("📨 RecipeArchive received message:", request);
-        
         if (request.action === "ping") {
           const response = { 
             status: "pong", 
             url: window.location.href,
             title: document.title 
           };
-          console.log("📨 Ping response:", response);
+          console.log("📨 Ping response being sent:", response);
           
-          // Safari needs explicit response handling
-          if (typeof browser !== "undefined") {
-            // Safari - return a Promise
-            return Promise.resolve(response);
-          } else {
-            // Chrome - use callback
-            sendResponse(response);
-            return true;
-          }
+          sendResponse(response);
+          return true; // Keep the message channel open
         }
         
         if (request.action === "captureRecipe") {
@@ -70,38 +66,22 @@ function initializeContentScript() {
           };
           
           const response = { status: "success", data: basicRecipe };
-          console.log("✅ Basic recipe extracted:", response);
+          console.log("✅ Recipe response being sent:", response);
           
-          // Safari needs explicit response handling
-          if (typeof browser !== "undefined") {
-            // Safari - return a Promise
-            return Promise.resolve(response);
-          } else {
-            // Chrome - use callback
-            sendResponse(response);
-            return true;
-          }
+          sendResponse(response);
+          return true; // Keep the message channel open
         }
         
         const unknownResponse = { status: "unknown_action", action: request.action };
-        
-        if (typeof browser !== "undefined") {
-          return Promise.resolve(unknownResponse);
-        } else {
-          sendResponse(unknownResponse);
-          return true;
-        }
+        console.log("❓ Unknown action response:", unknownResponse);
+        sendResponse(unknownResponse);
+        return true;
         
       } catch (error) {
         console.error("❌ RecipeArchive message handling error:", error);
         const errorResponse = { status: "error", error: error.message };
-        
-        if (typeof browser !== "undefined") {
-          return Promise.resolve(errorResponse);
-        } else {
-          sendResponse(errorResponse);
-          return true;
-        }
+        sendResponse(errorResponse);
+        return true;
       }
     });
     

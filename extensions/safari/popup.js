@@ -181,27 +181,32 @@ function captureRecipe() {
             // Check if content script is already loaded before injecting
             console.log("🔍 Checking for existing content script...");
             
-            // Safari prefers promises over callbacks
-            extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}).then(pingResponse => {
-                console.log("✅ Content script already loaded, ping response:", pingResponse);
-                sendCaptureMessage(tab.id);
-            }).catch(pingError => {
-                console.log("📥 Content script not loaded, injecting...", pingError);
-                // Content script not loaded, inject it
-                if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
-                    extensionAPI.scripting.executeScript({
-                        target: { tabId: tab.id },
-                        files: ["content.js"]
-                    }).then(() => {
-                        console.log("✅ Content script injected");
-                        // Wait a moment for script to initialize
-                        setTimeout(() => sendCaptureMessage(tab.id), 100);
-                    }).catch(error => {
-                        console.error("❌ Script injection failed:", error);
-                        showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
-                    });
+            // Try callback-based approach for better Safari compatibility
+            extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}, (pingResponse) => {
+                console.log("🔧 Extension runtime error:", extensionAPI.runtime.lastError);
+                console.log("🔧 Ping response received:", pingResponse);
+                
+                if (extensionAPI.runtime.lastError || !pingResponse) {
+                    console.log("📥 Content script not loaded, injecting...", extensionAPI.runtime.lastError);
+                    // Content script not loaded, inject it
+                    if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
+                        extensionAPI.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            files: ["content.js"]
+                        }).then(() => {
+                            console.log("✅ Content script injected");
+                            // Wait a moment for script to initialize
+                            setTimeout(() => sendCaptureMessage(tab.id), 500);
+                        }).catch(error => {
+                            console.error("❌ Script injection failed:", error);
+                            showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
+                        });
+                    } else {
+                        showStatus("❌ Scripting API not available", "#ffebee");
+                    }
                 } else {
-                    showStatus("❌ Scripting API not available", "#ffebee");
+                    console.log("✅ Content script already loaded, ping response:", pingResponse);
+                    sendCaptureMessage(tab.id);
                 }
             });
             
@@ -213,11 +218,18 @@ function captureRecipe() {
 }
 
 function sendCaptureMessage(tabId) {
-    // Send message to content script - Safari prefers promises
+    // Send message to content script - using callback for Safari compatibility
     console.log("📤 Sending capture message to tab:", tabId);
     
-    extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}).then(response => {
+    extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}, (response) => {
+        console.log("🔧 Extension runtime error:", extensionAPI.runtime.lastError);
         console.log("📨 Response received:", response);
+        
+        if (extensionAPI.runtime.lastError) {
+            console.error("❌ Message sending failed:", extensionAPI.runtime.lastError);
+            showStatus("❌ Message failed: " + extensionAPI.runtime.lastError.message, "#ffebee");
+            return;
+        }
         
         if (response && response.status === "success") {
             console.log("✅ Recipe data received:", response);
@@ -227,11 +239,8 @@ function sendCaptureMessage(tabId) {
             sendToBackend(response.data);
         } else {
             console.error("❌ Capture failed:", response);
-            showStatus("❌ Capture failed: " + (response ? response.message : "Invalid response"), "#ffebee");
+            showStatus("❌ Capture failed: " + (response ? (response.message || "Invalid response") : "No response"), "#ffebee");
         }
-    }).catch(error => {
-        console.error("❌ Message sending failed:", error);
-        showStatus("❌ Message failed: " + error.message, "#ffebee");
     });
 }
 
@@ -250,10 +259,10 @@ async function sendToBackend(recipeData) {
         
         // Get current API configuration
         const apiConfig = CONFIG && CONFIG.getCurrentAPI ? CONFIG.getCurrentAPI() : {
-            recipes: "http://localhost:8081/api/recipes"
+            recipes: "http://localhost:8082/api/recipes"
         };
         
-        const response = await fetch(apiConfig.recipes || "http://localhost:8081/api/recipes", {
+        const response = await fetch(apiConfig.recipes || "http://localhost:8082/api/recipes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
