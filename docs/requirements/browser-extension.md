@@ -46,7 +46,49 @@ The one-click capture is our core value proposition. It must be:
 
 ## 3. Functional Requirements
 
-### 3.1 Recipe Capture & Data Requirements
+### 3.1 AWS-Only Push Logic (CRITICAL BUSINESS REQUIREMENT)
+
+**STRICT DATA QUALITY ENFORCEMENT**: Extensions must implement rigorous validation before AWS submission to ensure cloud storage contains only complete, high-quality recipe data.
+
+**Push to AWS Logic:**
+```typescript
+function shouldPushToAWS(recipeData) {
+  // Required fields validation
+  const hasValidTitle = recipeData.title && 
+                       recipeData.title.trim().length >= 3 &&
+                       recipeData.title.length <= 200;
+  
+  const hasValidIngredients = recipeData.ingredients && 
+                             recipeData.ingredients.length >= 2 &&
+                             recipeData.ingredients.every(ing => ing.trim().length > 0);
+  
+  const hasValidInstructions = recipeData.instructions &&
+                              recipeData.instructions.length >= 2 &&
+                              recipeData.instructions.every(step => step.trim().length > 10);
+  
+  const hasValidSourceUrl = recipeData.sourceUrl && 
+                           recipeData.sourceUrl.startsWith('http');
+  
+  // AWS push ONLY if ALL required fields are satisfied
+  return hasValidTitle && hasValidIngredients && hasValidInstructions && hasValidSourceUrl;
+}
+```
+
+**Business Logic Requirements:**
+
+1. **Complete Data Only**: AWS receives recipes only when extraction is 100% successful for required fields
+2. **Failure Routing**: Incomplete extractions trigger parser failure API instead of recipe storage API
+3. **Data Integrity**: Prevent incomplete or corrupted recipe data from polluting production database
+4. **Cost Optimization**: Reduce AWS storage costs by filtering low-quality data at the source
+
+**Implementation Enforcement:**
+
+- Extensions must validate data using `shouldPushToAWS()` before AWS submission
+- Failed validation triggers automatic parser failure submission with HTML dump
+- Dev server (port 8081) accepts all data for testing and development
+- Production AWS accepts only validated, complete recipe data
+
+### 3.2 Recipe Capture & Data Requirements
 
 | Data Field        | Priority | Requirement                     | User Value              |
 | ----------------- | -------- | ------------------------------- | ----------------------- |
@@ -130,23 +172,96 @@ When diagnostic mode is enabled and user triggers capture, the extension must co
 - **Optional**: Always user-initiated, never automatic background collection
 - **Visual Feedback**: Clear indication when diagnostic data is successfully sent
 
-#### 3.3.6 Automatic Diagnostic Capture (ENHANCED REQUIREMENT)
+#### 3.3.6 Parser Failure API Integration (CRITICAL REQUIREMENT)
 
-**CRITICAL ENHANCEMENT**: Both extensions must automatically capture diagnostic data when recipe extraction fails, without user intervention.
+**SECURITY-FIRST REQUIREMENT**: Both extensions must automatically submit parser failure data to AWS backend with Cognito authentication to enable ML retraining pipeline.
 
-**Automatic Trigger Conditions:**
+**Automatic Failure Detection:**
 
-- Recipe extraction fails (missing title AND either ingredients OR steps)
-- Parser returns incomplete or malformed data
-- Site structure changes break existing parsers
+Extensions must detect parser failures using `isExtractionComplete()` validation:
+
+```typescript
+function isExtractionComplete(recipeData) {
+  const hasTitle = recipeData.title && recipeData.title.length > 3;
+  const hasIngredients = recipeData.ingredients && recipeData.ingredients.length >= 2;
+  const hasInstructions = recipeData.instructions && recipeData.instructions.length >= 2;
+  
+  return hasTitle && hasIngredients && hasInstructions;
+}
+```
+
+**AWS Push Logic (ENHANCED REQUIREMENT):**
+
+Extensions must implement dual-mode submission strategy:
+
+1. **Success Path**: Push to AWS if and only if ALL required JSON fields are satisfied
+   - Required: `title`, `ingredients[]` (≥2), `instructions[]` (≥2), `sourceUrl`
+   - Optional: `prepTime`, `cookTime`, `servings`, `mainPhotoUrl`
+   - Validation: Complete data validation before AWS submission
+
+2. **Failure Path**: Automatic parser failure submission when extraction fails
+   - Trigger: Missing title OR insufficient ingredients (<2) OR insufficient instructions (<2)
+   - Action: Submit HTML dump and metadata to `/v1/diagnostics/parser-failure`
+   - Authentication: Cognito bearer token required
+
+**Parser Failure Payload Requirements:**
+
+```typescript
+interface ExtensionFailurePayload {
+  url: string;                    // Current page URL
+  timestamp: string;              // ISO 8601 extraction attempt time
+  userAgent: string;              // Navigator.userAgent string
+  extensionVersion: string;       // Extension version from manifest
+  extractionAttempt: {
+    method: 'json-ld' | 'site-specific' | 'generic-fallback';
+    timeElapsed: number;          // Milliseconds for extraction
+    elementsFound: {
+      jsonLdScripts: number;      // document.querySelectorAll('script[type="application/ld+json"]').length
+      recipeContainers: number;   // Elements with recipe-related classes/IDs
+      ingredientElements: number; // Potential ingredient list elements
+      instructionElements: number;// Potential instruction elements
+    };
+    partialData: RecipeData;      // Whatever was successfully extracted
+  };
+  htmlDump: string;               // document.documentElement.outerHTML
+  domMetrics: {
+    totalElements: number;        // document.getElementsByTagName('*').length
+    imageCount: number;           // document.images.length
+    linkCount: number;            // document.links.length
+    listCount: number;            // document.querySelectorAll('ul, ol').length
+  };
+  failureReason: string;          // "Insufficient ingredients" | "Missing title" | "No instructions found"
+}
+```
 
 **Implementation Requirements:**
 
-- **Failure Detection**: `isExtractionFailed()` function validates extraction quality
-- **Automatic Submission**: Failed extractions trigger `sendAutoDiagnosticData()`
-- **User Notification**: Clear messaging that diagnostic data was automatically sent
-- **Non-Blocking**: Auto-diagnostic failures never break user experience
-- **AWS Endpoint**: `/v1/diagnostics/auto` for automatic submissions
+1. **Authentication Integration:**
+   - Use existing Cognito authentication flow
+   - Submit with Bearer token from user session
+   - Handle authentication failures gracefully
+
+2. **Data Collection:**
+   - Capture complete HTML via `document.documentElement.outerHTML`
+   - Collect DOM metrics using standard web APIs
+   - Record extraction timing and method attempted
+
+3. **User Experience:**
+   - Non-blocking: Failure submission never prevents normal extension operation
+   - User notification: "Sent diagnostic data to improve parser"
+   - Privacy respect: Clear indication when HTML data is transmitted
+
+4. **Error Handling:**
+   - Network failures: Queue locally and retry later
+   - Authentication errors: Prompt user to re-authenticate
+   - Rate limiting: Respect AWS rate limits (50 submissions/hour)
+
+**Security Measures:**
+
+- **Content Sanitization**: Remove sensitive data (passwords, tokens) from HTML before submission
+- **Size Limits**: Maximum 2MB HTML dump per submission
+- **User Consent**: Clear privacy policy regarding diagnostic data collection
+- **Data Retention**: AWS automatically purges failure data after 90 days
 
 **Business Impact:**
 This creates a **self-improving parser ecosystem** where every real-world failure contributes to system enhancement, enabling rapid response to site changes and continuous quality improvement.

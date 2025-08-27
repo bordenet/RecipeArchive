@@ -83,6 +83,95 @@ interface Instruction {
 - **Authentication**: Bearer token required
 - **Purpose**: Continuous parser improvement and site compatibility monitoring
 
+#### Parser Failure API (Enhanced Diagnostic Requirements)
+
+**POST** `/v1/diagnostics/parser-failure` - Parser failure with HTML dump submission
+
+**Critical Security Requirements:**
+- **Cognito Authentication**: Bearer token validation required
+- **User Rate Limiting**: Maximum 50 submissions per user per hour
+- **Data Validation**: Strict payload validation to prevent abuse
+- **Content Filtering**: HTML sanitization and size limits (max 2MB per submission)
+
+**Request Payload Structure:**
+```typescript
+interface ParserFailurePayload {
+  url: string;                    // Source recipe URL
+  timestamp: string;              // ISO 8601 timestamp
+  userAgent: string;              // Browser/extension info
+  extractionAttempt: {
+    method: 'json-ld' | 'html-parsing' | 'mixed';
+    timeElapsed: number;          // Milliseconds
+    elementsFound: {
+      jsonLdScripts: number;
+      recipeContainers: number;
+      ingredientSections: number;
+      instructionSections: number;
+    };
+    partialData: {
+      title?: string;
+      ingredients?: string[];
+      instructions?: string[];
+      timing?: string;
+      servings?: string;
+    };
+  };
+  htmlDump: string;               // Complete page HTML
+  domMetrics: {
+    totalElements: number;
+    imageCount: number;
+    linkCount: number;
+    listCount: number;
+  };
+  failureReason: string;          // Human-readable failure description
+}
+```
+
+**Response Structure:**
+```typescript
+interface ParserFailureResponse {
+  submissionId: string;           // Unique identifier for tracking
+  status: 'received' | 'queued' | 'processing';
+  timestamp: string;              // Server processing time
+  retryRecommendation?: {
+    waitMinutes: number;          // Suggested retry delay
+    alternativeMethod?: string;   // Alternative extraction approach
+  };
+}
+```
+
+**AWS Implementation Requirements:**
+
+1. **S3 Storage Structure:**
+   ```
+   recipeArchive-{environment}/
+   └── parser-failures/
+       └── {year}/{month}/{day}/
+           └── {userId}/
+               └── {submissionId}/
+                   ├── metadata.json    // Payload without HTML
+                   ├── page.html        // Full HTML dump
+                   └── analysis.json    // ML analysis results
+   ```
+
+2. **Lambda Processing Pipeline:**
+   - **Validation Function**: Authenticate user, validate payload, enforce rate limits
+   - **Storage Function**: Store HTML dump and metadata in S3
+   - **Analysis Function**: Extract features for ML retraining pipeline
+   - **Notification Function**: Alert development team of critical parsing failures
+
+3. **DynamoDB Tracking Table: `parser-failures`**
+   - **Partition Key**: `userId` (String)
+   - **Sort Key**: `submissionId` (String)
+   - **Attributes**: `url`, `timestamp`, `failureReason`, `processingStatus`, `s3Location`
+   - **TTL**: 90 days for automatic cleanup
+
+4. **ML Retraining Integration:**
+   - **Feature Extraction**: Automated analysis of HTML structure patterns
+   - **Parser Improvement**: Integration with parser development workflow
+   - **Success Metrics**: Track parser improvement over time
+   - **Feedback Loop**: Automatically test new parsers against historical failures
+
 ### 3. Authentication & Authorization
 
 **AWS Cognito Integration** (see `../architecture/auth-decision.md`):
@@ -170,9 +259,10 @@ recipeArchive-{environment}/
 ### Per-User Rate Limits
 
 - **Recipe Operations**: 100 requests/hour per user
-- **Search Operations**: 50 requests/hour per user
+- **Search Operations**: 50 requests/hour per user  
 - **File Uploads**: 20 uploads/hour per user
 - **Diagnostic Submissions**: 200 requests/hour per user
+- **Parser Failure Submissions**: 50 requests/hour per user (security critical)
 
 ### Cost Protection Measures
 
