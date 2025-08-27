@@ -38,7 +38,9 @@ function initializeContentScript() {
             title: document.title 
           };
           console.log("📨 Ping response being sent:", response);
-          sendResponse(response);
+          
+          // Safari Web Extensions: call sendResponse synchronously and return true
+          setTimeout(() => sendResponse(response), 0);
           return true;
         }
         
@@ -67,7 +69,7 @@ function initializeContentScript() {
             }
             
             console.log("📨 Capture response being sent:", response);
-            sendResponse(response);
+            setTimeout(() => sendResponse(response), 0);
             return true;
             
           } catch (extractError) {
@@ -84,20 +86,20 @@ function initializeContentScript() {
             const errorResponse = { status: "success", data: errorRecipe };
             
             console.log("📨 Error response being sent:", errorResponse);
-            sendResponse(errorResponse);
+            setTimeout(() => sendResponse(errorResponse), 0);
             return true;
           }
         }
         
         const unknownResponse = { status: "unknown_action", action: request.action };
         console.log("❓ Unknown action response:", unknownResponse);
-        sendResponse(unknownResponse);
+        setTimeout(() => sendResponse(unknownResponse), 0);
         return true;
         
       } catch (error) {
         console.error("❌ RecipeArchive message handling error:", error);
         const errorResponse = { status: "error", error: error.message };
-        sendResponse(errorResponse);
+        setTimeout(() => sendResponse(errorResponse), 0);
         return true;
       }
     });

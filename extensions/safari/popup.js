@@ -188,8 +188,8 @@ async function captureRecipe() {
             // Safari Web Extensions: Use async/await pattern that works with both Promise and callback
             try {
                 const pingResponse = await new Promise((resolve, reject) => {
-                    // Safari Web Extensions: Use background script routing
-                    extensionAPI.runtime.sendMessage({action: "ping"}, (response) => {
+                    // Safari Web Extensions: Use direct tab messaging with setTimeout response
+                    extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}, (response) => {
                         if (extensionAPI.runtime.lastError) {
                             reject(extensionAPI.runtime.lastError);
                         } else {
@@ -258,7 +258,7 @@ async function sendCaptureMessage(tabId) {
     
     try {
         const response = await new Promise((resolve, reject) => {
-            extensionAPI.runtime.sendMessage({action: "captureRecipe"}, (response) => {
+            extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}, (response) => {
                 if (extensionAPI.runtime.lastError) {
                     reject(extensionAPI.runtime.lastError);
                 } else {
