@@ -327,6 +327,7 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 1. **Enable OAuth2 Authentication**: Configure Cognito hosted UI and enable OAuth2 flow in extensions
 2. **Test Real Authentication**: Replace mock JWT tokens with real Cognito OAuth2 tokens  
 3. **USER_PASSWORD_AUTH Config**: Optionally enable direct password auth in Cognito User Pool client settings
+4. **🚨 EVALUATE PLAYWRIGHT REMOVAL**: Remove Playwright test infrastructure (2000+ lines, 26MB dependencies, questionable value vs manual testing)
 
 ### Short Term
 1. **Recipe Extraction Enhancement**: Support for additional recipe sites beyond Smitten Kitchen
