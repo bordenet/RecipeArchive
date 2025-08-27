@@ -6,6 +6,8 @@ console.log("🎯 RecipeArchive Safari content script starting...");
 // Safari Web Extensions: Prevent duplicate injection but always ensure message listeners
 if (typeof window.RecipeArchiveContentScript !== 'undefined') {
   console.log("🎯 RecipeArchive content script already loaded, but ensuring message listeners...");
+  // Reset listener flag to allow re-registration with new comprehensive approach
+  window.RecipeArchiveMessageListenerAdded = false;
   // Still set up message listeners in case they were lost
   initializeContentScript();
 } else {
