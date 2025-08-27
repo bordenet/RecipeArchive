@@ -422,10 +422,10 @@ async function captureRecipeDirectly(tabId) {
             
             if (recipeData && (recipeData.ingredients?.length > 0 || recipeData.title)) {
                 showStatus("✅ Recipe captured: " + recipeData.title, "#e8f5e8");
-                sendToBackends(recipeData);
+                await sendToBackends(recipeData);
             } else {
                 showStatus("⚠️ Limited recipe data found", "#fff3cd");
-                sendToBackends(recipeData);
+                await sendToBackends(recipeData);
             }
         } else {
             showStatus("❌ Direct capture failed", "#ffebee");
@@ -494,29 +494,47 @@ function showStatus(message, backgroundColor) {
 }
 
 async function sendToBackends(recipeData) {
-    // Show initial status
-    showStatus("Saving recipe...", "#fff3cd");
+    // Check if user is authenticated - if so, save directly to AWS
+    const authData = localStorage.getItem("recipeArchive.auth");
+    const isAuthenticated = authData && isSignedIn;
     
-    try {
-        // First, save to development backend for testing
-        const devResult = await sendToDevBackend(recipeData);
+    if (isAuthenticated) {
+        // Authenticated user: Save directly to AWS production
+        showStatus("Saving to AWS...", "#e7f3ff");
+        console.log("🚀 Authenticated user - saving directly to AWS");
         
-        if (devResult.success) {
-            // If dev backend succeeds, also send to AWS production
-            showStatus("Saving to AWS...", "#e7f3ff");
+        try {
             const awsResult = await sendToAWSBackend(recipeData);
             
             if (awsResult.success) {
-                showStatus("✅ Saved to both dev and AWS! Recipe ID: " + devResult.id, "#d4edda");
+                showStatus("✅ Saved to AWS! Recipe ID: " + awsResult.id, "#d4edda");
+                console.log("✅ Successfully saved to AWS:", awsResult);
             } else {
-                showStatus("✅ Saved to dev backend. AWS: " + awsResult.error, "#fff3cd");
+                showStatus("❌ AWS save failed: " + awsResult.error, "#f8d7da");
+                console.error("❌ AWS save failed:", awsResult.error);
             }
-        } else {
-            showStatus("❌ Failed to save: " + devResult.error, "#f8d7da");
+        } catch (error) {
+            console.error("❌ AWS backend error:", error);
+            showStatus("❌ AWS error: " + error.message, "#f8d7da");
         }
-    } catch (error) {
-        console.error("❌ Backend error:", error);
-        showStatus("❌ Save error: " + error.message, "#f8d7da");
+        
+    } else {
+        // Unauthenticated user: Try development backend only
+        showStatus("Saving to development backend...", "#fff3cd");
+        console.log("🔧 Unauthenticated user - trying development backend");
+        
+        try {
+            const devResult = await sendToDevBackend(recipeData);
+            
+            if (devResult.success) {
+                showStatus("✅ Saved to development backend! Recipe ID: " + devResult.id, "#d4edda");
+            } else {
+                showStatus("❌ Failed to save: " + devResult.error, "#f8d7da");
+            }
+        } catch (error) {
+            console.error("❌ Backend error:", error);
+            showStatus("❌ Save error: " + error.message, "#f8d7da");
+        }
     }
 }
 
