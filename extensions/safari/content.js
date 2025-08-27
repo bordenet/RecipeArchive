@@ -30,6 +30,8 @@ function initializeContentScript() {
     runtimeAPI.onMessage.addListener(function messageListener(request, sender, sendResponse) {
       try {
         console.log("📨 RecipeArchive received message:", request);
+        console.log("📨 Message sender:", sender);
+        console.log("📨 SendResponse function:", typeof sendResponse);
         
         if (request.action === "ping") {
           const response = { 
@@ -105,6 +107,9 @@ function initializeContentScript() {
     });
     
     console.log("✅ RecipeArchive message listener registered");
+    console.log("🔧 Using runtime API:", typeof browser !== "undefined" ? "browser (Safari)" : "chrome");
+    console.log("🔧 Runtime API object:", !!runtimeAPI);
+    console.log("🔧 onMessage available:", !!runtimeAPI.onMessage);
     
   } catch (error) {
     console.error("❌ RecipeArchive initialization error:", error);

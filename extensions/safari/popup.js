@@ -172,6 +172,9 @@ async function captureRecipe() {
         }
         
         const tab = tabs[0];
+        console.log("🔧 Active tab:", tab);
+        console.log("🔧 Tab ID:", tab.id);
+        console.log("🔧 Tab URL:", tab.url);
         
         try {
             // Check if content script is already loaded before injecting
@@ -190,6 +193,8 @@ async function captureRecipe() {
                 const pingResponse = await new Promise((resolve, reject) => {
                     // Safari Web Extensions: Use direct tab messaging with setTimeout response
                     extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}, (response) => {
+                        console.log("🔧 Ping sendMessage callback - response:", response);
+                        console.log("🔧 Ping sendMessage callback - lastError:", extensionAPI.runtime.lastError);
                         if (extensionAPI.runtime.lastError) {
                             reject(extensionAPI.runtime.lastError);
                         } else {
@@ -259,6 +264,8 @@ async function sendCaptureMessage(tabId) {
     try {
         const response = await new Promise((resolve, reject) => {
             extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}, (response) => {
+                console.log("🔧 Capture sendMessage callback - response:", response);
+                console.log("🔧 Capture sendMessage callback - lastError:", extensionAPI.runtime.lastError);
                 if (extensionAPI.runtime.lastError) {
                     reject(extensionAPI.runtime.lastError);
                 } else {
