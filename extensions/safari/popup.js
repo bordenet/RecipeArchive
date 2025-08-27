@@ -621,13 +621,17 @@ async function sendToAWSBackend(recipeData) {
         let userToken;
         try {
             const auth = JSON.parse(authData);
+            console.log("🔧 Full auth data from localStorage:", auth);
             userToken = auth.token || auth.accessToken || auth.idToken;
             console.log("🔧 Retrieved auth data:", {
                 email: auth.email,
                 provider: auth.provider,
                 tokenType: auth.tokenType,
                 tokenPreview: userToken ? userToken.substring(0, 50) + "..." : "null",
-                issuedAt: new Date(auth.issuedAt).toISOString()
+                issuedAt: new Date(auth.issuedAt).toISOString(),
+                hasToken: !!auth.token,
+                hasAccessToken: !!auth.accessToken,
+                hasIdToken: !!auth.idToken
             });
         } catch {
             return {

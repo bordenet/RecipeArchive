@@ -52,8 +52,18 @@ class CognitoAuth {
     }
   }
 
-  // Sign in user
-  async signIn(email, password) {
+  // Sign in user - supports both direct auth and OAuth2
+  async signIn(email, password, useOAuth2 = false) {
+    if (useOAuth2) {
+      return await this._signInWithOAuth2();
+    } else {
+      return await this._signInWithPassword(email, password);
+    }
+  }
+
+  // Direct password authentication (for development/testing)
+  async _signInWithPassword(email, password) {
+    // Check if the User Pool supports USER_PASSWORD_AUTH
     const params = {
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.clientId,
@@ -80,8 +90,240 @@ class CognitoAuth {
         return { success: false, error: 'Authentication failed' };
       }
     } catch (error) {
+      console.error('Direct authentication failed:', error);
+      
+      // If USER_PASSWORD_AUTH is not enabled, suggest OAuth2
+      if (error.message.includes('USER_PASSWORD_AUTH') || error.message.includes('NotAuthorizedException')) {
+        return { 
+          success: false, 
+          error: 'Direct password authentication not enabled. Please use OAuth2 flow or enable USER_PASSWORD_AUTH in your Cognito User Pool.',
+          suggestOAuth2: true
+        };
+      }
+      
       return { success: false, error: error.message };
     }
+  }
+
+  // OAuth2 authentication flow (recommended for browser extensions)
+  async _signInWithOAuth2() {
+    try {
+      console.log('🔐 Starting OAuth2 authentication flow...');
+      
+      // Build the authorization URL with PKCE for security
+      const { authUrl, codeVerifier } = await this._buildOAuth2AuthUrl();
+      console.log('🔗 Authorization URL:', authUrl);
+      
+      // Launch web auth flow (works in both Chrome and Safari)
+      const redirectUrl = await this._launchWebAuthFlow(authUrl);
+      console.log('✅ Received redirect URL');
+      
+      // Extract authorization code
+      const authCode = this._extractAuthorizationCode(redirectUrl);
+      if (!authCode) {
+        throw new Error('No authorization code received');
+      }
+      
+      console.log('🎫 Authorization code received, exchanging for tokens...');
+      
+      // Exchange code for tokens
+      const tokens = await this._exchangeCodeForTokens(authCode, codeVerifier);
+      console.log('🎫 Tokens received successfully');
+      
+      // Store tokens and extract user info
+      await this._storeTokens({
+        AccessToken: tokens.access_token,
+        IdToken: tokens.id_token,
+        RefreshToken: tokens.refresh_token,
+        ExpiresIn: tokens.expires_in
+      });
+      
+      // Extract user info from ID token
+      const userInfo = await this._extractUserInfo(tokens.id_token);
+      if (!userInfo) {
+        throw new Error('Failed to extract user information from ID token');
+      }
+      
+      await this._storeUserInfo(userInfo);
+      
+      return { success: true, data: userInfo, method: 'oauth2' };
+      
+    } catch (error) {
+      console.error('❌ OAuth2 authentication failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        method: 'oauth2'
+      };
+    }
+  }
+
+  // Build OAuth2 authorization URL with PKCE
+  async _buildOAuth2AuthUrl() {
+    // Generate PKCE parameters for security
+    const codeVerifier = this._generateCodeVerifier();
+    const codeChallenge = await this._generateCodeChallenge(codeVerifier);
+    const state = this._generateRandomString(32);
+    
+    // Store state and code verifier for validation
+    await this._setStoredItem('oauth2_state', state);
+    await this._setStoredItem('oauth2_code_verifier', codeVerifier);
+    
+    const params = new URLSearchParams({
+      client_id: this.clientId,
+      response_type: 'code',
+      scope: 'email openid profile',
+      redirect_uri: this._getRedirectUri(),
+      state: state,
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256'
+    });
+    
+    const cognitoDomain = this._getCognitoDomain();
+    const authUrl = `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
+    
+    return { authUrl, codeVerifier };
+  }
+
+  // Get Cognito hosted UI domain
+  _getCognitoDomain() {
+    // Extract from config or build from region
+    // Format: https://your-domain.auth.region.amazoncognito.com
+    if (this.cognitoDomain) {
+      return this.cognitoDomain;
+    }
+    
+    // If no domain specified, we can't use OAuth2
+    throw new Error('Cognito domain not configured. OAuth2 requires a hosted UI domain.');
+  }
+
+  // Get redirect URI for OAuth2
+  _getRedirectUri() {
+    // For browser extensions, we can use chrome-extension:// or safari-extension:// URLs
+    // or a localhost URL that we control
+    return this.redirectUri || 'https://localhost:3000/auth/callback';
+  }
+
+  // Launch web authentication flow
+  async _launchWebAuthFlow(url) {
+    const extensionAPI = (typeof browser !== 'undefined') ? browser : chrome;
+    
+    if (extensionAPI && extensionAPI.identity && extensionAPI.identity.launchWebAuthFlow) {
+      // Standard browser extension identity API
+      return await extensionAPI.identity.launchWebAuthFlow({
+        url: url,
+        interactive: true
+      });
+    } else {
+      // Fallback: manual popup handling
+      return new Promise((resolve, reject) => {
+        const popup = window.open(url, 'cognito-auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
+        
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            reject(new Error('Authentication popup was closed by user'));
+          }
+        }, 1000);
+        
+        // This is a simplified implementation
+        // In production, you'd need to handle the redirect properly
+        setTimeout(() => {
+          if (!popup.closed) {
+            try {
+              const currentUrl = popup.location.href;
+              if (currentUrl && currentUrl.includes('code=')) {
+                popup.close();
+                clearInterval(checkClosed);
+                resolve(currentUrl);
+              }
+            } catch (error) {
+              // Cross-origin access error - expected during auth flow
+            }
+          }
+        }, 1000);
+      });
+    }
+  }
+
+  // Extract authorization code from redirect URL
+  _extractAuthorizationCode(url) {
+    try {
+      const urlObj = new URL(url);
+      const code = urlObj.searchParams.get('code');
+      const state = urlObj.searchParams.get('state');
+      
+      // TODO: Validate state parameter for security
+      // const storedState = await this._getStoredItem('oauth2_state');
+      // if (state !== storedState) {
+      //   throw new Error('Invalid state parameter');
+      // }
+      
+      return code;
+    } catch (error) {
+      console.error('❌ Failed to extract authorization code:', error);
+      return null;
+    }
+  }
+
+  // Exchange authorization code for tokens
+  async _exchangeCodeForTokens(authCode, codeVerifier) {
+    const cognitoDomain = this._getCognitoDomain();
+    const tokenEndpoint = `${cognitoDomain}/oauth2/token`;
+    
+    const tokenData = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: this.clientId,
+      code: authCode,
+      redirect_uri: this._getRedirectUri(),
+      code_verifier: codeVerifier
+    });
+    
+    const response = await fetch(tokenEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: tokenData
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
+    }
+    
+    return await response.json();
+  }
+
+  // Generate PKCE code verifier
+  _generateCodeVerifier() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode.apply(null, array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+  // Generate PKCE code challenge
+  async _generateCodeChallenge(verifier) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+  }
+
+  // Generate random string
+  _generateRandomString(length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   // Sign out user

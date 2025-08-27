@@ -30,7 +30,10 @@ const CONFIG = {
   COGNITO: {
     region: 'us-west-2',
     userPoolId: 'us-west-2_qJ1i9RhxD',
-    clientId: '5grdn7qhf1el0ioqb6hkelr29s'  // Fixed: was userPoolClientId
+    clientId: '5grdn7qhf1el0ioqb6hkelr29s',
+    domain: 'recipearchive', // Cognito hosted UI domain
+    cognitoDomain: 'https://recipearchive.auth.us-west-2.amazoncognito.com',
+    redirectUri: 'https://localhost:3000/auth/callback' // OAuth2 redirect
   },
 
   // Development test user (for testing only)
