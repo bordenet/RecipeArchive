@@ -38,12 +38,22 @@ function initializeContentScript() {
         console.log("📨 RecipeArchive received message:", request);
         
         if (request.action === "ping") {
-          sendResponse({ 
+          const response = { 
             status: "pong", 
             url: window.location.href,
             title: document.title 
-          });
-          return true;
+          };
+          console.log("📨 Ping response:", response);
+          
+          // Safari needs explicit response handling
+          if (typeof browser !== "undefined") {
+            // Safari - return a Promise
+            return Promise.resolve(response);
+          } else {
+            // Chrome - use callback
+            sendResponse(response);
+            return true;
+          }
         }
         
         if (request.action === "captureRecipe") {
@@ -59,18 +69,39 @@ function initializeContentScript() {
             source: "basic-test"
           };
           
-          console.log("✅ Basic recipe extracted:", basicRecipe);
-          sendResponse({ status: "success", data: basicRecipe });
+          const response = { status: "success", data: basicRecipe };
+          console.log("✅ Basic recipe extracted:", response);
+          
+          // Safari needs explicit response handling
+          if (typeof browser !== "undefined") {
+            // Safari - return a Promise
+            return Promise.resolve(response);
+          } else {
+            // Chrome - use callback
+            sendResponse(response);
+            return true;
+          }
+        }
+        
+        const unknownResponse = { status: "unknown_action", action: request.action };
+        
+        if (typeof browser !== "undefined") {
+          return Promise.resolve(unknownResponse);
+        } else {
+          sendResponse(unknownResponse);
           return true;
         }
         
-        sendResponse({ status: "unknown_action", action: request.action });
-        return true;
-        
       } catch (error) {
         console.error("❌ RecipeArchive message handling error:", error);
-        sendResponse({ status: "error", error: error.message });
-        return true;
+        const errorResponse = { status: "error", error: error.message };
+        
+        if (typeof browser !== "undefined") {
+          return Promise.resolve(errorResponse);
+        } else {
+          sendResponse(errorResponse);
+          return true;
+        }
       }
     });
     
