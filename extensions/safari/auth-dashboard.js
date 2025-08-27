@@ -19,7 +19,7 @@ class AuthDashboard {
 
   // Hide the dashboard
   hide() {
-    const dashboard = document.getElementById('authDashboard');
+    const dashboard = document.getElementById("authDashboard");
     if (dashboard) {
       dashboard.remove();
     }
@@ -34,8 +34,8 @@ class AuthDashboard {
 
   // Create dashboard UI
   createDashboardUI() {
-    const dashboard = document.createElement('div');
-    dashboard.id = 'authDashboard';
+    const dashboard = document.createElement("div");
+    dashboard.id = "authDashboard";
     dashboard.style.cssText = `
       position: fixed;
       top: 10px;
@@ -79,16 +79,16 @@ class AuthDashboard {
     document.body.appendChild(dashboard);
 
     // Event handlers
-    document.getElementById('closeDashboard').onclick = () => this.hide();
-    document.getElementById('refreshAuth').onclick = () => this.updateStatus();
-    document.getElementById('clearAuthData').onclick = () => this.clearAuthData();
+    document.getElementById("closeDashboard").onclick = () => this.hide();
+    document.getElementById("refreshAuth").onclick = () => this.updateStatus();
+    document.getElementById("clearAuthData").onclick = () => this.clearAuthData();
 
     this.updateStatus();
   }
 
   // Update dashboard status
   async updateStatus() {
-    const content = document.getElementById('authStatusContent');
+    const content = document.getElementById("authStatusContent");
     if (!content) {return;}
 
     try {
@@ -114,13 +114,13 @@ class AuthDashboard {
 
     // Configuration status
     try {
-      if (typeof CONFIG !== 'undefined') {
+      if (typeof CONFIG !== "undefined") {
         status.config = {
           available: true,
-          environment: CONFIG.ENVIRONMENT || 'unknown',
-          cognitoRegion: CONFIG.COGNITO?.region || 'not set',
-          cognitoUserPoolId: CONFIG.COGNITO?.userPoolId || 'not set',
-          cognitoClientId: CONFIG.COGNITO?.clientId ? 'set' : 'not set',
+          environment: CONFIG.ENVIRONMENT || "unknown",
+          cognitoRegion: CONFIG.COGNITO?.region || "not set",
+          cognitoUserPoolId: CONFIG.COGNITO?.userPoolId || "not set",
+          cognitoClientId: CONFIG.COGNITO?.clientId ? "set" : "not set",
           apiEndpoints: CONFIG.getCurrentAPI ? Object.keys(CONFIG.getCurrentAPI()) : []
         };
       } else {
@@ -132,7 +132,7 @@ class AuthDashboard {
 
     // Token status
     try {
-      if (typeof SafariCognitoAuth !== 'undefined' && status.config.available) {
+      if (typeof SafariCognitoAuth !== "undefined" && status.config.available) {
         const auth = new SafariCognitoAuth(CONFIG.getCognitoConfig());
 
         // Get stored tokens
@@ -141,15 +141,15 @@ class AuthDashboard {
           hasAccessToken: Boolean(tokens.accessToken),
           hasRefreshToken: Boolean(tokens.refreshToken),
           hasIdToken: Boolean(tokens.idToken),
-          expiresAt: tokens.expiresAt ? new Date(tokens.expiresAt).toISOString() : 'not set',
-          isExpired: tokens.expiresAt ? Date.now() > tokens.expiresAt : 'unknown'
+          expiresAt: tokens.expiresAt ? new Date(tokens.expiresAt).toISOString() : "not set",
+          isExpired: tokens.expiresAt ? Date.now() > tokens.expiresAt : "unknown"
         };
 
         // Get current user
         const userResult = await auth.getCurrentUser();
         status.user = {
           authenticated: userResult.success && userResult.data?.authenticated,
-          email: userResult.data?.email || 'not available',
+          email: userResult.data?.email || "not available",
           error: userResult.error || null
         };
       }
@@ -158,7 +158,7 @@ class AuthDashboard {
     }
 
     // Performance metrics
-    if (typeof window !== 'undefined' && window.authPerformanceMonitor) {
+    if (typeof window !== "undefined" && window.authPerformanceMonitor) {
       status.performance = {
         available: true,
         activeOperations: window.authPerformanceMonitor.metrics.size
@@ -166,7 +166,7 @@ class AuthDashboard {
     }
 
     // Error status
-    if (typeof window !== 'undefined' && window.authErrorHandler) {
+    if (typeof window !== "undefined" && window.authErrorHandler) {
       const diagnostics = window.authErrorHandler.getDiagnostics();
       status.errors = {
         totalErrors: diagnostics.errorCount,
@@ -180,10 +180,10 @@ class AuthDashboard {
       userAgent: `${navigator.userAgent.substring(0, 100) }...`,
       url: window.location.href,
       storage: {
-        localStorage: typeof localStorage !== 'undefined',
-        browserStorage: typeof browser !== 'undefined' && typeof browser.storage !== 'undefined'
+        localStorage: typeof localStorage !== "undefined",
+        browserStorage: typeof browser !== "undefined" && typeof browser.storage !== "undefined"
       },
-      devBypass: localStorage.getItem('recipeArchive.devBypass') === 'true'
+      devBypass: localStorage.getItem("recipeArchive.devBypass") === "true"
     };
 
     return status;
@@ -191,8 +191,8 @@ class AuthDashboard {
 
   // Format status for display
   formatStatus(status) {
-    const formatBoolean = (value) => value ? '✅' : '❌';
-    const formatValue = (value) => value || '❌ not set';
+    const formatBoolean = (value) => value ? "✅" : "❌";
+    const formatValue = (value) => value || "❌ not set";
 
     return `
       <div style="margin-bottom: 15px;">
@@ -211,7 +211,7 @@ class AuthDashboard {
         <div>Access Token: ${formatBoolean(status.tokens.hasAccessToken)}</div>
         <div>ID Token: ${formatBoolean(status.tokens.hasIdToken)}</div>
         <div>Refresh Token: ${formatBoolean(status.tokens.hasRefreshToken)}</div>
-        <div>Token Expired: ${status.tokens.isExpired ? '⚠️ Yes' : '✅ No'}</div>
+        <div>Token Expired: ${status.tokens.isExpired ? "⚠️ Yes" : "✅ No"}</div>
       </div>
 
       <div style="margin-bottom: 15px;">
@@ -230,25 +230,25 @@ class AuthDashboard {
 
   // Clear authentication data
   async clearAuthData() {
-    if (!confirm('Clear all authentication data? You will need to sign in again.')) {
+    if (!confirm("Clear all authentication data? You will need to sign in again.")) {
       return;
     }
 
     try {
-      if (typeof SafariCognitoAuth !== 'undefined' && typeof CONFIG !== 'undefined') {
+      if (typeof SafariCognitoAuth !== "undefined" && typeof CONFIG !== "undefined") {
         const auth = new SafariCognitoAuth(CONFIG.getCognitoConfig());
         await auth.signOut();
       }
 
       // Clear local storage
-      localStorage.removeItem('recipeArchive.devBypass');
+      localStorage.removeItem("recipeArchive.devBypass");
 
       // Clear error logs
-      if (typeof window !== 'undefined' && window.authErrorHandler) {
+      if (typeof window !== "undefined" && window.authErrorHandler) {
         window.authErrorHandler.clearLog();
       }
 
-      alert('Authentication data cleared successfully');
+      alert("Authentication data cleared successfully");
       this.updateStatus();
     } catch (error) {
       alert(`Error clearing auth data: ${ error.message}`);
@@ -264,12 +264,12 @@ class AuthDashboard {
 }
 
 // Make available globally
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.AuthDashboard = AuthDashboard;
 
   // Add keyboard shortcut to show dashboard (Cmd+Shift+A or Ctrl+Shift+A)
-  document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "A") {
       e.preventDefault();
 
       if (!window.authDashboardInstance) {

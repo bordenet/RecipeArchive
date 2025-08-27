@@ -35,36 +35,36 @@ class AuthErrorHandler {
 
   // Get user-friendly error message
   getUserFriendlyMessage(error) {
-    const errorType = error.__type || error.name || 'UnknownError';
+    const errorType = error.__type || error.name || "UnknownError";
 
     const errorMessages = {
-      'NotAuthorizedException': 'Invalid email or password. Please check your credentials and try again.',
-      'UserNotFoundException': 'No account found with this email address. Please sign up first.',
-      'UsernameExistsException': 'An account with this email already exists. Please sign in instead.',
-      'InvalidPasswordException': 'Password does not meet requirements. Must be at least 8 characters with uppercase, lowercase, and numbers.',
-      'CodeDeliveryFailureException': 'Could not send verification code. Please check your email address.',
-      'ExpiredCodeException': 'Verification code has expired. Please request a new code.',
-      'CodeMismatchException': 'Invalid verification code. Please check the code and try again.',
-      'LimitExceededException': 'Too many attempts. Please wait a few minutes before trying again.',
-      'NetworkError': 'Connection problem. Please check your internet connection and try again.',
-      'TimeoutError': 'Request timed out. Please try again.',
-      'TokenExpiredException': 'Your session has expired. Please sign in again.',
-      'InvalidTokenException': 'Invalid session. Please sign in again.'
+      "NotAuthorizedException": "Invalid email or password. Please check your credentials and try again.",
+      "UserNotFoundException": "No account found with this email address. Please sign up first.",
+      "UsernameExistsException": "An account with this email already exists. Please sign in instead.",
+      "InvalidPasswordException": "Password does not meet requirements. Must be at least 8 characters with uppercase, lowercase, and numbers.",
+      "CodeDeliveryFailureException": "Could not send verification code. Please check your email address.",
+      "ExpiredCodeException": "Verification code has expired. Please request a new code.",
+      "CodeMismatchException": "Invalid verification code. Please check the code and try again.",
+      "LimitExceededException": "Too many attempts. Please wait a few minutes before trying again.",
+      "NetworkError": "Connection problem. Please check your internet connection and try again.",
+      "TimeoutError": "Request timed out. Please try again.",
+      "TokenExpiredException": "Your session has expired. Please sign in again.",
+      "InvalidTokenException": "Invalid session. Please sign in again."
     };
 
-    return errorMessages[errorType] || 'An unexpected error occurred. Please try again or contact support.';
+    return errorMessages[errorType] || "An unexpected error occurred. Please try again or contact support.";
   }
 
   // Check if operation should be retried
   shouldRetry(operation, error) {
     const retryableErrors = [
-      'NetworkError',
-      'TimeoutError',
-      'InternalErrorException',
-      'ServiceUnavailableException'
+      "NetworkError",
+      "TimeoutError",
+      "InternalErrorException",
+      "ServiceUnavailableException"
     ];
 
-    const errorType = error.__type || error.name || 'UnknownError';
+    const errorType = error.__type || error.name || "UnknownError";
     const currentAttempts = this.retryAttempts.get(operation) || 0;
 
     return retryableErrors.includes(errorType) && currentAttempts < this.maxRetries;
@@ -147,20 +147,20 @@ class AuthSecurityValidator {
   validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email || typeof email !== 'string') {
-      throw new Error('Email is required');
+    if (!email || typeof email !== "string") {
+      throw new Error("Email is required");
     }
 
     if (!emailRegex.test(email)) {
-      throw new Error('Invalid email format');
+      throw new Error("Invalid email format");
     }
 
     if (email.length > 254) {
-      throw new Error('Email address too long');
+      throw new Error("Email address too long");
     }
 
     if (this.containsSuspiciousContent(email)) {
-      throw new Error('Invalid characters in email');
+      throw new Error("Invalid characters in email");
     }
 
     return true;
@@ -168,32 +168,32 @@ class AuthSecurityValidator {
 
   // Validate password security
   validatePassword(password) {
-    if (!password || typeof password !== 'string') {
-      throw new Error('Password is required');
+    if (!password || typeof password !== "string") {
+      throw new Error("Password is required");
     }
 
     if (password.length < 8) {
-      throw new Error('Password must be at least 8 characters long');
+      throw new Error("Password must be at least 8 characters long");
     }
 
     if (password.length > 128) {
-      throw new Error('Password too long');
+      throw new Error("Password too long");
     }
 
     if (!/[A-Z]/.test(password)) {
-      throw new Error('Password must contain at least one uppercase letter');
+      throw new Error("Password must contain at least one uppercase letter");
     }
 
     if (!/[a-z]/.test(password)) {
-      throw new Error('Password must contain at least one lowercase letter');
+      throw new Error("Password must contain at least one lowercase letter");
     }
 
     if (!/[0-9]/.test(password)) {
-      throw new Error('Password must contain at least one number');
+      throw new Error("Password must contain at least one number");
     }
 
     if (this.containsSuspiciousContent(password)) {
-      throw new Error('Password contains invalid characters');
+      throw new Error("Password contains invalid characters");
     }
 
     return true;
@@ -206,12 +206,12 @@ class AuthSecurityValidator {
 
   // Validate confirmation code
   validateConfirmationCode(code) {
-    if (!code || typeof code !== 'string') {
-      throw new Error('Confirmation code is required');
+    if (!code || typeof code !== "string") {
+      throw new Error("Confirmation code is required");
     }
 
     if (!/^\d{6}$/.test(code)) {
-      throw new Error('Confirmation code must be 6 digits');
+      throw new Error("Confirmation code must be 6 digits");
     }
 
     return true;
@@ -245,7 +245,7 @@ class AuthPerformanceMonitor {
       timestamp: new Date().toISOString()
     };
 
-    console.log(`Auth Performance [${operation}]: ${duration.toFixed(2)}ms - ${success ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`Auth Performance [${operation}]: ${duration.toFixed(2)}ms - ${success ? "SUCCESS" : "FAILED"}`);
 
     this.metrics.delete(operation);
     return result;
@@ -261,7 +261,7 @@ class AuthPerformanceMonitor {
 }
 
 // Make classes available globally
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.AuthErrorHandler = AuthErrorHandler;
   window.AuthSecurityValidator = AuthSecurityValidator;
   window.AuthPerformanceMonitor = AuthPerformanceMonitor;

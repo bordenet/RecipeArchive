@@ -1,32 +1,32 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const saveButton = document.getElementById('saveAuth');
-  const statusDiv = document.getElementById('status');
-  const backLink = document.getElementById('backToMain');
+document.addEventListener("DOMContentLoaded", async () => {
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const saveButton = document.getElementById("saveAuth");
+  const statusDiv = document.getElementById("status");
+  const backLink = document.getElementById("backToMain");
 
   // Load existing credentials if any
   try {
-    const stored = await chrome.storage.local.get(['username', 'password']);
+    const stored = await chrome.storage.local.get(["username", "password"]);
     if (stored.username) {usernameInput.value = stored.username;}
     if (stored.password) {passwordInput.value = stored.password;}
   } catch (error) {
-    console.error('Error loading stored credentials:', error);
+    console.error("Error loading stored credentials:", error);
   }
 
   // Save credentials
-  saveButton.addEventListener('click', async () => {
+  saveButton.addEventListener("click", async () => {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
     if (!username || !password) {
-      showStatus('Please enter both username and password', 'error');
+      showStatus("Please enter both username and password", "error");
       return;
     }
 
     try {
       saveButton.disabled = true;
-      saveButton.textContent = 'Saving...';
+      saveButton.textContent = "Saving...";
 
       // Test the credentials
       const isValid = await testCredentials(username, password);
@@ -39,26 +39,26 @@ document.addEventListener('DOMContentLoaded', async () => {
           timestamp: Date.now()
         });
 
-        showStatus('Cognito authentication successful!', 'success');
+        showStatus("Cognito authentication successful!", "success");
         setTimeout(() => {
-          window.location.href = 'popup.html';
+          window.location.href = "popup.html";
         }, 1500);
       } else {
-        showStatus('Invalid credentials. Please try again.', 'error');
+        showStatus("Invalid credentials. Please try again.", "error");
       }
     } catch (error) {
-      console.error('Error saving credentials:', error);
-      showStatus(`Error saving credentials: ${ error.message}`, 'error');
+      console.error("Error saving credentials:", error);
+      showStatus(`Error saving credentials: ${ error.message}`, "error");
     } finally {
       saveButton.disabled = false;
-      saveButton.textContent = 'Save Credentials';
+      saveButton.textContent = "Save Credentials";
     }
   });
 
   // Back to main
-  backLink.addEventListener('click', (e) => {
+  backLink.addEventListener("click", (e) => {
     e.preventDefault();
-    window.location.href = 'popup.html';
+    window.location.href = "popup.html";
   });
 
   function showStatus(message, type) {
@@ -74,14 +74,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await cognitoAuth.signIn(username, password);
 
       if (result.success) {
-        console.log('Cognito authentication successful');
+        console.log("Cognito authentication successful");
         return true;
       }
-        console.error('Cognito authentication failed:', result.error);
+        console.error("Cognito authentication failed:", result.error);
         return false;
 
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error("Authentication error:", error);
       return false;
     }
   }
@@ -92,9 +92,9 @@ window.AuthUtils = {
   async getStoredCredentials() {
     try {
       const stored = await chrome.storage.local.get([
-        'username',
-        'password',
-        'authConfigured',
+        "username",
+        "password",
+        "authConfigured",
       ]);
       return {
         username: stored.username || null,
@@ -102,7 +102,7 @@ window.AuthUtils = {
         isConfigured: Boolean(stored.authConfigured),
       };
     } catch (error) {
-      console.error('Error getting stored credentials:', error);
+      console.error("Error getting stored credentials:", error);
       return { username: null, password: null, isConfigured: false };
     }
   },
@@ -110,13 +110,13 @@ window.AuthUtils = {
   async clearCredentials() {
     try {
       await chrome.storage.local.remove([
-        'username',
-        'password',
-        'authConfigured',
+        "username",
+        "password",
+        "authConfigured",
       ]);
       return true;
     } catch (error) {
-      console.error('Error clearing credentials:', error);
+      console.error("Error clearing credentials:", error);
       return false;
     }
   },

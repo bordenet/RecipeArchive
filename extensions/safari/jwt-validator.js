@@ -9,9 +9,9 @@ class JWTValidator {
   // Parse JWT without verification (for extracting header/payload)
   parseJWT(token) {
     try {
-      const parts = token.split('.');
+      const parts = token.split(".");
       if (parts.length !== 3) {
-        throw new Error('Invalid JWT format');
+        throw new Error("Invalid JWT format");
       }
 
       const header = JSON.parse(this.base64UrlDecode(parts[0]));
@@ -32,49 +32,49 @@ class JWTValidator {
 
       // Basic structure validation
       if (!header.alg || !header.typ) {
-        throw new Error('Invalid JWT header');
+        throw new Error("Invalid JWT header");
       }
 
-      if (header.typ !== 'JWT') {
-        throw new Error('Invalid token type');
+      if (header.typ !== "JWT") {
+        throw new Error("Invalid token type");
       }
 
       // Check required claims
       if (!payload.sub) {
-        throw new Error('Missing subject claim');
+        throw new Error("Missing subject claim");
       }
 
       if (!payload.iat) {
-        throw new Error('Missing issued at claim');
+        throw new Error("Missing issued at claim");
       }
 
       // Check expiration
       if (payload.exp) {
         if (now > payload.exp + this.clockSkewSeconds) {
-          throw new Error('Token expired');
+          throw new Error("Token expired");
         }
       }
 
       // Check not before
       if (payload.nbf) {
         if (now < payload.nbf - this.clockSkewSeconds) {
-          throw new Error('Token not yet valid');
+          throw new Error("Token not yet valid");
         }
       }
 
       // Check issuer if provided
       if (options.issuer && payload.iss !== options.issuer) {
-        throw new Error('Invalid issuer');
+        throw new Error("Invalid issuer");
       }
 
       // Check audience if provided
       if (options.audience) {
         if (Array.isArray(payload.aud)) {
           if (!payload.aud.includes(options.audience)) {
-            throw new Error('Invalid audience');
+            throw new Error("Invalid audience");
           }
         } else if (payload.aud !== options.audience) {
-          throw new Error('Invalid audience');
+          throw new Error("Invalid audience");
         }
       }
 
@@ -102,7 +102,7 @@ class JWTValidator {
 
       const now = Math.floor(Date.now() / 1000);
       return (payload.exp - now) <= thresholdSeconds;
-    } catch (error) {
+    } catch {
       return true; // Treat invalid tokens as expired
     }
   }
@@ -143,17 +143,17 @@ class JWTValidator {
     // Additional Cognito-specific validations
     const { payload } = validation;
 
-    if (payload.token_use !== 'access') {
+    if (payload.token_use !== "access") {
       return {
         valid: false,
-        error: 'Invalid token use - expected access token'
+        error: "Invalid token use - expected access token"
       };
     }
 
     if (!payload.client_id || payload.client_id !== expectedClientId) {
       return {
         valid: false,
-        error: 'Invalid client ID'
+        error: "Invalid client ID"
       };
     }
 
@@ -173,17 +173,17 @@ class JWTValidator {
     // Additional Cognito-specific validations
     const { payload } = validation;
 
-    if (payload.token_use !== 'id') {
+    if (payload.token_use !== "id") {
       return {
         valid: false,
-        error: 'Invalid token use - expected ID token'
+        error: "Invalid token use - expected ID token"
       };
     }
 
     if (!payload.aud || payload.aud !== expectedClientId) {
       return {
         valid: false,
-        error: 'Invalid audience'
+        error: "Invalid audience"
       };
     }
 
@@ -193,9 +193,9 @@ class JWTValidator {
   // Base64 URL decode helper
   base64UrlDecode(str) {
     // Add padding if needed
-    str += '='.repeat((4 - str.length % 4) % 4);
+    str += "=".repeat((4 - str.length % 4) % 4);
     // Replace URL-safe characters
-    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    str = str.replace(/-/g, "+").replace(/_/g, "/");
     return atob(str);
   }
 
@@ -204,7 +204,7 @@ class JWTValidator {
     const errors = [];
 
     if (!tokens.accessToken) {
-      errors.push('Missing access token');
+      errors.push("Missing access token");
     } else {
       const accessValidation = this.validateJWT(tokens.accessToken);
       if (!accessValidation.valid) {
@@ -220,7 +220,7 @@ class JWTValidator {
     }
 
     if (!tokens.refreshToken) {
-      errors.push('Missing refresh token');
+      errors.push("Missing refresh token");
     }
 
     return {
@@ -231,7 +231,7 @@ class JWTValidator {
 }
 
 // Export for both environments
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = JWTValidator;
 } else {
   window.JWTValidator = JWTValidator;

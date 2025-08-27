@@ -2,7 +2,7 @@
 // Safe initialization with error handling
 
 // Prevent duplicate injection
-if (typeof window.RecipeArchiveContentScript !== 'undefined') {
+if (typeof window.RecipeArchiveContentScript !== "undefined") {
   console.log("🎯 RecipeArchive content script already loaded, skipping");
 } else {
   window.RecipeArchiveContentScript = true;
@@ -26,7 +26,7 @@ function initializeContentScript() {
     console.log("✅ RecipeArchive content script initialized");
     
     // Remove any existing listeners to prevent duplicates
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
       // Chrome doesn't have a removeListener method, so we just ensure we don't add duplicates
     }
     

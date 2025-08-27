@@ -22,15 +22,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function initializeExtensionAPI() {
     // Cross-browser compatibility for Safari
-    if (typeof browser !== 'undefined') {
+    if (typeof browser !== "undefined") {
         extensionAPI = browser;
-    } else if (typeof chrome !== 'undefined') {
+    } else if (typeof chrome !== "undefined") {
         extensionAPI = chrome;
     }
     
     if (!extensionAPI) {
-        console.error('No extension API available');
-        showStatus('Extension API not available', '#ffebee');
+        console.error("No extension API available");
+        showStatus("Extension API not available", "#ffebee");
         return false;
     }
     
@@ -40,12 +40,12 @@ function initializeExtensionAPI() {
 function checkAuthenticationStatus() {
     // Check if user is signed in (from storage or session)
     // TODO: Replace with real AWS Cognito check
-    const storedAuth = localStorage.getItem('recipeArchive.auth');
+    const storedAuth = localStorage.getItem("recipeArchive.auth");
     if (storedAuth) {
         try {
             currentUser = JSON.parse(storedAuth);
             isSignedIn = true;
-        } catch(e) {
+        } catch {
             isSignedIn = false;
         }
     }
@@ -64,7 +64,7 @@ function renderUI() {
                 <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
             </div>
             <div style="margin-bottom: 15px; padding: 10px; background: #e8f5e8; border-radius: 8px; font-size: 12px;">
-                ✅ Signed in as ${currentUser ? currentUser.email : 'user'}
+                ✅ Signed in as ${currentUser ? currentUser.email : "user"}
             </div>
             <button id="capture" style="width: 100%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
             <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 12px; display: none;"></div>
@@ -142,7 +142,7 @@ function handleSignIn() {
             // Simulate successful sign in
             currentUser = { email: email };
             isSignedIn = true;
-            localStorage.setItem('recipeArchive.auth', JSON.stringify(currentUser));
+            localStorage.setItem("recipeArchive.auth", JSON.stringify(currentUser));
             renderUI();
             showStatus("✅ Signed in successfully", "#e8f5e8");
         } else {
@@ -154,7 +154,7 @@ function handleSignIn() {
 function signOut() {
     isSignedIn = false;
     currentUser = null;
-    localStorage.removeItem('recipeArchive.auth');
+    localStorage.removeItem("recipeArchive.auth");
     renderUI();
 }
 
