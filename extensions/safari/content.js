@@ -19,6 +19,8 @@ if (typeof window.RecipeArchiveContentScript !== "undefined") {
   } catch (error) {
     console.error("❌ RecipeArchive content script initialization error:", error);
   }
+  
+  console.log("🎯 RecipeArchive content script loaded");
 }
 
 function initializeContentScript() {
@@ -91,5 +93,3 @@ function initializeContentScript() {
     console.error("❌ RecipeArchive initialization error:", error);
   }
 }
-
-console.log("🎯 RecipeArchive content script loaded");
