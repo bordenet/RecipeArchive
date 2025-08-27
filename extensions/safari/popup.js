@@ -1,8 +1,8 @@
 // RecipeArchive Safari popup with authentication-first UX
 
 // State management
-let isSignedIn = false; // eslint-disable-line no-unused-vars
-let currentUser = null; // eslint-disable-line no-unused-vars
+let isSignedIn = false;
+let currentUser = null;
 let extensionAPI = null;
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -188,8 +188,8 @@ async function captureRecipe() {
             // Safari Web Extensions: Use async/await pattern that works with both Promise and callback
             try {
                 const pingResponse = await new Promise((resolve, reject) => {
-                    // Safari Web Extensions: Use background script to route messages
-                    extensionAPI.runtime.sendMessage({action: "pingContent"}, (response) => {
+                    // Safari Web Extensions: Use background script routing
+                    extensionAPI.runtime.sendMessage({action: "ping"}, (response) => {
                         if (extensionAPI.runtime.lastError) {
                             reject(extensionAPI.runtime.lastError);
                         } else {
@@ -258,7 +258,6 @@ async function sendCaptureMessage(tabId) {
     
     try {
         const response = await new Promise((resolve, reject) => {
-            // Safari Web Extensions: Use background script to route messages
             extensionAPI.runtime.sendMessage({action: "captureRecipe"}, (response) => {
                 if (extensionAPI.runtime.lastError) {
                     reject(extensionAPI.runtime.lastError);
