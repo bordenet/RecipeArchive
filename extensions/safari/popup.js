@@ -259,10 +259,10 @@ async function sendToBackend(recipeData) {
         
         // Get current API configuration
         const apiConfig = CONFIG && CONFIG.getCurrentAPI ? CONFIG.getCurrentAPI() : {
-            recipes: "http://localhost:8082/api/recipes"
+            recipes: "http://localhost:8081/api/recipes"
         };
         
-        const response = await fetch(apiConfig.recipes || "http://localhost:8082/api/recipes", {
+        const response = await fetch(apiConfig.recipes || "http://localhost:8081/api/recipes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
