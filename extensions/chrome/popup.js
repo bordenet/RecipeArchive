@@ -1,5 +1,4 @@
 // RecipeArchive popup with full backend integration
-console.log("RecipeArchive popup loading");
 
 // State management
 let isSignedIn = false;
@@ -19,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function() {
 function checkAuthenticationStatus() {
     // Check if user is signed in (from storage or session)
     // For now, simulate checking - replace with real AWS Cognito check
-    const storedAuth = localStorage.getItem('recipeArchive.auth');
+    const storedAuth = localStorage.getItem("recipeArchive.auth");
     if (storedAuth) {
         try {
             currentUser = JSON.parse(storedAuth);
@@ -43,7 +42,7 @@ function renderUI() {
                 <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
             </div>
             <div style="margin-bottom: 15px; padding: 10px; background: #e8f5e8; border-radius: 4px; font-size: 12px;">
-                ✅ Signed in as ${currentUser ? currentUser.email : 'user'}
+                ✅ Signed in as ${currentUser ? currentUser.email : "user"}
             </div>
             <button id="capture" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
             <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 12px; display: none;"></div>
@@ -121,7 +120,7 @@ function handleSignIn() {
             // Simulate successful sign in
             currentUser = { email: email };
             isSignedIn = true;
-            localStorage.setItem('recipeArchive.auth', JSON.stringify(currentUser));
+            localStorage.setItem("recipeArchive.auth", JSON.stringify(currentUser));
             renderUI();
             showStatus("✅ Signed in successfully", "#e8f5e8");
         } else {
@@ -133,7 +132,7 @@ function handleSignIn() {
 function signOut() {
     isSignedIn = false;
     currentUser = null;
-    localStorage.removeItem('recipeArchive.auth');
+    localStorage.removeItem("recipeArchive.auth");
     renderUI();
 }
 
@@ -170,8 +169,8 @@ function captureRecipe() {
                     console.log("✅ Recipe data received:", response);
                     showStatus("✅ Recipe captured: " + response.data.title, "#e8f5e8");
                     
-                    // Send to backend
-                    sendToBackend(response.data);
+                    // Send to both development and AWS backends
+                    sendToBackends(response.data);
                 } else {
                     console.error("❌ Capture failed:", response);
                     showStatus("❌ Capture failed: " + (response ? response.message : "No response"), "#ffebee");
@@ -192,11 +191,41 @@ function showStatus(message, backgroundColor) {
     statusDiv.style.display = "block";
 }
 
-async function sendToBackend(recipeData) {
+async function sendToBackends(recipeData) {
+    // Show initial status
+    showStatus("Saving recipe...", "#fff3cd");
+    
     try {
-        console.log("📤 Sending to backend:", recipeData);
+        // First, save to development backend for testing
+        const devResult = await sendToDevBackend(recipeData);
         
-        const response = await fetch("http://localhost:8080/api/recipes", {
+        if (devResult.success) {
+            // If dev backend succeeds, also send to AWS production
+            showStatus("Saving to AWS...", "#e7f3ff");
+            const awsResult = await sendToAWSBackend(recipeData);
+            
+            if (awsResult.success) {
+                showStatus("✅ Saved to both dev and AWS! Recipe ID: " + devResult.id, "#d4edda");
+            } else {
+                showStatus("✅ Saved to dev backend. AWS: " + awsResult.error, "#fff3cd");
+            }
+        } else {
+            showStatus("❌ Failed to save: " + devResult.error, "#f8d7da");
+        }
+    } catch (error) {
+        console.error("❌ Backend error:", error);
+        showStatus("❌ Save error: " + error.message, "#f8d7da");
+    }
+}
+
+async function sendToDevBackend(recipeData) {
+    try {
+        // Get current API configuration for development
+        const apiConfig = CONFIG && CONFIG.getCurrentAPI ? CONFIG.getCurrentAPI() : {
+            recipes: "http://localhost:8081/api/recipes"
+        };
+        
+        const response = await fetch(apiConfig.recipes || "http://localhost:8081/api/recipes", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -214,14 +243,66 @@ async function sendToBackend(recipeData) {
         
         if (response.ok) {
             const result = await response.json();
-            console.log("✅ Backend success:", result);
-            showStatus("✅ Saved to backend! Recipe ID: " + (result.recipe ? result.recipe.id.substring(0, 8) : "unknown"), "#d4edda");
+            return {
+                success: true,
+                id: result.id || "unknown",
+                result: result
+            };
         } else {
             const errorText = await response.text();
-            throw new Error("Backend error " + response.status + ": " + errorText);
+            return {
+                success: false,
+                error: "Dev backend error " + response.status + ": " + errorText
+            };
         }
     } catch (error) {
-        console.error("❌ Backend error:", error);
-        showStatus("⚠️ Backend error: " + error.message, "#fff3cd");
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+async function sendToAWSBackend(recipeData) {
+    try {
+        // Get AWS production endpoints from config
+        const awsEndpoint = CONFIG.API.production.recipes;
+        
+        const response = await fetch(awsEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + (currentUser ? currentUser.token : "dev-token")
+            },
+            body: JSON.stringify({
+                title: recipeData.title || "Unknown Recipe",
+                description: "Captured from " + recipeData.url,
+                ingredients: recipeData.ingredients || [],
+                instructions: recipeData.steps || [],
+                tags: ["chrome-extension", "production"],
+                source: "chrome-extension",
+                capturedAt: new Date().toISOString()
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            return {
+                success: true,
+                id: result.id || result.recipeId || "unknown",
+                result: result
+            };
+        } else {
+            const errorText = await response.text();
+            return {
+                success: false,
+                error: "AWS error " + response.status + ": " + errorText
+            };
+        }
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
     }
 }

@@ -16,6 +16,9 @@ module.exports = [
         fetch: "readonly",
         URL: "readonly",
         URLSearchParams: "readonly",
+        setTimeout: "readonly",
+        // Extension-specific globals
+        CONFIG: "readonly",
         // Node.js globals for config files
         module: "readonly",
         exports: "readonly",

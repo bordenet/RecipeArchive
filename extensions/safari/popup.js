@@ -1,5 +1,4 @@
 // RecipeArchive Safari popup with authentication-first UX
-console.log("RecipeArchive Safari popup loading");
 
 // State management
 let isSignedIn = false;
@@ -24,10 +23,8 @@ function initializeExtensionAPI() {
     // Safari Web Extensions use the browser API, not chrome API
     if (typeof browser !== "undefined") {
         extensionAPI = browser;
-        console.log("🦏 Using Safari browser API");
     } else if (typeof chrome !== "undefined") {
         extensionAPI = chrome;
-        console.log("🌐 Using Chrome API");
     }
     
     if (!extensionAPI) {
@@ -74,7 +71,6 @@ function renderUI() {
         
         // Attach event listeners for signed-in state
         document.getElementById("capture").onclick = function() {
-            console.log("🎯 Capture button clicked!");
             captureRecipe();
         };
         
@@ -162,48 +158,31 @@ function signOut() {
 }
 
 function captureRecipe() {
-    console.log("🎯 captureRecipe() function called!");
-    console.log("🎯 extensionAPI available:", !!extensionAPI);
-    
     if (!extensionAPI) {
-        console.log("❌ Extension API not available");
         showStatus("Extension API not available", "#ffebee");
         return;
     }
     
-    console.log("🎯 Setting status to 'Capturing recipe...'");
     showStatus("Capturing recipe...", "#f0f0f0");
     
-    console.log("🎯 Calling extensionAPI.tabs.query...");
     extensionAPI.tabs.query({active: true, currentWindow: true}, async function(tabs) {
-        console.log("🎯 tabs.query callback called, tabs:", tabs);
         if (!tabs || tabs.length === 0) {
-            console.log("❌ No active tab found");
             showStatus("❌ No active tab found", "#ffebee");
             return;
         }
         
         const tab = tabs[0];
-        console.log("🍳 Capturing recipe from:", tab.url);
         
         try {
             // Check if content script is already loaded before injecting
-            console.log("🔍 Checking for existing content script...");
-            
-            // Try callback-based approach for better Safari compatibility
             extensionAPI.tabs.sendMessage(tab.id, {action: "ping"}, (pingResponse) => {
-                console.log("🔧 Extension runtime error:", extensionAPI.runtime.lastError);
-                console.log("🔧 Ping response received:", pingResponse);
-                
                 if (extensionAPI.runtime.lastError || !pingResponse) {
-                    console.log("📥 Content script not loaded, injecting...", extensionAPI.runtime.lastError);
                     // Content script not loaded, inject it
                     if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
                         extensionAPI.scripting.executeScript({
                             target: { tabId: tab.id },
                             files: ["content.js"]
                         }).then(() => {
-                            console.log("✅ Content script injected");
                             // Wait a moment for script to initialize
                             setTimeout(() => sendCaptureMessage(tab.id), 500);
                         }).catch(error => {
@@ -214,7 +193,6 @@ function captureRecipe() {
                         showStatus("❌ Scripting API not available", "#ffebee");
                     }
                 } else {
-                    console.log("✅ Content script already loaded, ping response:", pingResponse);
                     sendCaptureMessage(tab.id);
                 }
             });
@@ -228,12 +206,7 @@ function captureRecipe() {
 
 function sendCaptureMessage(tabId) {
     // Send message to content script - using callback for Safari compatibility
-    console.log("📤 Sending capture message to tab:", tabId);
-    
     extensionAPI.tabs.sendMessage(tabId, {action: "captureRecipe"}, (response) => {
-        console.log("🔧 Extension runtime error:", extensionAPI.runtime.lastError);
-        console.log("📨 Response received:", response);
-        
         if (extensionAPI.runtime.lastError) {
             console.error("❌ Message sending failed:", extensionAPI.runtime.lastError);
             showStatus("❌ Message failed: " + extensionAPI.runtime.lastError.message, "#ffebee");
@@ -241,13 +214,11 @@ function sendCaptureMessage(tabId) {
         }
         
         if (response && response.status === "success") {
-            console.log("✅ Recipe data received:", response);
             showStatus("✅ Recipe captured: " + response.data.title, "#e8f5e8");
             
-            // Send to backend
-            sendToBackend(response.data);
+            // Send to both development and AWS backends
+            sendToBackends(response.data);
         } else {
-            console.error("❌ Capture failed:", response);
             showStatus("❌ Capture failed: " + (response ? (response.message || "Invalid response") : "No response"), "#ffebee");
         }
     });
@@ -262,11 +233,36 @@ function showStatus(message, backgroundColor) {
     }
 }
 
-async function sendToBackend(recipeData) {
+async function sendToBackends(recipeData) {
+    // Show initial status
+    showStatus("Saving recipe...", "#fff3cd");
+    
     try {
-        console.log("📤 Sending to backend:", recipeData);
+        // First, save to development backend for testing
+        const devResult = await sendToDevBackend(recipeData);
         
-        // Get current API configuration
+        if (devResult.success) {
+            // If dev backend succeeds, also send to AWS production
+            showStatus("Saving to AWS...", "#e7f3ff");
+            const awsResult = await sendToAWSBackend(recipeData);
+            
+            if (awsResult.success) {
+                showStatus("✅ Saved to both dev and AWS! Recipe ID: " + devResult.id, "#d4edda");
+            } else {
+                showStatus("✅ Saved to dev backend. AWS: " + awsResult.error, "#fff3cd");
+            }
+        } else {
+            showStatus("❌ Failed to save: " + devResult.error, "#f8d7da");
+        }
+    } catch (error) {
+        console.error("❌ Backend error:", error);
+        showStatus("❌ Save error: " + error.message, "#f8d7da");
+    }
+}
+
+async function sendToDevBackend(recipeData) {
+    try {
+        // Get current API configuration for development
         const apiConfig = CONFIG && CONFIG.getCurrentAPI ? CONFIG.getCurrentAPI() : {
             recipes: "http://localhost:8081/api/recipes"
         };
@@ -289,14 +285,66 @@ async function sendToBackend(recipeData) {
         
         if (response.ok) {
             const result = await response.json();
-            console.log("✅ Backend success:", result);
-            showStatus("✅ Saved to backend! Recipe ID: " + (result.recipe ? result.recipe.id.substring(0, 8) : "unknown"), "#d4edda");
+            return {
+                success: true,
+                id: result.id || "unknown",
+                result: result
+            };
         } else {
             const errorText = await response.text();
-            throw new Error("Backend error " + response.status + ": " + errorText);
+            return {
+                success: false,
+                error: "Dev backend error " + response.status + ": " + errorText
+            };
         }
     } catch (error) {
-        console.error("❌ Backend error:", error);
-        showStatus("⚠️ Backend error: " + error.message, "#fff3cd");
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+async function sendToAWSBackend(recipeData) {
+    try {
+        // Get AWS production endpoints from config
+        const awsEndpoint = CONFIG.API.production.recipes;
+        
+        const response = await fetch(awsEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + (currentUser ? currentUser.token : "dev-token")
+            },
+            body: JSON.stringify({
+                title: recipeData.title || "Unknown Recipe",
+                description: "Captured from " + recipeData.url,
+                ingredients: recipeData.ingredients || [],
+                instructions: recipeData.steps || [],
+                tags: ["safari-extension", "production"],
+                source: "safari-extension",
+                capturedAt: new Date().toISOString()
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            return {
+                success: true,
+                id: result.id || result.recipeId || "unknown",
+                result: result
+            };
+        } else {
+            const errorText = await response.text();
+            return {
+                success: false,
+                error: "AWS error " + response.status + ": " + errorText
+            };
+        }
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
     }
 }
