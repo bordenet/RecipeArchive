@@ -211,15 +211,15 @@ async function captureRecipe() {
                     console.log("✅ Content script already loaded, sending capture message");
                     await sendCaptureMessage(tab.id);
                 } else {
-                    console.log("🔧 Content script not loaded, injecting...");
-                    injectContentScript(tab.id);
+                    console.log("🔧 Safari Web Extensions: Trying direct recipe capture");
+                    await captureRecipeDirectly(tab.id);
                 }
             } catch (error) {
                 console.log("📥 Ping error:", error);
                 pingResponded = true;
                 clearTimeout(pingTimeout);
-                console.log("🔧 Content script not loaded, injecting...");
-                injectContentScript(tab.id);
+                console.log("🔧 Safari Web Extensions: Trying direct recipe capture as fallback");
+                await captureRecipeDirectly(tab.id);
             }
             
         } catch (error) {
@@ -244,6 +244,152 @@ function injectContentScript(tabId) {
         });
     } else {
         showStatus("❌ Scripting API not available", "#ffebee");
+    }
+}
+
+async function captureRecipeDirectly(tabId) {
+    console.log("🔧 Safari Web Extensions: Direct recipe capture starting");
+    
+    try {
+        const result = await extensionAPI.scripting.executeScript({
+            target: { tabId: tabId },
+            func: function() {
+                // Copy the recipe extraction functions from content script
+                function extractRecipeFromPage() {
+                    const url = window.location.href;
+                    console.log("🔍 Direct extraction from:", url);
+                    
+                    // Try JSON-LD first (works for most modern recipe sites)
+                    const jsonLdRecipe = extractRecipeFromJsonLd();
+                    if (jsonLdRecipe) {
+                        console.log("✅ Found JSON-LD recipe data");
+                        return jsonLdRecipe;
+                    }
+                    
+                    // Site-specific extractors
+                    if (url.includes('smittenkitchen.com')) {
+                        return extractSmittenKitchenRecipe();
+                    }
+                    
+                    // Generic fallback
+                    return {
+                        title: document.title || "Unknown Recipe",
+                        url: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        ingredients: [],
+                        steps: [],
+                        source: "safari-direct-fallback"
+                    };
+                }
+                
+                function extractRecipeFromJsonLd() {
+                    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+                    
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const jsonData = JSON.parse(script.textContent);
+                            let recipeData = null;
+                            
+                            if (jsonData['@type'] === 'Recipe') {
+                                recipeData = jsonData;
+                            } else if (Array.isArray(jsonData)) {
+                                recipeData = jsonData.find(item => item && item['@type'] === 'Recipe');
+                            } else if (jsonData['@graph']) {
+                                recipeData = jsonData['@graph'].find(item => item && item['@type'] === 'Recipe');
+                            }
+                            
+                            if (recipeData && recipeData.name) {
+                                const ingredients = recipeData.recipeIngredient 
+                                    ? [{ title: null, items: recipeData.recipeIngredient }]
+                                    : [];
+                                
+                                let steps = [];
+                                if (recipeData.recipeInstructions) {
+                                    const stepItems = recipeData.recipeInstructions
+                                        .map(instruction => {
+                                            if (typeof instruction === 'string') return instruction;
+                                            if (instruction.text) return instruction.text;
+                                            if (instruction.name) return instruction.name;
+                                            return '';
+                                        })
+                                        .filter(Boolean);
+                                    
+                                    if (stepItems.length > 0) {
+                                        steps = [{ title: null, items: stepItems }];
+                                    }
+                                }
+                                
+                                return {
+                                    title: recipeData.name,
+                                    url: window.location.href,
+                                    timestamp: new Date().toISOString(),
+                                    ingredients,
+                                    steps,
+                                    servingSize: recipeData.recipeYield || recipeData.yield || null,
+                                    time: recipeData.totalTime || recipeData.cookTime || recipeData.prepTime || null,
+                                    photos: recipeData.image ? (Array.isArray(recipeData.image) ? recipeData.image : [recipeData.image]) : [],
+                                    source: 'safari-direct-json-ld'
+                                };
+                            }
+                        } catch (e) {
+                            console.log('JSON-LD parsing failed:', e.message);
+                        }
+                    }
+                    return null;
+                }
+                
+                function extractSmittenKitchenRecipe() {
+                    console.log("🍳 Direct Smitten Kitchen extraction...");
+                    
+                    const title = document.querySelector('.entry-title, h1')?.textContent?.trim() || document.title;
+                    
+                    // Extract ingredients
+                    const ingredientElements = document.querySelectorAll('.recipe-ingredients li, .recipe-summary ul li');
+                    const ingredients = Array.from(ingredientElements)
+                        .map(el => el.textContent?.trim())
+                        .filter(text => text && text.length > 2);
+                    
+                    // Extract steps  
+                    const stepElements = document.querySelectorAll('.recipe-instructions li, .recipe-instructions ol li');
+                    const steps = Array.from(stepElements)
+                        .map(el => el.textContent?.trim())
+                        .filter(text => text && text.length > 10);
+                    
+                    return {
+                        title,
+                        url: window.location.href,
+                        timestamp: new Date().toISOString(),
+                        ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
+                        steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
+                        source: 'safari-direct-smitten-kitchen'
+                    };
+                }
+                
+                // Execute the extraction
+                return extractRecipeFromPage();
+            }
+        });
+        
+        if (result && result[0] && result[0].result) {
+            const recipeData = result[0].result;
+            console.log("✅ Direct recipe extraction result:", recipeData);
+            
+            const response = { status: "success", data: recipeData };
+            
+            if (recipeData && (recipeData.ingredients?.length > 0 || recipeData.title)) {
+                showStatus("✅ Recipe captured: " + recipeData.title, "#e8f5e8");
+                sendToBackends(recipeData);
+            } else {
+                showStatus("⚠️ Limited recipe data found", "#fff3cd");
+                sendToBackends(recipeData);
+            }
+        } else {
+            showStatus("❌ Direct capture failed", "#ffebee");
+        }
+        
+    } catch (error) {
+        console.error("❌ Direct recipe capture error:", error);
+        showStatus("❌ Direct capture error: " + error.message, "#ffebee");
     }
 }
 
