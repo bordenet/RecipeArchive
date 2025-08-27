@@ -1,4 +1,5 @@
-// RecipeArchive popup with full backend integration
+/* eslint-env browser */
+// RecipeArchive Chrome Extension Popup popup with full backend integration
 
 // State management
 let isSignedIn = false;
@@ -122,7 +123,7 @@ async function handleSignIn() {
         // For now, use the provided test credentials for AWS Cognito
         if (email === "mattbordenet@hotmail.com" && password === "Recipe123") {
             // Create a properly formatted JWT-like mock token (3 parts separated by dots)
-            const header = btoa('{"alg":"HS256","typ":"JWT"}');
+            const header = btoa("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
             const payload = btoa(`{"sub":"${email}","exp":${Math.floor(Date.now()/1000) + 3600},"iat":${Math.floor(Date.now()/1000)}}`);
             const signature = btoa("mock-signature-" + Date.now());
             const mockJWT = `${header}.${payload}.${signature}`;
@@ -382,8 +383,8 @@ async function sendToAWSBackend(recipeData) {
         // Use proper AWS API authentication format (JWT Bearer token)
         console.log("🔧 Using Bearer token authentication for AWS API");
         console.log("🔧 Full token for debugging:", userToken);
-        console.log("🔧 Token parts:", userToken.split('.').length);
-        console.log("🔧 Token header:", userToken.split('.')[0] ? atob(userToken.split('.')[0]) : 'no header');
+        console.log("🔧 Token parts:", userToken.split(".").length);
+        console.log("🔧 Token header:", userToken.split(".")[0] ? atob(userToken.split(".")[0]) : "no header");
         
         const response = await fetch(awsAPI.recipes, {
             method: "POST",

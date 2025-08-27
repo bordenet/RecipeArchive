@@ -162,7 +162,7 @@ async function handleSignIn() {
         // For now, use the provided test credentials for AWS Cognito
         if (email === "mattbordenet@hotmail.com" && password === "Recipe123") {
             // Create a properly formatted JWT-like mock token (3 parts separated by dots)
-            const header = btoa('{"alg":"HS256","typ":"JWT"}');
+            const header = btoa("{\"alg\":\"HS256\",\"typ\":\"JWT\"}");
             const payload = btoa(`{"sub":"${email}","exp":${Math.floor(Date.now()/1000) + 3600},"iat":${Math.floor(Date.now()/1000)}}`);
             const signature = btoa("mock-signature-" + Date.now());
             const mockJWT = `${header}.${payload}.${signature}`;
@@ -212,7 +212,7 @@ function signOut() {
     renderUI();
 }
 
-function forceAuthRefresh() {
+function forceAuthRefresh() { // eslint-disable-line no-unused-vars
     console.log("🔧 Forcing auth refresh - clearing cached tokens");
     localStorage.removeItem("recipeArchive.auth");
     isSignedIn = false;
@@ -330,7 +330,7 @@ async function captureRecipeDirectly(tabId) {
                     }
                     
                     // Site-specific extractors
-                    if (url.includes('smittenkitchen.com')) {
+                    if (url.includes("smittenkitchen.com")) {
                         return extractSmittenKitchenRecipe();
                     }
                     
@@ -346,19 +346,19 @@ async function captureRecipeDirectly(tabId) {
                 }
                 
                 function extractRecipeFromJsonLd() {
-                    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+                    const jsonLdScripts = document.querySelectorAll("script[type=\"application/ld+json\"]");
                     
                     for (const script of jsonLdScripts) {
                         try {
                             const jsonData = JSON.parse(script.textContent);
                             let recipeData = null;
                             
-                            if (jsonData['@type'] === 'Recipe') {
+                            if (jsonData["@type"] === "Recipe") {
                                 recipeData = jsonData;
                             } else if (Array.isArray(jsonData)) {
-                                recipeData = jsonData.find(item => item && item['@type'] === 'Recipe');
-                            } else if (jsonData['@graph']) {
-                                recipeData = jsonData['@graph'].find(item => item && item['@type'] === 'Recipe');
+                                recipeData = jsonData.find(item => item && item["@type"] === "Recipe");
+                            } else if (jsonData["@graph"]) {
+                                recipeData = jsonData["@graph"].find(item => item && item["@type"] === "Recipe");
                             }
                             
                             if (recipeData && recipeData.name) {
@@ -370,10 +370,10 @@ async function captureRecipeDirectly(tabId) {
                                 if (recipeData.recipeInstructions) {
                                     const stepItems = recipeData.recipeInstructions
                                         .map(instruction => {
-                                            if (typeof instruction === 'string') return instruction;
+                                            if (typeof instruction === "string") return instruction;
                                             if (instruction.text) return instruction.text;
                                             if (instruction.name) return instruction.name;
-                                            return '';
+                                            return "";
                                         })
                                         .filter(Boolean);
                                     
@@ -391,11 +391,11 @@ async function captureRecipeDirectly(tabId) {
                                     servingSize: recipeData.recipeYield || recipeData.yield || null,
                                     time: recipeData.totalTime || recipeData.cookTime || recipeData.prepTime || null,
                                     photos: recipeData.image ? (Array.isArray(recipeData.image) ? recipeData.image : [recipeData.image]) : [],
-                                    source: 'safari-direct-json-ld'
+                                    source: "safari-direct-json-ld"
                                 };
                             }
                         } catch (e) {
-                            console.log('JSON-LD parsing failed:', e.message);
+                            console.log("JSON-LD parsing failed:", e.message);
                         }
                     }
                     return null;
@@ -404,16 +404,16 @@ async function captureRecipeDirectly(tabId) {
                 function extractSmittenKitchenRecipe() {
                     console.log("🍳 Direct Smitten Kitchen extraction...");
                     
-                    const title = document.querySelector('.entry-title, h1')?.textContent?.trim() || document.title;
+                    const title = document.querySelector(".entry-title, h1")?.textContent?.trim() || document.title;
                     
                     // Extract ingredients
-                    const ingredientElements = document.querySelectorAll('.recipe-ingredients li, .recipe-summary ul li');
+                    const ingredientElements = document.querySelectorAll(".recipe-ingredients li, .recipe-summary ul li");
                     const ingredients = Array.from(ingredientElements)
                         .map(el => el.textContent?.trim())
                         .filter(text => text && text.length > 2);
                     
                     // Extract steps  
-                    const stepElements = document.querySelectorAll('.recipe-instructions li, .recipe-instructions ol li');
+                    const stepElements = document.querySelectorAll(".recipe-instructions li, .recipe-instructions ol li");
                     const steps = Array.from(stepElements)
                         .map(el => el.textContent?.trim())
                         .filter(text => text && text.length > 10);
@@ -424,7 +424,7 @@ async function captureRecipeDirectly(tabId) {
                         timestamp: new Date().toISOString(),
                         ingredients: ingredients.length > 0 ? [{ title: null, items: ingredients }] : [],
                         steps: steps.length > 0 ? [{ title: null, items: steps }] : [],
-                        source: 'safari-direct-smitten-kitchen'
+                        source: "safari-direct-smitten-kitchen"
                     };
                 }
                 
@@ -436,8 +436,6 @@ async function captureRecipeDirectly(tabId) {
         if (result && result[0] && result[0].result) {
             const recipeData = result[0].result;
             console.log("✅ Direct recipe extraction result:", recipeData);
-            
-            const response = { status: "success", data: recipeData };
             
             if (recipeData && (recipeData.ingredients?.length > 0 || recipeData.title)) {
                 showStatus("✅ Recipe captured: " + recipeData.title, "#e8f5e8");
@@ -655,8 +653,8 @@ async function sendToAWSBackend(recipeData) {
         // Use proper AWS API authentication format (same as Chrome extension)
         console.log("🔧 Using Bearer token authentication for AWS API");
         console.log("🔧 Full token for debugging:", userToken);
-        console.log("🔧 Token parts:", userToken.split('.').length);
-        console.log("🔧 Token header:", userToken.split('.')[0] ? atob(userToken.split('.')[0]) : 'no header');
+        console.log("🔧 Token parts:", userToken.split(".").length);
+        console.log("🔧 Token header:", userToken.split(".")[0] ? atob(userToken.split(".")[0]) : "no header");
         
         const response = await fetch(awsAPI.recipes, {
             method: "POST",
