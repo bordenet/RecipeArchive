@@ -262,6 +262,14 @@ async function sendToBackends(recipeData) {
 
 async function sendToDevBackend(recipeData) {
     try {
+        // Check if CONFIG is available
+        if (typeof CONFIG === 'undefined') {
+            return {
+                success: false,
+                error: "Development backend not available on port 8081 (CONFIG not loaded)"
+            };
+        }
+        
         // Get current API configuration for development
         const apiConfig = CONFIG && CONFIG.getCurrentAPI ? CONFIG.getCurrentAPI() : {
             recipes: "http://localhost:8081/api/recipes"
@@ -300,13 +308,21 @@ async function sendToDevBackend(recipeData) {
     } catch (error) {
         return {
             success: false,
-            error: error.message
+            error: "Development backend not available on port 8081: " + error.message
         };
     }
 }
 
 async function sendToAWSBackend(recipeData) {
     try {
+        // Check if CONFIG is available
+        if (typeof CONFIG === 'undefined') {
+            return {
+                success: false,
+                error: "AWS backend not available (CONFIG not loaded)"
+            };
+        }
+        
         // Get AWS production endpoints from config
         const awsEndpoint = CONFIG.API.production.recipes;
         

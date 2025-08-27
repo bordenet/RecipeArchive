@@ -1,8 +1,10 @@
 # 🍽️ RecipeArchive
 
-**The ultimate recipe hoarding tool for digital food obsessives**
+**A simple recipe archiving platform for home cooks**
 
-Stop screenshotting recipes like it's the 90's! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.
+RecipeArchive streamlines the way you capture, organize, and access your favorite recipes. Our platform provides reliable recipe capture, intelligent storage, and seamless synchronization across all your devices, ensuring your culinary collection is always accessible when you need it.
+
+Are there commercial solutions available for this? Why yes, of course there are. (AnyList, as an example.) But this one is mine, and this is a vibe coding opportunity!
 
 ## 🚀 Quick Start
 
@@ -56,13 +58,13 @@ A cross-platform recipe archiving system currently featuring:
 
 ## 🚀 The Big Picture
 
-Turn recipe chaos into culinary zen with:
+Transform your recipe management with a complete archiving solution:
 
-- **Lightning-fast capture** - Grab ingredients, steps, photos, and timing in seconds
-- **Smart organization** - Find that pasta dish from 3 months ago instantly
-- **Offline access** - Cook without WiFi like it's 2005
-- **Multi-device sync** - Start on phone, finish on laptop
-- **Full page archives** - Because food blogs love to disappear recipes
+- **Efficient capture** - Extract ingredients, instructions, photos, and timing information quickly
+- **Intelligent organization** - Advanced search and filtering capabilities
+- **Offline access** - View recipes without an internet connection
+- **Multi-device synchronization** - Access your collection from any device
+- **Complete page preservation** - Maintain full recipe context and source information
 
 ## 💪 Tech Stack
 
@@ -87,13 +89,13 @@ Turn recipe chaos into culinary zen with:
 
 *Strategic hybrid approach: each language serves its optimal purpose.*
 
-## 🎮 Core Superpowers (MVP)
+## 🎮 Core Features (MVP)
 
-1. **Recipe Extraction Magic** - Pull ingredients, steps, photos, and timing data
-2. **Smart Recipe Library** - Sort, search, and filter your collection like a boss
-3. **Meal Prep Mode** - Perfect detail view for cooking chaos
-4. **Offline Fortress** - Access recipes even when the internet dies
-5. **Cross-Device Harmony** - Pick up where you left off, anywhere
+1. **Recipe Extraction** - Extract ingredients, instructions, photos, and timing data
+2. **Recipe Library Management** - Comprehensive sorting, searching, and filtering
+3. **Cooking Interface** - Optimized view for kitchen use
+4. **Offline Capability** - Access recipes without internet connectivity
+5. **Cross-Device Synchronization** - Seamless experience across all platforms
 
 ## 🏗️ Development Philosophy
 
@@ -109,15 +111,16 @@ Use the right tool for each job:
 
 - Serverless-first AWS architecture
 - US-West deployment by default
-- No Kubernetes complexity - we're not Netflix
-- Zero npm bloat - every dependency earns its place
-- One CLI to rule them all
+- Streamlined infrastructure without unnecessary complexity
+- Efficient dependency management
+- Unified CLI for development operations
 
 ## 🎯 Supported Recipe Websites
 
 **Fully Implemented & Tested:**
 - 🥘 **Smitten Kitchen** - JSON-LD + manual parsing with comprehensive test coverage
 - 🍋 **Love & Lemons** - Site-specific parser with ingredient/instruction extraction
+- 🍽️ **Food Network** - JSON-LD + custom parser for Alton Brown recipes and more
 - 📄 **JSON-LD Sites** - Universal structured data support for compliant recipe sites
 
 **Ready for Implementation:**
@@ -166,21 +169,21 @@ recipe-cli --help          # Show available commands
 ## 🚀 Current Status
 
 **Chrome Extension: Production Ready** 🔥
-- ✅ Smitten Kitchen recipes conquered
-- ✅ One-click capture with full HTML archiving  
+- ✅ Comprehensive recipe site support
+- ✅ One-click capture with complete HTML archiving  
 - ✅ Production Cognito authentication
-- ✅ Cross-browser Safari extension ready
+- ✅ Cross-browser Safari extension available
 
 **Safari Extension: Production Ready** 🍎
 - ✅ iPhone/iPad compatible Web Extension
-- ✅ Same functionality as Chrome version
-- ✅ Mobile-optimized UI with dark mode
+- ✅ Feature parity with Chrome version
+- ✅ Mobile-optimized interface with dark mode support
 
 **Unified CLI: Development Ready** ⚡
-- ✅ Go-based `recipe-cli` for all development operations
-- ✅ One-command development environment setup
-- ✅ Comprehensive testing across all languages
-- ✅ Streamlined AWS deployment workflow
+- ✅ Go-based `recipe-cli` for streamlined development operations
+- ✅ Automated development environment setup
+- ✅ Comprehensive testing across all components
+- ✅ Integrated AWS deployment workflow
 
 **Next Priorities:**
 - AWS Lambda deployment via CLI
@@ -228,4 +231,4 @@ Our AWS backend includes:
 
 ---
 
-_Built for people who bookmark recipes they'll definitely cook "someday" 🍳_
+_Designed for home cooks who value organization and accessibility in their recipe collection 🍳_
