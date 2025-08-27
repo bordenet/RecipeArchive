@@ -74,6 +74,7 @@ function renderUI() {
         
         // Attach event listeners for signed-in state
         document.getElementById("capture").onclick = function() {
+            console.log("🎯 Capture button clicked!");
             captureRecipe();
         };
         
@@ -161,15 +162,23 @@ function signOut() {
 }
 
 function captureRecipe() {
+    console.log("🎯 captureRecipe() function called!");
+    console.log("🎯 extensionAPI available:", !!extensionAPI);
+    
     if (!extensionAPI) {
+        console.log("❌ Extension API not available");
         showStatus("Extension API not available", "#ffebee");
         return;
     }
     
+    console.log("🎯 Setting status to 'Capturing recipe...'");
     showStatus("Capturing recipe...", "#f0f0f0");
     
+    console.log("🎯 Calling extensionAPI.tabs.query...");
     extensionAPI.tabs.query({active: true, currentWindow: true}, async function(tabs) {
+        console.log("🎯 tabs.query callback called, tabs:", tabs);
         if (!tabs || tabs.length === 0) {
+            console.log("❌ No active tab found");
             showStatus("❌ No active tab found", "#ffebee");
             return;
         }
