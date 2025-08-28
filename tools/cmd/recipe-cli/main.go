@@ -1289,9 +1289,9 @@ func startLocalDev() error {
 	// Build Go tools
 	fmt.Println("\n🔨 Building Go development tools...")
 	toolsDir := filepath.Join(projectRoot, "tools")
-	cmd := exec.Command("make", "build")
-	cmd.Dir = toolsDir
-	if output, err := cmd.CombinedOutput(); err != nil {
+	toolsCmd := exec.Command("make", "build")
+	toolsCmd.Dir = toolsDir
+	if output, err := toolsCmd.CombinedOutput(); err != nil {
 		fmt.Printf("⚠️  Go tools build failed: %v\nOutput: %s\n", err, string(output))
 	} else {
 		fmt.Println("✅ Go development tools built successfully")
