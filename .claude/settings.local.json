@@ -65,7 +65,8 @@
       "Bash(./bin/recipe-cli test:*)",
       "Bash(jest:*)",
       "Bash(trufflehog:*)",
-      "Bash(brew install:*)"
+      "Bash(brew install:*)",
+      "Read(/private/tmp/recipearchive-cache/**)"
     ],
     "deny": [],
     "ask": []

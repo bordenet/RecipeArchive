@@ -7,6 +7,9 @@ import { LoveAndLemonsParser } from "./sites/loveandlemons";
 import { Food52Parser } from "./sites/food52";
 import { EpicuriousParser } from "./sites/epicurious";
 import { WashingtonPostParser } from "./sites/washington-post";
+import { FoodAndWineParser } from "./sites/food-and-wine";
+import { DamnDeliciousParser } from "./sites/damn-delicious";
+import { SeriousEatsParser } from "./sites/serious-eats";
 import { Recipe } from "./types";
 
 export class ParserRegistry {
@@ -22,7 +25,10 @@ export class ParserRegistry {
             new LoveAndLemonsParser(),
             new Food52Parser(),
             new EpicuriousParser(),
-            new WashingtonPostParser()
+            new WashingtonPostParser(),
+            new FoodAndWineParser(),
+            new DamnDeliciousParser(),
+            new SeriousEatsParser()
         );
     }
 
