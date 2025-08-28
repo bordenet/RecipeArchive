@@ -23,7 +23,7 @@ export class WashingtonPostParser extends BaseParser {
     async parse(html: string, url: string): Promise<Recipe> {
         // First try JSON-LD structured data
         const jsonLd = this.extractJsonLD(html);
-        if (jsonLd && this.isValidJsonLdRecipe(jsonLd)) {
+        if (jsonLd) {
             return this.parseFromJsonLD(jsonLd, url);
         }
 

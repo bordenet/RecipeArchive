@@ -60,7 +60,10 @@
       "Bash(go run:*)",
       "WebFetch(domain:smittenkitchen.com)",
       "Bash(./validate-monorepo.sh)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git stash:*)",
+      "Bash(./bin/recipe-cli test:*)",
+      "Bash(jest:*)"
     ],
     "deny": [],
     "ask": []

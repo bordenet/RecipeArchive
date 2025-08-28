@@ -411,14 +411,432 @@ class SmittenKitchenParser extends BaseParser {
 }
 
 // Parser Registry
+// AllRecipes Parser
+class AllRecipesParser extends BaseParser {
+    canParse(url) {
+        return url.includes("allrecipes.com");
+    }
+
+    async parse(html, url) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        // First try JSON-LD
+        const jsonLd = this.extractJsonLD(html);
+        if (jsonLd) {
+            const recipe = {
+                title: this.sanitizeText(jsonLd.name),
+                source: url,
+                author: typeof jsonLd.author === "string" ? jsonLd.author : 
+                       jsonLd.author?.name || "AllRecipes",
+                ingredients: (jsonLd.recipeIngredient || []).map(i => this.sanitizeText(i)),
+                instructions: (jsonLd.recipeInstructions || []).map(i =>
+                    typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+                ),
+                imageUrl: typeof jsonLd.image === "string" ? jsonLd.image :
+                    Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) :
+                        jsonLd.image?.url,
+                prepTime: jsonLd.prepTime,
+                cookTime: jsonLd.cookTime,
+                totalTime: jsonLd.totalTime,
+                servings: jsonLd.recipeYield?.toString(),
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+            };
+
+            const validation = this.validateRecipe(recipe);
+            if (validation.isValid) {
+                return recipe;
+            }
+        }
+
+        // Fallback to DOM parsing for AllRecipes specific selectors
+        const title = this.extractElements(doc, [
+            "h1.recipe-summary__h1",
+            "h1.entry-title",
+            ".recipe-title h1",
+            ".recipe-header h1",
+            "h1"
+        ])[0];
+
+        const author = this.extractElements(doc, [
+            ".recipe-summary__author",
+            ".by-author",
+            ".recipe-author",
+            ".attribution__by"
+        ])[0] || "AllRecipes";
+
+        const ingredients = this.extractElements(doc, [
+            ".recipe-ingred_txt",
+            ".ingredients-item-name", 
+            ".recipe-ingredient",
+            ".ingredient-list li",
+            "span[data-ingredient]",
+            ".mntl-structured-ingredients__list-item",
+            "[data-ingredient-name]"
+        ]);
+
+        const instructions = this.extractElements(doc, [
+            ".recipe-directions__list--item",
+            ".instructions-section .section-body",
+            ".recipe-instruction",
+            ".direction-list li",
+            ".mntl-sc-block-group--LI .mntl-sc-block",
+            ".recipe-directions li"
+        ]);
+
+        const recipe = {
+            title: title || document.title,
+            source: url,
+            author,
+            ingredients,
+            instructions,
+            imageUrl: doc.querySelector(".recipe-summary__image img, .hero-photo__image, .primary-image img, img[data-src]")?.getAttribute("src") || undefined
+        };
+
+        return recipe;
+    }
+}
+
+// Love and Lemons Parser
+class LoveAndLemonsParser extends BaseParser {
+    canParse(url) {
+        return url.includes("loveandlemons.com");
+    }
+
+    async parse(html, url) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        // First try JSON-LD
+        const jsonLd = this.extractJsonLD(html);
+        if (jsonLd) {
+            const recipe = {
+                title: this.sanitizeText(jsonLd.name),
+                source: url,
+                author: typeof jsonLd.author === "string" ? jsonLd.author : 
+                       jsonLd.author?.name || "Love and Lemons",
+                ingredients: (jsonLd.recipeIngredient || []).map(i => this.sanitizeText(i)),
+                instructions: (jsonLd.recipeInstructions || []).map(i =>
+                    typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+                ),
+                imageUrl: typeof jsonLd.image === "string" ? jsonLd.image :
+                    Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) :
+                        jsonLd.image?.url,
+                prepTime: jsonLd.prepTime,
+                cookTime: jsonLd.cookTime,
+                totalTime: jsonLd.totalTime,
+                servings: jsonLd.recipeYield?.toString(),
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+            };
+
+            const validation = this.validateRecipe(recipe);
+            if (validation.isValid) {
+                return recipe;
+            }
+        }
+
+        // Fallback to DOM parsing
+        const title = this.extractElements(doc, [
+            ".entry-title",
+            ".recipe-card-title",
+            ".wp-block-group h1",
+            "h1.has-large-font-size",
+            "h1"
+        ])[0];
+
+        const author = this.extractElements(doc, [
+            ".recipe-card-author",
+            ".author-name", 
+            ".entry-author",
+            ".byline"
+        ])[0] || "Love and Lemons";
+
+        const ingredients = this.extractElements(doc, [
+            ".wp-block-recipe-card-blocks-ingredients ul li",
+            ".recipe-ingredients li",
+            ".ingredient-list li",
+            ".wp-block-list li",
+            "[data-ingredient]"
+        ]);
+
+        const instructions = this.extractElements(doc, [
+            ".wp-block-recipe-card-blocks-instructions ol li",
+            ".recipe-instructions li", 
+            ".recipe-method li",
+            ".wp-block-list.instructions li",
+            ".method-step"
+        ]);
+
+        const recipe = {
+            title: title || document.title,
+            source: url,
+            author,
+            ingredients,
+            instructions,
+            imageUrl: doc.querySelector(".recipe-card-image img, .wp-post-image, .entry-content img:first-of-type, .featured-image img")?.getAttribute("src") || undefined
+        };
+
+        return recipe;
+    }
+}
+
+// Food52 Parser
+class Food52Parser extends BaseParser {
+    canParse(url) {
+        return url.includes("food52.com");
+    }
+
+    async parse(html, url) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        // First try JSON-LD
+        const jsonLd = this.extractJsonLD(html);
+        if (jsonLd) {
+            const recipe = {
+                title: this.sanitizeText(jsonLd.name),
+                source: url,
+                author: typeof jsonLd.author === "string" ? jsonLd.author : 
+                       jsonLd.author?.name || "Food52",
+                ingredients: (jsonLd.recipeIngredient || []).map(i => this.sanitizeText(i)),
+                instructions: (jsonLd.recipeInstructions || []).map(i =>
+                    typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+                ),
+                imageUrl: typeof jsonLd.image === "string" ? jsonLd.image :
+                    Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) :
+                        jsonLd.image?.url,
+                prepTime: jsonLd.prepTime,
+                cookTime: jsonLd.cookTime,
+                totalTime: jsonLd.totalTime,
+                servings: jsonLd.recipeYield?.toString(),
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+            };
+
+            const validation = this.validateRecipe(recipe);
+            if (validation.isValid) {
+                return recipe;
+            }
+        }
+
+        // Fallback to DOM parsing
+        const title = this.extractElements(doc, [
+            ".recipe__title",
+            ".recipe-header h1",
+            ".content-header h1",
+            "h1.recipe-title",
+            "h1"
+        ])[0];
+
+        const author = this.extractElements(doc, [
+            ".recipe__author",
+            ".byline .author",
+            ".recipe-author",
+            ".content-header .author"
+        ])[0] || "Food52";
+
+        const ingredients = this.extractElements(doc, [
+            ".recipe__ingredients li",
+            ".recipe-ingredients li", 
+            ".ingredients-list li",
+            ".recipe-ingredient",
+            "[data-ingredient]"
+        ]);
+
+        const instructions = this.extractElements(doc, [
+            ".recipe__instructions li",
+            ".recipe-instructions li",
+            ".recipe-method li",
+            ".instructions-list li",
+            ".recipe-step"
+        ]);
+
+        const recipe = {
+            title: title || document.title,
+            source: url,
+            author,
+            ingredients,
+            instructions,
+            imageUrl: doc.querySelector(".recipe__image img, .recipe-hero img, .content-image img, .featured-image img")?.getAttribute("src") || undefined
+        };
+
+        return recipe;
+    }
+}
+
+// Epicurious Parser
+class EpicuriousParser extends BaseParser {
+    canParse(url) {
+        return url.includes("epicurious.com");
+    }
+
+    async parse(html, url) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        // First try JSON-LD
+        const jsonLd = this.extractJsonLD(html);
+        if (jsonLd) {
+            const recipe = {
+                title: this.sanitizeText(jsonLd.name),
+                source: url,
+                author: typeof jsonLd.author === "string" ? jsonLd.author : 
+                       jsonLd.author?.name || "Epicurious",
+                ingredients: (jsonLd.recipeIngredient || []).map(i => this.sanitizeText(i)),
+                instructions: (jsonLd.recipeInstructions || []).map(i =>
+                    typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+                ),
+                imageUrl: typeof jsonLd.image === "string" ? jsonLd.image :
+                    Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) :
+                        jsonLd.image?.url,
+                prepTime: jsonLd.prepTime,
+                cookTime: jsonLd.cookTime,
+                totalTime: jsonLd.totalTime,
+                servings: jsonLd.recipeYield?.toString(),
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+            };
+
+            const validation = this.validateRecipe(recipe);
+            if (validation.isValid) {
+                return recipe;
+            }
+        }
+
+        // Fallback to DOM parsing
+        const title = this.extractElements(doc, [
+            ".recipe__header h1",
+            ".recipe-title",
+            ".content-header h1",
+            "h1.recipe-hed",
+            "h1"
+        ])[0];
+
+        const author = this.extractElements(doc, [
+            ".recipe__header .by",
+            ".recipe-author",
+            ".byline .author",
+            ".author-name"
+        ])[0] || "Epicurious";
+
+        const ingredients = this.extractElements(doc, [
+            ".recipe__ingredients li",
+            ".ingredients li",
+            ".recipe-ingredients li",
+            "[data-testid=\"ingredients-list\"] li",
+            ".ingredient"
+        ]);
+
+        const instructions = this.extractElements(doc, [
+            ".recipe__instructions li",
+            ".instructions li",
+            ".recipe-instructions li",
+            "[data-testid=\"instructions-list\"] li",
+            ".instruction"
+        ]);
+
+        const recipe = {
+            title: title || document.title,
+            source: url,
+            author,
+            ingredients,
+            instructions,
+            imageUrl: doc.querySelector(".recipe__image img, .recipe-hero img, .lede-image img, .primary-image img")?.getAttribute("src") || undefined
+        };
+
+        return recipe;
+    }
+}
+
+// Alexandra Cooks Parser
+class AlexandraCooksParser extends BaseParser {
+    canParse(url) {
+        return url.includes("alexandracooks.com");
+    }
+
+    async parse(html, url) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        // First try JSON-LD
+        const jsonLd = this.extractJsonLD(html);
+        if (jsonLd) {
+            const recipe = {
+                title: this.sanitizeText(jsonLd.name),
+                source: url,
+                author: typeof jsonLd.author === "string" ? jsonLd.author : 
+                       jsonLd.author?.name || "Alexandra Cooks",
+                ingredients: (jsonLd.recipeIngredient || []).map(i => this.sanitizeText(i)),
+                instructions: (jsonLd.recipeInstructions || []).map(i =>
+                    typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+                ),
+                imageUrl: typeof jsonLd.image === "string" ? jsonLd.image :
+                    Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) :
+                        jsonLd.image?.url,
+                prepTime: jsonLd.prepTime,
+                cookTime: jsonLd.cookTime,
+                totalTime: jsonLd.totalTime,
+                servings: jsonLd.recipeYield?.toString(),
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+            };
+
+            const validation = this.validateRecipe(recipe);
+            if (validation.isValid) {
+                return recipe;
+            }
+        }
+
+        // Fallback to DOM parsing
+        const title = this.extractElements(doc, [
+            ".entry-title",
+            ".recipe-title", 
+            ".post-title",
+            "h1.entry-title",
+            "h1"
+        ])[0];
+
+        const author = this.extractElements(doc, [
+            ".recipe-author",
+            ".author-name",
+            ".entry-author",
+            ".byline"
+        ])[0] || "Alexandra Cooks";
+
+        const ingredients = this.extractElements(doc, [
+            ".recipe-ingredients li",
+            ".ingredients li",
+            ".wp-block-list li",
+            ".ingredient-list li",
+            "[data-ingredient]"
+        ]);
+
+        const instructions = this.extractElements(doc, [
+            ".recipe-instructions li",
+            ".instructions li", 
+            ".recipe-method li",
+            ".wp-block-list.instructions li",
+            ".method-step"
+        ]);
+
+        const recipe = {
+            title: title || document.title,
+            source: url,
+            author,
+            ingredients,
+            instructions,
+            imageUrl: doc.querySelector(".recipe-image img, .wp-post-image, .entry-content img:first-of-type, .featured-image img")?.getAttribute("src") || undefined
+        };
+
+        return recipe;
+    }
+}
+
 class ParserRegistry {
     constructor() {
         this.parsers = [];
         // Register all parsers
         this.parsers.push(
             new SmittenKitchenParser(),
-            new FoodNetworkParser(),
-            new NYTCookingParser()
+            new FoodNetworkParser(), 
+            new NYTCookingParser(),
+            new AllRecipesParser(),
+            new LoveAndLemonsParser(),
+            new Food52Parser(),
+            new EpicuriousParser(),
+            new AlexandraCooksParser()
         );
     }
 
