@@ -30,27 +30,27 @@ npm run validate  # Uses recipe-cli validate env
 
 **CRITICAL**: This project uses `.env` files for sensitive credentials. The `.env` file is protected by `.gitignore` and should NEVER be committed to version control. Always use `.env.template` as a reference for setup.
 
-### Local Development (Zero AWS Costs)
+### Development Workflow
 
 ```bash
-# Start local development environment
+# Set up development environment (compiles parsers, builds tools)
 npm run dev:start
 
-# Run comprehensive test suite
+# Run comprehensive monorepo validation
 npm test
 
 # Deploy to AWS when ready
 npm run deploy
 ```
 
-**Unified CLI Features:**
+**Development Features:**
 
-- 🏠 **Local Development**: One command starts everything
+- 🔨 **Build Tools**: Compiles TypeScript parsers and builds Go CLI tools
 - 🧪 **Comprehensive Testing**: All tests across Go, JavaScript, and integrations
 - ☁️ **AWS Deployment**: Streamlined cloud deployment
 - 🔧 **Development Tools**: High-performance Go utilities
-- 📊 **Status Monitoring**: Real-time development feedback
-- 💰 **Zero AWS Costs**: Develop completely offline
+- 📊 **Monorepo Validation**: 8-tier quality gate system
+- ⚡ **Direct AWS Integration**: Extensions authenticate with AWS Cognito, store to S3
 
 ## 🎯 What We're Building
 
@@ -223,6 +223,11 @@ recipe-cli --help          # Show available commands
 - AWS Lambda deployment via CLI
 - Additional recipe site parsers (Food & Wine, NYT Cooking)
 - iOS app development
+
+**Development Requirements:**
+- AWS Account with Cognito and S3 access
+- Valid AWS credentials in `.env` file
+- Development incurs minimal AWS costs (~$1-5/month for testing)
 
 ## 📚 Project Documentation
 
