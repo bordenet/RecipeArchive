@@ -69,19 +69,6 @@ const SITES = [
         'https://cooking.nytimes.com/recipes/1020223-creamy-sesame-ginger-dressing'
       ]
     },
-    // Alexandra Cooks (NYT free recipe)
-    {
-      name: 'alexandra-cooks',
-      parserPath: path.resolve(__dirname, '../../parsers/sites/alexandra-cooks.ts'),
-      urls: [
-        'https://alexandracooks.com/2009/03/20/lemon-blueberry-muffins/',
-        'https://alexandracooks.com/2012/11/07/my-mothers-peasant-bread-the-best-easiest-bread-you-will-ever-make/',
-        'https://alexandracooks.com/2018/03/02/overnight-refrigerator-focaccia-best-focaccia/',
-        'https://alexandracooks.com/2017/10/24/homemade-sourdough-bread-step-step-guide/',
-        'https://alexandracooks.com/2020/05/01/simple-sourdough-pizza-crust-a-step-by-step-guide/',
-        'https://alexandracooks.com/2014/09/12/easy-eggplant-parmesan-with-roasted-not-fried-eggplant/'
-      ]
-    },
     // Allrecipes
     {
       name: 'allrecipes',
@@ -116,6 +103,42 @@ const SITES = [
         'https://www.washingtonpost.com/food/2025/06/28/30-minute-summer-meals/',
         'https://www.washingtonpost.com/food/2025/06/07/blueberry-recipes-muffins-cake-salad/',
         'https://www.washingtonpost.com/food/2025/04/05/30-minute-pasta-recipes-spring/'
+      ]
+    },
+    // Food & Wine
+    {
+      name: 'food-and-wine',
+      parserPath: path.resolve(__dirname, '../../parsers/sites/food-and-wine.ts'),
+      urls: [
+        'https://www.foodandwine.com/recipes/creamy-udon-with-umami-butter',
+        'https://www.foodandwine.com/recipes/dr-pepper-braised-pot-roast',
+        'https://www.foodandwine.com/recipes/slow-cooker-chicken-pho',
+        'https://www.foodandwine.com/recipes/chicken-korma',
+        'https://www.foodandwine.com/recipes/ricotta-gnocchi'
+      ]
+    },
+    // Damn Delicious
+    {
+      name: 'damn-delicious',
+      parserPath: path.resolve(__dirname, '../../parsers/sites/damn-delicious.ts'),
+      urls: [
+        'https://damndelicious.net/2014/03/29/spaghetti-carbonara/',
+        'https://damndelicious.net/2014/09/10/easy-shrimp-broccoli-stir-fry/',
+        'https://damndelicious.net/2014/04/09/pf-changs-chicken-lettuce-wraps/',
+        'https://damndelicious.net/2013/07/07/garlic-butter-shrimp-pasta/',
+        'https://damndelicious.net/2013/05/20/easy-lemon-chicken/'
+      ]
+    },
+    // Serious Eats
+    {
+      name: 'serious-eats',
+      parserPath: path.resolve(__dirname, '../../parsers/sites/serious-eats.ts'),
+      urls: [
+        'https://www.seriouseats.com/mazatlan-ceviche-de-sierra-sinaloan-mackerel-ceviche-recipe-8383273',
+        'https://www.seriouseats.com/rhode-island-style-stuffed-quahog-clams-stuffies-recipe-8363750',
+        'https://www.seriouseats.com/buffalo-chicken-salad-recipe-8383267',
+        'https://www.seriouseats.com/how-to-make-chai-8363658',
+        'https://www.seriouseats.com/tahdig-persian-crunchy-rice-recipe-8383636'
       ]
     }
   ];
