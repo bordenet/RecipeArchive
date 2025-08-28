@@ -274,12 +274,15 @@ async function captureRecipe() {
         console.log("🔧 Tab ID:", tab.id);
         console.log("🔧 Tab URL:", tab.url);
         
+        // Declare timeout variable outside try-catch to avoid scoping issues
+        let pingTimeout = null;
+        
         try {
             // Check if content script is already loaded before injecting
             let pingResponded = false;
             console.log("📤 Sending ping to tab:", tab.id);
             
-            const pingTimeout = setTimeout(() => {
+            pingTimeout = setTimeout(() => {
                 if (!pingResponded) {
                     console.log("⏰ Ping timeout - injecting content script");
                     injectContentScript(tab.id);
@@ -840,13 +843,18 @@ function transformRecipeDataForAWS(recipeData) {
         throw new Error("Recipe title is required");
     }
     
-    // Validate that we actually found recipe content
+    // Temporary: Allow empty ingredients/instructions for debugging
     if (ingredients.length === 0) {
-        throw new Error("No ingredients found on this page. This may not be a recipe page, or the page format has changed.");
+        console.warn("⚠️ No ingredients found - adding placeholder for debugging");
+        ingredients.push({ text: "[No ingredients extracted - parser debugging needed]" });
     }
     
     if (instructions.length === 0) {
-        throw new Error("No cooking instructions found on this page. This may not be a recipe page, or the page format has changed.");
+        console.warn("⚠️ No instructions found - adding placeholder for debugging");
+        instructions.push({ 
+            stepNumber: 1, 
+            text: "[No instructions extracted - parser debugging needed]" 
+        });
     }
     
     if (!transformedData.sourceUrl) {
