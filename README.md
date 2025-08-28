@@ -9,6 +9,7 @@ Are there commercial solutions available for this? Why yes, of course there are.
 ## 🚀 Quick Start
 
 ### One-Command Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/RecipeArchive
@@ -23,9 +24,11 @@ recipe-cli setup
 ```
 
 ### 🔐 Security Notice
+
 **CRITICAL**: This project uses `.env` files for sensitive credentials. The `.env` file is protected by `.gitignore` and should NEVER be committed to version control. Always use `.env.template` as a reference for setup.
 
 ### Local Development (Zero AWS Costs)
+
 ```bash
 # Start local development environment
 recipe-cli dev start
@@ -38,11 +41,12 @@ recipe-cli deploy aws
 ```
 
 **Unified CLI Features:**
+
 - 🏠 **Local Development**: One command starts everything
 - 🧪 **Comprehensive Testing**: All tests across Go, JavaScript, and integrations
 - ☁️ **AWS Deployment**: Streamlined cloud deployment
 - 🔧 **Development Tools**: High-performance Go utilities
-- � **Status Monitoring**: Real-time development feedback
+- 📊 **Status Monitoring**: Real-time development feedback
 - 💰 **Zero AWS Costs**: Develop completely offline
 
 ## 🎯 What We're Building
@@ -52,6 +56,7 @@ A cross-platform recipe archiving system currently featuring:
 ### 🌐 Recipe Site Support
 
 🔵 **Currently Supported Sites:**
+
 - [Smitten Kitchen](https://smittenkitchen.com)
 - [Love & Lemons](https://www.loveandlemons.com)
 - [Food52](https://food52.com)
@@ -63,12 +68,11 @@ A cross-platform recipe archiving system currently featuring:
 
 All sites are validated against a large set of real recipe URLs with strict contract enforcement (title, ingredients, instructions). Release is gated on passing all contract tests for these domains.
 
-````
-
 - 🔌 **Browser Extensions** - Chrome & Safari extensions for one-click recipe archiving (PRODUCTION READY)
 - ☁️ **AWS Backend** - Go-based serverless backend with local development server (LOCAL DEVELOPMENT COMPLETE)
 
 **🚧 Planned Components:**
+
 - 📱 **iOS App** - Native mobile recipe browsing
 - 🌐 **Web App** - Recipe management and meal planning interface
 
@@ -85,25 +89,28 @@ Transform your recipe management with a complete archiving solution:
 ## 💪 Tech Stack
 
 **Production Ready:**
+
 - **Unified CLI:** Go-based `recipe-cli` for all development operations
 - **Browser Extensions:** JavaScript + Manifest V3 (Chrome & Safari)
-- **Backend API:** Go with local development server + comprehensive tests  
+- **Backend API:** Go with local development server + comprehensive tests
 - **Authentication:** AWS Cognito with JWT token management
 - **Recipe Parsing:** JSON-LD structured data + site-specific parsers
 - **Testing:** Jest + Go testing with 40/40 tests passing
 
 **In Development:**
+
 - **Cloud Infrastructure:** AWS Lambda, S3, API Gateway (TypeScript CDK)
 - **Mobile App:** Swift for iOS
 - **Web Interface:** React + TypeScript
 
 **Language Strategy:**
+
 - **Go:** Backend services, CLI tools, web scraping, high-performance operations
 - **JavaScript:** Browser extensions (required for DOM APIs), DOM manipulation
 - **TypeScript:** AWS infrastructure, future web UI
 - **Swift:** iOS app development
 
-*Strategic hybrid approach: each language serves its optimal purpose.*
+_Strategic hybrid approach: each language serves its optimal purpose._
 
 ## 🎮 Core Features (MVP)
 
@@ -118,6 +125,7 @@ Transform your recipe management with a complete archiving solution:
 **Strategic Hybrid Architecture**
 
 Use the right tool for each job:
+
 - **Go CLI First**: Unified `recipe-cli` command for all development operations
 - **JavaScript Where Required**: Browser extensions need DOM APIs
 - **TypeScript for Infrastructure**: AWS CDK and future web UI
@@ -134,37 +142,40 @@ Use the right tool for each job:
 ## 🎯 Supported Recipe Websites
 
 **Fully Implemented & Tested:**
+
 - 🥘 **Smitten Kitchen** - JSON-LD + manual parsing with comprehensive test coverage
 - 🍋 **Love & Lemons** - Site-specific parser with ingredient/instruction extraction
 - 🍽️ **Food Network** - JSON-LD + custom parser for Alton Brown recipes and more
 - 📄 **JSON-LD Sites** - Universal structured data support for compliant recipe sites
 
 **Ready for Implementation:**
+
 - 📰 **Washington Post** - Authentication-ready parser implemented
-- 🍽️ **Food & Wine** - High priority per PRD requirements  
+- 🍽️ **Food & Wine** - High priority per PRD requirements
 - 🗞️ **New York Times Cooking** - Premium recipes target
 - 🌶️ **Damn Delicious** - PRD specified site
 - 🧪 **Serious Eats** - Science-based cooking target
 
-*HTML fixtures and parsing validation framework ready for rapid expansion to all priority sites.*
+_HTML fixtures and parsing validation framework ready for rapid expansion to all priority sites._
 
 ## 📊 Test Coverage & Quality
 
-| Component | Tests | Status | Coverage |
-|-----------|-------|--------|----------|
-| **Go Backend** | 5/5 passing | ✅ | Health, Auth, CRUD APIs |
-| **Recipe Parsing Logic** | 30/30 passing | ✅ | Real business logic tests |
-| **Integration Tests** | 5/5 passing | ✅ | Server lifecycle & APIs |
-| **ESLint (Code Quality)** | 0 errors | ✅ | 100% compliant |
-| **Overall Test Suite** | 40/40 tests | ✅ | 100% pass rate |
+| Component                 | Tests         | Status | Coverage                  |
+| ------------------------- | ------------- | ------ | ------------------------- |
+| **Go Backend**            | 5/5 passing   | ✅     | Health, Auth, CRUD APIs   |
+| **Recipe Parsing Logic**  | 30/30 passing | ✅     | Real business logic tests |
+| **Integration Tests**     | 5/5 passing   | ✅     | Server lifecycle & APIs   |
+| **ESLint (Code Quality)** | 0 errors      | ✅     | 100% compliant            |
+| **Overall Test Suite**    | 40/40 tests   | ✅     | 100% pass rate            |
 
-*Testing focuses on catching real bugs rather than metrics. Recipe parsing tests validate actual business logic and HTML extraction patterns.*
+_Testing focuses on catching real bugs rather than metrics. Recipe parsing tests validate actual business logic and HTML extraction patterns._
 
 ### Unified CLI Commands
+
 ```bash
 # Development workflow
 recipe-cli dev start        # Start local development environment
-recipe-cli dev stop         # Stop all development services  
+recipe-cli dev stop         # Stop all development services
 recipe-cli dev status       # Check development environment status
 
 # Testing
@@ -172,7 +183,7 @@ recipe-cli test run         # Run comprehensive test suite
 recipe-cli test unit        # Run unit tests only
 recipe-cli test integration # Run integration tests only
 
-# Deployment  
+# Deployment
 recipe-cli deploy aws       # Deploy to AWS
 recipe-cli deploy validate  # Validate deployment configuration
 
@@ -185,23 +196,27 @@ recipe-cli --help          # Show available commands
 ## 🚀 Current Status
 
 **Chrome Extension: Production Ready** 🔥
+
 - ✅ Comprehensive recipe site support
-- ✅ One-click capture with complete HTML archiving  
+- ✅ One-click capture with complete HTML archiving
 - ✅ Production Cognito authentication
 - ✅ Cross-browser Safari extension available
 
 **Safari Extension: Production Ready** 🍎
+
 - ✅ iPhone/iPad compatible Web Extension
 - ✅ Feature parity with Chrome version
 - ✅ Mobile-optimized interface with dark mode support
 
 **Unified CLI: Development Ready** ⚡
+
 - ✅ Go-based `recipe-cli` for streamlined development operations
 - ✅ Automated development environment setup
 - ✅ Comprehensive testing across all components
 - ✅ Integrated AWS deployment workflow
 
 **Next Priorities:**
+
 - AWS Lambda deployment via CLI
 - Additional recipe site parsers (Food & Wine, NYT Cooking)
 - iOS app development
@@ -209,23 +224,38 @@ recipe-cli --help          # Show available commands
 ## 📚 Project Documentation
 
 ### 📋 Product Requirements Documents (PRDs)
+
 - **docs/requirements/browser-extension.md** - Chrome & Safari extension specifications
-- **docs/requirements/ios-app.md** - Native mobile app requirements  
+- **docs/requirements/ios-app.md** - Native mobile app requirements
 - **docs/requirements/website.md** - Web application specifications
 - **docs/requirements/aws-backend.md** - Cloud infrastructure requirements
 
 ### 🏗️ Architecture Decisions
+
 - **AUTH_ARCHITECTURE_DECISION.md** - AWS Cognito authentication strategy
 - **RECIPE_DATA_MODEL.md** - Unified TypeScript recipe interface
 - **PERFORMANCE_STANDARDS.md** - Performance targets and SLAs
 - **STORAGE_RECOMMENDATIONS.md** - Cost optimization analysis (S3 vs DynamoDB)
 
 ### 🧪 Development Validation
+
+#### Monorepo Validation (Primary Command)
+```bash
+./validate-monorepo.sh            # Comprehensive validation of entire monorepo
+```
+
+**Run this script periodically** (daily/before commits) to ensure monorepo health across all four areas:
+- 🔌 Web Extensions (Chrome & Safari)  
+- 🧩 Recipe Parsers (site-specific parsers)
+- ☁️ AWS Backend (Go services)  
+- 🌐 Frontend Clients (coming soon)
+
+#### Legacy Commands
 ```bash
 # Run comprehensive test suite with CLI
 recipe-cli test run
 
-# Extension development workflow  
+# Extension development workflow
 cd extensions/chrome
 npm install && npm test && npm run lint
 
@@ -254,12 +284,14 @@ _Designed for home cooks who value organization and accessibility in their recip
 These tests are the backbone of RecipeArchive's site parser quality and release workflow. The monorepo-wide parser validator automatically fetches and caches HTML for a large set of real recipe URLs from all supported sites (Smitten Kitchen, Food Network, Food52, Epicurious, AllRecipes, Love & Lemons, Alexandra's Kitchen, NYT Cooking, etc.).
 
 For each site, the validator runs the corresponding parser against cached HTML and strictly enforces contract validation for required fields (`title`, `ingredients`, `instructions`, etc.). If any parser fails for any test URL, the release is blocked until all pass. This ensures:
+
 - **Strict contract compliance** for all site parsers
 - **Automated, release-gating validation** for every supported site
 - **Compatibility for both Node.js and web extensions**
 - **Iterative, test-driven parser refinement**
 
 **How it works:**
+
 - Caches HTML for each test URL (fetches if missing)
 - Runs parser against cached content
 - Validates output against contract
@@ -267,6 +299,7 @@ For each site, the validator runs the corresponding parser against cached HTML a
 - Blocks release if any fail
 
 **Supported Sites:**
+
 - Smitten Kitchen
 - Food Network
 - Food52
@@ -277,6 +310,7 @@ For each site, the validator runs the corresponding parser against cached HTML a
 - NYT Cooking
 
 **Next Steps:**
+
 - Continue refining all site parsers until every test URL passes
 - Ensure web extensions use the same parser system for full coverage
 - Push changes to GitHub after all tests pass

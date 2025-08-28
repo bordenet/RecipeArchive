@@ -274,12 +274,15 @@ async function captureRecipe() {
         console.log("🔧 Tab ID:", tab.id);
         console.log("🔧 Tab URL:", tab.url);
         
+        // Declare timeout variable outside try-catch to avoid scoping issues
+        let pingTimeout = null;
+        
         try {
             // Check if content script is already loaded before injecting
             let pingResponded = false;
             console.log("📤 Sending ping to tab:", tab.id);
             
-            const pingTimeout = setTimeout(() => {
+            pingTimeout = setTimeout(() => {
                 if (!pingResponded) {
                     console.log("⏰ Ping timeout - injecting content script");
                     injectContentScript(tab.id);

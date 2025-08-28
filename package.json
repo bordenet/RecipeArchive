@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "test": "cd tools && ./bin/recipe-cli test run",
-    "test:parsers": "jest --config=jest.config.js --testMatch='**/parsers/tests/**/*.test.ts'",
+    "test:parsers": "jest --config=config/jest.config.js --testMatch='**/parsers/tests/**/*.test.ts'",
     "test:unit": "jest --testMatch='**/tests/unit/**/*.test.js'",
     "test:integration": "jest --testMatch='**/tests/integration/**/*.test.js' --testTimeout=20000",
     "test:coverage": "jest --coverage --testMatch='**/tests/**/*.test.js'",
@@ -19,7 +19,7 @@
     "deploy:prod": "cd tools && ./bin/recipe-cli deploy aws prod",
   "lint": "eslint --config tools/linting/eslint.config.browser-extensions.cjs 'extensions/**/*.{js,ts}' --ignore-pattern 'extensions/safari-backup/**' --ignore-pattern '**/eslint.config.js' --max-warnings 150",
     "lint:fix": "eslint --config tools/linting/eslint.config.enhanced-v2.js extensions/chrome/ extensions/safari/ tools/ --ignore-pattern 'extensions/safari-backup/**' --ignore-pattern 'tests/**' --ignore-pattern '**/*.test.js' --fix",
-    "lint:browser": "eslint --config tools/linting/eslint.config.browser-extensions.js extensions/chrome/ extensions/safari/ extensions/shared/ --ignore-pattern 'extensions/safari-backup/**' --max-warnings 0",
+    "lint:browser": "eslint --config tools/linting/eslint.config.browser-extensions.cjs extensions/chrome/ extensions/safari/ extensions/shared/ --ignore-pattern 'extensions/safari-backup/**' --max-warnings 0",
     "lint:nodejs": "eslint --config tools/linting/eslint.config.nodejs.js tools/ tests/ --max-warnings 0",
     "lint:scoping": "node tools/focused-scoping-validator.cjs extensions/*/*.js",
     "lint:full": "npm run lint && npm run lint:scoping",
@@ -51,37 +51,6 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.1",
     "typescript": "^5.9.2"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setup.js"
-    ],
-    "projects": [
-      {
-        "displayName": "Unit Tests - Browser",
-        "testEnvironment": "jsdom",
-        "setupFilesAfterEnv": [
-          "<rootDir>/tests/setup.js"
-        ],
-        "testMatch": [
-          "**/tests/unit/chrome/**/*.test.js",
-          "**/tests/unit/safari/**/*.test.js",
-          "**/tests/unit/shared/**/*.test.js"
-        ]
-      },
-      {
-        "displayName": "Integration Tests",
-        "testEnvironment": "node",
-        "setupFilesAfterEnv": [
-          "<rootDir>/tests/setup.js"
-        ],
-        "testMatch": [
-          "**/tests/integration/**/*.test.js"
-        ]
-      }
-    ],
-    "testTimeout": 20000
   },
   "author": "Matt Bordenet",
   "license": "MIT",

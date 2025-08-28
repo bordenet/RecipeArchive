@@ -323,7 +323,19 @@ API_KEY=sk-1234567890abcdef
 
 This security standard is **NON-NEGOTIABLE** and applies to all future development work.
 
-### Development Commands (Go CLI)
+### Development Commands
+
+#### Monorepo Validation (Primary Command)
+```bash
+./validate-monorepo.sh            # Comprehensive validation of entire monorepo
+```
+**Run this script periodically** (daily/before commits) to ensure monorepo health across all four areas:
+- 🔌 Web Extensions (Chrome & Safari)  
+- 🧩 Recipe Parsers (site-specific parsers)
+- ☁️ AWS Backend (Go services)  
+- 🌐 Frontend Clients (coming soon)
+
+#### Go CLI Commands
 ```bash
 # Project Setup
 recipe-cli setup                   # One-time project initialization
