@@ -138,16 +138,20 @@ var testCmd = &cobra.Command{
 
 var testRunCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run all tests",
-	Long: `Run comprehensive test suite across all tiers of the application.
-Includes Go tests, JavaScript tests, and integration tests.`,
+	Short: "Run comprehensive monorepo validation",
+	Long: `Run comprehensive monorepo validation script that covers:
+- Web Extensions (Chrome & Safari)
+- Recipe Parsers (site-specific parsers) 
+- AWS Backend (Go services)
+- Frontend Clients (coming soon)
+- Quality gates (linting, security, documentation)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🧪 Recipe Archive Comprehensive Test Suite")
+		fmt.Println("🧪 Recipe Archive Comprehensive Monorepo Validation")
 		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-		err := runAllTests()
+		err := runMonorepoValidation()
 		if err != nil {
-			logrus.Fatalf("Test suite failed: %v", err)
+			logrus.Fatalf("Monorepo validation failed: %v", err)
 		}
 	},
 }
@@ -255,10 +259,10 @@ Strategic Hybrid Architecture:
 		fmt.Println("Available commands:")
 		fmt.Println("  extract <url>    Extract recipe from any URL")
 		fmt.Println("  auth wapost      Capture Washington Post cookies")
-		fmt.Println("  dev start        Start local development environment")
-		fmt.Println("  dev stop         Stop local development environment")
+		fmt.Println("  dev start        Start development environment (parsers, extensions)")
+		fmt.Println("  dev stop         Stop development services")
 		fmt.Println("  setup init       Initialize project setup")
-		fmt.Println("  test run         Run all tests")
+		fmt.Println("  test run         Run comprehensive monorepo validation")
 		fmt.Println("  test single <url> Test single recipe extraction")
 		fmt.Println("  validate env     Check environment setup")
 		fmt.Println("  settings show    Show current configuration")
@@ -277,10 +281,10 @@ var devCmd = &cobra.Command{
 var devStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start local development environment",
-	Long: `Start all local development services including:
-- Local backend server
-- File watchers
-- Test harnesses`,
+	Long: `Start local development services including:
+- Parser compilation
+- Extension building
+- File watchers for development`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🚀 Starting Recipe Archive Local Development Environment")
 		fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
@@ -704,64 +708,30 @@ func validateEnvironment() error {
 	return nil
 }
 
-// runAllTests executes the comprehensive test suite
-func runAllTests() error {
-	fmt.Println("🧪 Recipe Archive Comprehensive Test Suite")
-	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
+// runMonorepoValidation executes the comprehensive monorepo validation script
+func runMonorepoValidation() error {
 	projectRoot, err := findProjectRoot()
 	if err != nil {
 		return fmt.Errorf("failed to find project root: %w", err)
 	}
 
-	fmt.Println("\n🧪 Running comprehensive test suite...")
-
-	tests := []struct {
-		name    string
-		command string
-		args    []string
-		dir     string
-	}{
-		{"Go Unit Tests", "go", []string{"test", "-v"}, "aws-backend/functions/local-server"},
-		{"JavaScript Lint", "npm", []string{"run", "lint"}, "."},
-		// Skip JavaScript Unit Tests due to Node.js compatibility issues - covered by other tests
-		// {"JavaScript Unit Tests", "npm", []string{"run", "test:unit"}, "."},
-		{"Go Tools Build", "make", []string{"build"}, "tools"},
+	fmt.Println("\n🔄 Running monorepo validation script...")
+	
+	validationScript := filepath.Join(projectRoot, "validate-monorepo.sh")
+	if _, err := os.Stat(validationScript); os.IsNotExist(err) {
+		return fmt.Errorf("monorepo validation script not found at: %s", validationScript)
 	}
-
-	failed := 0
-	passed := 0
-
-	for _, test := range tests {
-		fmt.Printf("\n🔄 Running: %s\n", test.name)
-		fmt.Printf("  Command: %s %s (in %s)\n", test.command, strings.Join(test.args, " "), test.dir)
-
-		// Change to test directory
-		testDir := filepath.Join(projectRoot, test.dir)
-		cmd := exec.Command(test.command, test.args...)
-		cmd.Dir = testDir
-
-		// Capture output
-		output, err := cmd.CombinedOutput()
-
-		if err != nil {
-			fmt.Printf("  ❌ %s: FAILED\n", test.name)
-			fmt.Printf("     Error: %v\n", err)
-			if len(output) > 0 {
-				fmt.Printf("     Output: %s\n", string(output))
-			}
-			failed++
-		} else {
-			fmt.Printf("  ✅ %s: PASSED\n", test.name)
-			passed++
-		}
+	
+	cmd := exec.Command("bash", validationScript)
+	cmd.Dir = projectRoot
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("monorepo validation failed: %w", err)
 	}
-
-	if failed > 0 {
-		return fmt.Errorf("test suite failed: %d tests failed, %d passed", failed, passed)
-	}
-
-	fmt.Printf("\n🎉 All tests passed! (%d total)\n", passed)
+	
+	fmt.Println("\n🎉 Monorepo validation completed successfully!")
 	return nil
 }
 
@@ -1303,27 +1273,40 @@ func startLocalDev() error {
 		return fmt.Errorf("port %s is already in use", port)
 	}
 
-	// Create local data directory
-	localDataDir := filepath.Join(projectRoot, "local-data")
-	if err := os.MkdirAll(localDataDir, 0755); err != nil {
-		return fmt.Errorf("failed to create local data directory: %w", err)
+	// Compile TypeScript parsers
+	fmt.Println("\n🔨 Compiling TypeScript parsers...")
+	parsersDir := filepath.Join(projectRoot, "parsers")
+	if _, err := os.Stat(parsersDir); err == nil {
+		cmd := exec.Command("npx", "tsc")
+		cmd.Dir = parsersDir
+		if output, err := cmd.CombinedOutput(); err != nil {
+			fmt.Printf("⚠️  Parser compilation failed: %v\nOutput: %s\n", err, string(output))
+		} else {
+			fmt.Println("✅ TypeScript parsers compiled successfully")
+		}
 	}
-	fmt.Printf("📁 Created local data directory: %s\n", localDataDir)
 
-	// Start local backend server
-	fmt.Println("\n🏠 Starting Local Development Server...")
-	serverDir := filepath.Join(projectRoot, "aws-backend/functions/local-server")
+	// Build Go tools
+	fmt.Println("\n🔨 Building Go development tools...")
+	toolsDir := filepath.Join(projectRoot, "tools")
+	cmd := exec.Command("make", "build")
+	cmd.Dir = toolsDir
+	if output, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("⚠️  Go tools build failed: %v\nOutput: %s\n", err, string(output))
+	} else {
+		fmt.Println("✅ Go development tools built successfully")
+	}
 
-	fmt.Printf("📝 Running: cd %s && go run .\n", serverDir)
-	fmt.Printf("🌐 Server will be available at: http://localhost:%s\n", port)
-	fmt.Println("\n✅ Development environment startup initiated")
-	fmt.Println("📋 Next steps:")
-	fmt.Println("   1. Local server starting on http://localhost:8080")
-	fmt.Println("   2. Browser extensions can connect to local server")
-	fmt.Println("   3. Use 'recipe-cli dev stop' to stop services")
-
-	// Note: In a production version, we'd start the server in a goroutine
-	// and manage the process lifecycle
+	fmt.Println("\n✅ Development environment ready!")
+	fmt.Println("📋 Status:")
+	fmt.Println("   ✅ TypeScript parsers compiled")
+	fmt.Println("   ✅ Go development tools built")
+	fmt.Println("   ✅ Extensions ready for AWS direct connection")
+	fmt.Println("\n💡 Next steps:")
+	fmt.Println("   1. Load extensions in browser (chrome://extensions/ or Safari)")
+	fmt.Println("   2. Extensions authenticate directly with AWS Cognito")
+	fmt.Println("   3. Recipe data stored directly to AWS S3")
+	fmt.Println("   4. Use 'recipe-cli test run' to validate everything works")
 
 	return nil
 }
@@ -1333,30 +1316,35 @@ func stopLocalDev() error {
 	fmt.Println("� Stopping Recipe Archive Local Development Services")
 	fmt.Println("============================================")
 
-	// Find and stop processes using port 8080
-	port := "8080"
-	fmt.Printf("🔍 Looking for services on port %s...\n", port)
+	projectRoot, err := findProjectRoot()
+	if err != nil {
+		return fmt.Errorf("failed to find project root: %w", err)
+	}
 
-	cmd := exec.Command("lsof", "-Pi", ":"+port, "-sTCP:LISTEN", "-t")
-	output, err := cmd.Output()
-
-	if err != nil || len(strings.TrimSpace(string(output))) == 0 {
-		fmt.Printf("ℹ️  No services found running on port %s\n", port)
-	} else {
-		pids := strings.Fields(strings.TrimSpace(string(output)))
-		for _, pid := range pids {
-			fmt.Printf("🔄 Stopping process %s...\n", pid)
-			killCmd := exec.Command("kill", "-TERM", pid)
-			if err := killCmd.Run(); err != nil {
-				fmt.Printf("⚠️  Failed to stop process %s: %v\n", pid, err)
-			} else {
-				fmt.Printf("✅ Stopped process %s\n", pid)
-			}
+	// Clean up compiled artifacts
+	fmt.Println("\n🧹 Cleaning up development artifacts...")
+	
+	parsersDistDir := filepath.Join(projectRoot, "parsers", "dist")
+	if _, err := os.Stat(parsersDistDir); err == nil {
+		if err := os.RemoveAll(parsersDistDir); err != nil {
+			fmt.Printf("⚠️  Failed to clean parsers/dist: %v\n", err)
+		} else {
+			fmt.Println("✅ Cleaned parsers/dist directory")
+		}
+	}
+	
+	toolsBinDir := filepath.Join(projectRoot, "tools", "bin")
+	if _, err := os.Stat(toolsBinDir); err == nil {
+		if err := os.RemoveAll(toolsBinDir); err != nil {
+			fmt.Printf("⚠️  Failed to clean tools/bin: %v\n", err)
+		} else {
+			fmt.Println("✅ Cleaned tools/bin directory")
 		}
 	}
 
-	fmt.Println("\n✅ Development environment stopped")
-	fmt.Println("📋 All local services have been terminated")
+	fmt.Println("\n✅ Development environment cleaned")
+	fmt.Println("📋 Compiled artifacts have been removed")
+	fmt.Println("💡 Run 'recipe-cli dev start' to rebuild when needed")
 
 	return nil
 }

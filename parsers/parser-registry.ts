@@ -6,6 +6,7 @@ import { AllRecipesParser } from "./sites/allrecipes";
 import { LoveAndLemonsParser } from "./sites/loveandlemons";
 import { Food52Parser } from "./sites/food52";
 import { EpicuriousParser } from "./sites/epicurious";
+import { WashingtonPostParser } from "./sites/washington-post";
 import { Recipe } from "./types";
 
 export class ParserRegistry {
@@ -20,7 +21,8 @@ export class ParserRegistry {
             new AllRecipesParser(),
             new LoveAndLemonsParser(),
             new Food52Parser(),
-            new EpicuriousParser()
+            new EpicuriousParser(),
+            new WashingtonPostParser()
         );
     }
 

@@ -107,6 +107,16 @@ const SITES = [
         'https://www.loveandlemons.com/frittata-recipe/',
         'https://www.loveandlemons.com/baked-potato/'
       ]
+    },
+    // Washington Post
+    {
+      name: 'washington-post',
+      parserPath: path.resolve(__dirname, '../../parsers/sites/washington-post.ts'),
+      urls: [
+        'https://www.washingtonpost.com/food/2025/06/28/30-minute-summer-meals/',
+        'https://www.washingtonpost.com/food/2025/06/07/blueberry-recipes-muffins-cake-salad/',
+        'https://www.washingtonpost.com/food/2025/04/05/30-minute-pasta-recipes-spring/'
+      ]
     }
   ];
 const CACHE_DIR = '/tmp/recipearchive-cache';
