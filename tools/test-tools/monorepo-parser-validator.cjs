@@ -179,7 +179,8 @@ function isCacheExpired(filePath) {
 
 async function fetchAndCache(url, outPath) {
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   
   // Load Washington Post cookies if available
   if (url.includes('washingtonpost.com')) {
@@ -189,21 +190,19 @@ async function fetchAndCache(url, outPath) {
       const cookiesJSON = fs.readFileSync(cookiesPath, 'utf8');
       const cookies = JSON.parse(cookiesJSON);
       
-      // Set cookies in the browser context
-      for (const cookie of cookies) {
-        await page.setCookie({
-          name: cookie.name,
-          value: cookie.value,
-          domain: cookie.domain,
-          path: cookie.path,
-          expires: cookie.expires ? cookie.expires : undefined,
-          httpOnly: cookie.httpOnly,
-          secure: cookie.secure,
-          sameSite: cookie.sameSite === 'None' ? 'none' : 
-                   cookie.sameSite === 'Lax' ? 'lax' : 
-                   cookie.sameSite === 'Strict' ? 'strict' : 'lax'
-        });
-      }
+      // Set cookies in the browser context using context.addCookies
+      await context.addCookies(cookies.map(cookie => ({
+        name: cookie.name,
+        value: cookie.value,
+        domain: cookie.domain,
+        path: cookie.path,
+        expires: cookie.expires ? cookie.expires : undefined,
+        httpOnly: cookie.httpOnly,
+        secure: cookie.secure,
+        sameSite: cookie.sameSite === 'None' ? 'none' : 
+                 cookie.sameSite === 'Lax' ? 'lax' : 
+                 cookie.sameSite === 'Strict' ? 'strict' : 'lax'
+      })));
       console.log(`[WAPOST-AUTH] Set ${cookies.length} authentication cookies`);
     } else {
       console.log(`[WAPOST-AUTH] No cookies found at ${cookiesPath}`);
