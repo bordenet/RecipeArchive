@@ -95,7 +95,7 @@ const SITES = [
         'https://www.loveandlemons.com/baked-potato/'
       ]
     },
-    // Washington Post
+    // Washington Post - Cookie authentication supported
     {
       name: 'washington-post',
       parserPath: path.resolve(__dirname, '../../parsers/sites/washington-post.ts'),
@@ -166,9 +166,51 @@ function cachePath(site, url) {
   return path.join(CACHE_DIR, `${site}_${safe}.html`);
 }
 
+function isCacheExpired(filePath) {
+  if (!fs.existsSync(filePath)) return true;
+  
+  const stats = fs.statSync(filePath);
+  const now = new Date();
+  const fileAge = now - stats.mtime;
+  const hours48 = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+  
+  return fileAge > hours48;
+}
+
 async function fetchAndCache(url, outPath) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
+  
+  // Load Washington Post cookies if available
+  if (url.includes('washingtonpost.com')) {
+    const cookiesPath = path.join(path.resolve(__dirname, '../../dev-tools'), 'wapost-subscription-cookies.json');
+    if (fs.existsSync(cookiesPath)) {
+      console.log(`[WAPOST-AUTH] Loading authentication cookies for ${url}`);
+      const cookiesJSON = fs.readFileSync(cookiesPath, 'utf8');
+      const cookies = JSON.parse(cookiesJSON);
+      
+      // Set cookies in the browser context
+      for (const cookie of cookies) {
+        await page.setCookie({
+          name: cookie.name,
+          value: cookie.value,
+          domain: cookie.domain,
+          path: cookie.path,
+          expires: cookie.expires ? cookie.expires : undefined,
+          httpOnly: cookie.httpOnly,
+          secure: cookie.secure,
+          sameSite: cookie.sameSite === 'None' ? 'none' : 
+                   cookie.sameSite === 'Lax' ? 'lax' : 
+                   cookie.sameSite === 'Strict' ? 'strict' : 'lax'
+        });
+      }
+      console.log(`[WAPOST-AUTH] Set ${cookies.length} authentication cookies`);
+    } else {
+      console.log(`[WAPOST-AUTH] No cookies found at ${cookiesPath}`);
+      console.log(`[WAPOST-AUTH] Run 'cd tools/cmd/wapost-cookies && go run main.go' to capture cookies`);
+    }
+  }
+  
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2000); // Wait for content
   const html = await page.content();
@@ -218,11 +260,12 @@ async function run() {
     for (const url of site.urls) {
       const cache = cachePath(site.name, url);
       let html;
-      if (fs.existsSync(cache)) {
+      if (fs.existsSync(cache) && !isCacheExpired(cache)) {
         html = fs.readFileSync(cache, 'utf8');
         console.log(`[CACHE] ${site.name}: ${url}`);
       } else {
-        console.log(`[FETCH] ${site.name}: ${url}`);
+        const action = fs.existsSync(cache) ? 'REFETCH' : 'FETCH';
+        console.log(`[${action}] ${site.name}: ${url}`);
         await fetchAndCache(url, cache);
         html = fs.readFileSync(cache, 'utf8');
       }

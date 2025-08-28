@@ -338,10 +338,10 @@ class SmittenKitchenParser extends BaseParser {
         ])[0];
 
         const author = this.extractElements(doc, [
-            'p.recipe-meta + p',
-            '.author-meta',
-            '.author'
-        ])[0]?.replace('Author:', '').trim() || 'Deb Perelman';
+            "p.recipe-meta + p",
+            ".author-meta",
+            ".author"
+        ])[0]?.replace("Author:", "").trim() || "Deb Perelman";
 
         // Extract ingredients
         const ingredients = this.extractElements(doc, [
@@ -595,10 +595,11 @@ class Food52Parser extends BaseParser {
                 source: url,
                 author: typeof jsonLd.author === "string" ? jsonLd.author : 
                        jsonLd.author?.name || "Food52",
-                ingredients: (jsonLd.recipeIngredient || []).map(i => this.sanitizeText(i)),
-                instructions: (jsonLd.recipeInstructions || []).map(i =>
-                    typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
-                ),
+                ingredients: (jsonLd.recipeIngredient || []).map(i => ({ text: this.sanitizeText(i) })),
+                instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({ 
+                    stepNumber: idx + 1, 
+                    text: typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text) 
+                })),
                 imageUrl: typeof jsonLd.image === "string" ? jsonLd.image :
                     Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) :
                         jsonLd.image?.url,
@@ -631,7 +632,7 @@ class Food52Parser extends BaseParser {
             ".content-header .author"
         ])[0] || "Food52";
 
-        const ingredients = this.extractElements(doc, [
+        const ingredientTexts = this.extractElements(doc, [
             ".recipe__ingredients li",
             ".recipe-ingredients li", 
             ".ingredients-list li",
@@ -639,7 +640,7 @@ class Food52Parser extends BaseParser {
             "[data-ingredient]"
         ]);
 
-        const instructions = this.extractElements(doc, [
+        const instructionTexts = this.extractElements(doc, [
             ".recipe__instructions li",
             ".recipe-instructions li",
             ".recipe-method li",
@@ -651,8 +652,8 @@ class Food52Parser extends BaseParser {
             title: title || document.title,
             source: url,
             author,
-            ingredients,
-            instructions,
+            ingredients: ingredientTexts.map(text => ({ text })),
+            instructions: instructionTexts.map((text, idx) => ({ stepNumber: idx + 1, text })),
             imageUrl: doc.querySelector(".recipe__image img, .recipe-hero img, .content-image img, .featured-image img")?.getAttribute("src") || undefined
         };
 

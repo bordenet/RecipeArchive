@@ -107,8 +107,8 @@ export class FoodNetworkParser extends BaseParser {
     const ogImage = $('meta[property="og:image"]').attr('content');
     if (ogImage) imageUrl = ogImage;
 
-        // Return recipe object
-        return {
+        // Create and validate recipe object
+        const recipe: Recipe = {
             title,
             source: url,
             author,
@@ -116,5 +116,12 @@ export class FoodNetworkParser extends BaseParser {
             instructions,
             imageUrl
         };
+
+        const validation = this.validateRecipe(recipe);
+        if (!validation.isValid) {
+            throw new Error(`[FoodNetwork] Contract validation failed: ${JSON.stringify(validation)}`);
+        }
+
+        return recipe;
     }
 }

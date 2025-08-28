@@ -1,25 +1,3 @@
-# Monorepo Parser Validation Tool Plan
-
-## Purpose
-This tool validates every site parser in the monorepo against a large set of real recipe URLs. It ensures each parser extracts all required fields (per AWS Lambda contract) and blocks release until all URLs pass contract validation.
-
-## Workflow
-1. **Load URL List**: Reads a config/list of recipe URLs for each site (JSON, file, etc.).
-2. **Cache HTML**: For each URL, checks for cached HTML in `/tmp` (or designated cache dir). If missing, fetches live HTML using Playwright and saves to cache.
-3. **Run Parser**: Loads the correct parser for the site and runs it against the cached HTML.
-4. **Contract Validation**: Validates parser output against required contract fields (Recipe, Ingredient, Instruction, etc. as defined in AWS Lambda types).
-5. **Logging**: Logs results for each URL (success/failure, missing fields, etc.).
-6. **Summary & Release Gate**: Summarizes results at the end. If any parser/URL fails contract validation, the tool exits with failure and blocks release.
-
-## Extensibility
-- Easily add new sites/URLs to the config.
-- Supports iterative parser refinement and re-testing.
-- Output can be formatted for console, JSON, or CI integration.
-
-## Next Steps
-- Scaffold the test runner to your specs.
-- Specify location/format of URL lists and contract type definitions.
-- Implement contract validation logic and reporting.
 # RecipeArchive Project Guide
 
 ## 🚀 Current Status: TypeScript Parser System - PRODUCTION READY
@@ -30,18 +8,13 @@ This tool validates every site parser in the monorepo against a large set of rea
 - **Parser Coverage**: ✅ 6/6 test URLs supported (Smitten Kitchen, Food Network, NYT Cooking)
 - **Architecture**: ✅ Decoupled, maintainable parsers in `extensions/shared/parsers/`
 
-### Recent Technical Work (Latest Session)
-- **Fixed Chrome Extension**: Removed complex script injection, simplified to direct messaging
-- **TypeScript Parser Integration**: Both extensions now use decoupled parser system
-- **Parser Coverage**: Added Food Network and NYT Cooking parsers alongside Smitten Kitchen
-- **Testing**: Integration test confirms all parsers working correctly
-- **Next**: Real browser testing to confirm end-to-end functionality
-
-### Previous Session Work
-- Fixed data transformation (`sourceURL` → `sourceUrl` field mapping)
-- Added JSON payload debugging to Chrome extension
-- Enhanced validation for required fields (title, ingredients, instructions, sourceUrl)
-- Improved optional field handling for AWS backend compatibility
+### Latest Achievements (August 28, 2025)
+- **Parser System**: ✅ 8 site parsers implemented with high success rates
+- **Chrome Extension**: ✅ Fixed async handling, data transformation, and AWS integration
+- **Safari Extension**: ✅ Applied same fixes as Chrome for consistent functionality
+- **Report Tool**: ✅ Fixed authentication to use JWT-based user IDs like extensions
+- **Validation Tool**: ✅ Added 48-hour cache expiry and Washington Post cookie auth
+- **Code Quality**: ✅ Removed 25+ zero-length files and redundant test scripts
 
 ---
 
@@ -129,12 +102,13 @@ This project is guided by **four comprehensive PRD documents** that define the c
 - **UI**: Complete popup interface with production authentication flow
 - **Architecture**: Fixed content script messaging, no more script injection complexity
 
-#### TypeScript Parser System (Production Ready - NEW)
-- **Location**: `/extensions/shared/parsers/`
+#### TypeScript Parser System (Production Ready)
+- **Location**: `/extensions/shared/parsers/` and `/tools/test-tools/monorepo-parser-validator.cjs`
 - **Architecture**: BaseParser abstract class with ParserRegistry pattern
-- **Site Coverage**: Smitten Kitchen, Food Network, NYT Cooking parsers implemented
+- **Site Coverage**: 8 sites supported (Food Network, Food52, Serious Eats, AllRecipes, etc.)
+- **Cache System**: 48-hour intelligent caching to reduce network requests
+- **Authentication**: Washington Post cookie authentication for paywall bypass
 - **Integration**: Bundled JavaScript works in both Chrome and Safari extensions
-- **Fallback**: JSON-LD extraction for unsupported sites
 
 #### Shared Authentication System (Production Ready)
 - **Location**: Embedded in extension files
@@ -142,40 +116,30 @@ This project is guided by **four comprehensive PRD documents** that define the c
 - **Cross-Browser Support**: Works in both Chrome and Safari with proper storage abstraction
 - **Token Management**: Automatic refresh, secure storage, proper expiration handling
 
-### Recent Technical Improvements
+### Key Technical Solutions
 
-#### Authentication Flow Debugging
+#### Web Extension Async Fix
 ```javascript
-// Implemented step-by-step status tracking
-showMessage('Step 1: Getting configuration...', 'info');
-showMessage('Step 2: Getting Cognito configuration...', 'info');
-showMessage('Step 3: Checking SafariCognitoAuth availability...', 'info');
-// ... with comprehensive timeout protection
+// Fixed Chrome/Safari content scripts with proper async handling
+(async () => {
+  try {
+    const recipeData = await extractRecipeFromPage();
+    const response = { status: "success", data: recipeData };
+    setTimeout(() => sendResponse(response), 0);
+  } catch (error) {
+    // Error handling...
+  }
+})();
 ```
 
-#### DOM Element Optimization
-```javascript
-// Cached DOM elements (reduced from 15+ repeated queries to 9 cached)
-domElements = {
-  authSection: document.getElementById('authSection'),
-  captureBtn: document.getElementById('captureBtn'),
-  message: document.getElementById('message'),
-  // ... etc
-};
-```
-
-#### Timeout Protection System
-```javascript
-// Multi-layer timeout protection
-const authTimeout = setTimeout(() => {
-  showMessage('Authentication check timed out. Check emergency bypass.', 'error');
-  showAuthRequired();
-}, 10000); // 10 second timeout for popup
-
-// Storage operation timeouts
-const timeoutPromise = new Promise((_, reject) => 
-  setTimeout(() => reject(new Error('Storage operation timed out')), 3000)
-);
+#### Authentication Unification
+```go
+// Report tool now uses same JWT extraction as extensions
+func (r *RecipeReporter) extractUserFromJWT(token string) (string, string, error) {
+  parts := strings.Split(token, ".")
+  payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+  // Extract sub (user ID) from JWT payload
+}
 ```
 
 ### Recipe Data Model
@@ -244,7 +208,7 @@ This ensures CLAUDE.md remains a focused, actionable project guide rather than a
 
 ---
 
-*Last updated: August 27, 2025 - TypeScript parser system migration completed for both extensions*
+*Last updated: August 28, 2025 - Fixed web extension integration, authentication unification, and parser validation system*
 
 ## 🚨 CRITICAL SECURITY REQUIREMENT: PII & SECRETS PROTECTION
 
@@ -356,8 +320,8 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 ## Next Development Priorities
 
 ### IMMEDIATE (Blocking)
-1. **Fix AWS HTTP 500 Error**: Debug Lambda function failure in `recipeDB.CreateRecipe(&recipe)`
-2. **Implement Failed-Parse API**: Fallback system for extraction failures (documented in `TODO-FAILED-PARSE-API.md`)
+1. **Fix Web Extension Linting**: Resolve ESLint errors preventing monorepo validation
+2. **Fix AWS HTTP 500 Error**: Debug Lambda function failure in `recipeDB.CreateRecipe(&recipe)`
 
 ### Short Term  
 1. **Recipe Extraction Enhancement**: Support additional recipe sites

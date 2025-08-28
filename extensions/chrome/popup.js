@@ -170,9 +170,9 @@ async function handleSignIn() {
     try {
         // Initialize CognitoAuth with configuration
         const cognitoAuth = new ChromeCognitoAuth({
-            region: 'us-west-2',
-            userPoolId: 'us-west-2_qJ1i9RhxD',
-            clientId: '5grdn7qhf1el0ioqb6hkelr29s'
+            region: "us-west-2",
+            userPoolId: "us-west-2_qJ1i9RhxD",
+            clientId: "5grdn7qhf1el0ioqb6hkelr29s"
         });
         
         // Perform real Cognito authentication
@@ -348,24 +348,86 @@ function transformRecipeDataForAWS(recipeData) {
     const ingredients = [];
     const instructions = [];
     
-    // Transform ingredients - Chrome format is simpler: ["text1", "text2"]
-    // To AWS format: [{ text: "text1" }, { text: "text2" }]
+    // DEBUG: Log the actual structure we're receiving
+    console.log("🔧 RAW recipeData structure:", JSON.stringify(recipeData, null, 2));
+    console.log("🔧 recipeData.ingredients type:", typeof recipeData.ingredients, recipeData.ingredients);
+    console.log("🔧 recipeData.steps type:", typeof recipeData.steps, recipeData.steps);
+    console.log("🔧 recipeData.instructions type:", typeof recipeData.instructions, recipeData.instructions);
+    
+    // Transform ingredients - Handle both flat arrays and grouped format
+    // Flat format: ["text1", "text2"] -> AWS format: [{ text: "text1" }, { text: "text2" }]
+    // Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ text: "text1" }, ...]
     if (recipeData.ingredients && Array.isArray(recipeData.ingredients)) {
         recipeData.ingredients.forEach(item => {
-            if (item && typeof item === 'string' && item.trim()) {
+            if (item && typeof item === "string" && item.trim()) {
+                // Flat format - direct string
                 ingredients.push({ text: item.trim() });
+            } else if (item && item.items && Array.isArray(item.items)) {
+                // Grouped format - extract from items array
+                item.items.forEach(subItem => {
+                    if (subItem && subItem.text && subItem.text.trim()) {
+                        ingredients.push({ text: subItem.text.trim() });
+                    } else if (typeof subItem === "string" && subItem.trim()) {
+                        ingredients.push({ text: subItem.trim() });
+                    }
+                });
             }
         });
     }
     
-    // Transform instructions - Chrome format is: ["step1", "step2"]  
-    // To AWS format: [{ stepNumber: 1, text: "step1" }, { stepNumber: 2, text: "step2" }]
+    // Transform instructions - Handle both flat arrays and grouped format
+    // Flat format: ["step1", "step2"] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
+    // Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
     if (recipeData.instructions && Array.isArray(recipeData.instructions)) {
         recipeData.instructions.forEach((item, index) => {
-            if (item && typeof item === 'string' && item.trim()) {
+            if (item && typeof item === "string" && item.trim()) {
+                // Flat format - direct string
                 instructions.push({ 
                     stepNumber: index + 1, 
                     text: item.trim() 
+                });
+            } else if (item && item.items && Array.isArray(item.items)) {
+                // Grouped format - extract from items array
+                item.items.forEach((subItem, _subIndex) => {
+                    if (subItem && subItem.text && subItem.text.trim()) {
+                        instructions.push({ 
+                            stepNumber: instructions.length + 1,
+                            text: subItem.text.trim() 
+                        });
+                    } else if (typeof subItem === "string" && subItem.trim()) {
+                        instructions.push({ 
+                            stepNumber: instructions.length + 1,
+                            text: subItem.trim() 
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
+    // Also handle `steps` field (TypeScript parser uses this field name)
+    if (recipeData.steps && Array.isArray(recipeData.steps)) {
+        recipeData.steps.forEach((item, _index) => {
+            if (item && typeof item === "string" && item.trim()) {
+                // Flat format - direct string
+                instructions.push({ 
+                    stepNumber: instructions.length + 1, 
+                    text: item.trim() 
+                });
+            } else if (item && item.items && Array.isArray(item.items)) {
+                // Grouped format - extract from items array
+                item.items.forEach((subItem, _subIndex) => {
+                    if (subItem && subItem.text && subItem.text.trim()) {
+                        instructions.push({ 
+                            stepNumber: instructions.length + 1,
+                            text: subItem.text.trim() 
+                        });
+                    } else if (typeof subItem === "string" && subItem.trim()) {
+                        instructions.push({ 
+                            stepNumber: instructions.length + 1,
+                            text: subItem.trim() 
+                        });
+                    }
                 });
             }
         });
@@ -390,7 +452,7 @@ function transformRecipeDataForAWS(recipeData) {
     if (recipeData.cookTime) {
         // Try to parse time strings to minutes
         const timeStr = recipeData.cookTime.toString().toLowerCase();
-        if (timeStr.includes('min')) {
+        if (timeStr.includes("min")) {
             const minutes = parseInt(timeStr.match(/\d+/)?.[0]);
             if (minutes && minutes > 0) {
                 transformedData.totalTimeMinutes = minutes;
@@ -453,6 +515,23 @@ async function sendToAWSBackend(recipeData) {
             allKeys: Object.keys(auth)
         });
         
+        // Extract and log user information from JWT token
+        if (auth.token) {
+            try {
+                const tokenParts = auth.token.split(".");
+                if (tokenParts.length === 3) {
+                    const payload = JSON.parse(atob(tokenParts[1]));
+                    console.log("🔧 JWT Token payload:", {
+                        email: payload.email,
+                        sub: payload.sub,
+                        username: payload["cognito:username"]
+                    });
+                }
+            } catch (e) {
+                console.warn("Could not decode JWT token:", e);
+            }
+        }
+        
         if (!auth.token) {
             console.error("❌ No token in auth data");
             return { success: false, error: "No valid authentication token" };
@@ -470,10 +549,10 @@ async function sendToAWSBackend(recipeData) {
         console.log("🔧 Using API endpoint:", apiEndpoint);
 
         const response = await fetch(apiEndpoint, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${auth.token}`
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${auth.token}`
             },
             body: JSON.stringify(transformedData)
         });

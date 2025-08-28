@@ -3,17 +3,17 @@
 
 class CognitoAuth {
   constructor(config) {
-    this.region = config.region || 'us-west-2';
+    this.region = config.region || "us-west-2";
     this.userPoolId = config.userPoolId;
     this.clientId = config.clientId;
     this.baseUrl = `https://cognito-idp.${this.region}.amazonaws.com/`;
     
     // Token storage keys
-    this.ACCESS_TOKEN_KEY = 'cognito_access_token';
-    this.REFRESH_TOKEN_KEY = 'cognito_refresh_token';  
-    this.ID_TOKEN_KEY = 'cognito_id_token';
-    this.USER_INFO_KEY = 'cognito_user_info';
-    this.TOKEN_EXPIRES_KEY = 'cognito_token_expires';
+    this.ACCESS_TOKEN_KEY = "cognito_access_token";
+    this.REFRESH_TOKEN_KEY = "cognito_refresh_token";  
+    this.ID_TOKEN_KEY = "cognito_id_token";
+    this.USER_INFO_KEY = "cognito_user_info";
+    this.TOKEN_EXPIRES_KEY = "cognito_token_expires";
   }
 
   // Sign up a new user
@@ -23,13 +23,13 @@ class CognitoAuth {
       Username: email,
       Password: password,
       UserAttributes: [
-        { Name: 'email', Value: email },
+        { Name: "email", Value: email },
         ...Object.entries(attributes).map(([key, value]) => ({ Name: key, Value: value }))
       ]
     };
 
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.SignUp', params);
+      const response = await this._makeRequest("AWSCognitoIdentityProviderService.SignUp", params);
       return { success: true, data: response };
     } catch (error) {
       return { success: false, error: error.message };
@@ -45,7 +45,7 @@ class CognitoAuth {
     };
 
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.ConfirmSignUp', params);
+      const response = await this._makeRequest("AWSCognitoIdentityProviderService.ConfirmSignUp", params);
       return { success: true, data: response };
     } catch (error) {
       return { success: false, error: error.message };
@@ -65,7 +65,7 @@ class CognitoAuth {
   async _signInWithPassword(email, password) {
     // Check if the User Pool supports USER_PASSWORD_AUTH
     const params = {
-      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthFlow: "USER_PASSWORD_AUTH",
       ClientId: this.clientId,
       AuthParameters: {
         USERNAME: email,
@@ -74,14 +74,14 @@ class CognitoAuth {
     };
 
     try {
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.InitiateAuth', params);
+      const response = await this._makeRequest("AWSCognitoIdentityProviderService.InitiateAuth", params);
       
       if (response.AuthenticationResult) {
         await this._storeTokens(response.AuthenticationResult);
         const userInfo = await this._extractUserInfo(response.AuthenticationResult.IdToken);
         
         if (!userInfo) {
-          return { success: false, error: 'Failed to extract user information from token' };
+          return { success: false, error: "Failed to extract user information from token" };
         }
         
         await this._storeUserInfo(userInfo);
@@ -99,16 +99,16 @@ class CognitoAuth {
           }
         };
       } else {
-        return { success: false, error: 'Authentication failed' };
+        return { success: false, error: "Authentication failed" };
       }
     } catch (error) {
-      console.error('Direct authentication failed:', error);
+      console.error("Direct authentication failed:", error);
       
       // If USER_PASSWORD_AUTH is not enabled, suggest OAuth2
-      if (error.message.includes('USER_PASSWORD_AUTH') || error.message.includes('NotAuthorizedException')) {
+      if (error.message.includes("USER_PASSWORD_AUTH") || error.message.includes("NotAuthorizedException")) {
         return { 
           success: false, 
-          error: 'Direct password authentication not enabled. Please use OAuth2 flow or enable USER_PASSWORD_AUTH in your Cognito User Pool.',
+          error: "Direct password authentication not enabled. Please use OAuth2 flow or enable USER_PASSWORD_AUTH in your Cognito User Pool.",
           suggestOAuth2: true
         };
       }
@@ -120,27 +120,27 @@ class CognitoAuth {
   // OAuth2 authentication flow (recommended for browser extensions)
   async _signInWithOAuth2() {
     try {
-      console.log('🔐 Starting OAuth2 authentication flow...');
+      console.log("🔐 Starting OAuth2 authentication flow...");
       
       // Build the authorization URL with PKCE for security
       const { authUrl, codeVerifier } = await this._buildOAuth2AuthUrl();
-      console.log('🔗 Authorization URL:', authUrl);
+      console.log("🔗 Authorization URL:", authUrl);
       
       // Launch web auth flow (works in both Chrome and Safari)
       const redirectUrl = await this._launchWebAuthFlow(authUrl);
-      console.log('✅ Received redirect URL');
+      console.log("✅ Received redirect URL");
       
       // Extract authorization code
       const authCode = this._extractAuthorizationCode(redirectUrl);
       if (!authCode) {
-        throw new Error('No authorization code received');
+        throw new Error("No authorization code received");
       }
       
-      console.log('🎫 Authorization code received, exchanging for tokens...');
+      console.log("🎫 Authorization code received, exchanging for tokens...");
       
       // Exchange code for tokens
       const tokens = await this._exchangeCodeForTokens(authCode, codeVerifier);
-      console.log('🎫 Tokens received successfully');
+      console.log("🎫 Tokens received successfully");
       
       // Store tokens and extract user info
       await this._storeTokens({
@@ -153,19 +153,19 @@ class CognitoAuth {
       // Extract user info from ID token
       const userInfo = await this._extractUserInfo(tokens.id_token);
       if (!userInfo) {
-        throw new Error('Failed to extract user information from ID token');
+        throw new Error("Failed to extract user information from ID token");
       }
       
       await this._storeUserInfo(userInfo);
       
-      return { success: true, data: userInfo, method: 'oauth2' };
+      return { success: true, data: userInfo, method: "oauth2" };
       
     } catch (error) {
-      console.error('❌ OAuth2 authentication failed:', error);
+      console.error("❌ OAuth2 authentication failed:", error);
       return {
         success: false,
         error: error.message,
-        method: 'oauth2'
+        method: "oauth2"
       };
     }
   }
@@ -178,17 +178,17 @@ class CognitoAuth {
     const state = this._generateRandomString(32);
     
     // Store state and code verifier for validation
-    await this._setStoredItem('oauth2_state', state);
-    await this._setStoredItem('oauth2_code_verifier', codeVerifier);
+    await this._setStoredItem("oauth2_state", state);
+    await this._setStoredItem("oauth2_code_verifier", codeVerifier);
     
     const params = new URLSearchParams({
       client_id: this.clientId,
-      response_type: 'code',
-      scope: 'email openid profile',
+      response_type: "code",
+      scope: "email openid profile",
       redirect_uri: this._getRedirectUri(),
       state: state,
       code_challenge: codeChallenge,
-      code_challenge_method: 'S256'
+      code_challenge_method: "S256"
     });
     
     const cognitoDomain = this._getCognitoDomain();
@@ -206,19 +206,19 @@ class CognitoAuth {
     }
     
     // If no domain specified, we can't use OAuth2
-    throw new Error('Cognito domain not configured. OAuth2 requires a hosted UI domain.');
+    throw new Error("Cognito domain not configured. OAuth2 requires a hosted UI domain.");
   }
 
   // Get redirect URI for OAuth2
   _getRedirectUri() {
     // For browser extensions, we can use chrome-extension:// or safari-extension:// URLs
     // or a localhost URL that we control
-    return this.redirectUri || 'https://localhost:3000/auth/callback';
+    return this.redirectUri || "https://localhost:3000/auth/callback";
   }
 
   // Launch web authentication flow
   async _launchWebAuthFlow(url) {
-    const extensionAPI = (typeof browser !== 'undefined') ? browser : chrome;
+    const extensionAPI = (typeof browser !== "undefined") ? browser : chrome;
     
     if (extensionAPI && extensionAPI.identity && extensionAPI.identity.launchWebAuthFlow) {
       // Standard browser extension identity API
@@ -229,12 +229,12 @@ class CognitoAuth {
     } else {
       // Fallback: manual popup handling
       return new Promise((resolve, reject) => {
-        const popup = window.open(url, 'cognito-auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
+        const popup = window.open(url, "cognito-auth", "width=500,height=600,scrollbars=yes,resizable=yes");
         
         const checkClosed = setInterval(() => {
           if (popup.closed) {
             clearInterval(checkClosed);
-            reject(new Error('Authentication popup was closed by user'));
+            reject(new Error("Authentication popup was closed by user"));
           }
         }, 1000);
         
@@ -244,7 +244,7 @@ class CognitoAuth {
           if (!popup.closed) {
             try {
               const currentUrl = popup.location.href;
-              if (currentUrl && currentUrl.includes('code=')) {
+              if (currentUrl && currentUrl.includes("code=")) {
                 popup.close();
                 clearInterval(checkClosed);
                 resolve(currentUrl);
@@ -262,8 +262,8 @@ class CognitoAuth {
   _extractAuthorizationCode(url) {
     try {
       const urlObj = new URL(url);
-      const code = urlObj.searchParams.get('code');
-      const state = urlObj.searchParams.get('state');
+      const code = urlObj.searchParams.get("code");
+      // const _state = urlObj.searchParams.get("state");
       
       // TODO: Validate state parameter for security
       // const storedState = await this._getStoredItem('oauth2_state');
@@ -273,7 +273,7 @@ class CognitoAuth {
       
       return code;
     } catch (error) {
-      console.error('❌ Failed to extract authorization code:', error);
+      console.error("❌ Failed to extract authorization code:", error);
       return null;
     }
   }
@@ -284,7 +284,7 @@ class CognitoAuth {
     const tokenEndpoint = `${cognitoDomain}/oauth2/token`;
     
     const tokenData = new URLSearchParams({
-      grant_type: 'authorization_code',
+      grant_type: "authorization_code",
       client_id: this.clientId,
       code: authCode,
       redirect_uri: this._getRedirectUri(),
@@ -292,9 +292,9 @@ class CognitoAuth {
     });
     
     const response = await fetch(tokenEndpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body: tokenData
     });
@@ -312,26 +312,26 @@ class CognitoAuth {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return btoa(String.fromCharCode.apply(null, array))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
   }
 
   // Generate PKCE code challenge
   async _generateCodeChallenge(verifier) {
     const encoder = new TextEncoder();
     const data = encoder.encode(verifier);
-    const digest = await crypto.subtle.digest('SHA-256', data);
+    const digest = await crypto.subtle.digest("SHA-256", data);
     return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
   }
 
   // Generate random string
   _generateRandomString(length) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -346,10 +346,10 @@ class CognitoAuth {
         const params = {
           AccessToken: accessToken
         };
-        await this._makeRequest('AWSCognitoIdentityProviderService.GlobalSignOut', params);
+        await this._makeRequest("AWSCognitoIdentityProviderService.GlobalSignOut", params);
       }
     } catch (error) {
-      console.warn('Global sign out failed:', error);
+      console.warn("Global sign out failed:", error);
     }
 
     // Clear stored tokens regardless of API call success
@@ -364,7 +364,7 @@ class CognitoAuth {
       if (userInfo && await this._isTokenValid()) {
         return { success: true, data: userInfo };
       } else {
-        return { success: false, error: 'No valid session' };
+        return { success: false, error: "No valid session" };
       }
     } catch (error) {
       return { success: false, error: error.message };
@@ -385,9 +385,9 @@ class CognitoAuth {
         return await this._getStoredToken(this.ACCESS_TOKEN_KEY);
       }
 
-      throw new Error('Unable to get valid access token');
+      throw new Error("Unable to get valid access token");
     } catch (error) {
-      console.error('Failed to get access token:', error);
+      console.error("Failed to get access token:", error);
       return null;
     }
   }
@@ -397,27 +397,27 @@ class CognitoAuth {
     try {
       const refreshToken = await this._getStoredToken(this.REFRESH_TOKEN_KEY);
       if (!refreshToken) {
-        throw new Error('No refresh token available');
+        throw new Error("No refresh token available");
       }
 
       const params = {
-        AuthFlow: 'REFRESH_TOKEN_AUTH',
+        AuthFlow: "REFRESH_TOKEN_AUTH",
         ClientId: this.clientId,
         AuthParameters: {
           REFRESH_TOKEN: refreshToken
         }
       };
 
-      const response = await this._makeRequest('AWSCognitoIdentityProviderService.InitiateAuth', params);
+      const response = await this._makeRequest("AWSCognitoIdentityProviderService.InitiateAuth", params);
       
       if (response.AuthenticationResult) {
         await this._storeTokens(response.AuthenticationResult);
         return { success: true };
       } else {
-        throw new Error('Token refresh failed');
+        throw new Error("Token refresh failed");
       }
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error("Token refresh failed:", error);
       await this._clearStoredTokens(); // Clear invalid tokens
       return { success: false, error: error.message };
     }
@@ -434,7 +434,7 @@ class CognitoAuth {
       const validation = jwtValidator.validateCognitoAccessToken(accessToken, this.clientId);
       
       if (!validation.valid) {
-        console.warn('Token validation failed:', validation.error);
+        console.warn("Token validation failed:", validation.error);
         return false;
       }
 
@@ -445,7 +445,7 @@ class CognitoAuth {
 
       return true;
     } catch (error) {
-      console.error('Token validation error:', error);
+      console.error("Token validation error:", error);
       return false;
     }
   }
@@ -470,18 +470,18 @@ class CognitoAuth {
   // Extract user info from ID token with proper validation
   async _extractUserInfo(idToken) {
     try {
-      if (!idToken || typeof idToken !== 'string') {
-        throw new Error('Invalid ID token: token must be a non-empty string');
+      if (!idToken || typeof idToken !== "string") {
+        throw new Error("Invalid ID token: token must be a non-empty string");
       }
       
       // Simple JWT parsing without strict validation (similar to backend approach)
-      const parts = idToken.split('.');
+      const parts = idToken.split(".");
       if (parts.length !== 3) {
-        throw new Error('Invalid JWT format: must have 3 parts');
+        throw new Error("Invalid JWT format: must have 3 parts");
       }
       
       // Decode the payload (middle part)
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
       
       // Extract basic user information
       return {
@@ -496,10 +496,10 @@ class CognitoAuth {
       };
       
     } catch (error) {
-      console.error('Failed to extract user info from ID token:', error);
+      console.error("Failed to extract user info from ID token:", error);
       
       // Fallback: try with JWT validator if simple parsing fails
-      if (typeof JWTValidator !== 'undefined') {
+      if (typeof JWTValidator !== "undefined") {
         let jwtValidator = null;
         let userInfo = null;
         
@@ -519,7 +519,7 @@ class CognitoAuth {
             };
           }
         } catch (validatorError) {
-          console.error('JWT validator also failed:', validatorError);
+          console.error("JWT validator also failed:", validatorError);
         }
       }
       
@@ -559,12 +559,12 @@ class CognitoAuth {
   // Make HTTP request to Cognito API
   async _makeRequest(action, params) {
     const headers = {
-      'Content-Type': 'application/x-amz-json-1.1',
-      'X-Amz-Target': action
+      "Content-Type": "application/x-amz-json-1.1",
+      "X-Amz-Target": action
     };
 
     const response = await fetch(this.baseUrl, {
-      method: 'POST',
+      method: "POST",
       headers: headers,
       body: JSON.stringify(params)
     });
@@ -587,15 +587,15 @@ class CognitoAuth {
 
   // Storage abstraction (to be implemented by specific browser)
   async _getStoredItem(_key) {
-    throw new Error('_getStoredItem must be implemented by subclass');
+    throw new Error("_getStoredItem must be implemented by subclass");
   }
 
   async _setStoredItem(_key, _value) {
-    throw new Error('_setStoredItem must be implemented by subclass');
+    throw new Error("_setStoredItem must be implemented by subclass");
   }
 
   async _removeStoredItem(_key) {
-    throw new Error('_removeStoredItem must be implemented by subclass');
+    throw new Error("_removeStoredItem must be implemented by subclass");
   }
 }
 
@@ -632,7 +632,7 @@ class SafariCognitoAuth extends CognitoAuth {
 }
 
 // Export for use in extensions
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { CognitoAuth, ChromeCognitoAuth, SafariCognitoAuth };
 } else {
   window.CognitoAuth = CognitoAuth;

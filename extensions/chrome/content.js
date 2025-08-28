@@ -36,38 +36,67 @@ function initializeContentScript() {
         if (request.action === "captureRecipe") {
           console.log("🍳 Starting recipe capture...");
           
-          try {
-            // Try to extract recipe data based on site
-            const recipeData = extractRecipeFromPage();
-            
-            if (recipeData && recipeData.ingredients && recipeData.ingredients.length > 0) {
-              console.log("✅ Recipe extracted:", recipeData);
-              sendResponse({ status: "success", data: recipeData });
-            } else {
-              console.log("⚠️ No recipe data found, sending basic info");
-              const basicRecipe = {
+          // Handle async operation properly in Chrome extension message listener
+          (async () => {
+            try {
+              // Try to extract recipe data based on site
+              console.log("🔧 About to call extractRecipeFromPage()...");
+              const recipeData = await extractRecipeFromPage();
+              console.log("🔧 extractRecipeFromPage() completed, recipeData:", recipeData);
+              console.log("🔧 recipeData type:", typeof recipeData);
+              console.log("🔧 recipeData.ingredients:", recipeData?.ingredients);
+              console.log("🔧 recipeData.steps:", recipeData?.steps);
+              console.log("🔧 recipeData.instructions:", recipeData?.instructions);
+              
+              // Check if we have valid recipe data - handle both flat and grouped formats
+              const hasIngredients = recipeData && recipeData.ingredients && (
+                (Array.isArray(recipeData.ingredients) && recipeData.ingredients.length > 0 && 
+                 (typeof recipeData.ingredients[0] === "string" || 
+                  (recipeData.ingredients[0] && recipeData.ingredients[0].items && recipeData.ingredients[0].items.length > 0)
+                 )
+                )
+              );
+              
+              const hasInstructions = recipeData && (
+                (recipeData.instructions && Array.isArray(recipeData.instructions) && recipeData.instructions.length > 0) ||
+                (recipeData.steps && Array.isArray(recipeData.steps) && recipeData.steps.length > 0)
+              );
+              
+              console.log("🔧 Validation results:");
+              console.log("🔧   hasIngredients:", hasIngredients);
+              console.log("🔧   hasInstructions:", hasInstructions);
+              console.log("🔧   recipeData.title:", recipeData?.title);
+              
+              if (recipeData && recipeData.title && (hasIngredients || hasInstructions)) {
+                console.log("✅ Recipe extracted:", recipeData);
+                sendResponse({ status: "success", data: recipeData });
+              } else {
+                console.log("⚠️ No recipe data found, sending basic info");
+                console.log("⚠️ Debug - recipeData:", recipeData);
+                const basicRecipe = {
+                  title: document.title || "Unknown Recipe",
+                  url: window.location.href,
+                  timestamp: new Date().toISOString(),
+                  ingredients: [],
+                  steps: [],
+                  source: "no-recipe-found"
+                };
+                sendResponse({ status: "success", data: basicRecipe });
+              }
+            } catch (extractError) {
+              console.error("❌ Recipe extraction error:", extractError);
+              const errorRecipe = {
                 title: document.title || "Unknown Recipe",
                 url: window.location.href,
                 timestamp: new Date().toISOString(),
                 ingredients: [],
                 steps: [],
-                source: "no-recipe-found"
+                source: "extraction-error",
+                error: extractError.message
               };
-              sendResponse({ status: "success", data: basicRecipe });
+              sendResponse({ status: "success", data: errorRecipe });
             }
-          } catch (extractError) {
-            console.error("❌ Recipe extraction error:", extractError);
-            const errorRecipe = {
-              title: document.title || "Unknown Recipe",
-              url: window.location.href,
-              timestamp: new Date().toISOString(),
-              ingredients: [],
-              steps: [],
-              source: "extraction-error",
-              error: extractError.message
-            };
-            sendResponse({ status: "success", data: errorRecipe });
-          }
+          })();
           return true;
         }
         
