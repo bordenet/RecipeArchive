@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "test": "cd tools && ./bin/recipe-cli test run",
-    "test:parsers": "jest --config=jest.config.js --testMatch='**/parsers/tests/**/*.test.ts'",
+    "test:parsers": "jest --config=config/jest.config.js --testMatch='**/parsers/tests/**/*.test.ts'",
     "test:unit": "jest --testMatch='**/tests/unit/**/*.test.js'",
     "test:integration": "jest --testMatch='**/tests/integration/**/*.test.js' --testTimeout=20000",
     "test:coverage": "jest --coverage --testMatch='**/tests/**/*.test.js'",
@@ -17,9 +17,9 @@
     "deploy": "cd tools && ./bin/recipe-cli deploy aws",
     "deploy:staging": "cd tools && ./bin/recipe-cli deploy aws staging",
     "deploy:prod": "cd tools && ./bin/recipe-cli deploy aws prod",
-    "lint": "eslint --config tools/linting/eslint.config.browser-extensions.js 'extensions/**/*.{js,ts}' --ignore-pattern 'extensions/safari-backup/**' --ignore-pattern '**/eslint.config.js' --max-warnings 150",
+  "lint": "eslint --config tools/linting/eslint.config.browser-extensions.cjs 'extensions/**/*.{js,ts}' --ignore-pattern 'extensions/safari-backup/**' --ignore-pattern '**/eslint.config.js' --max-warnings 150",
     "lint:fix": "eslint --config tools/linting/eslint.config.enhanced-v2.js extensions/chrome/ extensions/safari/ tools/ --ignore-pattern 'extensions/safari-backup/**' --ignore-pattern 'tests/**' --ignore-pattern '**/*.test.js' --fix",
-    "lint:browser": "eslint --config tools/linting/eslint.config.browser-extensions.js extensions/chrome/ extensions/safari/ extensions/shared/ --ignore-pattern 'extensions/safari-backup/**' --max-warnings 0",
+    "lint:browser": "eslint --config tools/linting/eslint.config.browser-extensions.cjs extensions/chrome/ extensions/safari/ extensions/shared/ --ignore-pattern 'extensions/safari-backup/**' --max-warnings 0",
     "lint:nodejs": "eslint --config tools/linting/eslint.config.nodejs.js tools/ tests/ --max-warnings 0",
     "lint:scoping": "node tools/focused-scoping-validator.cjs extensions/*/*.js",
     "lint:full": "npm run lint && npm run lint:scoping",
@@ -39,8 +39,8 @@
     "@types/jest": "^30.0.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^24.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.40.0",
-    "@typescript-eslint/parser": "^8.40.0",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
@@ -52,41 +52,12 @@
     "ts-jest": "^29.4.1",
     "typescript": "^5.9.2"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setup.js"
-    ],
-    "projects": [
-      {
-        "displayName": "Unit Tests - Browser",
-        "testEnvironment": "jsdom",
-        "setupFilesAfterEnv": [
-          "<rootDir>/tests/setup.js"
-        ],
-        "testMatch": [
-          "**/tests/unit/chrome/**/*.test.js",
-          "**/tests/unit/safari/**/*.test.js",
-          "**/tests/unit/shared/**/*.test.js"
-        ]
-      },
-      {
-        "displayName": "Integration Tests",
-        "testEnvironment": "node",
-        "setupFilesAfterEnv": [
-          "<rootDir>/tests/setup.js"
-        ],
-        "testMatch": [
-          "**/tests/integration/**/*.test.js"
-        ]
-      }
-    ],
-    "testTimeout": 20000
-  },
   "author": "Matt Bordenet",
   "license": "MIT",
   "dependencies": {
     "aws-cdk": "^2.1026.0",
-    "aws-cdk-lib": "^2.212.0"
+    "aws-cdk-lib": "^2.212.0",
+    "cheerio": "^1.1.2",
+    "ts-node": "^10.9.2"
   }
 }

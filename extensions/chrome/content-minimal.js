@@ -1,4 +1,5 @@
 // Minimal content script for testing
+/* global chrome */
 console.log("🎯 RecipeArchive content script loaded");
 
 // Simple message listener

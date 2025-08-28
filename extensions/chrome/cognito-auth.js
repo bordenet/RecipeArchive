@@ -500,9 +500,12 @@ class CognitoAuth {
       
       // Fallback: try with JWT validator if simple parsing fails
       if (typeof JWTValidator !== 'undefined') {
+        let jwtValidator = null;
+        let userInfo = null;
+        
         try {
-          const jwtValidator = new JWTValidator();
-          const userInfo = jwtValidator.extractCognitoUserInfo(idToken);
+          jwtValidator = new JWTValidator();
+          userInfo = jwtValidator.extractCognitoUserInfo(idToken);
           if (userInfo) {
             return {
               id: userInfo.userId || null,
