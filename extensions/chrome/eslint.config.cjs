@@ -17,11 +17,18 @@ module.exports = [
         URL: "readonly",
         URLSearchParams: "readonly",
         setTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
         btoa: "readonly",
         atob: "readonly",
         navigator: "readonly",
+        crypto: "readonly",
+        TextEncoder: "readonly",
+        DOMParser: "readonly",
         // Extension-specific globals
         CONFIG: "readonly",
+        ChromeCognitoAuth: "readonly",
+        JWTValidator: "readonly",
         // Node.js globals for config files
         module: "readonly",
         exports: "readonly",

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -33,6 +34,14 @@ const (
 	FailurePath  = "parsing-failures/"
 	ErrorPath    = "errors/"
 )
+
+// JWTPayload represents the JWT token payload
+type JWTPayload struct {
+	Sub           string `json:"sub"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Username      string `json:"cognito:username"`
+}
 
 // Recipe represents a stored recipe
 type Recipe struct {
@@ -67,6 +76,8 @@ type RecipeReporter struct {
 	cognitoClient *cognitoidentityprovider.Client
 	bucketName   string
 	ctx          context.Context
+	userID       string // JWT-extracted user ID (UUID)
+	userEmail    string // User email from JWT
 }
 
 // NewRecipeReporter creates a new recipe reporter
@@ -108,8 +119,47 @@ func (r *RecipeReporter) Authenticate(username, password string) error {
 		return fmt.Errorf("authentication failed - no tokens received")
 	}
 
-	fmt.Printf("✅ Authentication successful\n")
+	// Extract user ID from ID token (same as Chrome extension)
+	idToken := result.AuthenticationResult.IdToken
+	if idToken != nil {
+		userID, email, err := r.extractUserFromJWT(*idToken)
+		if err != nil {
+			return fmt.Errorf("failed to extract user info from JWT: %w", err)
+		}
+		r.userID = userID
+		r.userEmail = email
+		fmt.Printf("✅ Authentication successful (User: %s, ID: %s)\n", email, userID)
+	} else {
+		return fmt.Errorf("no ID token received from authentication")
+	}
+
 	return nil
+}
+
+// extractUserFromJWT extracts user ID and email from JWT token (matches Chrome extension behavior)
+func (r *RecipeReporter) extractUserFromJWT(token string) (string, string, error) {
+	// JWT tokens have 3 parts: header.payload.signature
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return "", "", fmt.Errorf("invalid JWT format")
+	}
+
+	// Decode the payload (base64url)
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode JWT payload: %w", err)
+	}
+
+	var jwtPayload JWTPayload
+	if err := json.Unmarshal(payload, &jwtPayload); err != nil {
+		return "", "", fmt.Errorf("failed to parse JWT payload: %w", err)
+	}
+
+	if jwtPayload.Sub == "" {
+		return "", "", fmt.Errorf("JWT token missing 'sub' claim")
+	}
+
+	return jwtPayload.Sub, jwtPayload.Email, nil
 }
 
 // getUserID converts email to S3-safe user ID
@@ -177,15 +227,14 @@ func (r *RecipeReporter) getS3Object(key string, v interface{}) error {
 
 // GenerateReport scans S3 and generates a comprehensive report
 func (r *RecipeReporter) GenerateReport(userEmail string) ([]ReportEntry, error) {
-	fmt.Printf("\n📊 Generating recipe report for %s...\n", userEmail)
+	fmt.Printf("\n📊 Generating recipe report for %s (ID: %s)...\n", r.userEmail, r.userID)
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
-	userID := getUserID(userEmail)
 	var allEntries []ReportEntry
 
-	// Scan successful recipes
+	// Scan successful recipes using JWT-extracted user ID
 	fmt.Printf("🔍 Scanning successful recipes...\n")
-	recipeObjects, err := r.listS3Objects(RecipePath + userID + "/")
+	recipeObjects, err := r.listS3Objects(RecipePath + r.userID + "/")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list recipes: %w", err)
 	}
@@ -217,7 +266,7 @@ func (r *RecipeReporter) GenerateReport(userEmail string) ([]ReportEntry, error)
 
 	// Scan parsing failures
 	fmt.Printf("🔍 Scanning parsing failures...\n")
-	failureObjects, err := r.listS3Objects(FailurePath + userID + "/")
+	failureObjects, err := r.listS3Objects(FailurePath + r.userID + "/")
 	if err != nil {
 		fmt.Printf("⚠️  Could not scan failures: %v\n", err)
 	} else {
@@ -249,7 +298,7 @@ func (r *RecipeReporter) GenerateReport(userEmail string) ([]ReportEntry, error)
 
 	// Scan other errors
 	fmt.Printf("🔍 Scanning other errors...\n")
-	errorObjects, err := r.listS3Objects(ErrorPath + userID + "/")
+	errorObjects, err := r.listS3Objects(ErrorPath + r.userID + "/")
 	if err != nil {
 		fmt.Printf("⚠️  Could not scan errors: %v\n", err)
 	} else {

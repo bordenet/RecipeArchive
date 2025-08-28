@@ -60,16 +60,23 @@ A cross-platform recipe archiving system currently featuring:
 
 🔵 **Currently Supported Sites:**
 
-- [Smitten Kitchen](https://smittenkitchen.com)
-- [Love & Lemons](https://www.loveandlemons.com)
-- [Food52](https://food52.com)
-- [Food Network](https://www.foodnetwork.com)
-- [Epicurious](https://www.epicurious.com)
-- [NYT Cooking](https://cooking.nytimes.com)
-- [Alexandra's Kitchen](https://alexandracooks.com)
-- [AllRecipes](https://www.allrecipes.com)
+- [Smitten Kitchen](https://smittenkitchen.com) ✅
+- [Love & Lemons](https://www.loveandlemons.com) ✅
+- [Food52](https://food52.com) ✅
+- [Food Network](https://www.foodnetwork.com) ✅
+- [Epicurious](https://www.epicurious.com) ✅
+- [NYT Cooking](https://cooking.nytimes.com) ✅
+- [Alexandra's Kitchen](https://alexandracooks.com) ✅
+- [AllRecipes](https://www.allrecipes.com) ✅
+- [Serious Eats](https://www.seriouseats.com) ✅
+- [Washington Post](https://www.washingtonpost.com) ✅ (with cookie auth)
 
-All sites are validated against a large set of real recipe URLs with strict contract enforcement (title, ingredients, instructions). Release is gated on passing all contract tests for these domains.
+**Features:**
+- ✅ TypeScript parser system with decoupled site-specific parsers
+- ✅ 48-hour intelligent caching system to reduce network load
+- ✅ Paywall bypass support (Washington Post cookie authentication)
+- ✅ Comprehensive contract validation for all sites
+- ✅ Both Chrome and Safari extension integration
 
 - 🔌 **Browser Extensions** - Chrome & Safari extensions for one-click recipe archiving (PRODUCTION READY)
 - ☁️ **AWS Backend** - Go-based serverless backend with local development server (LOCAL DEVELOPMENT COMPLETE)
@@ -200,16 +207,17 @@ recipe-cli --help          # Show available commands
 
 **Chrome Extension: Production Ready** 🔥
 
-- ✅ Comprehensive recipe site support
+- ✅ 10 recipe sites supported with contract validation
+- ✅ Fixed async handling and data transformation issues
+- ✅ JWT authentication unified with backend systems
 - ✅ One-click capture with complete HTML archiving
-- ✅ Production Cognito authentication
-- ✅ Cross-browser Safari extension available
 
 **Safari Extension: Production Ready** 🍎
 
 - ✅ iPhone/iPad compatible Web Extension
-- ✅ Feature parity with Chrome version
+- ✅ Same async fixes applied as Chrome for consistency
 - ✅ Mobile-optimized interface with dark mode support
+- ✅ Feature parity with Chrome version
 
 **Unified CLI: Development Ready** ⚡
 
@@ -220,8 +228,8 @@ recipe-cli --help          # Show available commands
 
 **Next Priorities:**
 
-- AWS Lambda deployment via CLI
-- Additional recipe site parsers (Food & Wine, NYT Cooking)
+- Fix web extension linting errors blocking monorepo validation
+- AWS Lambda deployment optimization  
 - iOS app development
 
 **Development Requirements:**

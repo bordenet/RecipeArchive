@@ -113,12 +113,39 @@ function handleMessage(request, sender, sendResponse) {
     if (request.action === "captureRecipe") {
       console.log("🍳 Starting recipe capture...");
 
-      try {
-        // Try to extract recipe data based on site
-        const recipeData = extractRecipeFromPage();
+      // Handle async operation properly for Safari
+      (async () => {
+        try {
+          // Try to extract recipe data based on site
+          console.log("🔧 About to call extractRecipeFromPage()...");
+          const recipeData = await extractRecipeFromPage();
+          console.log("🔧 extractRecipeFromPage() completed, recipeData:", recipeData);
+          console.log("🔧 recipeData type:", typeof recipeData);
+          console.log("🔧 recipeData.ingredients:", recipeData?.ingredients);
+          console.log("🔧 recipeData.steps:", recipeData?.steps);
+          console.log("🔧 recipeData.instructions:", recipeData?.instructions);
 
-        let response;
-        if (recipeData && recipeData.ingredients && recipeData.ingredients.length > 0) {
+          // Check if we have valid recipe data - handle both flat and grouped formats
+          const hasIngredients = recipeData && recipeData.ingredients && (
+            (Array.isArray(recipeData.ingredients) && recipeData.ingredients.length > 0 && 
+             (typeof recipeData.ingredients[0] === 'string' || 
+              (recipeData.ingredients[0] && recipeData.ingredients[0].items && recipeData.ingredients[0].items.length > 0)
+             )
+            )
+          );
+          
+          const hasInstructions = recipeData && (
+            (recipeData.instructions && Array.isArray(recipeData.instructions) && recipeData.instructions.length > 0) ||
+            (recipeData.steps && Array.isArray(recipeData.steps) && recipeData.steps.length > 0)
+          );
+          
+          console.log("🔧 Validation results:");
+          console.log("🔧   hasIngredients:", hasIngredients);
+          console.log("🔧   hasInstructions:", hasInstructions);
+          console.log("🔧   recipeData.title:", recipeData?.title);
+
+          let response;
+          if (recipeData && recipeData.title && (hasIngredients || hasInstructions)) {
           console.log("✅ Recipe extracted:", recipeData);
           response = { status: "success", data: recipeData };
         } else {
@@ -155,7 +182,9 @@ function handleMessage(request, sender, sendResponse) {
         setTimeout(() => sendResponse(errorResponse), 0);
         return true;
       }
-    }
+    })();
+    return true;
+  }
 
     const unknownResponse = { status: "unknown_action", action: request.action };
     console.log("❓ Unknown action response:", unknownResponse);
