@@ -121,19 +121,39 @@ build_go_binaries() {
     print_header "GO BUILDS"
     
     print_step "Building Go binaries"
-    if (cd aws-backend && make build > /dev/null 2>&1) && \
-       (cd tools && make build > /dev/null 2>&1) && \
-       (cd tools/recipe-report && go build -o recipe-report . > /dev/null 2>&1); then
-        print_success
-        ((PASSED_TESTS+=3))
-    else
+    
+    # Capture error output for better debugging
+    local error_output=""
+    
+    # Test aws-backend build
+    if ! error_output=$(cd aws-backend && make build 2>&1); then
         print_error
-        echo "    Go build failed - rerun with details:"
-        echo "    cd aws-backend && make build && cd ../tools && make build && cd recipe-report && go build -o recipe-report ."
+        echo "    AWS Backend build failed:"
+        echo "$error_output" | sed 's/^/      /'
         ((BUILD_FAILURES++))
         return 1
     fi
     
+    # Test tools build  
+    if ! error_output=$(cd tools && make build 2>&1); then
+        print_error
+        echo "    Tools build failed:"
+        echo "$error_output" | sed 's/^/      /'
+        ((BUILD_FAILURES++))
+        return 1
+    fi
+    
+    # Test recipe-report build
+    if ! error_output=$(cd tools/recipe-report && go build -o recipe-report . 2>&1); then
+        print_error
+        echo "    Recipe report build failed:"
+        echo "$error_output" | sed 's/^/      /'
+        ((BUILD_FAILURES++))
+        return 1
+    fi
+    
+    print_success
+    ((PASSED_TESTS+=3))
     ((TOTAL_TESTS+=3))
 }
 
@@ -142,15 +162,33 @@ build_typescript() {
     print_header "TYPESCRIPT"
     
     print_step "Compiling TypeScript"
-    if npx tsc --project parsers/tsconfig.json --noEmit > /dev/null 2>&1 && \
-       (cd aws-backend/infrastructure && npx tsc --noEmit > /dev/null 2>&1); then
-        print_success
+    
+    # Capture error output for better debugging
+    local error_output=""
+    
+    # Test parsers TypeScript compilation
+    if ! error_output=$(npx tsc --project parsers/tsconfig.json --noEmit 2>&1); then
+        print_error
+        echo "    Parsers TypeScript compilation failed:"
+        echo "$error_output" | sed 's/^/      /'
+        ((BUILD_FAILURES++))
+        return 1
+    fi
+    
+    # Test infrastructure TypeScript compilation (if directory exists)
+    if [ -d "aws-backend/infrastructure" ]; then
+        if ! error_output=$(cd aws-backend/infrastructure && npx tsc --noEmit 2>&1); then
+            print_error
+            echo "    Infrastructure TypeScript compilation failed:"
+            echo "$error_output" | sed 's/^/      /'
+            ((BUILD_FAILURES++))
+            return 1
+        fi
         ((PASSED_TESTS+=2))
     else
-        print_error
-        echo "    TypeScript compilation failed - rerun with details:"
-        echo "    npx tsc --project parsers/tsconfig.json --noEmit && cd aws-backend/infrastructure && npx tsc --noEmit"
-        ((BUILD_FAILURES++))
+        print_success
+        echo "    Infrastructure directory not found - skipping"
+        ((PASSED_TESTS+=1))
     fi
     
     ((TOTAL_TESTS+=2))
