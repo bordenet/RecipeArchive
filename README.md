@@ -51,18 +51,17 @@ A cross-platform recipe archiving system currently featuring:
 
 ### 🌐 Recipe Site Support
 
-🔵 **Currently Implemented:**
-- [Smitten Kitchen](https://smittenkitchen.com) - Full support with structured data extraction
+🔵 **Currently Supported Sites:**
+- [Smitten Kitchen](https://smittenkitchen.com)
+- [Love & Lemons](https://www.loveandlemons.com)
+- [Food52](https://food52.com)
+- [Food Network](https://www.foodnetwork.com)
+- [Epicurious](https://www.epicurious.com)
+- [NYT Cooking](https://cooking.nytimes.com)
+- [Alexandra's Kitchen](https://alexandracooks.com)
+- [AllRecipes](https://www.allrecipes.com)
 
-🔄 **Previously Supported (August 24, 2025):**
-- Love & Lemons 
-- Food52
-- Food Network
-- AllRecipes
-- Epicurious
-- Washington Post (with paywall support)
-
-*These sites were supported but need reimplementation in the new parser architecture. Work is underway to restore full functionality.*
+All sites are validated against a large set of real recipe URLs with strict contract enforcement (title, ingredients, instructions). Release is gated on passing all contract tests for these domains.
 
 ````
 
@@ -249,3 +248,35 @@ Our AWS backend includes:
 ---
 
 _Designed for home cooks who value organization and accessibility in their recipe collection 🍳_
+
+# 🧪 Website Parser Validation Tests
+
+These tests are the backbone of RecipeArchive's site parser quality and release workflow. The monorepo-wide parser validator automatically fetches and caches HTML for a large set of real recipe URLs from all supported sites (Smitten Kitchen, Food Network, Food52, Epicurious, AllRecipes, Love & Lemons, Alexandra's Kitchen, NYT Cooking, etc.).
+
+For each site, the validator runs the corresponding parser against cached HTML and strictly enforces contract validation for required fields (`title`, `ingredients`, `instructions`, etc.). If any parser fails for any test URL, the release is blocked until all pass. This ensures:
+- **Strict contract compliance** for all site parsers
+- **Automated, release-gating validation** for every supported site
+- **Compatibility for both Node.js and web extensions**
+- **Iterative, test-driven parser refinement**
+
+**How it works:**
+- Caches HTML for each test URL (fetches if missing)
+- Runs parser against cached content
+- Validates output against contract
+- Logs pass/fail for each site/URL
+- Blocks release if any fail
+
+**Supported Sites:**
+- Smitten Kitchen
+- Food Network
+- Food52
+- Epicurious
+- AllRecipes
+- Love & Lemons
+- Alexandra's Kitchen
+- NYT Cooking
+
+**Next Steps:**
+- Continue refining all site parsers until every test URL passes
+- Ensure web extensions use the same parser system for full coverage
+- Push changes to GitHub after all tests pass

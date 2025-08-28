@@ -1,0 +1,120 @@
+// ...existing code...
+import { BaseParser } from "../base-parser.js";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
+
+export class FoodNetworkParser extends BaseParser {
+    canParse(url: string): boolean {
+        return url.includes("foodnetwork.com");
+    }
+
+    async parse(html: string, url: string): Promise<Recipe> {
+    const $ = cheerio.load(html);
+
+        // First try JSON-LD
+        const jsonLd = this.extractJsonLD(html);
+        if (jsonLd) {
+            const recipe: Recipe = {
+                title: this.sanitizeText(jsonLd.name),
+                source: url,
+                author: typeof jsonLd.author === "string" ? this.sanitizeText(jsonLd.author) : this.sanitizeText(jsonLd.author?.name) || "Food Network",
+                ingredients: (jsonLd.recipeIngredient || []).map(i => ({ text: this.sanitizeText(i) })).filter(ing => typeof ing.text === 'string' && ing.text.length > 0),
+                instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({ stepNumber: idx + 1, text: typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text) })).filter(inst => typeof inst.text === 'string' && inst.text.length > 0),
+                imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) : jsonLd.image?.url,
+                prepTime: jsonLd.prepTime,
+                cookTime: jsonLd.cookTime,
+                totalTime: jsonLd.totalTime,
+                servings: jsonLd.recipeYield?.toString(),
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+            };
+
+            const validation = this.validateRecipe(recipe);
+            if (validation.isValid) {
+                return recipe;
+            }
+        }
+
+        // Fallback to DOM parsing for Food Network specific selectors
+        const title = this.sanitizeText([
+            $('h1.o-AssetTitle__a-HeadlineText').text(),
+            $('h1.recipe-title').text(),
+            $('h1').text()
+        ].find(t => t && t.trim().length > 0) || "");
+
+        const author = this.sanitizeText([
+            $('.o-Attribution__a-Name').text(),
+            $('.recipe-author').text(),
+            $('.chef-name').text()
+        ].find(a => a && a.trim().length > 0) || "Food Network");
+
+        let ingredients: Ingredient[] = [];
+        // Try main selectors first
+        $('.o-Ingredients__a-Ingredient, .ingredients-list__item, .ingredient, .recipe-ingredients li, ul li, .entry-content ul li').each((_, el) => {
+            let label = $(el).find('.o-Ingredients__a-Ingredient--CheckboxLabel').text().trim();
+            if (!label) label = $(el).text().trim();
+            if (label && label.toLowerCase() !== 'deselect all') {
+                ingredients.push({ text: label });
+            }
+        });
+        // Fallback: all <li> under any <ul> after h2 containing 'Ingredients'
+        if (ingredients.length === 0) {
+            $('h2:contains("Ingredients")').nextAll('ul').each((_, ul) => {
+                $(ul).find('li').each((__, el) => {
+                    const text = $(el).text().trim();
+                    if (text) ingredients.push({ text });
+                });
+            });
+        }
+
+        // Extract instructions with Food Network specific selectors  
+        let instructionsRaw: string[] = [];
+        const instructionSelectors = [
+            ".o-Method__m-Step",
+            ".recipe-instructions .o-Method__m-Step",
+            ".o-Method__m-Body li",
+            ".o-Method li",
+            "[data-module=\"InstructionsList\"] li",
+            ".recipe-instructions ol li",
+            ".recipe-instructions li",
+            ".recipe-directions li",
+            "section[aria-labelledby=\"recipe-instructions-section\"] li",
+            "ul.instructions li",
+            "li.instruction",
+            "span.instruction-text"
+        ];
+        for (const selector of instructionSelectors) {
+            $(selector).each((_, el) => {
+                const text = this.sanitizeText($(el).text());
+                if (text && text.length > 0) instructionsRaw.push(text);
+            });
+        }
+        let instructions: Instruction[] = instructionsRaw
+            .filter(text => typeof text === 'string' && text.trim().length > 0)
+            .map((text, idx) => ({ stepNumber: idx + 1, text }));
+        // Fallback: all <li> under any <ul> after h2 containing 'Directions' or 'Instructions'
+        if (instructions.length === 0) {
+            $('h2:contains("Directions"), h2:contains("Instructions")').nextAll('ul').each((ulIdx, ul) => {
+                $(ul).find('li').each((liIdx, el) => {
+                    const text = $(el).text().trim();
+                    if (text) instructions.push({ stepNumber: instructions.length + 1, text });
+                });
+            });
+        }
+
+    // Extract image
+    let imageUrl = $(".recipe-hero img, .o-AssetPhoto img, img").first().attr("src") || undefined;
+    // Try to find a better image if available
+    const ogImage = $('meta[property="og:image"]').attr('content');
+    if (ogImage) imageUrl = ogImage;
+
+        // Return recipe object
+        return {
+            title,
+            source: url,
+            author,
+            ingredients,
+            instructions,
+            imageUrl
+        };
+    }
+}

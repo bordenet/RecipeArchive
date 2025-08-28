@@ -1,3 +1,25 @@
+# Monorepo Parser Validation Tool Plan
+
+## Purpose
+This tool validates every site parser in the monorepo against a large set of real recipe URLs. It ensures each parser extracts all required fields (per AWS Lambda contract) and blocks release until all URLs pass contract validation.
+
+## Workflow
+1. **Load URL List**: Reads a config/list of recipe URLs for each site (JSON, file, etc.).
+2. **Cache HTML**: For each URL, checks for cached HTML in `/tmp` (or designated cache dir). If missing, fetches live HTML using Playwright and saves to cache.
+3. **Run Parser**: Loads the correct parser for the site and runs it against the cached HTML.
+4. **Contract Validation**: Validates parser output against required contract fields (Recipe, Ingredient, Instruction, etc. as defined in AWS Lambda types).
+5. **Logging**: Logs results for each URL (success/failure, missing fields, etc.).
+6. **Summary & Release Gate**: Summarizes results at the end. If any parser/URL fails contract validation, the tool exits with failure and blocks release.
+
+## Extensibility
+- Easily add new sites/URLs to the config.
+- Supports iterative parser refinement and re-testing.
+- Output can be formatted for console, JSON, or CI integration.
+
+## Next Steps
+- Scaffold the test runner to your specs.
+- Specify location/format of URL lists and contract type definitions.
+- Implement contract validation logic and reporting.
 # RecipeArchive Project Guide
 
 ## 🚀 Current Status: TypeScript Parser System - PRODUCTION READY
@@ -374,46 +396,30 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 - **Failed-Parse API**: Planned fallback for extraction failures
 - **Security**: No PII/secrets in code, environment variables only
 
-## 🚨 CRITICAL STORAGE ARCHITECTURE DECISION
+# 🏁 Remaining Work for Full Web Extension Support
 
-**NEVER USE DYNAMODB AGAIN - S3 ONLY**: This project uses S3-based JSON storage for recipes.
+To achieve full, reliable support for all listed sites in both Chrome and Safari extensions, the following work remains:
 
-**Why S3-Only Architecture:**
-- **95% Cost Savings**: $0.05/month vs $3-5/month DynamoDB minimum
-- **Simpler Code**: Direct JSON read/write vs complex attribute mapping
-- **Perfect for Files**: Images and archives stored alongside recipe data
-- **No Vendor Lock-in**: Standard JSON files vs proprietary NoSQL
+1. **Parser Refinement:**
+   - Update and iterate on all site parsers (Food Network, Food52, Epicurious, AllRecipes, Love & Lemons, Alexandra's Kitchen, NYT Cooking, Smitten Kitchen) until every test URL passes strict contract validation.
+   - Expand fallback logic and selectors for sites with inconsistent HTML or missing JSON-LD.
+   - Add diagnostic logging for edge cases and failures.
 
-**Architecture Confirmed 3 Times**:
-1. ✅ Original architecture decision documented
-2. ✅ Storage recommendations analysis completed  
-3. ✅ Implementation refactored from DynamoDB to S3
+2. **Validator Workflow:**
+   - Rerun the monorepo-wide validator after each parser update.
+   - Block release until all test URLs pass for every site.
 
-**If Anyone Suggests DynamoDB**: Point to `docs/architecture/STORAGE_RECOMMENDATIONS.md`
+3. **Web Extension Integration:**
+   - Ensure both Chrome and Safari extensions use the latest, validated TypeScript parser bundle.
+   - Test extensions against all supported sites and URLs for real-world coverage.
+   - Fix any extension-specific issues (content script messaging, parser loading, etc.).
 
-### AWS Infrastructure Setup
+4. **Documentation & Release:**
+   - Update README.md and CLAUDE.md to reflect full site support and validation workflow.
+   - Push all changes to GitHub after validation and linting.
 
-**Status**: **READY FOR DEPLOYMENT** 🚀
+5. **Final Validation:**
+   - Confirm all parsers and extensions work for every test URL and site.
+   - Mark project as fully supporting all listed sites.
 
-**Infrastructure Created**:
-- ✅ **AWS CDK Stack**: Complete infrastructure as code (`aws-backend/infrastructure/`)
-- ✅ **Cognito User Pool**: Email-based authentication with 1hr/30day token expiration
-- ✅ **S3 Bucket**: Recipe JSON storage + photos + web archives with lifecycle management
-- ✅ **API Gateway**: RESTful API with CORS and rate limiting
-- ✅ **IAM Roles**: Least-privilege access for Lambda functions  
-- ✅ **Security**: Encryption at rest and in transit, no hardcoded secrets
-- 🗑️ **DynamoDB**: REMOVED - Use cleanup script if any tables exist
-
-**Deployment Tools**:
-- ✅ **Setup Command**: `recipe-cli setup` - Automated project initialization
-- ✅ **Environment Template**: `.env.template` - Secure credential management
-- ✅ **Security**: Enhanced `.gitignore` to prevent credential leaks
-
-### Success Metrics Across All Platforms
-- **Quality**: 95% extraction success rate, <5% error rate
-- **Engagement**: 5-10+ recipes saved per user per week
-- **Retention**: 80%+ user retention at 30 days
-- **Performance**: Sub-second response times across all platforms
-- **Beta Success**: 50+ active users with high satisfaction scores
-
-This guide serves as the definitive project reference and should be updated as development progresses.
+---

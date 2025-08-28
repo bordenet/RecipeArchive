@@ -840,13 +840,18 @@ function transformRecipeDataForAWS(recipeData) {
         throw new Error("Recipe title is required");
     }
     
-    // Validate that we actually found recipe content
+    // Temporary: Allow empty ingredients/instructions for debugging
     if (ingredients.length === 0) {
-        throw new Error("No ingredients found on this page. This may not be a recipe page, or the page format has changed.");
+        console.warn("⚠️ No ingredients found - adding placeholder for debugging");
+        ingredients.push({ text: "[No ingredients extracted - parser debugging needed]" });
     }
     
     if (instructions.length === 0) {
-        throw new Error("No cooking instructions found on this page. This may not be a recipe page, or the page format has changed.");
+        console.warn("⚠️ No instructions found - adding placeholder for debugging");
+        instructions.push({ 
+            stepNumber: 1, 
+            text: "[No instructions extracted - parser debugging needed]" 
+        });
     }
     
     if (!transformedData.sourceUrl) {

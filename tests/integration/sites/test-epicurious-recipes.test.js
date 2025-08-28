@@ -1,14 +1,21 @@
+// ...existing code...
+
 const { chromium } = require('playwright');
 
-const FOOD_NETWORK_RECIPES = [
+const EPICURIOUS_RECIPES = [
   {
-    url: 'https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048',
-    expected: 'Margarita',
-    category: 'cocktails',
+    url: 'https://www.epicurious.com/recipes/food/views/philly-fluff-cake',
+    expected: 'Philly Fluff Cake',
+    category: 'dessert',
+  },
+  {
+    url: 'https://www.epicurious.com/recipes/food/views/3-ingredient-peanut-butter-cookies',
+    expected: '3-Ingredient Peanut Butter Cookies',
+    category: 'dessert',
   },
 ];
 
-describe('Food Network Recipe Extraction', () => {
+describe('Epicurious Recipe Extraction', () => {
   let browser;
   let context;
 
@@ -23,20 +30,19 @@ describe('Food Network Recipe Extraction', () => {
     if (browser) await browser.close();
   });
 
-  test.each(FOOD_NETWORK_RECIPES)(
+  test.each(EPICURIOUS_RECIPES)(
     'should extract recipe data from %s',
     async (recipe) => {
       const page = await context.newPage();
-      
       try {
-        await page.goto(recipe.url, { 
+        await page.goto(recipe.url, {
           waitUntil: 'domcontentloaded',
-          timeout: 60000 
+          timeout: 60000
         });
         await page.waitForTimeout(3000);
 
         const result = await testRecipeExtraction(page, recipe);
-        
+
         // AWS backend contract validation
         expect(result.title).toBeTruthy();
         expect(result.title.length).toBeLessThanOrEqual(200);
@@ -76,141 +82,92 @@ describe('Food Network Recipe Extraction', () => {
 
 async function testRecipeExtraction(page, recipe) {
   const result = await page.evaluate(() => {
-    // JSON-LD Extraction (Primary method for Food Network)
+    // JSON-LD Extraction (Primary method for Epicurious)
     function extractRecipeFromJsonLd() {
       const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-      
       for (const script of jsonLdScripts) {
         try {
           const jsonData = JSON.parse(script.textContent);
           let recipeData = null;
-          
-          // Handle array of JSON-LD objects
           if (Array.isArray(jsonData)) {
             recipeData = jsonData.find(item => item['@type'] === 'Recipe');
           } else if (jsonData['@type'] === 'Recipe') {
             recipeData = jsonData;
           }
-          
           if (recipeData && recipeData.name) {
-            const ingredients = recipeData.recipeIngredient 
-              ? [{ title: null, items: recipeData.recipeIngredient }]
+            const ingredients = recipeData.recipeIngredient
+              ? recipeData.recipeIngredient.map(text => ({ text }))
               : [];
-            
-            let steps = [];
+            let instructions = [];
             if (recipeData.recipeInstructions) {
-              const stepItems = recipeData.recipeInstructions
-                .map(instruction => {
-                  if (typeof instruction === 'string') return instruction;
-                  if (instruction.text) return instruction.text;
-                  if (instruction.name) return instruction.name;
-                  return '';
-                })
-                .filter(Boolean);
-              
-              if (stepItems.length > 0) {
-                steps = [{ title: null, items: stepItems }];
-              }
+              instructions = recipeData.recipeInstructions.map((instruction, idx) => {
+                let text = '';
+                if (typeof instruction === 'string') text = instruction;
+                else if (instruction.text) text = instruction.text;
+                else if (instruction.name) text = instruction.name;
+                return { stepNumber: idx + 1, text };
+              });
             }
-            
             return {
-              method: 'json-ld',
               title: recipeData.name,
               ingredients,
-              steps,
-              servingSize: recipeData.recipeYield || recipeData.yield || null,
-              time: recipeData.totalTime || recipeData.cookTime || recipeData.prepTime || null,
-              photos: recipeData.image ? (Array.isArray(recipeData.image) ? recipeData.image : [recipeData.image]) : [],
-              success: true
+              instructions,
+              sourceUrl: window.location.href,
+              mainPhotoUrl: recipeData.image ? (Array.isArray(recipeData.image) ? recipeData.image[0] : recipeData.image) : undefined,
+              prepTimeMinutes: undefined,
+              cookTimeMinutes: undefined,
+              totalTimeMinutes: undefined,
+              servings: undefined,
+              yield: recipeData.recipeYield || undefined,
             };
           }
         } catch (e) {
-          console.log('Food Network: JSON-LD parsing failed:', e.message);
+          console.log('Epicurious: JSON-LD parsing failed:', e.message);
         }
       }
       return null;
     }
-
-    // Food Network HTML extraction fallback
-    function extractFoodNetworkRecipe() {
-      const title = document.querySelector('h1')?.textContent?.trim() || 
-                   document.title || 
-                   'Unknown Recipe';
-
-      // Extract ingredients - avoiding metadata
+    // Fallback: Epicurious HTML parsing (if needed)
+    function extractEpicuriousRecipe() {
+      const title = document.querySelector('h1')?.textContent?.trim() || document.title || 'Unknown Recipe';
       let ingredients = [];
-      const ingredientSelectors = [
-        '.o-RecipeInfo__a-Ingredients li',
-        '.o-Ingredients__a-ListItem', 
-        'section[aria-labelledby="recipe-ingredients-section"] li'
-      ];
-
+      const ingredientSelectors = ['.ingredient'];
       for (const selector of ingredientSelectors) {
         const ingredientElements = document.querySelectorAll(selector);
         if (ingredientElements.length > 0) {
           const items = Array.from(ingredientElements)
             .map(el => el.textContent?.trim())
-            .filter(text => 
-              text && 
-              text.length > 3 &&
-              !text.includes('Level:') &&
-              !text.includes('Total:') &&
-              !text.includes('Prep:') &&
-              !text.includes('Yield:') &&
-              !text.includes('Nutrition Info') &&
-              !text.includes('Save Recipe') &&
-              !text.includes('{')
-            );
-
+            .filter(text => text && text.length > 3);
           if (items.length > 0) {
-            ingredients = [{ title: null, items }];
+            ingredients = items.map(text => ({ text }));
             break;
           }
         }
       }
-
-      // Extract steps
-      let steps = [];
-      const stepSelectors = [
-        '.o-Method__m-Body li',
-        '.o-Method li',
-        '.recipe-directions li',
-        'section[aria-labelledby="recipe-instructions-section"] li'
-      ];
-
+      let instructions = [];
+      const stepSelectors = ['.preparation-step'];
       for (const selector of stepSelectors) {
         const stepElements = document.querySelectorAll(selector);
         if (stepElements.length > 0) {
           const items = Array.from(stepElements)
             .map(el => el.textContent?.trim())
             .filter(text => text && text.length > 10);
-
           if (items.length > 0) {
-            steps = [{ title: null, items }];
+            instructions = items.map((text, idx) => ({ stepNumber: idx + 1, text }));
             break;
           }
         }
       }
-
       return {
-        method: 'html-parsing',
         title,
         ingredients,
-        steps,
-        servingSize: null,
-        time: null,
-        photos: [],
-        success: ingredients.length > 0 && steps.length > 0
+        instructions,
+        sourceUrl: window.location.href,
       };
     }
-
-    // Try JSON-LD first (preferred for Food Network)
     const jsonLdResult = extractRecipeFromJsonLd();
     if (jsonLdResult) return jsonLdResult;
-
-    // Fallback to HTML parsing
-    return extractFoodNetworkRecipe();
+    return extractEpicuriousRecipe();
   });
-
   return result;
 }
