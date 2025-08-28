@@ -53,4 +53,6 @@ export interface JsonLdRecipe {
     totalTime?: string;
     recipeYield?: string;
     description?: string;
+    keywords?: string | string[];
+    recipeCategory?: string | string[];
 }

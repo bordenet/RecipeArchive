@@ -12,6 +12,30 @@ export class Food52Parser extends BaseParser {
         const jsonLd = this.extractJsonLD(html);
         let recipe: Recipe;
         if (jsonLd) {
+            // Author extraction
+            let author = undefined;
+            if (typeof jsonLd.author === "string") {
+                author = this.sanitizeText(jsonLd.author);
+            } else if (jsonLd.author && typeof jsonLd.author === "object" && jsonLd.author.name) {
+                author = this.sanitizeText(jsonLd.author.name);
+            }
+            // Tags extraction
+            let tags: string[] | undefined = undefined;
+            if (jsonLd.keywords) {
+                if (Array.isArray(jsonLd.keywords)) {
+                    tags = (jsonLd.keywords as string[]).map((k: string) => this.sanitizeText(k));
+                } else if (typeof jsonLd.keywords === "string") {
+                    tags = (jsonLd.keywords as string).split(/,|;/).map((k: string) => this.sanitizeText(k)).filter(Boolean);
+                }
+            }
+            if (jsonLd.recipeCategory) {
+                if (!tags) tags = [];
+                if (Array.isArray(jsonLd.recipeCategory)) {
+                    tags.push(...(jsonLd.recipeCategory as string[]).map((c: string) => this.sanitizeText(c)));
+                } else if (typeof jsonLd.recipeCategory === "string") {
+                    tags.push(...(jsonLd.recipeCategory as string).split(/,|;/).map((c: string) => this.sanitizeText(c)).filter(Boolean));
+                }
+            }
             recipe = {
                 title: this.sanitizeText(jsonLd.name),
                 source: url,
@@ -22,34 +46,54 @@ export class Food52Parser extends BaseParser {
                 cookTime: jsonLd.cookTime,
                 totalTime: jsonLd.totalTime,
                 servings: jsonLd.recipeYield?.toString(),
-                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
+                notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined,
+                author,
+                tags
             };
         } else {
             // Fallback: extract from HTML
             const $ = cheerio.load(html);
             const title = $('h1').first().text().trim();
             const ingredients: Ingredient[] = [];
-                $('h2:contains("Ingredients")').nextAll('ul').first().find('li').each((_, el) => {
-                    const text = $(el).text().trim();
-                    if (text) ingredients.push({ text });
-                });
+            $('h2:contains("Ingredients")').nextAll('ul').first().find('li').each((_, el) => {
+                const text = $(el).text().trim();
+                if (text) ingredients.push({ text });
+            });
             const instructions: Instruction[] = [];
-                $('h2:contains("Directions")').nextAll('ul').first().find('li').each((i, el) => {
-                    const text = $(el).find('p').text().trim();
-                    if (text) instructions.push({ stepNumber: i + 1, text });
+            $('h2:contains("Directions")').nextAll('ul').first().find('li').each((i, el) => {
+                const text = $(el).find('p').text().trim();
+                if (text) instructions.push({ stepNumber: i + 1, text });
+            });
+            // Fallback image extraction: look for main recipe image
+            let imageUrl = $('img').first().attr('src');
+            // Try to find a better image if available
+            const ogImage = $('meta[property="og:image"]').attr('content');
+            if (ogImage) imageUrl = ogImage;
+            // Fallback author extraction
+            let author = undefined;
+            const authorEl = $('a[href*="/author/"]').first();
+            if (authorEl.length) {
+                author = authorEl.text().trim();
+            }
+            // Fallback tags extraction
+            let tags: string[] | undefined = undefined;
+            const tagEls = $('span.text-approved, .tags, meta[property="og:keywords"]');
+            if (tagEls.length) {
+                tags = [];
+                tagEls.each((_, el) => {
+                    const t = $(el).text().trim();
+                    if (tags && t) tags.push(t);
                 });
-                // Fallback image extraction: look for main recipe image
-                let imageUrl = $('img').first().attr('src');
-                // Try to find a better image if available
-                const ogImage = $('meta[property="og:image"]').attr('content');
-                if (ogImage) imageUrl = ogImage;
+            }
             recipe = {
                 title,
                 source: url,
                 ingredients,
                 instructions,
-                    imageUrl,
-                notes: undefined
+                imageUrl,
+                notes: undefined,
+                author,
+                tags
             };
         }
         const validation = this.validateRecipe(recipe);
