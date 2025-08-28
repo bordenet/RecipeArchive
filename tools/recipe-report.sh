@@ -4,7 +4,7 @@
 
 set -e
 
-TOOL_DIR="/Users/matt/GitHub/RecipeArchive/tools/recipe-report"
+TOOL_DIR="$(pwd)/tools/recipe-report"
 
 echo "🔧 Recipe Archive S3 Reporting Tool"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
