@@ -317,6 +317,28 @@ run_husky_checks() {
         ((PASSED_TESTS++)) # Count as passed if tool not available
     fi
     
+    print_step "Empty markdown files"
+    empty_md_files=$(find . -name "*.md" -type f -size 0 2>/dev/null | grep -v node_modules | grep -v .git || true)
+    
+    if [ -z "$empty_md_files" ]; then
+        print_success
+        ((PASSED_TESTS++))
+    else
+        print_error
+        echo "    Empty markdown files found (should be deleted): $empty_md_files"
+    fi
+    
+    print_step "Orphaned development files"
+    orphaned_files=$(find . -name "*.bak" -o -name "*-clean.*" -o -name "*-minimal.*" -o -name "*-debug.*" -o -name "*-old.*" -o -name "*-backup.*" 2>/dev/null | grep -v node_modules | grep -v .git || true)
+    
+    if [ -z "$orphaned_files" ]; then
+        print_success
+        ((PASSED_TESTS++))
+    else
+        print_error
+        echo "    Orphaned development files found (should be deleted): $orphaned_files"
+    fi
+    
     print_step "Documentation checks"
     if npm run docs:organize > /dev/null 2>&1 && npm run docs:review > /dev/null 2>&1; then
         print_success
@@ -326,7 +348,7 @@ run_husky_checks() {
         echo "    Documentation checks failed - rerun with details: npm run docs:organize && npm run docs:review"
     fi
     
-    ((TOTAL_TESTS+=6))
+    ((TOTAL_TESTS+=8))
 }
 
 # Run final recipe report tool validation

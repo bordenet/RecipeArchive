@@ -19,8 +19,11 @@ cd RecipeArchive
 cp .env.template .env
 # Edit .env with your actual credentials (NEVER commit this file!)
 
-# Setup everything automatically with our unified CLI
-recipe-cli setup
+# Build the unified CLI tool
+cd tools && make build-recipe-cli && cd ..
+
+# Setup everything automatically with our unified CLI  
+npm run validate  # Uses recipe-cli validate env
 ```
 
 ### 🔐 Security Notice
@@ -31,13 +34,13 @@ recipe-cli setup
 
 ```bash
 # Start local development environment
-recipe-cli dev start
+npm run dev:start
 
 # Run comprehensive test suite
-recipe-cli test run
+npm test
 
 # Deploy to AWS when ready
-recipe-cli deploy aws
+npm run deploy
 ```
 
 **Unified CLI Features:**
