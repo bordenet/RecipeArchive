@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 const { chromium } = require('playwright');
 
 const FOOD_NETWORK_RECIPES = [
@@ -41,19 +37,35 @@ describe('Food Network Recipe Extraction', () => {
 
         const result = await testRecipeExtraction(page, recipe);
         
+        // AWS backend contract validation
         expect(result.title).toBeTruthy();
+        expect(result.title.length).toBeLessThanOrEqual(200);
         expect(result.title).toContain(recipe.expected);
         expect(result.ingredients).toBeTruthy();
+        expect(Array.isArray(result.ingredients)).toBe(true);
         expect(result.ingredients.length).toBeGreaterThan(0);
-        expect(result.steps).toBeTruthy();
-        expect(result.steps.length).toBeGreaterThan(0);
-        
-        console.log(`✅ ${recipe.expected}:`, {
-          title: result.title,
-          ingredients: result.ingredients.length,
-          steps: result.steps.length,
-          method: result.method
+        result.ingredients.forEach(ing => {
+          expect(typeof ing.text).toBe('string');
+          expect(ing.text.length).toBeGreaterThan(0);
         });
+        expect(result.instructions).toBeTruthy();
+        expect(Array.isArray(result.instructions)).toBe(true);
+        expect(result.instructions.length).toBeGreaterThan(0);
+        result.instructions.forEach((step, idx) => {
+          expect(typeof step.text).toBe('string');
+          expect(step.text.length).toBeGreaterThan(0);
+          expect(typeof step.stepNumber).toBe('number');
+          expect(step.stepNumber).toBe(idx + 1);
+        });
+        expect(result.sourceUrl).toBe(recipe.url);
+        // Optional fields
+        if (result.mainPhotoUrl) expect(typeof result.mainPhotoUrl).toBe('string');
+        if (result.prepTimeMinutes) expect(typeof result.prepTimeMinutes).toBe('number');
+        if (result.cookTimeMinutes) expect(typeof result.cookTimeMinutes).toBe('number');
+        if (result.totalTimeMinutes) expect(typeof result.totalTimeMinutes).toBe('number');
+        if (result.servings) expect(typeof result.servings).toBe('number');
+        if (result.yield) expect(typeof result.yield).toBe('string');
+        console.log(`✅ AWS contract validated for ${recipe.expected}`);
       } finally {
         await page.close();
       }
