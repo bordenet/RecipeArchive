@@ -1,0 +1,77 @@
+{
+  "testUrls": {
+    "smittenkitchen.com": [
+      "https://smittenkitchen.com/2014/04/the-perfect-margarita/",
+      "https://smittenkitchen.com/2023/10/glazed-apple-cider-doughnut-cake/",
+      "https://smittenkitchen.com/2018/09/big-apple-crumb-cake/",
+      "https://smittenkitchen.com/2021/07/cannellini-aglio-e-olio/",
+      "https://smittenkitchen.com/2021/07/zucchini-butter-spaghetti/"
+    ],
+    "allrecipes.com": [
+      "https://www.allrecipes.com/recipe/17481/simple-white-cake/",
+      "https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/",
+      "https://www.allrecipes.com/recipe/214963/moms-chicken-pot-pie/",
+      "https://www.allrecipes.com/recipe/220985/scott-hibbs-amazing-whisky-grilled-baby-back-ribs/",
+      "https://www.allrecipes.com/recipe/278881/garlic-brown-sugar-chicken-thighs/",
+      "https://www.allrecipes.com/recipe/280951/black-pepper-beef-and-cabbage-stir-fry/"
+    ],
+    "loveandlemons.com": [
+      "https://www.loveandlemons.com/corn-salsa/",
+      "https://www.loveandlemons.com/grilled-corn-on-the-cob/",
+      "https://www.loveandlemons.com/margarita-recipe/",
+      "https://www.loveandlemons.com/black-bean-burgers/",
+      "https://www.loveandlemons.com/shakshuka-recipe/",
+      "https://www.loveandlemons.com/lentil-soup/",
+      "https://www.loveandlemons.com/frittata-recipe/",
+      "https://www.loveandlemons.com/baked-potato/"
+    ],
+    "food52.com": [
+      "https://food52.com/recipes/confit-red-pepper-and-tomato-sauce-with-pasta",
+      "https://food52.com/recipes/yellowtail-sashimi-with-nectarine-and-meyer-lemon-relish",
+      "https://food52.com/recipes/8578-short-rib-ragu",
+      "https://food52.com/recipes/83215-lemon-raspberry-layer-cake-recipe",
+      "https://food52.com/recipes/79815-pink-champagne-cake-recipe",
+      "https://food52.com/recipes/38653-nea-s-swedish-princess-cake-prinsesstarta"
+    ],
+    "foodnetwork.com": [
+      "https://www.foodnetwork.com/recipes/food-network-kitchen/margarita-recipe-1928467",
+      "https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048",
+      "https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-cacciatore-recipe-1943033",
+      "https://www.foodnetwork.com/recipes/giada-de-laurentiis/lasagna-rolls-recipe-1943265",
+      "https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-piccata-recipe-1942429",
+      "https://www.foodnetwork.com/recipes/giada-de-laurentiis/lemon-ricotta-cookies-with-lemon-glaze-recipe-1950642"
+    ],
+    "epicurious.com": [
+      "https://www.epicurious.com/recipes/food/views/philly-fluff-cake",
+      "https://www.epicurious.com/recipes/food/views/3-ingredient-peanut-butter-cookies",
+      "https://www.epicurious.com/recipes/food/views/salmon-nicoise-109010",
+      "https://www.epicurious.com/recipes/food/views/white-chocolate-cranberry-and-macadamia-nut-cookies-236823",
+      "https://www.epicurious.com/recipes/food/views/mini-chicken-pot-pies-with-bacon-and-marjoram-240130",
+      "https://www.epicurious.com/recipes/food/views/irish-soda-bread-106278"
+    ],
+    "cooking.nytimes.com": [
+      "https://cooking.nytimes.com/recipes/1016153-classic-margarita",
+      "https://cooking.nytimes.com/recipes/1020221-samin-nosrats-house-dressing",
+      "https://cooking.nytimes.com/recipes/1020222-creamy-lemon-miso-dressing",
+      "https://cooking.nytimes.com/recipes/1020223-creamy-sesame-ginger-dressing"
+    ],
+    "alexandracooks.com": [
+      "https://alexandracooks.com/2009/03/20/lemon-blueberry-muffins/",
+      "https://alexandracooks.com/2012/11/07/my-mothers-peasant-bread-the-best-easiest-bread-you-will-ever-make/",
+      "https://alexandracooks.com/2018/03/02/overnight-refrigerator-focaccia-best-focaccia/",
+      "https://alexandracooks.com/2017/10/24/homemade-sourdough-bread-step-step-guide/",
+      "https://alexandracooks.com/2020/05/01/simple-sourdough-pizza-crust-a-step-by-step-guide/",
+      "https://alexandracooks.com/2014/09/12/easy-eggplant-parmesan-with-roasted-not-fried-eggplant/"
+    ]
+  },
+  "supportedSites": [
+    "smittenkitchen.com",
+    "allrecipes.com", 
+    "loveandlemons.com",
+    "food52.com",
+    "foodnetwork.com",
+    "epicurious.com",
+    "cooking.nytimes.com",
+    "alexandracooks.com"
+  ]
+}

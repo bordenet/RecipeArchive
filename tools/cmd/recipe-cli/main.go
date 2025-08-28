@@ -716,21 +716,21 @@ func runMonorepoValidation() error {
 	}
 
 	fmt.Println("\n🔄 Running monorepo validation script...")
-	
+
 	validationScript := filepath.Join(projectRoot, "validate-monorepo.sh")
 	if _, err := os.Stat(validationScript); os.IsNotExist(err) {
 		return fmt.Errorf("monorepo validation script not found at: %s", validationScript)
 	}
-	
+
 	cmd := exec.Command("bash", validationScript)
 	cmd.Dir = projectRoot
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("monorepo validation failed: %w", err)
 	}
-	
+
 	fmt.Println("\n🎉 Monorepo validation completed successfully!")
 	return nil
 }
@@ -1323,7 +1323,7 @@ func stopLocalDev() error {
 
 	// Clean up compiled artifacts
 	fmt.Println("\n🧹 Cleaning up development artifacts...")
-	
+
 	parsersDistDir := filepath.Join(projectRoot, "parsers", "dist")
 	if _, err := os.Stat(parsersDistDir); err == nil {
 		if err := os.RemoveAll(parsersDistDir); err != nil {
@@ -1332,7 +1332,7 @@ func stopLocalDev() error {
 			fmt.Println("✅ Cleaned parsers/dist directory")
 		}
 	}
-	
+
 	toolsBinDir := filepath.Join(projectRoot, "tools", "bin")
 	if _, err := os.Stat(toolsBinDir); err == nil {
 		if err := os.RemoveAll(toolsBinDir); err != nil {
