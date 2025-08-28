@@ -63,7 +63,9 @@
       "Bash(timeout:*)",
       "Bash(git stash:*)",
       "Bash(./bin/recipe-cli test:*)",
-      "Bash(jest:*)"
+      "Bash(jest:*)",
+      "Bash(trufflehog:*)",
+      "Bash(brew install:*)"
     ],
     "deny": [],
     "ask": []
