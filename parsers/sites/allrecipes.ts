@@ -10,7 +10,14 @@ export class AllRecipesParser extends BaseParser {
 
     async parse(html: string, url: string): Promise<Recipe> {
         const $ = cheerio.load(html);
-        
+
+        // Detect AllRecipes 404/error page
+        const canonicalUrl = $('link[rel="canonical"]').attr('href');
+        const ogUrl = $('meta[property="og:url"]').attr('content');
+        if ((canonicalUrl && canonicalUrl.includes('/404')) || (ogUrl && ogUrl.includes('/404'))) {
+            throw new Error('AllRecipes: 404 or error page detected');
+        }
+
         // First try JSON-LD extraction
         const jsonLd = this.extractJsonLD(html);
         if (jsonLd) {
@@ -33,7 +40,6 @@ export class AllRecipesParser extends BaseParser {
                 servings: Array.isArray(jsonLd.recipeYield) ? jsonLd.recipeYield.join(", ") : jsonLd.recipeYield?.toString(),
                 notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
             };
-            
             const validation = this.validateRecipe(recipe);
             if (validation.isValid) {
                 return recipe;
