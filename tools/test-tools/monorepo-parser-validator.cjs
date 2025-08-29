@@ -181,11 +181,14 @@ function isCacheExpired(filePath) {
 
 async function fetchAndCache(url, outPath) {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  
-  // Load Washington Post cookies if available
+  let context;
+  let page;
+  // Spoof user-agent for Washington Post
   if (url.includes('washingtonpost.com')) {
+    context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+    });
+    page = await context.newPage();
     const cookiesPath = path.join(path.resolve(__dirname, '../../dev-tools'), 'wapost-subscription-cookies.json');
     if (fs.existsSync(cookiesPath)) {
       console.log(`[WAPOST-AUTH] Loading authentication cookies for ${url}`);
@@ -220,6 +223,9 @@ async function fetchAndCache(url, outPath) {
       console.log(`[WAPOST-AUTH] No cookies found at ${cookiesPath}`);
       console.log(`[WAPOST-AUTH] Run 'cd tools/cmd/wapost-cookies && go run main.go' to capture cookies`);
     }
+  } else {
+    context = await browser.newContext();
+    page = await context.newPage();
   }
   
   await page.goto(url, { waitUntil: 'domcontentloaded' });
