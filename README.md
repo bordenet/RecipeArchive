@@ -52,33 +52,56 @@ A cross-platform recipe archiving system currently featuring:
 
 ### 🌐 Recipe Site Support
 
-🔵 **Currently Supported Sites:**
 
-- [Smitten Kitchen](https://smittenkitchen.com) ✅
-- [Love & Lemons](https://www.loveandlemons.com) ✅
-- [Food52](https://food52.com) ✅
-- [Food Network](https://www.foodnetwork.com) ✅
-- [Epicurious](https://www.epicurious.com) ✅
-- [NYT Cooking](https://cooking.nytimes.com) ✅
-- [Alexandra's Kitchen](https://alexandracooks.com) ✅
-- [AllRecipes](https://www.allrecipes.com) ✅
-- [Serious Eats](https://www.seriouseats.com) ✅
-- [Washington Post](https://www.washingtonpost.com) ✅ (with cookie auth)
+## � Supported Recipe Websites & Test Fixture Strategy
 
-**Features:**
-- ✅ TypeScript parser system with decoupled site-specific parsers (production-ready)
-- ✅ Cross-platform compatibility (no hardcoded paths)
-- ✅ Comprehensive contract validation for all sites (100% passing)
-- ✅ Both Chrome and Safari extension integration (production-ready)
-- ✅ AWS backend with recipe URL-based overwrite and S3 storage
+| Site Name           | URL Pattern                  | Parser Status | Test Fixture | Paywall/Notes                  |
+|---------------------|-----------------------------|--------------|--------------|-------------------------------|
+| Smitten Kitchen     | smittenkitchen.com           | ✅           | Yes          | JSON-LD + manual parsing      |
+| Food Network        | foodnetwork.com              | ✅           | Yes          | Complex CSS selectors         |
+| NYT Cooking         | cooking.nytimes.com          | ✅           | Yes          | data-testid attributes        |
+| Washington Post     | washingtonpost.com           | ✅           | Yes          | Cookie auth for live tests; offline HTML fixture for CI |
+| Love & Lemons       | loveandlemons.com            | ✅           | Yes          | Complex ingredient grouping   |
+| Food52              | food52.com                   | ✅           | Yes          | Multiple recipe formats       |
+| AllRecipes          | allrecipes.com               | ✅           | Yes          | Community-generated content   |
+| Epicurious          | epicurious.com               | ✅           | Yes          | Condé Nast network           |
+| Serious Eats        | seriouseats.com              | ✅           | Yes          | Technical cooking focus       |
+| Alexandra's Kitchen | alexandracooks.com           | ✅           | Yes          | Standard extraction           |
+| Food & Wine         | foodandwine.com              | 🔄 Planned   | Yes          | Parser framework ready        |
+| Damn Delicious      | damndelicious.net            | 🔄 Planned   | Yes          | PRD specified site            |
+| JSON-LD Sites       | (universal fallback)         | ✅           | Yes          | Structured data support       |
 
-- 🔌 **Browser Extensions** - Chrome & Safari extensions for one-click recipe archiving (PRODUCTION READY)
-- ☁️ **AWS Backend** - Go-based serverless backend with S3 storage (PRODUCTION READY)
+**Legend:**
+- ✅ = Production-ready TypeScript parser, full test coverage
+- 🔄 Planned = PRD-defined, parser framework ready or in development
+- Test Fixture: HTML sample available in `/tests/fixtures/html-samples/`
 
-**🚧 Planned Components:**
+**Site Registry:**
+- All supported sites, parser files, fixture files, paywall status, and implementation status are centrally managed in `/parsers/sites/site-registry.ts`.
+- To add or update a site, edit the registry and add the corresponding fixture file.
 
-- 📱 **iOS App** - Native mobile recipe browsing
-- 🌐 **Web App** - Recipe management and meal planning interface
+**Registry-Driven Tests:**
+- Extraction tests are automatically generated for all sites in the registry via `/tests/unit/registry-driven-recipe-extraction.test.ts`.
+- Shared test utilities in `/tests/unit/test-utils.ts` handle parser loading, fixture loading, extraction, and contract validation.
+- Redundant site-specific extraction test files have been removed for maintainability.
+
+**Paywalled Sites:**
+- *Washington Post*: Live tests require cookie-based authentication. For CI/offline testing, use the checked-in HTML fixture (`washington-post-sample.html`).
+
+**Test Coverage:**
+- All registry sites have matching HTML fixtures and are covered by registry-driven tests.
+- Backend synthetic recipes reference real URLs in `/aws-backend/functions/testdata/test-recipes.json`.
+
+**Universal Fallback:**
+- For unsupported sites, JSON-LD extraction is attempted first. If unavailable, generic DOM parsing is used. Failed parses trigger diagnostic submission for parser improvement.
+
+**Diagnostic Automation:**
+- Failed extractions automatically submit diagnostic payloads (HTML, metadata) for parser improvement.
+- Diagnostic coverage is enforced in both extension and backend workflows, ensuring continuous parser quality.
+
+**Planned Components:**
+- iOS App (Swift): Native mobile recipe browsing
+- Web App (React + TypeScript): Recipe management and meal planning interface
 
 ## 🚀 The Big Picture
 
