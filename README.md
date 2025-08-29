@@ -52,18 +52,19 @@ A cross-platform recipe archiving system currently featuring:
 
 ### 🌐 Recipe Site Support
 
-🔵 **Currently Supported Sites:**
+🔵 **Currently Supported Sites (11 Total):**
 
 - [Smitten Kitchen](https://smittenkitchen.com) ✅
-- [Love & Lemons](https://www.loveandlemons.com) ✅
+- [Love & Lemons](https://www.loveandlemons.com) ✅  
 - [Food52](https://food52.com) ✅
 - [Food Network](https://www.foodnetwork.com) ✅
 - [Epicurious](https://www.epicurious.com) ✅
 - [NYT Cooking](https://cooking.nytimes.com) ✅
-- [Alexandra's Kitchen](https://alexandracooks.com) ✅
 - [AllRecipes](https://www.allrecipes.com) ✅
 - [Serious Eats](https://www.seriouseats.com) ✅
 - [Washington Post](https://www.washingtonpost.com) ✅ (with cookie auth)
+- [Food & Wine](https://www.foodandwine.com) ✅
+- [Damn Delicious](https://damndelicious.net) ✅
 
 **Features:**
 - ✅ TypeScript parser system with decoupled site-specific parsers (production-ready)
@@ -157,10 +158,9 @@ Use the right tool for each job:
 - 🍽️ **Food Network** - JSON-LD + custom parser for Alton Brown recipes and more
 - 📄 **JSON-LD Sites** - Universal structured data support for compliant recipe sites
 
-**Additional Sites in Development:**
+**Parser Development Status:**
 
-- 🍽️ **Food & Wine** - Parser framework ready, needs implementation
-- 🌶️ **Damn Delicious** - PRD specified site, needs implementation
+All 11 sites have complete TypeScript parsers with comprehensive contract validation. Each parser handles both JSON-LD structured data and site-specific HTML extraction patterns.
 
 _All sites with ✅ status are production-ready with comprehensive test coverage and validation._
 
@@ -201,7 +201,7 @@ npm run docs:review         # CLAUDE.md maintenance check
 
 **Chrome Extension: Production Ready** 🔥
 
-- ✅ 10 recipe sites supported with comprehensive validation
+- ✅ 11 recipe sites supported with comprehensive validation
 - ✅ TypeScript parser system with decoupled site-specific parsers
 - ✅ JWT authentication with AWS Cognito integration
 - ✅ Recipe URL-based overwrite behavior (no duplicates)

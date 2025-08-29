@@ -32,7 +32,8 @@ const SITES = [
         'https://smittenkitchen.com/2023/10/glazed-apple-cider-doughnut-cake/',
         'https://smittenkitchen.com/2018/09/big-apple-crumb-cake/',
         'https://smittenkitchen.com/2021/07/cannellini-aglio-e-olio/',
-        'https://smittenkitchen.com/2021/07/zucchini-butter-spaghetti/'
+        'https://smittenkitchen.com/2021/07/zucchini-butter-spaghetti/',
+        'https://smittenkitchen.com/2025/06/slushy-paper-plane/' // NEW: Jetpack recipe format
       ]
     },
     // Food Network
