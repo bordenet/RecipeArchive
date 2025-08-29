@@ -5,14 +5,16 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
-    "test:unit": "jest --testMatch='**/*.test.js'",
+  "test": "jest --setupFiles ./__tests__/setupJest.js",
+  "test:unit": "jest --testMatch='**/*.test.js' --setupFiles ./__tests__/setupJest.js",
     "test:integration": "node test-recipe-extraction.js",
     "lint": "eslint *.js",
-    "lint:fix": "eslint *.js --fix"
+    "lint:fix": "eslint *.js --fix",
+    "build:parser-bundle": "node ../build-parser-bundle.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "esbuild": "^0.25.9",
     "eslint": "^9.34.0",
     "jest": "^29.0.0",
     "jsdom": "^22.0.0",

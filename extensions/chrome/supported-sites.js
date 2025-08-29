@@ -2,17 +2,17 @@
 // This file defines which sites the extensions should work on
 
 const SUPPORTED_SITES = [
-    'smittenkitchen.com',
-    'loveandlemons.com', 
-    'food52.com',
-    'foodnetwork.com',
-    'epicurious.com',
-    'cooking.nytimes.com',
-    'allrecipes.com',
-    'seriouseats.com',
-    'washingtonpost.com',
-    'foodandwine.com',
-    'damndelicious.net'
+    "smittenkitchen.com",
+    "loveandlemons.com", 
+    "food52.com",
+    "foodnetwork.com",
+    "epicurious.com",
+    "cooking.nytimes.com",
+    "allrecipes.com",
+    "seriouseats.com",
+    "washingtonpost.com",
+    "foodandwine.com",
+    "damndelicious.net"
 ];
 
 /**
@@ -21,7 +21,7 @@ const SUPPORTED_SITES = [
  * @returns {boolean} - True if the site is supported
  */
 function isSupportedSite(url) {
-    if (!url || typeof url !== 'string') {
+    if (!url || typeof url !== "string") {
         return false;
     }
     
@@ -31,14 +31,14 @@ function isSupportedSite(url) {
         
         return SUPPORTED_SITES.some(site => {
             // Remove 'www.' prefix for comparison
-            const normalizedHostname = hostname.replace(/^www\./, '');
-            const normalizedSite = site.replace(/^www\./, '');
+            const normalizedHostname = hostname.replace(/^www\./, "");
+            const normalizedSite = site.replace(/^www\./, "");
             
             return normalizedHostname === normalizedSite || 
-                   normalizedHostname.endsWith('.' + normalizedSite);
+                   normalizedHostname.endsWith("." + normalizedSite);
         });
     } catch (error) {
-        console.warn('Invalid URL provided to isSupportedSite:', url, error);
+        console.warn("Invalid URL provided to isSupportedSite:", url, error);
         return false;
     }
 }
@@ -52,7 +52,7 @@ function getSupportedSites() {
 }
 
 // Export functions based on environment
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
     // Node.js environment
     module.exports = {
         isSupportedSite,

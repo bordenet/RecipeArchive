@@ -537,7 +537,7 @@ class CognitoAuth {
     try {
       const userInfoStr = await this._getStoredItem(this.USER_INFO_KEY);
       return userInfoStr ? JSON.parse(userInfoStr) : null;
-    } catch (_error) {
+    } catch {
       return null;
     }
   }
@@ -576,7 +576,7 @@ class CognitoAuth {
       try {
         const errorData = JSON.parse(responseText);
         errorMessage = errorData.__type || errorData.message || errorMessage;
-      } catch (_e) {
+      } catch {
         errorMessage = responseText || errorMessage;
       }
       throw new Error(errorMessage);
