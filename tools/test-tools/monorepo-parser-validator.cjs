@@ -180,13 +180,16 @@ function isCacheExpired(filePath) {
 }
 
 async function fetchAndCache(url, outPath) {
-  const browser = await chromium.launch();
+  let browser;
   let context;
   let page;
-  // Spoof user-agent for Washington Post
+  // For Washington Post, disable HTTP/2 and spoof user agent
   if (url.includes('washingtonpost.com')) {
+    browser = await chromium.launch({
+      args: ['--disable-http2']
+    });
     context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     });
     page = await context.newPage();
     const cookiesPath = path.join(path.resolve(__dirname, '../../dev-tools'), 'wapost-subscription-cookies.json');
@@ -194,14 +197,11 @@ async function fetchAndCache(url, outPath) {
       console.log(`[WAPOST-AUTH] Loading authentication cookies for ${url}`);
       const cookiesJSON = fs.readFileSync(cookiesPath, 'utf8');
       const cookies = JSON.parse(cookiesJSON);
-      
-      // Set cookies in the browser context using context.addCookies
       await context.addCookies(cookies.map(cookie => {
         let sameSite;
         if (cookie.sameSite === 'None' || cookie.sameSite === 'Lax' || cookie.sameSite === 'Strict') {
           sameSite = cookie.sameSite;
         } else if (typeof cookie.sameSite === 'string') {
-          // Normalize capitalization if needed
           const val = cookie.sameSite.toLowerCase();
           if (val === 'none') sameSite = 'None';
           else if (val === 'lax') sameSite = 'Lax';
@@ -224,10 +224,10 @@ async function fetchAndCache(url, outPath) {
       console.log(`[WAPOST-AUTH] Run 'cd tools/cmd/wapost-cookies && go run main.go' to capture cookies`);
     }
   } else {
+    browser = await chromium.launch();
     context = await browser.newContext();
     page = await context.newPage();
   }
-  
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2000); // Wait for content
   const html = await page.content();
