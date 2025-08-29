@@ -23,6 +23,7 @@
     "lint:nodejs": "eslint --config tools/linting/eslint.config.nodejs.cjs tools/ tests/ --max-warnings 0",
     "lint:scoping": "node tools/focused-scoping-validator.cjs extensions/*/*.js",
     "lint:full": "npm run lint && npm run lint:scoping",
+    "build:parser-bundle": "node tools/build-parser-bundle.cjs",
     "security:scan": "trufflehog git file://. --since-commit HEAD --only-verified --fail",
     "security:scan-all": "trufflehog git file://. --only-verified --fail",
     "security:clean": "echo '🚨 SECURITY VIOLATION DETECTED! Remove all PII/secrets before committing.' && exit 1",

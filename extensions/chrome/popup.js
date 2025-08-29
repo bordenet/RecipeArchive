@@ -361,6 +361,22 @@ async function captureRecipe() {
             console.error("❌ AWS save failed:", result.error);
             showStatus("❌ Failed to save: " + result.error, "#ffebee");
         }
+
+    } catch (error) {
+        console.error("❌ Recipe capture error:", error);
+        showStatus("❌ Capture failed: " + error.message, "#ffebee");
+        // Submit diagnostic data for parsing failures
+        await submitDiagnosticData({
+            error: error.message,
+            errorType: "recipe_capture_failed",
+            url: tab && tab.url ? tab.url : "unknown",
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            stage: "recipe_capture"
+        });
+    }
+}
+
 // Fallback: submit page HTML and metadata to failed-parse API
 async function submitFallbackParse(tab, recipeData = {}) {
     try {
@@ -402,21 +418,6 @@ async function submitFallbackParse(tab, recipeData = {}) {
         }
     } catch (error) {
         showStatus("⚠️ Fallback parse error: " + error.message, "#ffebee");
-    }
-}
-
-    } catch (error) {
-        console.error("❌ Recipe capture error:", error);
-        showStatus("❌ Capture failed: " + error.message, "#ffebee");
-        // Submit diagnostic data for parsing failures
-        await submitDiagnosticData({
-            error: error.message,
-            errorType: "recipe_capture_failed",
-            url: tab && tab.url ? tab.url : "unknown",
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-            stage: "recipe_capture"
-        });
     }
 }
 
@@ -696,11 +697,24 @@ async function submitDiagnosticData(diagnosticPayload) {
         console.log("🔍 Submitting diagnostic data to:", diagnosticsEndpoint);
         console.log("🔍 Diagnostic payload:", diagnosticPayload);
 
+        // Get auth token for diagnostics endpoint
+        let authHeaders = { "Content-Type": "application/json" };
+        try {
+            const authData = localStorage.getItem("recipeArchive.auth");
+            if (authData) {
+                const auth = JSON.parse(authData);
+                const token = auth.token || auth.accessToken || auth.idToken;
+                if (token) {
+                    authHeaders["Authorization"] = `Bearer ${token}`;
+                }
+            }
+        } catch (error) {
+            console.warn("⚠️ Could not get auth token for diagnostics:", error.message);
+        }
+
         const response = await fetch(diagnosticsEndpoint, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: authHeaders,
             body: JSON.stringify(diagnosticPayload)
         });
 

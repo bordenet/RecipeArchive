@@ -972,10 +972,46 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
     }
 }
 
-// Ensure submitDiagnosticData is defined or fallback to window.submitDiagnosticData
-if (typeof submitDiagnosticData !== 'function' && typeof window !== 'undefined' && typeof window.submitDiagnosticData === 'function') {
-    var submitDiagnosticData = window.submitDiagnosticData;
+// Submit diagnostic data to AWS backend for debugging parsing failures
+async function submitDiagnosticData(diagnosticPayload) {
+    try {
+        const diagnosticsEndpoint = CONFIG.getCurrentAPI().diagnostics;
+        console.log("🔍 Submitting diagnostic data to:", diagnosticsEndpoint);
+        console.log("🔍 Diagnostic payload:", diagnosticPayload);
+
+        // Get auth token for diagnostics endpoint
+        let authHeaders = { "Content-Type": "application/json" };
+        try {
+            const authData = localStorage.getItem("recipeArchive.auth");
+            if (authData) {
+                const auth = JSON.parse(authData);
+                const token = auth.token || auth.accessToken || auth.idToken;
+                if (token) {
+                    authHeaders["Authorization"] = `Bearer ${token}`;
+                }
+            }
+        } catch (error) {
+            console.warn("⚠️ Could not get auth token for diagnostics:", error.message);
+        }
+
+        const response = await fetch(diagnosticsEndpoint, {
+            method: "POST",
+            headers: authHeaders,
+            body: JSON.stringify(diagnosticPayload)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log("📊 Diagnostic data submitted successfully:", result);
+        } else {
+            console.warn("⚠️ Diagnostic submission failed:", response.status, await response.text());
+        }
+    } catch (error) {
+        console.warn("⚠️ Failed to submit diagnostic data:", error.message);
+        // Don't throw - diagnostic submission failures shouldn't break the main flow
+    }
 }
+
 
 // Credential management functions for convenience
 function saveCredentials(email, password) {
