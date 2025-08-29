@@ -19,8 +19,33 @@
 ---
 
 
-## TODO
-- Ensure all compiled code in this project is linted (run ESLint on all .js/.ts output)
+## TODO (Updated August 29, 2025)
+
+### Parser System Action Plan (Current)
+- [x] All site parsers pass contract validation against real recipe URLs
+- [x] Chrome/Safari extensions updated for new schema
+- [x] AWS backend Go model and handler logic patched for new schema
+- [x] Playwright-based test files patched for correct environment headers
+- [x] Lint errors (no-undef, process.exit, browser globals) resolved
+- [ ] Console warnings remain in test files (note: revisit and refactor/suppress)
+- [ ] End-to-end validation: Run full extension-to-backend-to-S3 test for all supported sites
+- [ ] S3 bucket reset and validation (pending correct bucket name)
+- [ ] Final monorepo validation (run validate-monorepo.sh and fix any errors)
+
+### Next Steps
+- Run validate-monorepo.sh and address any reported errors
+- Complete end-to-end tests for all supported sites
+- Refactor or suppress console warnings in test files
+- Document any new issues or edge cases found during validation
+
+### Context Persistence
+- See also: docs/development/claude-context.md for full project state and resume instructions
+
+### Resume Instructions
+1. Clone repo and run ./scripts/setup-macos.sh
+2. Configure AWS CLI and source aws-backend/.env
+3. Review CLAUDE.md and claude-context.md for current state
+4. Continue with next TODO item above
 
 ## Project Overview
 
