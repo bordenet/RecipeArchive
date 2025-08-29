@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+/* eslint-env node, browser */
 
 /**
  * Washington Post Manual Testing Guide

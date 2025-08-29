@@ -1,3 +1,5 @@
+/* eslint-env node, browser */
+/* eslint-env node, browser */
 /**
  * @jest-environment jsdom
  */

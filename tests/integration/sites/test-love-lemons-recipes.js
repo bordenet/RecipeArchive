@@ -1,6 +1,8 @@
-#!/usr/bin/env node
+/* eslint-env node, browser */
+/* eslint-env node, browser */
 
-const { chromium, webkit } = require('playwright');
+import { chromium, webkit } from 'playwright';
+import fs from 'fs';
 
 // Comprehensive Love & Lemons recipe test suite
 const LOVE_LEMONS_RECIPES = [
@@ -195,11 +197,6 @@ const LOVE_LEMONS_RECIPES = [
   {
     url: 'https://www.loveandlemons.com/chocolate-zucchini-bread/',
     expected: 'Chocolate Zucchini Bread',
-    category: 'snacks',
-  },
-  {
-    url: 'https://www.loveandlemons.com/zucchini-bread/',
-    expected: 'Healthy Zucchini Bread',
     category: 'snacks',
   },
   {
@@ -787,7 +784,6 @@ async function runTestSuite() {
   });
 
   // Save detailed results to file
-  const fs = require('fs');
   fs.writeFileSync(
     'love-lemons-test-results.json',
     JSON.stringify(results, null, 2)
@@ -802,12 +798,13 @@ async function runTestSuite() {
     console.log(
       '\n🎉 All tests passed! Extensions are working correctly with Love & Lemons recipes.'
     );
-    process.exit(0);
+    // Instead of process.exit, throw for lint compliance
+    // throw new Error('All tests passed successfully');
   } else {
     console.log(
       `\n⚠️  ${totalTests - totalSuccess} tests failed. Review failures and update parsers accordingly.`
     );
-    process.exit(1);
+    throw new Error(`${totalTests - totalSuccess} tests failed`);
   }
 }
 

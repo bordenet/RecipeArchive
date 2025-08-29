@@ -1,6 +1,12 @@
 // Automated JavaScript Variable Scope and Error Detection Tests
 // Catches runtime errors like undefined variables before they reach users
 
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = require('util').TextEncoder;
+}
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = require('util').TextDecoder;
+}
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
@@ -39,7 +45,14 @@ describe('Extension JavaScript Error Detection', () => {
     window = dom.window;
     global.window = window;
     global.document = window.document;
-    global.localStorage = window.localStorage;
+    // Polyfill localStorage to avoid JSDOM SecurityError
+    global.localStorage = {
+      store: {},
+      getItem(key) { return this.store[key] || null; },
+      setItem(key, value) { this.store[key] = value.toString(); },
+      removeItem(key) { delete this.store[key]; },
+      clear() { this.store = {}; }
+    };
 
     // Capture console errors
     console = {
@@ -83,10 +96,10 @@ describe('Extension JavaScript Error Detection', () => {
         throw new Error('Test error');
       };
 
-      const testFunc = eval(`(${problematicFunction}); testFunction`);
-      
+      // Patch: define testFunction in global scope for this test
+      global.testFunction = eval(problematicFunction);
       try {
-        await testFunc();
+        await global.testFunction();
       } catch (error) {
         // Should detect the variable scope error
         expect(console.errors.some(err => err.includes('Can\'t find variable') || err.includes('someVar'))).toBe(true);
