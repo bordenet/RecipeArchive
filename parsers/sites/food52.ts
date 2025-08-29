@@ -9,9 +9,20 @@ export class Food52Parser extends BaseParser {
     }
 
     async parse(html: string, url: string): Promise<Recipe> {
+<<<<<<< HEAD
         // Detect Food52 404 page and throw error, but skip for local fixture files
         const isLocalFixture = url.endsWith('.html') || url.startsWith('tests/fixtures/html-samples/');
         if (!isLocalFixture && (html.includes('Apologies, that page cannot be found.') || (html.includes('404') && html.includes('food52.com')))) {
+=======
+<<<<<<< HEAD
+        // Detect Food52 404 page and throw error
+        if (html.includes('Apologies, that page cannot be found.')) {
+=======
+        // Detect Food52 404 page and throw error, but skip for local fixture files
+        const isLocalFixture = url.endsWith('.html') || url.startsWith('tests/fixtures/html-samples/');
+        if (!isLocalFixture && (html.includes('Apologies, that page cannot be found.') || (html.includes('404') && html.includes('food52.com')))) {
+>>>>>>> e435a6e (Fix Love & Lemons ingredient extraction test, robust loader for JSON-LD, cleanup debug logs, ensure contract compliance)
+>>>>>>> 9031fa2 (Fix Love & Lemons ingredient extraction test, robust loader for JSON-LD, cleanup debug logs, ensure contract compliance)
             throw new Error(`[Food52] 404 page detected for URL: ${url}`);
         }
         const jsonLd = this.extractJsonLD(html);
