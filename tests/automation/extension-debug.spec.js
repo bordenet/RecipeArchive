@@ -5,7 +5,7 @@ test.describe('Extension Debug Analysis', () => {
   test('Debug extension loading with detailed analysis', async () => {
     console.log('🔍 Starting detailed extension debug analysis...');
     
-    const extensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome');
+    const extensionPath = path.resolve(__dirname, '../../extensions/chrome');
     console.log('📁 Extension path:', extensionPath);
 
     // Launch browser with extension and developer mode

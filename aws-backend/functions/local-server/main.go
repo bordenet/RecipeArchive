@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -91,8 +92,10 @@ func testPageHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 
-	// Read the test validation page
-	testPagePath := "/Users/Matt.Bordenet/GitHub/RecipeArchive/tests/chrome-extension-validation.html"
+	// Read the test validation page (relative to project root)
+	cwd, _ := os.Getwd()
+	projectRoot := filepath.Join(cwd, "..", "..", "..")
+	testPagePath := filepath.Join(projectRoot, "tests", "chrome-extension-validation.html")
 	content, err := ioutil.ReadFile(testPagePath)
 	if err != nil {
 		// Fallback to simple HTML if file doesn't exist

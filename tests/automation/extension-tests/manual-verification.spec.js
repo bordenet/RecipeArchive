@@ -6,7 +6,7 @@ test.describe('Chrome Extension Manual Verification', () => {
     console.log('🔍 Manual Chrome Extension Verification Test');
     
     // Navigate to our test page
-    const testPagePath = 'file:///Users/Matt.Bordenet/GitHub/RecipeArchive/tests/chrome-extension-test.html';
+    const testPagePath = 'file://' + path.resolve(__dirname, '../../../tests/chrome-extension-test.html');
     await page.goto(testPagePath);
     
     console.log('📄 Test page loaded');

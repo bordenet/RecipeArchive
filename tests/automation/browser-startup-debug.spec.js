@@ -5,7 +5,7 @@ test.describe('Extension Browser Startup Debug', () => {
   test('Debug browser startup with extension', async () => {
     console.log('🔍 Debugging browser startup process...');
     
-    const extensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome');
+    const extensionPath = path.resolve(__dirname, '../../extensions/chrome');
     console.log('📁 Extension path:', extensionPath);
 
     let browser;

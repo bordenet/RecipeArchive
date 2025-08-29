@@ -5,7 +5,7 @@ test.describe('Minimal Extension Test', () => {
   test('Test minimal extension loading', async () => {
     console.log('🔍 Testing minimal extension...');
     
-    const testExtensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/tests/automation/test-extension');
+    const testExtensionPath = path.resolve(__dirname, '../test-extension');
     console.log('📁 Test extension path:', testExtensionPath);
 
     const browser = await chromium.launch({

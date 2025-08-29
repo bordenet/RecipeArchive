@@ -5,7 +5,7 @@ test.describe('Extension Console Debug', () => {
   test('Capture extension console messages', async () => {
     console.log('🔍 Starting extension console debug...');
     
-    const extensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome');
+    const extensionPath = path.resolve(__dirname, '../../../extensions/chrome');
     console.log('📁 Extension path:', extensionPath);
 
     const browser = await chromium.launch({

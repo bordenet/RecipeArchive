@@ -5,7 +5,7 @@ test.describe('Persistent Context Extension Test', () => {
   test('Test extension with persistent context', async () => {
     console.log('🔍 Testing extension with persistent context...');
     
-    const extensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome');
+    const extensionPath = path.resolve(__dirname, '../../../extensions/chrome');
     console.log('📁 Extension path:', extensionPath);
 
     // Use persistent context instead of regular launch
