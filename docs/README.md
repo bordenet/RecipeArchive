@@ -2,7 +2,7 @@
 
 **See also:** [Website Parsers Architecture Decision Record](./architecture/website-parsers.md)
 
-**The ultimate recipe hoarding tool for digital food obsessives**
+**Registry-Driven, Production-Ready: All Supported Sites Migrated & Validated**
 
 Stop screenshotting recipes like a caveperson! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.
 
@@ -53,6 +53,7 @@ Turn recipe chaos into culinary zen with:
 - **Offline access** - Cook without WiFi like it's 2005
 - **Multi-device sync** - Start on phone, finish on laptop
 - **Full page archives** - Because food blogs love to disappear recipes
+- **Registry-driven architecture** - All supported sites managed in `/parsers/sites/site-registry.ts` and reflected in documentation and PRD
 
 ## 💪 Tech Stack (Current Implementation)
 
