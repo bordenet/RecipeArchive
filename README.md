@@ -73,14 +73,13 @@ A cross-platform recipe archiving system currently featuring:
 
 **Features:**
 - ✅ TypeScript parser system with decoupled site-specific parsers (production-ready)
-- ✅ 48-hour intelligent caching system to reduce network load  
 - ✅ Cross-platform compatibility (no hardcoded paths)
 - ✅ Comprehensive contract validation for all sites (100% passing)
 - ✅ Both Chrome and Safari extension integration (production-ready)
 - ✅ AWS backend with recipe de-duplication and S3 storage
 
 - 🔌 **Browser Extensions** - Chrome & Safari extensions for one-click recipe archiving (PRODUCTION READY)
-- ☁️ **AWS Backend** - Go-based serverless backend with local development server (LOCAL DEVELOPMENT COMPLETE)
+- ☁️ **AWS Backend** - Go-based serverless backend with S3 storage (PRODUCTION READY)
 
 **🚧 Planned Components:**
 
@@ -103,7 +102,7 @@ Transform your recipe management with a complete archiving solution:
 
 - **Unified CLI:** Go-based `recipe-cli` for all development operations
 - **Browser Extensions:** JavaScript + Manifest V3 (Chrome & Safari)
-- **Backend API:** Go with local development server + comprehensive tests
+- **Backend API:** Go serverless functions with AWS Lambda + comprehensive tests
 - **Authentication:** AWS Cognito with JWT token management
 - **Recipe Parsing:** JSON-LD structured data + site-specific parsers
 - **Testing:** Jest + Go testing with 40/40 tests passing
@@ -185,8 +184,8 @@ _Testing focuses on catching real bugs rather than metrics. Recipe parsing tests
 
 ```bash
 # Development workflow
-recipe-cli dev start        # Start local development environment
-recipe-cli dev stop         # Stop all development services
+recipe-cli dev start        # Start development build process
+recipe-cli dev stop         # Stop development services
 recipe-cli dev status       # Check development environment status
 
 # Testing

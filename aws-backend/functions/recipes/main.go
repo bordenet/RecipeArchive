@@ -338,20 +338,67 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// Check if recipe with same source URL already exists
+	// Check if recipe with same source URL already exists (implement overwrite behavior)
 	sourceURL := strings.TrimSpace(recipeData.SourceURL)
+	var existingRecipe *models.Recipe
 	for _, existing := range existingRecipes {
 		if existing.SourceURL == sourceURL {
-			// Return existing recipe instead of creating duplicate
-			response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
-				"recipe":  existing,
-				"message": "Recipe already exists, returning existing recipe",
+			existingRecipe = &existing
+			break
+		}
+	}
+
+	if existingRecipe != nil {
+		// Recipe with same URL exists - overwrite it with new data
+		fmt.Printf("Recipe with URL %s already exists, overwriting with new data", sourceURL)
+
+		// Preserve original creation time and ID, but update everything else
+		now := time.Now().UTC()
+		updatedRecipe := models.Recipe{
+			ID:               existingRecipe.ID,           // Keep same ID
+			UserID:           userID,                      // Current user
+			Title:            recipeData.Title,            // New title
+			Ingredients:      recipeData.Ingredients,      // New ingredients
+			Instructions:     recipeData.Instructions,     // New instructions
+			SourceURL:        sourceURL,                   // Same URL
+			PrepTimeMinutes:  recipeData.PrepTimeMinutes,  // New prep time
+			CookTimeMinutes:  recipeData.CookTimeMinutes,  // New cook time
+			TotalTimeMinutes: recipeData.TotalTimeMinutes, // New total time
+			Servings:         recipeData.Servings,         // New servings
+			Yield:            recipeData.Yield,            // New yield
+			Categories:       []string{},                  // Reset categories (no Categories in request)
+			MainPhotoURL:     recipeData.MainPhotoURL,     // New photo
+			CreatedAt:        existingRecipe.CreatedAt,    // Preserve original creation
+			UpdatedAt:        now,                         // Current timestamp
+			IsDeleted:        false,                       // Ensure not deleted
+			Version:          existingRecipe.Version + 1,  // Increment version
+		}
+
+		// Update the recipe in storage
+		err = recipeDB.UpdateRecipe(&updatedRecipe)
+		if err != nil {
+			response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+				"error": map[string]interface{}{
+					"code":      "UPDATE_FAILED",
+					"message":   "Failed to update existing recipe",
+					"timestamp": time.Now().UTC(),
+				},
 			})
 			if responseErr != nil {
 				return events.APIGatewayProxyResponse{}, responseErr
 			}
 			return response, nil
 		}
+
+		// Return the updated recipe
+		response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
+			"recipe":  updatedRecipe,
+			"message": "Recipe updated successfully (overwrite existing)",
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
 	}
 
 	// Create the recipe object
