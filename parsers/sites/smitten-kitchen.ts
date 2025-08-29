@@ -1,5 +1,5 @@
 // ...existing code...
-import { BaseParser } from "../base-parser.js";
+import { BaseParser } from "../base-parser";
 import * as cheerio from "cheerio";
 import { Recipe, Ingredient, Instruction } from "../types";
 
@@ -30,34 +30,32 @@ export class SmittenKitchenParser extends BaseParser {
                 return recipe;
             }
         }
-        // Fallback selectors using Cheerio
+        // Refined selectors for Smitten Kitchen
         const title = this.sanitizeText($('h1.entry-title, h1.post-title, h1').first().text() || $('h1').first().text() || "");
-        const author = this.sanitizeText($('p.recipe-meta + p, .author-meta, .author').first().text().replace('Author:', '').trim() || 'Deb Perelman');
+        const author = this.sanitizeText($('.byline .author').first().text() || 'Deb Perelman');
         let ingredients: Ingredient[] = [];
-        // Try main selectors first
-        ingredients = $('.recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient, ul li, .entry-content ul li').map((_, el) => ({ text: this.sanitizeText($(el).text()) })).get();
-        // Fallback: all <li> under any <ul> after h2 containing 'Ingredients'
-        if (ingredients.length === 0) {
-            $('h2:contains("Ingredients")').nextAll('ul').each((_, ul) => {
-                $(ul).find('li').each((__, el) => {
-                    const text = $(el).text().trim();
-                    if (text) ingredients.push({ text });
-                });
-            });
-        }
         let instructions: Instruction[] = [];
-        instructions = $('.instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step, ul li, .entry-content ol li, .entry-content ul li').map((i, el) => ({ stepNumber: i + 1, text: this.sanitizeText($(el).text()) })).get();
-        // Fallback: all <li> under any <ul> after h2 containing 'Directions' or 'Instructions'
-        if (instructions.length === 0) {
-            $('h2:contains("Directions"), h2:contains("Instructions")').nextAll('ul').each((ulIdx, ul) => {
-                $(ul).find('li').each((liIdx, el) => {
-                    const text = $(el).text().trim();
-                    if (text) instructions.push({ stepNumber: instructions.length + 1, text });
-                });
-            });
+        // Find the <p> with bolded recipe title, then extract following <p> tags for ingredients and instructions
+        const entryContent = $('.entry-content');
+        const recipeTitleP = entryContent.find('p b:contains("Ina Garten")').parent();
+        // Ingredients: first <p> after recipeTitleP, split by <br>
+        let ingredientP = recipeTitleP.next('p');
+        if (ingredientP.length) {
+            const raw = ingredientP.html();
+            if (raw) {
+                ingredients = raw.split(/<br\s*\/?>/i).map(t => ({ text: this.sanitizeText($(t).text() || $("<div>"+t+"</div>").text()) })).filter(i => i.text);
+            }
         }
+        // Instructions: next <p> tags after ingredients, until a <p> with <u> or unrelated content
+        let instrIdx = ingredientP.index();
+        entryContent.find('p').slice(instrIdx + 1).each((i, el) => {
+            const html = $(el).html();
+            if (html && (html.includes('Preheat oven') || html.match(/\bBake\b|\bAllow to cool\b|\bDo ahead\b|\bFlouring\b|\bSift together\b|\bPour into\b|\bMelt together\b|\bStir\b|\bAdd to\b|\bToss the walnuts\b|\bDo not overbake\b/))) {
+                instructions.push({ stepNumber: instructions.length + 1, text: this.sanitizeText($(el).text()) });
+            }
+        });
         // Fallback image extraction: look for main recipe image
-        let imageUrl = $('.recipe-photo img, img').first().attr('src') || undefined;
+        let imageUrl = $('.post-thumbnail-container img').first().attr('src') || undefined;
         // Try to find a better image if available
         const ogImage = $('meta[property="og:image"]').attr('content');
         if (ogImage) imageUrl = ogImage;
