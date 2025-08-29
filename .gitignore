@@ -53,6 +53,15 @@ vendor/
 *.o
 __debug_bin*
 
+# Go compiled binaries (platform-specific, should be built from source)
+aws-backend/functions/test-tools/test-tools
+tools/recipe-report/recipe-report
+tools/*/bin/*
+**/bin/*
+**/*-darwin-*
+**/*-linux-*
+**/*-windows-*
+
 # AWS CDK Build Artifacts
 cdk.out/
 *.asset.*
