@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Color scheme
-  static const Color primaryColor = Color(0xFF2E7D32); // Green for recipes/food
+  static const Color primaryColor = Color(0xFF2E7D32); // Gr        cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+        ), recipes/food
   static const Color secondaryColor = Color(0xFFFF6F00); // Orange accent
   static const Color backgroundColor = Color(0xFFFAFAFA);
   static const Color surfaceColor = Colors.white;
@@ -20,7 +26,6 @@ class AppTheme {
         seedColor: primaryColor,
         brightness: Brightness.light,
         surface: surfaceColor,
-        background: backgroundColor,
       ),
       
       // App Bar Theme
@@ -134,12 +139,13 @@ class AppTheme {
         centerTitle: true,
       ),
       
-      cardTheme: CardTheme(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
         ),
-      ),
     );
   }
 }
