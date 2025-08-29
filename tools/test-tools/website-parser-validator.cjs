@@ -18,9 +18,9 @@ const SITES = [
       urls: [
         'https://food52.com/recipes/confit-red-pepper-and-tomato-sauce-with-pasta',
         'https://food52.com/recipes/8578-short-rib-ragu',
-        'https://food52.com/recipes/83215-lemon-raspberry-layer-cake-recipe',
-        'https://food52.com/recipes/79815-pink-champagne-cake-recipe',
-        'https://food52.com/recipes/38653-nea-s-swedish-princess-cake-prinsesstarta'
+        'https://food52.com/recipes/53924-lemon-raspberry-layer-cake',
+        'https://food52.com/recipes/61548-pink-champagne-cake',
+        'https://food52.com/recipes/90824-how-to-make-princess-cake-recipe'
       ]
     },
     // Smitten Kitchen
@@ -41,10 +41,10 @@ const SITES = [
       parserPath: path.resolve(__dirname, '../../parsers/sites/food-network.ts'),
       urls: [
         'https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048',
-        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-cacciatore-recipe-1943033',
-        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lasagna-rolls-recipe-1943265',
-        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-piccata-recipe-1942429',
-        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lemon-ricotta-cookies-with-lemon-glaze-recipe-1950642'
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-cacciatore-recipe-1943042',
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lasagna-rolls-recipe-1943979',
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-piccata-recipe2-1913809',
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lemon-ricotta-cookies-with-lemon-glaze-recipe-1950241'
       ]
     },
     // Epicurious
@@ -53,7 +53,7 @@ const SITES = [
       parserPath: path.resolve(__dirname, '../../parsers/sites/epicurious.ts'),
       urls: [
         'https://www.epicurious.com/recipes/food/views/3-ingredient-peanut-butter-cookies',
-        'https://www.epicurious.com/recipes/food/views/salmon-nicoise-109010',
+        'https://www.epicurious.com/recipes/food/views/salmon-nicoise-56389407',
         'https://www.epicurious.com/recipes/food/views/white-chocolate-cranberry-and-macadamia-nut-cookies-236823',
         'https://www.epicurious.com/recipes/food/views/mini-chicken-pot-pies-with-bacon-and-marjoram-240130',
         'https://www.epicurious.com/recipes/food/views/irish-soda-bread-106278'
@@ -77,10 +77,10 @@ const SITES = [
       urls: [
         'https://www.allrecipes.com/recipe/17481/simple-white-cake/',
         'https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/',
-        'https://www.allrecipes.com/recipe/214963/moms-chicken-pot-pie/',
-        'https://www.allrecipes.com/recipe/220985/scott-hibbs-amazing-whisky-grilled-baby-back-ribs/',
-        'https://www.allrecipes.com/recipe/278881/garlic-brown-sugar-chicken-thighs/',
-        'https://www.allrecipes.com/recipe/280951/black-pepper-beef-and-cabbage-stir-fry/'
+        'https://www.allrecipes.com/recipe/234974/moms-chicken-pot-pie/',
+        'https://www.allrecipes.com/recipe/35753/scott-hibbs-amazing-whisky-grilled-baby-back-ribs/',
+        'https://www.allrecipes.com/recipe/279903/garlic-brown-sugar-chicken-thighs/',
+        'https://www.allrecipes.com/recipe/50233/black-pepper-beef-and-cabbage-stir-fry/'
       ]
     },
     // Love and Lemons
@@ -89,7 +89,7 @@ const SITES = [
       parserPath: path.resolve(__dirname, '../../parsers/sites/loveandlemons.ts'),
       urls: [
         'https://www.loveandlemons.com/margarita-recipe/',
-        'https://www.loveandlemons.com/black-bean-burgers/',
+        'https://www.loveandlemons.com/black-bean-burger-recipe/',
         'https://www.loveandlemons.com/shakshuka-recipe/',
         'https://www.loveandlemons.com/lentil-soup/',
         'https://www.loveandlemons.com/frittata-recipe/',
