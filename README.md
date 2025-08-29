@@ -80,8 +80,8 @@ A cross-platform recipe archiving system currently featuring:
 | Epicurious          | epicurious.com               | ✅           | Yes          | Condé Nast network           |
 | Serious Eats        | seriouseats.com              | ✅           | Yes          | Technical cooking focus       |
 | Alexandra's Kitchen | alexandracooks.com           | ✅           | Yes          | Standard extraction           |
-| Food & Wine         | foodandwine.com              | 🔄 Planned   | Yes          | Parser framework ready        |
-| Damn Delicious      | damndelicious.net            | 🔄 Planned   | Yes          | PRD specified site            |
+| Food & Wine         | foodandwine.com              | ✅           | Yes          | Magazine recipes              |
+| Damn Delicious      | damndelicious.net            | ✅           | Yes          | High-traffic food blog        |
 | JSON-LD Sites       | (universal fallback)         | ✅           | Yes          | Structured data support       |
 
 **Legend:**
@@ -195,7 +195,7 @@ Use the right tool for each job:
 
 **Parser Development Status:**
 
-All 11 sites have complete TypeScript parsers with comprehensive contract validation. Each parser handles both JSON-LD structured data and site-specific HTML extraction patterns.
+All 13 sites have complete TypeScript parsers with comprehensive contract validation. Each parser handles both JSON-LD structured data and site-specific HTML extraction patterns.
 
 _All sites with ✅ status are production-ready with comprehensive test coverage and validation._
 
