@@ -45,12 +45,12 @@ type JWTPayload struct {
 
 // Recipe represents a stored recipe
 type Recipe struct {
-	ID             string    `json:"id"`
-	Title          string    `json:"title"`
-	AttributionURL string    `json:"attributionUrl"`
-	URL            string    `json:"url"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UserID         string    `json:"userId"`
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	SourceURL string    `json:"sourceUrl"`
+	URL       string    `json:"url"`
+	CreatedAt time.Time `json:"createdAt"`
+	UserID    string    `json:"userId"`
 }
 
 // ParseFailure represents a failed recipe extraction
@@ -248,7 +248,7 @@ func (r *RecipeReporter) GenerateReport(userEmail string) ([]ReportEntry, error)
 
 		entry := ReportEntry{
 			Name:   recipe.Title,
-			Domain: extractDomain(recipe.AttributionURL),
+			Domain: extractDomain(recipe.SourceURL),
 			Date:   recipe.CreatedAt,
 			Type:   "success",
 			Key:    *obj.Key,
