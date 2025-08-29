@@ -88,7 +88,8 @@ function renderUI() {
         `;
         
         // Attach event listeners for signed-in state
-        document.getElementById("capture").onclick = function() {
+        const captureBtn = document.getElementById("capture");
+        captureBtn.onclick = function() {
             captureRecipe();
         };
         
@@ -96,6 +97,30 @@ function renderUI() {
             e.preventDefault();
             signOut();
         };
+
+        // Check if current site is supported and enable/disable button
+        if (extensionAPI && extensionAPI.tabs) {
+            extensionAPI.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                if (tabs && tabs.length > 0) {
+                    const tab = tabs[0];
+                    let isSupported = false;
+                    if (tab && typeof window.RecipeArchiveSites !== "undefined") {
+                        isSupported = window.RecipeArchiveSites.isSupportedSite(tab.url);
+                    }
+                    captureBtn.disabled = !isSupported;
+                    captureBtn.style.opacity = isSupported ? "1" : "0.5";
+                    captureBtn.style.cursor = isSupported ? "pointer" : "not-allowed";
+                    captureBtn.title = isSupported ? "Capture Recipe" : "This site is not supported";
+                    
+                    // Update button text to be more descriptive
+                    if (!isSupported) {
+                        captureBtn.textContent = "Site Not Supported";
+                    } else {
+                        captureBtn.textContent = "Capture Recipe";
+                    }
+                }
+            });
+        }
         
     } else {
         // Load saved credentials

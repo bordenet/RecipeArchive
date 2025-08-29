@@ -86,7 +86,8 @@
       "Bash(zip:*)",
       "Bash(S3_STORAGE_BUCKET=recipearchive-storage-dev-990537043943 ./tools/recipe-report/recipe-report -user=\"d80153c0-90b1-7090-85be-28e9c4e458f7\" -password=\"temp\")",
       "Bash(S3_STORAGE_BUCKET=recipearchive-storage-dev-990537043943 ./aws-backend/functions/test-tools/test-tools -action=test-url-overwrite)",
-      "Bash(GOOS=linux GOARCH=amd64 go build -o bootstrap main.go)"
+      "Bash(GOOS=linux GOARCH=amd64 go build -o bootstrap main.go)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
