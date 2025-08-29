@@ -1,3 +1,30 @@
+# Resume Checklist (August 29, 2025)
+
+## Current Parser System State
+- All site parsers pass contract validation
+- Chrome/Safari extensions updated for new schema
+- AWS backend Go model and handler logic patched for new schema
+- Playwright-based test files patched for correct environment headers
+- Lint errors resolved (no-undef, process.exit, browser globals)
+- Console warnings remain in test files (note: revisit and refactor/suppress)
+
+## Remaining Tasks
+- Run validate-monorepo.sh and address any reported errors
+- Complete end-to-end tests for all supported sites (extension → backend → S3)
+- Refactor or suppress console warnings in test files
+- Document any new issues or edge cases found during validation
+
+## End-to-End Testing Plan
+- Validate extension output for all supported sites
+- Confirm backend ingestion and S3 storage for each site
+- Test AWS authentication and error handling
+- Review S3 bucket reset and validation
+
+## Resume Instructions
+1. Clone repo and run ./scripts/setup-macos.sh
+2. Configure AWS CLI and source aws-backend/.env
+3. Review CLAUDE.md and this file for current state
+4. Continue with next TODO item above
 # RecipeArchive Project Guide
 
 **See also:** [Website Parsers Architecture Decision Record](../architecture/website-parsers.md)
