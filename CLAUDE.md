@@ -18,6 +18,10 @@
 
 ---
 
+
+## TODO
+- Ensure all compiled code in this project is linted (run ESLint on all .js/.ts output)
+
 ## Project Overview
 
 **RecipeArchive** is a cross-platform recipe archiving system that captures, stores, and syncs culinary discoveries across all devices.
