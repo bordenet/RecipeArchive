@@ -1,5 +1,7 @@
 # RecipeArchive Project Guide
 
+**See also:** [Website Parsers Architecture Decision Record](../architecture/website-parsers.md)
+
 ## Project Overview & Vision
 
 **RecipeArchive** is a cross-platform recipe archiving system that captures, stores, and syncs culinary discoveries across all your devices. Think of it as your personal recipe fortress that never loses a bookmark.
