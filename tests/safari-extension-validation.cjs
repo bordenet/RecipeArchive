@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 /**
  * Safari Extension Validation Test

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 // Real Recipe Parser Validation Tool
 // Tests actual recipe extraction with real HTML content

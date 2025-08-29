@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 // Test script to validate the new TypeScript parser integration
 console.log("🦪 Testing TypeScript Parser Integration");
