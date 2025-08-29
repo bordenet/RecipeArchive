@@ -1,5 +1,7 @@
 # Unified Recipe Data Model Specification
 
+**See also:** [Website Parsers Architecture Decision Record](./website-parsers.md)
+
 ## Document Status: **DRAFT - PENDING APPROVAL**
 
 **Date**: August 24, 2025  

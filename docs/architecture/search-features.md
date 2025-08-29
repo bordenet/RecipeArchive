@@ -1,5 +1,7 @@
 # Search Feature Requirements Clarification
 
+**See also:** [Website Parsers Architecture Decision Record](./website-parsers.md)
+
 ## Document Status: **URGENT RESOLUTION REQUIRED**
 
 **Date**: August 24, 2025  

@@ -1,5 +1,7 @@
 # 🍽️ RecipeArchive
 
+**See also:** [Website Parsers Architecture Decision Record](./architecture/website-parsers.md)
+
 **The ultimate recipe hoarding tool for digital food obsessives**
 
 Stop screenshotting recipes like a caveperson! RecipeArchive is your handy little sous chef that captures, stores, and syncs your culinary discoveries across all your devices. Because losing that perfect brownie recipe to a broken bookmark is basically a crime against dessert.

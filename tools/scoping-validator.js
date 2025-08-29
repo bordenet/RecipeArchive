@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Advanced JavaScript Variable Scoping Validator
 // Custom AST-based analyzer to catch complex scoping bugs that ESLint might miss
 

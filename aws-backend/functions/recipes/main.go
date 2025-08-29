@@ -344,7 +344,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		if existing.SourceURL == sourceURL {
 			// Return existing recipe instead of creating duplicate
 			response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
-				"recipe": existing,
+				"recipe":  existing,
 				"message": "Recipe already exists, returning existing recipe",
 			})
 			if responseErr != nil {
@@ -369,6 +369,10 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		TotalTimeMinutes: recipeData.TotalTimeMinutes,
 		Servings:         recipeData.Servings,
 		Yield:            recipeData.Yield,
+		Categories:       recipeData.Categories,
+		Description:      recipeData.Description,
+		Reviews:          recipeData.Reviews,
+		Nutrition:        recipeData.Nutrition,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 		IsDeleted:        false,
@@ -509,6 +513,10 @@ func handleUpdateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		TotalTimeMinutes: updateRecipe.TotalTimeMinutes,
 		Servings:         updateRecipe.Servings,
 		Yield:            updateRecipe.Yield,
+		Categories:       updateRecipe.Categories,
+		Description:      updateRecipe.Description,
+		Reviews:          updateRecipe.Reviews,
+		Nutrition:        updateRecipe.Nutrition,
 		CreatedAt:        existingRecipe.CreatedAt,   // Preserve original creation time
 		UpdatedAt:        now,                        // Update timestamp
 		IsDeleted:        false,                      // Ensure not deleted

@@ -992,8 +992,8 @@ window.TypeScriptParser = {
                 url: recipe.source,
                 timestamp: new Date().toISOString(),
                 // Convert flat string arrays to grouped format for extension compatibility
-                ingredients: recipe.ingredients.length > 0 ? [{ title: null, items: recipe.ingredients }] : [],
-                steps: recipe.instructions.length > 0 ? [{ title: null, items: recipe.instructions }] : [],
+                ingredients: recipe.ingredients && recipe.ingredients.length > 0 ? [{ title: null, items: recipe.ingredients }] : [],
+                steps: recipe.instructions && recipe.instructions.length > 0 ? [{ title: null, items: recipe.instructions }] : [],
                 servingSize: recipe.servings || null,
                 time: recipe.totalTime || recipe.cookTime || recipe.prepTime || null,
                 prepTime: recipe.prepTime || null,
@@ -1001,7 +1001,12 @@ window.TypeScriptParser = {
                 photos: recipe.imageUrl ? [recipe.imageUrl] : [],
                 source: "typescript-parser",
                 author: recipe.author,
-                notes: recipe.notes
+                notes: recipe.notes,
+                categories: recipe.categories || [],
+                description: recipe.description || '',
+                reviews: recipe.reviews || null,
+                nutrition: recipe.nutrition || null,
+                yield: recipe.yield || null
             };
 
             console.log("✅ TypeScript parser extracted recipe:", {
