@@ -23,6 +23,43 @@ cp .env.template .env
 npm run validate  # Runs comprehensive monorepo validation
 ```
 
+### 🌐 Flutter Web App Quick Start
+
+The Recipe Archive web application is built with Flutter and provides a modern, responsive interface for managing your recipe collection.
+
+```bash
+# Navigate to the web app directory
+cd web_app
+
+# Install Flutter dependencies
+flutter pub get
+
+# Generate JSON serialization code
+dart run build_runner build
+
+# Start the development server
+flutter run -d chrome
+
+# Or build for production
+flutter build web
+```
+
+**Web App Features:**
+- 📱 **Responsive Design**: Mobile-first with tablet and desktop optimizations
+- 🔍 **Advanced Search**: Filter by cuisine, tags, cooking time, and favorites
+- 🎨 **Material Design 3**: Modern UI with recipe-focused color scheme
+- ⚡ **Progressive Web App**: Installable with offline capabilities
+- 🔄 **Real-time Sync**: Connected to AWS backend for cross-device synchronization
+
+**Development URLs:**
+- Local Development: `http://localhost:PORT` (PORT shown in terminal)
+- Production Build: Served from `web_app/build/web/`
+
+**Prerequisites:**
+- Flutter SDK 3.10.0 or higher
+- Chrome browser for development
+- Valid AWS credentials for backend integration
+
 ### 🔐 Security Notice
 
 **CRITICAL**: This project uses `.env` files for sensitive credentials. The `.env` file is protected by `.gitignore` and should NEVER be committed to version control. Always use `.env.template` as a reference for setup.

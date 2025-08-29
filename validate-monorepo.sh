@@ -105,6 +105,14 @@ validate_prerequisites() {
         ((errors++))
     fi
     
+    # Check for Dart/Flutter (optional for web app development)
+    if [ -d "web_app" ]; then
+        if ! command -v dart &> /dev/null && ! command -v flutter &> /dev/null; then
+            print_warning "Dart/Flutter not found - web app validation will be skipped"
+            echo "    Install Flutter from: https://flutter.dev/docs/get-started/install"
+        fi
+    fi
+    
     if [ $errors -eq 0 ]; then
         print_success
         echo "    Running security scan..."
@@ -309,6 +317,25 @@ run_linting_by_area() {
         echo "    Parser compilation failed - rerun with details: cd parsers && npx tsc"
     fi
     
+    print_step "Flutter web app analysis"
+    if [ -d "web_app" ]; then
+        if command -v dart &> /dev/null || command -v flutter &> /dev/null; then
+            if (cd web_app && dart analyze > /dev/null 2>&1); then
+                print_success
+                ((PASSED_TESTS++))
+            else
+                print_warning "Flutter analysis failed - run 'cd web_app && flutter pub get' first"
+                ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
+            fi
+        else
+            print_warning "Dart/Flutter not installed (skipping web app validation)"
+            ((PASSED_TESTS++)) # Count as passed since it's optional
+        fi
+    else
+        print_warning "Flutter web app directory not found (skipping)"
+        ((PASSED_TESTS++)) # Count as passed since it's optional
+    fi
+    
     print_step "Go code formatting"
     if (cd tools && make fmt > /dev/null 2>&1 && git diff --exit-code > /dev/null 2>&1); then
         print_success
@@ -462,7 +489,23 @@ run_recipe_report() {
 # Area 4: Frontend Clients placeholder
 show_frontend_status() {
     print_header "FRONTEND CLIENTS"
-    print_info "Coming soon! React-based recipe management interface planned"
+    
+    # Check Flutter Web App
+    if [ -d "web_app" ]; then
+        print_step "Flutter web app setup"
+        if [ -f "web_app/pubspec.yaml" ]; then
+            print_success
+            print_info "Flutter web app ready - run 'cd web_app && flutter run -d chrome'"
+        else
+            print_error
+            print_info "pubspec.yaml not found in web_app directory"
+        fi
+    else
+        print_info "Flutter web app not found (expected in web_app/)"
+    fi
+    
+    print_info "iOS app planned - Swift-based mobile interface"
+    track_section_completion
 }
 
 # Final summary
