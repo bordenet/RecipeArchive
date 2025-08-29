@@ -1,0 +1,22 @@
+{
+  "name": "safari-extension-tests",
+  "version": "0.1.0",
+  "description": "Jest setup for Safari extension unit tests",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest --testMatch='**/*.test.js'",
+    "test:integration": "node test-recipe-extraction.js",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix",
+    "build:parser-bundle": "node ../build-parser-bundle-safari.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "eslint": "^9.34.0",
+    "jest": "^29.0.0",
+    "jsdom": "^22.0.0",
+    "playwright": "^1.55.0"
+  }
+}
