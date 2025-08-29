@@ -2,7 +2,7 @@
 
 echo "🔍 Validating Chrome extension files..."
 
-EXTENSION_DIR="/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome"
+EXTENSION_DIR="$(cd "$(dirname "$0")/../extensions/chrome" && pwd)"
 cd "$EXTENSION_DIR"
 
 echo "📁 Current directory: $(pwd)"

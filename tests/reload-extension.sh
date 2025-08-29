@@ -3,7 +3,7 @@
 # Quick Chrome Extension Reload Script
 echo "🔄 Reloading Chrome Extension..."
 
-EXTENSION_PATH="/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome"
+EXTENSION_PATH="$(cd "$(dirname "$0")/../extensions/chrome" && pwd)"
 
 echo "📁 Extension path: $EXTENSION_PATH"
 

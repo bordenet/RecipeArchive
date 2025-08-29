@@ -4,7 +4,7 @@ echo "🚀 Chrome Extension End-to-End Test Guide"
 echo "=========================================="
 echo ""
 
-EXTENSION_PATH="/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome"
+EXTENSION_PATH="$(cd "$(dirname "$0")/../extensions/chrome" && pwd)"
 TEST_URL="http://localhost:8080/test-page"
 
 echo "📋 MANUAL TEST STEPS:"

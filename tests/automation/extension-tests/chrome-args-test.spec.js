@@ -5,7 +5,7 @@ test.describe('Chrome Args Testing', () => {
   test('Test different Chrome argument formats', async () => {
     console.log('🔍 Testing different Chrome argument formats...');
     
-    const extensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome');
+    const extensionPath = path.resolve(__dirname, '../../../extensions/chrome');
     console.log('📁 Extension path:', extensionPath);
     
     // Test method 1: Standard load-extension

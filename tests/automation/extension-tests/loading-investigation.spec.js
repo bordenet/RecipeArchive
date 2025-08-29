@@ -5,7 +5,7 @@ test.describe('Extension Loading Investigation', () => {
   test('Investigate why extension is not loading', async () => {
     console.log('🔍 Investigating extension loading...');
     
-    const extensionPath = path.resolve('/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome');
+    const extensionPath = path.resolve(__dirname, '../../../extensions/chrome');
     console.log('📁 Extension path:', extensionPath);
 
     const context = await chromium.launchPersistentContext('', {

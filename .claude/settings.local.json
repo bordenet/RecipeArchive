@@ -76,7 +76,9 @@
       "Bash(git show-branch:*)",
       "Read(/private/tmp/recipearchive-cache/**)",
       "WebFetch(domain:food52.com)",
-      "Read(/private/tmp/**)"
+      "Read(/private/tmp/**)",
+      "Bash(gofmt:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

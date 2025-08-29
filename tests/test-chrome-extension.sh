@@ -7,7 +7,8 @@ echo "=============================================="
 # Check if Chrome extension files exist
 echo ""
 echo "1️⃣ Checking extension files..."
-cd /Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/../extensions/chrome"
 
 # Core files check
 files_to_check=(
@@ -63,7 +64,7 @@ done
 
 echo ""
 echo "4️⃣ Starting mock server for testing..."
-cd /Users/Matt.Bordenet/GitHub/RecipeArchive/aws-backend/functions/local-server
+cd "$SCRIPT_DIR/../aws-backend/functions/local-server"
 
 # Check if server is already running
 if curl -s http://localhost:8080/health > /dev/null 2>&1; then
@@ -95,11 +96,11 @@ echo ""
 echo "5️⃣ Opening test page and Chrome with extension..."
 
 # Open test page
-TEST_PAGE_PATH="/Users/Matt.Bordenet/GitHub/RecipeArchive/tests/chrome-extension-test.html"
+TEST_PAGE_PATH="$SCRIPT_DIR/chrome-extension-test.html"
 open "file://$TEST_PAGE_PATH"
 
 # Launch Chrome with extension
-EXTENSION_PATH="/Users/Matt.Bordenet/GitHub/RecipeArchive/extensions/chrome"
+EXTENSION_PATH="$SCRIPT_DIR/../extensions/chrome"
 echo "🌐 Launching Chrome with extension..."
 open -a 'Google Chrome' --args --load-extension="$EXTENSION_PATH" --new-window
 

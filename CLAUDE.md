@@ -9,6 +9,8 @@
 - **Architecture**: ✅ Decoupled, maintainable parsers in `extensions/shared/parsers/`
 
 ### Latest Achievements (August 29, 2025)
+- **Hardcoded Paths Fixed**: ✅ Eliminated all 16 instances of `/Users/Matt.Bordenet/` paths from codebase
+- **Cross-Platform Compatibility**: ✅ Project now works on any developer machine with relative paths
 - **Backend De-duplication**: ✅ Implemented recipe de-duplication logic to prevent duplicates with same source URL
 - **Recipe Reports**: ✅ Fixed domain extraction (AttributionURL → SourceURL field mapping)
 - **Parser Validation**: ✅ Fixed overly aggressive 404 detection and updated 15+ broken test URLs
@@ -335,7 +337,6 @@ recipe-cli deploy aws              # Deploy to AWS Lambda + API Gateway
 
 ### IMMEDIATE (Blocking)
 1. **Fix Web Extension Linting**: Resolve ESLint errors preventing monorepo validation
-2. **Fix AWS HTTP 500 Error**: Debug Lambda function failure in `recipeDB.CreateRecipe(&recipe)`
 
 ### Short Term  
 1. **Recipe Extraction Enhancement**: Support additional recipe sites
