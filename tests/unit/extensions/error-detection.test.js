@@ -93,8 +93,15 @@ describe('Extension JavaScript Error Detection', () => {
         throw new Error('Test error');
       };
 
+<<<<<<< HEAD
       try {
         await testFunction();
+=======
+      // Patch: define testFunction in global scope for this test
+      global.testFunction = eval(problematicFunction);
+      try {
+        await global.testFunction();
+>>>>>>> 9031fa2 (Fix Love & Lemons ingredient extraction test, robust loader for JSON-LD, cleanup debug logs, ensure contract compliance)
       } catch (error) {
         // Should detect the variable scope error
         expect(console.errors.some(err => err.includes("someVar") || err.includes("not defined") || err.includes("Can't find variable"))).toBe(true);
