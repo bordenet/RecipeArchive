@@ -5,9 +5,6 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium, firefox } = require('playwright');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-puppeteer.use(StealthPlugin());
 const cheerio = require('cheerio');
 const { exit } = require('process');
 
@@ -21,9 +18,9 @@ const SITES = [
       urls: [
         'https://food52.com/recipes/confit-red-pepper-and-tomato-sauce-with-pasta',
         'https://food52.com/recipes/8578-short-rib-ragu',
-  'https://food52.com/recipes/53924-lemon-raspberry-layer-cake',
-  'https://food52.com/recipes/61548-pink-champagne-cake',
-  'https://food52.com/recipes/90824-how-to-make-princess-cake-recipe'
+        'https://food52.com/recipes/83215-lemon-raspberry-layer-cake-recipe',
+        'https://food52.com/recipes/79815-pink-champagne-cake-recipe',
+        'https://food52.com/recipes/38653-nea-s-swedish-princess-cake-prinsesstarta'
       ]
     },
     // Smitten Kitchen
@@ -44,10 +41,10 @@ const SITES = [
       parserPath: path.resolve(__dirname, '../../parsers/sites/food-network.ts'),
       urls: [
         'https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048',
-  'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-cacciatore-recipe-1943042',
-  'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lasagna-rolls-recipe-1943979',
-  'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-piccata-recipe2-1913809',
-  'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lemon-ricotta-cookies-with-lemon-glaze-recipe-1950241'
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-cacciatore-recipe-1943033',
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lasagna-rolls-recipe-1943265',
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/chicken-piccata-recipe-1942429',
+        'https://www.foodnetwork.com/recipes/giada-de-laurentiis/lemon-ricotta-cookies-with-lemon-glaze-recipe-1950642'
       ]
     },
     // Epicurious
@@ -56,7 +53,7 @@ const SITES = [
       parserPath: path.resolve(__dirname, '../../parsers/sites/epicurious.ts'),
       urls: [
         'https://www.epicurious.com/recipes/food/views/3-ingredient-peanut-butter-cookies',
-  'https://www.epicurious.com/recipes/food/views/salmon-nicoise-56389407',
+        'https://www.epicurious.com/recipes/food/views/salmon-nicoise-109010',
         'https://www.epicurious.com/recipes/food/views/white-chocolate-cranberry-and-macadamia-nut-cookies-236823',
         'https://www.epicurious.com/recipes/food/views/mini-chicken-pot-pies-with-bacon-and-marjoram-240130',
         'https://www.epicurious.com/recipes/food/views/irish-soda-bread-106278'
@@ -80,10 +77,10 @@ const SITES = [
       urls: [
         'https://www.allrecipes.com/recipe/17481/simple-white-cake/',
         'https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/',
-  'https://www.allrecipes.com/recipe/234974/moms-chicken-pot-pie/',
-  'https://www.allrecipes.com/recipe/35753/scott-hibbs-amazing-whisky-grilled-baby-back-ribs/',
-  'https://www.allrecipes.com/recipe/279903/garlic-brown-sugar-chicken-thighs/',
-  'https://www.allrecipes.com/recipe/50233/black-pepper-beef-and-cabbage-stir-fry/'
+        'https://www.allrecipes.com/recipe/214963/moms-chicken-pot-pie/',
+        'https://www.allrecipes.com/recipe/220985/scott-hibbs-amazing-whisky-grilled-baby-back-ribs/',
+        'https://www.allrecipes.com/recipe/278881/garlic-brown-sugar-chicken-thighs/',
+        'https://www.allrecipes.com/recipe/280951/black-pepper-beef-and-cabbage-stir-fry/'
       ]
     },
     // Love and Lemons
@@ -92,7 +89,7 @@ const SITES = [
       parserPath: path.resolve(__dirname, '../../parsers/sites/loveandlemons.ts'),
       urls: [
         'https://www.loveandlemons.com/margarita-recipe/',
-  'https://www.loveandlemons.com/black-bean-burger-recipe/',
+        'https://www.loveandlemons.com/black-bean-burgers/',
         'https://www.loveandlemons.com/shakshuka-recipe/',
         'https://www.loveandlemons.com/lentil-soup/',
         'https://www.loveandlemons.com/frittata-recipe/',
@@ -187,7 +184,6 @@ async function fetchAndCache(url, outPath) {
   let browser;
   let context;
   let page;
-  let response;
   // Use Firefox only for Washington Post, Chromium for all other sites
   if (url.includes('washingtonpost.com')) {
     browser = await firefox.launch();
@@ -226,46 +222,16 @@ async function fetchAndCache(url, outPath) {
       console.log(`[WAPOST-AUTH] No cookies found at ${cookiesPath}`);
       console.log(`[WAPOST-AUTH] Run 'cd tools/cmd/wapost-cookies && go run main.go' to capture cookies`);
     }
-  } else if (url.includes('seriouseats.com')) {
-    // Use puppeteer-extra with stealth plugin for Serious Eats
-    try {
-      const browser = await puppeteer.launch({ headless: false, args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-blink-features=AutomationControlled',
-      ] });
-      const page = await browser.newPage();
-      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
-      await page.goto('https://www.seriouseats.com/', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(2000);
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded' });
-      console.log(`[SeriousEats] Stealth fetch status: ${response ? response.status() : 'no response'}`);
-      await page.waitForTimeout(3000);
-      if (response && response.status() === 404) {
-        console.log('[SeriousEats] Stealth got 404, NOT persisting result.');
-        await browser.close();
-        throw new Error('Serious Eats fetch received 404 response');
-      }
-      const html = await page.content();
-      fs.writeFileSync(outPath, html);
-      console.log('[SeriousEats] Successfully persisted non-404 result.');
-      await browser.close();
-      return;
-    } catch (err) {
-      console.error(`[SeriousEats] Stealth fetch error: ${err}`);
-      throw err;
-    }
   } else {
     browser = await chromium.launch();
     context = await browser.newContext();
     page = await context.newPage();
-    response = await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2000); // Wait for content
-    const html = await page.content();
-    fs.writeFileSync(outPath, html);
-    await browser.close();
   }
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2000); // Wait for content
+  const html = await page.content();
+  fs.writeFileSync(outPath, html);
+  await browser.close();
 }
 
 function validateContract(result) {

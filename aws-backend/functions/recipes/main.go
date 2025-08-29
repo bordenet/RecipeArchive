@@ -322,6 +322,38 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
+	// Check for existing recipe with same source URL (de-duplication)
+	existingRecipes, err := recipeDB.ListRecipes(userID)
+	if err != nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to check existing recipes",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Check if recipe with same source URL already exists
+	sourceURL := strings.TrimSpace(recipeData.SourceURL)
+	for _, existing := range existingRecipes {
+		if existing.SourceURL == sourceURL {
+			// Return existing recipe instead of creating duplicate
+			response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
+				"recipe": existing,
+				"message": "Recipe already exists, returning existing recipe",
+			})
+			if responseErr != nil {
+				return events.APIGatewayProxyResponse{}, responseErr
+			}
+			return response, nil
+		}
+	}
+
 	// Create the recipe object
 	now := time.Now().UTC()
 	recipe := models.Recipe{
@@ -344,7 +376,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	}
 
 	// Save to S3
-	err := recipeDB.CreateRecipe(&recipe)
+	err = recipeDB.CreateRecipe(&recipe)
 	if err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
