@@ -1,0 +1,46 @@
+{
+  "name": "RecipeArchive Mobile",
+  "short_name": "RecipeArchive",
+  "description": "Capture and save recipes from any website",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#4CAF50",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "../extensions/chrome/icon16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "../extensions/chrome/icon32.png", 
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "../extensions/chrome/icon48.png",
+      "sizes": "48x48", 
+      "type": "image/png"
+    },
+    {
+      "src": "../extensions/chrome/icon128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "../extensions/chrome/icon128.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "../extensions/chrome/icon128.png", 
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["food", "productivity", "utilities"],
+  "scope": "/",
+  "id": "com.recipeArchive.mobile",
+  "prefer_related_applications": false
+}
