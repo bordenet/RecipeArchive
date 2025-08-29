@@ -82,7 +82,15 @@ function renderUI() {
             }
             captureBtn.disabled = !isSupported;
             captureBtn.style.opacity = isSupported ? "1" : "0.5";
+            captureBtn.style.cursor = isSupported ? "pointer" : "not-allowed";
             captureBtn.title = isSupported ? "Capture Recipe" : "This site is not supported";
+            
+            // Update button text to be more descriptive
+            if (!isSupported) {
+                captureBtn.textContent = "Site Not Supported";
+            } else {
+                captureBtn.textContent = "Capture Recipe";
+            }
         });
         
     } else {
