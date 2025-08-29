@@ -73,8 +73,7 @@ A cross-platform recipe archiving system currently featuring:
 
 **Features:**
 - ✅ TypeScript parser system with decoupled site-specific parsers
-- ✅ 48-hour intelligent caching system to reduce network load
-- ✅ Paywall bypass support (Washington Post cookie authentication)
+- ✅ Paywall bypass support for offline testing (Washington Post cookie authentication) -- real users need to have a subscription to access recipes
 - ✅ Comprehensive contract validation for all sites
 - ✅ Both Chrome and Safari extension integration
 

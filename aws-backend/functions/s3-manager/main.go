@@ -99,7 +99,7 @@ func main() {
 // cleanupAllObjects removes ALL objects from the bucket (DESTRUCTIVE!)
 func cleanupAllObjects(ctx context.Context, bucketName string, dryRun bool) error {
 	fmt.Printf("🧹 %s: Cleaning up ALL objects from bucket: %s\\n", getActionPrefix(dryRun), bucketName)
-	
+
 	if !dryRun {
 		fmt.Print("⚠️ WARNING: This will DELETE ALL OBJECTS in the bucket. Continue? (y/N): ")
 		var response string
@@ -165,7 +165,7 @@ func cleanupAllObjects(ctx context.Context, bucketName string, dryRun bool) erro
 		} else {
 			// Dry run - just count what would be deleted
 			for _, obj := range result.Contents {
-				fmt.Printf("    Would delete: %s (%.2f KB)\\n", 
+				fmt.Printf("    Would delete: %s (%.2f KB)\\n",
 					*obj.Key, float64(*obj.Size)/1024.0)
 				totalDeleted++
 			}
@@ -192,7 +192,7 @@ func cleanupUserObjects(ctx context.Context, bucketName, userID string, dryRun b
 	fmt.Printf("🧹 %s: Cleaning up objects for user: %s\\n", getActionPrefix(dryRun), userID)
 
 	userPrefix := fmt.Sprintf("users/%s/", userID)
-	
+
 	listInput := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(userPrefix),
@@ -271,17 +271,17 @@ func listAllObjects(ctx context.Context, bucketName string) error {
 	for _, obj := range result.Contents {
 		sizeKB := float64(*obj.Size) / 1024.0
 		totalSize += *obj.Size
-		
+
 		key := *obj.Key
 		if len(key) > 54 {
 			key = key[:51] + "..."
 		}
-		
+
 		fmt.Printf("  %-54s | %9.2f | %s\\n",
 			key, sizeKB, obj.LastModified.Format("2006-01-02"))
 	}
 
-	fmt.Printf("\\n📈 Total: %d objects, %.2f KB\\n", 
+	fmt.Printf("\\n📈 Total: %d objects, %.2f KB\\n",
 		len(result.Contents), float64(totalSize)/1024.0)
 
 	return nil
@@ -292,8 +292,8 @@ func createTestObjects(ctx context.Context, bucketName string) error {
 	fmt.Printf("🧪 Creating test objects in bucket: %s\\n", bucketName)
 
 	testObjects := []struct {
-		key     string
-		content string
+		key         string
+		content     string
 		contentType string
 	}{
 		{
@@ -302,7 +302,7 @@ func createTestObjects(ctx context.Context, bucketName string) error {
 			contentType: "image/jpeg",
 		},
 		{
-			key:         "users/test-user-001/photos/recipe-002/main.jpg", 
+			key:         "users/test-user-001/photos/recipe-002/main.jpg",
 			content:     "another-fake-jpeg-data-for-main-photo",
 			contentType: "image/jpeg",
 		},
@@ -325,7 +325,7 @@ func createTestObjects(ctx context.Context, bucketName string) error {
 
 	for i, obj := range testObjects {
 		fmt.Printf("  📤 Creating object %d/%d: %s\\n", i+1, len(testObjects), obj.key)
-		
+
 		putInput := &s3.PutObjectInput{
 			Bucket:      aws.String(bucketName),
 			Key:         aws.String(obj.key),

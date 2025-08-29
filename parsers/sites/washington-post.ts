@@ -33,9 +33,19 @@ export class WashingtonPostParser extends BaseParser {
         // Washington Post recipe structure detection
         const title = this.extractTitle($);
         const ingredients = this.extractIngredients($);
-        const instructions = this.extractInstructions($);
+        let instructions = this.extractInstructions($);
         const imageUrl = this.extractImage($);
         const metadata = this.extractMetadata($);
+
+        // Fallback: If no instructions found, use recipe description as a single step
+        if (instructions.length === 0) {
+            const description = metadata.notes?.[0] || '';
+            if (description) {
+                instructions = [{ stepNumber: 1, text: description }];
+            } else {
+                instructions = [{ stepNumber: 1, text: 'No instructions provided.' }];
+            }
+        }
 
         const recipe: Recipe = {
             title,

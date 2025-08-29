@@ -91,6 +91,14 @@ Podfile.lock
 *.bak
 *.orig
 
+# Orphaned debug/spec files (auto-generated, not tracked)
+parsers/dist/sites/food-network-debug.d.ts
+parsers/dist/sites/food-network-debug.js
+tests/automation/browser-startup-debug.spec.js
+tests/automation/extension-tests/browser-startup-debug.spec.js
+tests/automation/extension-tests/console-debug.spec.js
+tests/automation/extension-debug.spec.js
+
 # Operating System
 .DS_Store
 Thumbs.db

@@ -1,4 +1,9 @@
-// ...existing code...
+/* eslint-env node, browser */
+// Polyfill setImmediate for Node.js compatibility
+if (typeof global.setImmediate === 'undefined') {
+  global.setImmediate = (fn, ...args) => setTimeout(fn, 0, ...args);
+}
+/* eslint-env node, browser */
 
 const { chromium } = require('playwright');
 

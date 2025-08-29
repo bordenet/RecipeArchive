@@ -1,5 +1,7 @@
 # Performance Standards Unification
 
+**See also:** [Website Parsers Architecture Decision Record](./website-parsers.md)
+
 ## Document Status: **IMPORTANT - PENDING APPROVAL**
 
 **Date**: August 24, 2025  

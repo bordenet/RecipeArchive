@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Focused JavaScript Scoping Validator - catches try/catch variable scoping issues
 // This validator specifically targets the tokenResult-style bugs
 

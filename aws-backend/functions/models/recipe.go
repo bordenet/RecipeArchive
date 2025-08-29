@@ -16,13 +16,17 @@ type Recipe struct {
 	Instructions []Instruction `json:"instructions" dynamodb:"instructions"`
 	SourceURL    string        `json:"sourceUrl" dynamodb:"sourceUrl"`
 
-	// Optional Metadata
-	MainPhotoURL     *string `json:"mainPhotoUrl,omitempty" dynamodb:"mainPhotoUrl,omitempty"`
-	PrepTimeMinutes  *int    `json:"prepTimeMinutes,omitempty" dynamodb:"prepTimeMinutes,omitempty"`
-	CookTimeMinutes  *int    `json:"cookTimeMinutes,omitempty" dynamodb:"cookTimeMinutes,omitempty"`
-	TotalTimeMinutes *int    `json:"totalTimeMinutes,omitempty" dynamodb:"totalTimeMinutes,omitempty"`
-	Servings         *int    `json:"servings,omitempty" dynamodb:"servings,omitempty"`
-	Yield            *string `json:"yield,omitempty" dynamodb:"yield,omitempty"`
+	// Optional Metadata (expanded contract)
+	MainPhotoURL     *string  `json:"mainPhotoUrl,omitempty" dynamodb:"mainPhotoUrl,omitempty"`
+	PrepTimeMinutes  *int     `json:"prepTimeMinutes,omitempty" dynamodb:"prepTimeMinutes,omitempty"`
+	CookTimeMinutes  *int     `json:"cookTimeMinutes,omitempty" dynamodb:"cookTimeMinutes,omitempty"`
+	TotalTimeMinutes *int     `json:"totalTimeMinutes,omitempty" dynamodb:"totalTimeMinutes,omitempty"`
+	Servings         *int     `json:"servings,omitempty" dynamodb:"servings,omitempty"`
+	Yield            *string  `json:"yield,omitempty" dynamodb:"yield,omitempty"`
+	Categories       []string `json:"categories,omitempty" dynamodb:"categories,omitempty"`
+	Description      *string  `json:"description,omitempty" dynamodb:"description,omitempty"`
+	Reviews          *string  `json:"reviews,omitempty" dynamodb:"reviews,omitempty"`
+	Nutrition        *string  `json:"nutrition,omitempty" dynamodb:"nutrition,omitempty"`
 
 	// System Fields
 	CreatedAt time.Time `json:"createdAt" dynamodb:"createdAt"`
@@ -60,6 +64,10 @@ type CreateRecipeRequest struct {
 	TotalTimeMinutes *int          `json:"totalTimeMinutes,omitempty" validate:"omitempty,min=0"`
 	Servings         *int          `json:"servings,omitempty" validate:"omitempty,min=1"`
 	Yield            *string       `json:"yield,omitempty" validate:"omitempty,max=100"`
+	Categories       []string      `json:"categories,omitempty"`
+	Description      *string       `json:"description,omitempty"`
+	Reviews          *string       `json:"reviews,omitempty"`
+	Nutrition        *string       `json:"nutrition,omitempty"`
 	WebArchiveHTML   *string       `json:"webArchiveHtml,omitempty"`
 }
 
@@ -75,6 +83,10 @@ type UpdateRecipeRequest struct {
 	TotalTimeMinutes *int           `json:"totalTimeMinutes,omitempty" validate:"omitempty,min=0"`
 	Servings         *int           `json:"servings,omitempty" validate:"omitempty,min=1"`
 	Yield            *string        `json:"yield,omitempty" validate:"omitempty,max=100"`
+	Categories       *[]string      `json:"categories,omitempty"`
+	Description      *string        `json:"description,omitempty"`
+	Reviews          *string        `json:"reviews,omitempty"`
+	Nutrition        *string        `json:"nutrition,omitempty"`
 	Version          *int           `json:"version,omitempty" validate:"omitempty,min=1"`
 }
 

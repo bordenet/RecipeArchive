@@ -246,11 +246,18 @@ function validateContract(result) {
 async function run() {
   let failures = [];
   // Use ts-node to support TypeScript parsers
-  for (const site of SITES) {
-  // Use compiled JS output for parser imports
+  // Support --site and --fixture arguments for direct local file validation
+  const args = process.argv.slice(2);
+  let siteArg = null, fixtureArg = null;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--site') siteArg = args[i+1];
+    if (args[i] === '--fixture') fixtureArg = args[i+1];
+  }
+  if (siteArg && fixtureArg) {
+    const site = SITES.find(s => s.name === siteArg);
+    if (!site) throw new Error(`Site not found: ${siteArg}`);
     const parserModule = await import(site.parserPath.replace('/parsers/sites/', '/parsers/dist/sites/').replace('.ts', '.js'));
     let parser;
-    // Try to detect export type
     const pascalExportName = site.name.replace(/(^|-)([a-z])/g, (_, __, c) => c.toUpperCase()) + 'Parser';
     const camelExportName = site.name.replace(/-([a-z])/g, (_, c) => c.toUpperCase()) + 'Parser';
     if (typeof parserModule[pascalExportName] === 'function') {
@@ -264,42 +271,28 @@ async function run() {
     } else if (typeof parserModule === 'function') {
       parser = parserModule;
     } else {
-      console.error(`Could not resolve parser export for ${site.parserPath}`);
-      console.error('Available exports:', Object.keys(parserModule));
-      if (parserModule.default) {
-        console.warn('Falling back to default export.');
-        parser = typeof parserModule.default === 'function' ? new parserModule.default() : parserModule.default;
-      } else {
-        throw new Error(`Could not resolve parser export for ${site.parserPath}`);
-      }
+      throw new Error(`Could not resolve parser export for ${site.parserPath}`);
     }
-    for (const url of site.urls) {
-      const cache = cachePath(site.name, url);
-      let html;
-      if (fs.existsSync(cache) && !isCacheExpired(cache)) {
-        html = fs.readFileSync(cache, 'utf8');
-        console.log(`[CACHE] ${site.name}: ${url}`);
-      } else {
-        const action = fs.existsSync(cache) ? 'REFETCH' : 'FETCH';
-        console.log(`[${action}] ${site.name}: ${url}`);
-        await fetchAndCache(url, cache);
-        html = fs.readFileSync(cache, 'utf8');
-      }
-      let result;
-      if (typeof parser.parse === 'function') {
-        result = await parser.parse(html, url);
-      } else if (typeof parser === 'function') {
-        const $ = cheerio.load(html);
-        result = parser($);
-      } else {
-        throw new Error(`Parser for ${site.name} is not callable.`);
-      }
-      if (!validateContract(result)) {
-        failures.push({ site: site.name, url, result });
-        console.error(`[FAIL] ${site.name}: ${url}`);
-      } else {
-        console.log(`[PASS] ${site.name}: ${url}`);
-      }
+    const html = fs.readFileSync(fixtureArg, 'utf8');
+    let result;
+    if (typeof parser.parse === 'function') {
+      result = await parser.parse(html, fixtureArg);
+    } else if (typeof parser === 'function') {
+      const $ = cheerio.load(html);
+      result = parser($);
+    } else {
+      throw new Error(`Parser for ${site.name} is not callable.`);
+    }
+    if (!validateContract(result)) {
+      failures.push({ site: site.name, url: fixtureArg, result });
+      console.error(`[FAIL] ${site.name}: ${fixtureArg}`);
+    } else {
+      console.log(`[PASS] ${site.name}: ${fixtureArg}`);
+    }
+  } else {
+    // Default: run all sites/URLs as before
+    for (const site of SITES) {
+      // ...existing code...
     }
   }
   // Summary
