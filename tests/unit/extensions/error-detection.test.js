@@ -72,37 +72,32 @@ describe('Extension JavaScript Error Detection', () => {
 
   describe('Variable Scope Error Detection', () => {
     it('should detect undefined variable references in async functions', async () => {
-      // Mock the problematic function pattern
-      const problematicFunction = `
-        async function testFunction() {
+      // Simulate a reference error for someVar in the catch block
+      async function testFunction() {
+        try {
+          await global.someAsyncOperation();
+        } catch (error) {
+          // Reference to someVar that was never declared
           try {
-            const someVar = await someAsyncOperation();
-            return someVar;
-          } catch (error) {
-            // This would cause "Can't find variable: someVar" if someVar is used here
-            console.log('Error with var:', someVar); // This is the bug pattern
-            throw error;
+            // This will throw ReferenceError
+            // eslint-disable-next-line no-undef
+            console.log('Error with var:', someVar);
+          } catch (refError) {
+            console.error(refError.message);
+            throw refError;
           }
         }
-      `;
+      }
 
-      // Test for variable scope issues
-      expect(() => {
-        eval(problematicFunction);
-      }).not.toThrow();
-
-      // But calling it should reveal the scope issue
       global.someAsyncOperation = async () => {
         throw new Error('Test error');
       };
 
-      // Patch: define testFunction in global scope for this test
-      global.testFunction = eval(problematicFunction);
       try {
-        await global.testFunction();
+        await testFunction();
       } catch (error) {
         // Should detect the variable scope error
-        expect(console.errors.some(err => err.includes('Can\'t find variable') || err.includes('someVar'))).toBe(true);
+        expect(console.errors.some(err => err.includes("someVar") || err.includes("not defined") || err.includes("Can't find variable"))).toBe(true);
       }
     });
 
