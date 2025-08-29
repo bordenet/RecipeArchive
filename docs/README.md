@@ -17,8 +17,8 @@ cd RecipeArchive
 ```
 
 ### Local Development (Zero AWS Costs)
-```bash
 # Start local development server
+
 cd aws-backend/functions/local-server
 go run main.go
 
