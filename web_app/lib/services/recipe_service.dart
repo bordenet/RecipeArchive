@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/recipe.dart';
+import 'auth_service.dart';
 
 class RecipeService {
   static const String baseUrl = 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod';
@@ -12,6 +13,11 @@ class RecipeService {
   static const bool useLocalBackend = false;
   
   String get apiUrl => useLocalBackend ? localUrl : baseUrl;
+  
+  // Authentication service - accept as parameter to share state
+  final AuthService _authService;
+  
+  RecipeService({AuthService? authService}) : _authService = authService ?? AuthService();
 
   // Get all recipes
   Future<List<Recipe>> getRecipes({
@@ -34,7 +40,7 @@ class RecipeService {
     try {
       final response = await http.get(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
       );
       
       if (response.statusCode == 200) {
@@ -59,7 +65,7 @@ class RecipeService {
     try {
       final response = await http.get(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
       );
       
       if (response.statusCode == 200) {
@@ -82,7 +88,7 @@ class RecipeService {
     try {
       final response = await http.post(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
         body: json.encode(recipe.toJson()),
       );
       
@@ -104,7 +110,7 @@ class RecipeService {
     try {
       final response = await http.put(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
         body: json.encode(recipe.toJson()),
       );
       
@@ -126,7 +132,7 @@ class RecipeService {
     try {
       final response = await http.delete(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
       );
       
       if (response.statusCode != 204) {
@@ -150,12 +156,13 @@ class RecipeService {
   // Get favorite recipes
   Future<List<Recipe>> getFavoriteRecipes() async {
     final allRecipes = await getRecipes();
-    return allRecipes.where((recipe) => recipe.isFavorite).toList();
+    return allRecipes.where((recipe) => recipe.isFavorite == true).toList();
   }
 
   // Toggle favorite status
   Future<Recipe> toggleFavorite(Recipe recipe) async {
-    final updatedRecipe = recipe.copyWith(isFavorite: !recipe.isFavorite);
+    final currentFavorite = recipe.isFavorite ?? false;
+    final updatedRecipe = recipe.copyWith(isFavorite: !currentFavorite);
     return await updateRecipe(updatedRecipe);
   }
 
@@ -175,13 +182,13 @@ class RecipeService {
     return await updateRecipe(updatedRecipe);
   }
 
-  // Helper method to get common headers
-  Map<String, String> _getHeaders() {
+  // Helper method to get authenticated headers
+  Future<Map<String, String>> _getHeaders() async {
+    final authHeaders = await _authService.getAuthHeaders();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      // TODO: Add authentication headers when implemented
-      // 'Authorization': 'Bearer $token',
+      ...authHeaders,
     };
   }
 
@@ -192,7 +199,7 @@ class RecipeService {
     try {
       final response = await http.get(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
       );
       
       if (response.statusCode == 200) {
@@ -226,7 +233,7 @@ class RecipeService {
     try {
       final response = await http.get(
         uri,
-        headers: _getHeaders(),
+        headers: await _getHeaders(),
       );
       
       if (response.statusCode == 200) {
