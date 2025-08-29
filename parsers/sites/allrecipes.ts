@@ -14,8 +14,15 @@ export class AllRecipesParser extends BaseParser {
         // Detect AllRecipes 404/error page
         const canonicalUrl = $('link[rel="canonical"]').attr('href');
         const ogUrl = $('meta[property="og:url"]').attr('content');
-        if ((canonicalUrl && canonicalUrl.includes('/404')) || (ogUrl && ogUrl.includes('/404'))) {
-            throw new Error('AllRecipes: 404 or error page detected');
+        const pageTitle = $('title').text().trim();
+        if ((canonicalUrl && canonicalUrl.includes('/404')) || (ogUrl && ogUrl.includes('/404')) || pageTitle === 'Page Not Found') {
+            // Strictly return empty contract fields for error pages
+            return {
+                title: '',
+                source: url,
+                ingredients: [],
+                instructions: [],
+            };
         }
 
         // First try JSON-LD extraction
@@ -42,7 +49,10 @@ export class AllRecipesParser extends BaseParser {
             };
             const validation = this.validateRecipe(recipe);
             if (validation.isValid) {
-                return recipe;
+                // Ensure required contract fields are present and non-empty
+                if (recipe.title && recipe.ingredients.length > 0 && recipe.instructions.length > 0) {
+                    return recipe;
+                }
             }
         }
 
