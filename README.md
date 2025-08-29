@@ -19,8 +19,12 @@ cd RecipeArchive
 cp .env.template .env
 # Edit .env with your actual credentials (NEVER commit this file!)
 
-# Setup everything automatically  
-npm run validate  # Runs comprehensive monorepo validation
+# Environment validation (quick check)
+npm run validate  # Checks Node.js, Go, Git, and project structure
+
+# Full monorepo validation (comprehensive)
+npm test  # Runs complete 8-tier quality gate system including Flutter
+# OR run directly: ./validate-monorepo.sh
 ```
 
 ### 🌐 Flutter Web App Quick Start
