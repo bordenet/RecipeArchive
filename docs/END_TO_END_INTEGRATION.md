@@ -3,6 +3,12 @@
 ## Overview
 
 This document describes the complete end-to-end workflow from browser extension recipe capture to cloud storage in the RecipeArchive system.
+ 
+> **See Also:**
+> - [Project README](./README.md) — Quick start, tech stack, and high-level overview
+> - [Environment Configuration](./ENVIRONMENT_CONFIG.md) — Extension/backend environment setup and detection
+> - [Website Parsers Architecture Decision Record](./architecture/website-parsers.md)
+> - [Failed Parse API Implementation Tracker](./TODO-FAILED-PARSE-API.md)
 
 ## Architecture
 
@@ -16,9 +22,7 @@ Browser Extension → Recipe Extraction → Authentication → Local/AWS Backend
 ## Components
 
 ### 1. 🔐 Authentication System
-- **Washington Post Cookies**: `wapost-subscription-cookies.json` (480 cookies)
-- **Purpose**: Bypass paywall for subscription-only recipes
-- **Usage**: Automatically loaded by Playwright-based extraction
+
 
 ### 2. 🌐 Recipe Extraction
 - **Engine**: Playwright browser automation
@@ -27,15 +31,10 @@ Browser Extension → Recipe Extraction → Authentication → Local/AWS Backend
 - **Output**: Structured recipe data (title, ingredients, instructions, etc.)
 
 ### 3. 🔄 Browser Extensions
-- **Chrome**: `extensions/chrome/`
-- **Safari**: `extensions/safari/`
-- **Features**: Recipe capture, cloud sync, diagnostic mode
-- **Configuration**: Auto-detects development vs production environment
+
 
 ### 4. ☁️ Backend APIs
-- **Local Development**: `http://localhost:8080` (Go server, in-memory storage)
-- **AWS Production**: `https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod`
-- **Authentication**: Mock tokens (dev) / Cognito JWT (prod)
+
 
 ## Quick Start
 
@@ -60,6 +59,7 @@ Browser Extension → Recipe Extraction → Authentication → Local/AWS Backend
 
 3. **Test Recipe Extraction**
    ```bash
+   > **For ongoing development tasks and API improvements, see [Failed Parse API Implementation Tracker](./TODO-FAILED-PARSE-API.md).**
    node dev-tools/test-wapost-extraction.js
    ```
 
@@ -89,18 +89,10 @@ Browser Extension → Recipe Extraction → Authentication → Local/AWS Backend
    ```
 
 ## Environment Configuration
-
 ### Development Mode (Default)
-- **Backend**: http://localhost:8080
-- **Authentication**: Mock tokens (username-extension-token)
-- **Storage**: In-memory (resets on restart)
-- **Switch**: localStorage.setItem('recipeArchive.dev', 'true')
 
 ### Production Mode
-- **Backend**: AWS API Gateway + Lambda
-- **Authentication**: Cognito JWT tokens
-- **Storage**: DynamoDB + S3
-- **Switch**: localStorage.setItem('recipeArchive.dev', 'false')
+
 
 ## API Endpoints
 
