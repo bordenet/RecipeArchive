@@ -9,6 +9,10 @@ export class EpicuriousParser extends BaseParser {
     }
 
     async parse(html: string, url: string): Promise<Recipe> {
+        // Detect Epicurious 404 page and throw error
+        if (html.includes('Page Not Found | Epicurious')) {
+            throw new Error(`[Epicurious] 404 page detected for URL: ${url}`);
+        }
         const $ = cheerio.load(html);
         
         // First try JSON-LD extraction

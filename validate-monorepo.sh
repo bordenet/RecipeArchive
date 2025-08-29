@@ -329,18 +329,18 @@ validate_parsers() {
     print_header "RECIPE PARSERS"
     
     print_step "Site-specific parsers"
-    if [ -f "tools/test-tools/monorepo-parser-validator.cjs" ]; then
-        if (cd tools/test-tools && timeout 60 node monorepo-parser-validator.cjs > /dev/null 2>&1); then
+    if [ -f "tools/test-tools/website-parser-validator.cjs" ]; then
+    if (cd tools/test-tools && timeout 60 node website-parser-validator.cjs > /dev/null 2>&1); then
             print_success
             ((PASSED_TESTS++))
         else
             print_error
-            echo "    Parser tests failed - rerun with details: cd tools/test-tools && node monorepo-parser-validator.cjs"
+            echo "    Parser tests failed - rerun with details: cd tools/test-tools && node website-parser-validator.cjs"
             echo "    Common issues: Missing TypeScript compilation, network errors, contract validation failures"
         fi
     else
         print_error
-        echo "    Parser validation tool not found at tools/test-tools/monorepo-parser-validator.cjs"
+    echo "    Parser validation tool not found at tools/test-tools/website-parser-validator.cjs"
     fi
     
     ((TOTAL_TESTS+=1))
@@ -490,7 +490,7 @@ show_summary() {
         echo "📋 DEBUGGING GUIDE:"
         echo "  • Test failures: Run individual test commands shown above for details"
         echo "  • Build failures: Check TypeScript compilation and Go build errors"  
-        echo "  • Parser issues: Check tools/test-tools/monorepo-parser-validator.cjs"
+    echo "  • Parser issues: Check tools/test-tools/website-parser-validator.cjs"
         echo "  • Linting issues: Run 'npm run lint' for specific file errors"
         echo "  • Missing dependencies: Run 'npm install' in all directories"
         echo
