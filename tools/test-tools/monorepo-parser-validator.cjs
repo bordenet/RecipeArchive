@@ -191,18 +191,28 @@ async function fetchAndCache(url, outPath) {
       const cookies = JSON.parse(cookiesJSON);
       
       // Set cookies in the browser context using context.addCookies
-      await context.addCookies(cookies.map(cookie => ({
-        name: cookie.name,
-        value: cookie.value,
-        domain: cookie.domain,
-        path: cookie.path,
-        expires: cookie.expires ? cookie.expires : undefined,
-        httpOnly: cookie.httpOnly,
-        secure: cookie.secure,
-        sameSite: cookie.sameSite === 'None' ? 'none' : 
-                 cookie.sameSite === 'Lax' ? 'lax' : 
-                 cookie.sameSite === 'Strict' ? 'strict' : 'lax'
-      })));
+      await context.addCookies(cookies.map(cookie => {
+        let sameSite;
+        if (cookie.sameSite === 'None' || cookie.sameSite === 'Lax' || cookie.sameSite === 'Strict') {
+          sameSite = cookie.sameSite;
+        } else if (typeof cookie.sameSite === 'string') {
+          // Normalize capitalization if needed
+          const val = cookie.sameSite.toLowerCase();
+          if (val === 'none') sameSite = 'None';
+          else if (val === 'lax') sameSite = 'Lax';
+          else if (val === 'strict') sameSite = 'Strict';
+        }
+        return {
+          name: cookie.name,
+          value: cookie.value,
+          domain: cookie.domain,
+          path: cookie.path,
+          expires: cookie.expires ? cookie.expires : undefined,
+          httpOnly: cookie.httpOnly,
+          secure: cookie.secure,
+          sameSite: sameSite
+        };
+      }));
       console.log(`[WAPOST-AUTH] Set ${cookies.length} authentication cookies`);
     } else {
       console.log(`[WAPOST-AUTH] No cookies found at ${cookiesPath}`);
