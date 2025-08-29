@@ -43,7 +43,7 @@ func init() {
 }
 
 func main() {
-	var action = flag.String("action", "", "Action to perform: load-test-data, cleanup-s3, validate-crud, list-recipes, test-url-overwrite, test-backup")
+	var action = flag.String("action", "", "Action to perform: load-test-data, cleanup-s3, validate-crud, list-recipes, cleanup-duplicates, test-url-overwrite, test-backup")
 	var userID = flag.String("user-id", "test-user-001", "User ID for testing")
 	_ = flag.String("recipe-id", "", "Recipe ID for single operations") // Currently unused
 	var testDataFile = flag.String("test-data", "../testdata/test-recipes.json", "Path to test data file")
@@ -56,6 +56,7 @@ func main() {
 		fmt.Println("  cleanup-s3         - Clean all S3 objects from bucket")
 		fmt.Println("  validate-crud      - Run full CRUD validation tests")
 		fmt.Println("  list-recipes       - List all recipes for a user")
+		fmt.Println("  cleanup-duplicates - Remove duplicate recipes, keeping latest versions")
 		fmt.Println("  test-url-overwrite - Test URL-based recipe overwrite behavior")
 		fmt.Println("  test-backup        - Test backup functionality")
 		os.Exit(1)
@@ -89,6 +90,12 @@ func main() {
 		err := listRecipes(ctx, *userID)
 		if err != nil {
 			log.Fatalf("Failed to list recipes: %v", err)
+		}
+
+	case "cleanup-duplicates":
+		err := cleanupDuplicateRecipes(ctx, *userID)
+		if err != nil {
+			log.Fatalf("Failed to cleanup duplicates: %v", err)
 		}
 
 	case "test-url-overwrite":
@@ -318,6 +325,82 @@ func listRecipes(ctx context.Context, userID string) error {
 
 		fmt.Printf("  %-36s | %-30s | %-10s | %-7d | %s\\n",
 			recipe.ID, title, createdAt, recipe.Version, deletedStatus)
+	}
+
+	return nil
+}
+
+// cleanupDuplicateRecipes removes duplicate recipes, keeping only the latest version
+func cleanupDuplicateRecipes(ctx context.Context, userID string) error {
+	fmt.Printf("🧹 Cleaning up duplicate recipes for user: %s...\n", userID)
+
+	// Get all recipes for the user
+	recipes, err := recipeDB.ListRecipes(userID)
+	if err != nil {
+		return fmt.Errorf("failed to list recipes: %w", err)
+	}
+
+	if len(recipes) == 0 {
+		fmt.Println("  📁 No recipes found for this user")
+		return nil
+	}
+
+	fmt.Printf("📊 Found %d total recipes, analyzing for duplicates...\n", len(recipes))
+
+	// Group recipes by source URL
+	recipesByURL := make(map[string][]models.Recipe)
+	for _, recipe := range recipes {
+		if recipe.SourceURL != "" {
+			recipesByURL[recipe.SourceURL] = append(recipesByURL[recipe.SourceURL], recipe)
+		}
+	}
+
+	duplicateCount := 0
+	deletedCount := 0
+
+	// Process each group to find duplicates
+	for sourceURL, recipeGroup := range recipesByURL {
+		if len(recipeGroup) > 1 {
+			duplicateCount++
+			fmt.Printf("\n🔍 Found %d duplicates for: %s\n", len(recipeGroup), sourceURL)
+
+			// Sort by creation time to find the latest
+			latestRecipe := recipeGroup[0]
+			for _, recipe := range recipeGroup {
+				if recipe.CreatedAt.After(latestRecipe.CreatedAt) {
+					latestRecipe = recipe
+				}
+			}
+
+			fmt.Printf("  ✅ Keeping latest: %s (Created: %s)\n", latestRecipe.Title, latestRecipe.CreatedAt.Format("2006-01-02 15:04:05"))
+
+			// Delete older duplicates
+			for _, recipe := range recipeGroup {
+				if recipe.ID != latestRecipe.ID {
+					fmt.Printf("  🗑️ Deleting older: %s (Created: %s)\n", recipe.Title, recipe.CreatedAt.Format("2006-01-02 15:04:05"))
+
+					// Delete the recipe file from S3
+					deleteParams := &s3.DeleteObjectInput{
+						Bucket: aws.String(bucketName),
+						Key:    aws.String(fmt.Sprintf("recipes/%s/%s.json", userID, recipe.ID)),
+					}
+
+					_, err := s3Client.DeleteObject(ctx, deleteParams)
+					if err != nil {
+						fmt.Printf("    ⚠️ Failed to delete %s: %v\n", recipe.ID, err)
+					} else {
+						deletedCount++
+						fmt.Printf("    ✓ Deleted successfully\n")
+					}
+				}
+			}
+		}
+	}
+
+	if duplicateCount == 0 {
+		fmt.Println("✅ No duplicates found - all recipes are unique!")
+	} else {
+		fmt.Printf("\n✅ Cleanup complete! Processed %d duplicate groups, deleted %d older recipes\n", duplicateCount, deletedCount)
 	}
 
 	return nil
