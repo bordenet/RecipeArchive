@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -37,6 +41,7 @@ type LocalDB struct {
 }
 
 var db *LocalDB
+var s3Client *s3.Client
 
 // MockAuthMiddleware provides simple JWT-like authentication for local testing
 func MockAuthMiddleware(next http.Handler) http.Handler {
@@ -186,17 +191,71 @@ func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Log the diagnostic data for debugging
 	fmt.Printf("📊 Received diagnostic data from %s\n", r.UserAgent())
-	fmt.Printf("🔍 Data: %s\n", string(body))
+	fmt.Printf("🔍 Data size: %d bytes\n", len(body))
 
-	// Respond with success
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	// Check for HTML content and store it in S3 if available
+	var s3StorageResult string
+	if s3Client != nil {
+		if htmlContent, ok := diagnosticData["html"].(string); ok && htmlContent != "" {
+			bucketName := os.Getenv("S3_FAILED_PARSING_BUCKET")
+			if bucketName == "" {
+				bucketName = "recipearchive-failed-parsing-dev-990537043943" // Fallback for local dev
+			}
+
+			// Create a unique filename based on timestamp and URL
+			timestamp := time.Now().Format("2006-01-02_15-04-05")
+			url := ""
+			if urlValue, exists := diagnosticData["url"].(string); exists {
+				// Clean URL for filename (remove protocol and replace special chars)
+				url = strings.ReplaceAll(strings.ReplaceAll(urlValue, "https://", ""), "http://", "")
+				url = strings.ReplaceAll(strings.ReplaceAll(url, "/", "_"), "?", "_")
+				url = strings.ReplaceAll(url, "&", "_")
+				if len(url) > 50 {
+					url = url[:50] // Truncate long URLs
+				}
+			}
+
+			filename := fmt.Sprintf("failed-parsing/%s_%s_%s.html", timestamp, url, uuid.New().String()[:8])
+
+			// Store HTML in S3
+			_, err := s3Client.PutObject(context.Background(), &s3.PutObjectInput{
+				Bucket:      aws.String(bucketName),
+				Key:         aws.String(filename),
+				Body:        strings.NewReader(htmlContent),
+				ContentType: aws.String("text/html"),
+				Metadata: map[string]string{
+					"source-url": url,
+					"user-agent": r.UserAgent(),
+					"timestamp":  timestamp,
+				},
+			})
+
+			if err != nil {
+				fmt.Printf("⚠️  Failed to store HTML in S3: %v\n", err)
+				s3StorageResult = fmt.Sprintf("Failed to store HTML: %v", err)
+			} else {
+				fmt.Printf("✅ Stored failed parsing HTML: %s\n", filename)
+				s3StorageResult = fmt.Sprintf("HTML stored as: %s", filename)
+			}
+		}
+	}
+
+	// Prepare response
+	response := map[string]interface{}{
 		"status":    "received",
 		"timestamp": time.Now().Format(time.RFC3339),
 		"message":   "Diagnostic data processed successfully",
 		"dataSize":  len(body),
-	})
+	}
+
+	if s3StorageResult != "" {
+		response["s3Storage"] = s3StorageResult
+	}
+
+	// Respond with success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 // List recipes handler
@@ -519,6 +578,15 @@ func main() {
 	// Initialize local database
 	db = &LocalDB{
 		recipes: make(map[string]Recipe),
+	}
+
+	// Initialize S3 client for failed parsing storage
+	cfg, err := config.LoadDefaultConfig(context.Background())
+	if err != nil {
+		fmt.Printf("⚠️  Failed to load AWS config (S3 storage disabled): %v\n", err)
+	} else {
+		s3Client = s3.NewFromConfig(cfg)
+		fmt.Println("✅ S3 client initialized for failed parsing storage")
 	}
 
 	// Create router

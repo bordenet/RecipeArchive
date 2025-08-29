@@ -142,31 +142,38 @@ interface ParserFailureResponse {
 
 **AWS Implementation Requirements:**
 
-1. **S3 Storage Structure:**
+1. **Dedicated S3 Bucket for Failed Parsing HTML:**
+   - **Bucket Name**: `recipearchive-failed-parsing-{environment}-{accountId}`
+   - **Cost Control**: 20MB maximum size enforced by CloudWatch alarms
+   - **Data Retention**: 30-day automatic purging via S3 lifecycle rules
+   - **Security**: Block all public access, encrypted with S3-managed keys
+
+2. **S3 Storage Structure:**
    ```
-   recipeArchive-{environment}/
-   └── parser-failures/
-       └── {year}/{month}/{day}/
-           └── {userId}/
-               └── {submissionId}/
-                   ├── metadata.json    // Payload without HTML
-                   ├── page.html        // Full HTML dump
-                   └── analysis.json    // ML analysis results
+   recipearchive-failed-parsing-{environment}-{accountId}/
+   └── failed-parsing/
+       └── {timestamp}_{domain}_{uuid}.html    // Raw HTML files
    ```
 
-2. **Lambda Processing Pipeline:**
+3. **Storage Cost Control Measures:**
+   - **Size Limit**: CloudWatch alarm triggers at 20MB bucket size
+   - **Time Limit**: S3 lifecycle rule deletes files after 30 days
+   - **Monitoring**: SNS notifications for size limit breaches
+   - **Cleanup**: Automatic incomplete multipart upload deletion
+
+4. **Lambda Processing Pipeline:**
    - **Validation Function**: Authenticate user, validate payload, enforce rate limits
    - **Storage Function**: Store HTML dump and metadata in S3
    - **Analysis Function**: Extract features for ML retraining pipeline
    - **Notification Function**: Alert development team of critical parsing failures
 
-3. **DynamoDB Tracking Table: `parser-failures`**
+5. **DynamoDB Tracking Table: `parser-failures`**
    - **Partition Key**: `userId` (String)
    - **Sort Key**: `submissionId` (String)
    - **Attributes**: `url`, `timestamp`, `failureReason`, `processingStatus`, `s3Location`
    - **TTL**: 90 days for automatic cleanup
 
-4. **ML Retraining Integration:**
+6. **ML Retraining Integration:**
    - **Feature Extraction**: Automated analysis of HTML structure patterns
    - **Parser Improvement**: Integration with parser development workflow
    - **Success Metrics**: Track parser improvement over time
@@ -184,15 +191,25 @@ interface ParserFailureResponse {
 
 ### 4. File Storage Architecture
 
-**S3 Bucket Structure**:
+**S3 Bucket Structure** - Three dedicated buckets for different purposes:
 
 ```
-recipeArchive-{environment}/
+# Primary storage bucket for user data
+recipearchive-storage-{environment}-{accountId}/
 ├── users/{userId}/
 │   ├── photos/{recipeId}/main.jpg
 │   └── archives/{recipeId}/
 │       ├── page.html (primary)
 │       └── page.pdf (fallback)
+
+# Temporary processing bucket
+recipearchive-temp-{environment}-{accountId}/
+├── uploads/{userId}/{sessionId}/...  (7-day retention)
+
+# Failed parsing diagnostics bucket (NEW)
+recipearchive-failed-parsing-{environment}-{accountId}/
+├── failed-parsing/
+│   └── {timestamp}_{domain}_{uuid}.html  (30-day retention, 20MB limit)
 ```
 
 **Access Control**:
