@@ -8,13 +8,14 @@
 - **Parser Coverage**: ✅ 6/6 test URLs supported (Smitten Kitchen, Food Network, NYT Cooking)
 - **Architecture**: ✅ Decoupled, maintainable parsers in `extensions/shared/parsers/`
 
-### Latest Achievements (August 28, 2025)
-- **Parser System**: ✅ 8 site parsers implemented with high success rates
-- **Chrome Extension**: ✅ Fixed async handling, data transformation, and AWS integration
-- **Safari Extension**: ✅ Applied same fixes as Chrome for consistent functionality
-- **Report Tool**: ✅ Fixed authentication to use JWT-based user IDs like extensions
-- **Validation Tool**: ✅ Added 48-hour cache expiry and Washington Post cookie auth
-- **Code Quality**: ✅ Removed 25+ zero-length files and redundant test scripts
+### Latest Achievements (August 29, 2025)
+- **Backend De-duplication**: ✅ Implemented recipe de-duplication logic to prevent duplicates with same source URL
+- **Recipe Reports**: ✅ Fixed domain extraction (AttributionURL → SourceURL field mapping)
+- **Parser Validation**: ✅ Fixed overly aggressive 404 detection and updated 15+ broken test URLs
+- **Cache System**: ✅ Parser validation cache properly repopulates with [FETCH] for new URLs
+- **Food52 Parser**: ✅ Fixed false positive 404 detection, now 4/5 URLs pass validation
+- **System Health**: ✅ All Go builds pass, TypeScript compiles, security scans clean
+- **Branch Sync**: ✅ Website-parsers branch fully synchronized with main branch
 
 ---
 
@@ -101,6 +102,19 @@ This project is guided by **four comprehensive PRD documents** that define the c
 - **Recipe Extraction**: ✅ **NEW** TypeScript parser system with decoupled site-specific parsers
 - **UI**: Complete popup interface with production authentication flow
 - **Architecture**: Fixed content script messaging, no more script injection complexity
+
+#### AWS Backend (Production Ready)
+- **Location**: `/aws-backend/functions/recipes/`
+- **Recipe De-duplication**: ✅ Prevents duplicate recipes with same source URL per user
+- **S3 Storage**: Cost-effective JSON storage with 95% cost savings vs DynamoDB
+- **Authentication**: JWT token validation with AWS Cognito integration
+- **Architecture**: Serverless Lambda functions with S3-based database
+- **Contract Validation**: Enforces required fields (title, ingredients, instructions, sourceUrl)
+
+**Key Files:**
+- `main.go` - Recipe creation with de-duplication logic (lines 325-355)
+- `db/s3storage.go` - S3-based database implementation
+- `models/recipe.go` - Recipe data model with 15 core fields
 
 #### TypeScript Parser System (Production Ready)
 - **Location**: `/extensions/shared/parsers/` and `/tools/test-tools/website-parser-validator.cjs`
