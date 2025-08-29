@@ -3,21 +3,51 @@ import 'package:json_annotation/json_annotation.dart';
 part 'recipe.g.dart';
 
 @JsonSerializable()
+class RecipeIngredient {
+  final String text;
+  
+  const RecipeIngredient({required this.text});
+  
+  factory RecipeIngredient.fromJson(Map<String, dynamic> json) => _$RecipeIngredientFromJson(json);
+  Map<String, dynamic> toJson() => _$RecipeIngredientToJson(this);
+}
+
+@JsonSerializable()
+class RecipeInstruction {
+  final int stepNumber;
+  final String text;
+  
+  const RecipeInstruction({required this.stepNumber, required this.text});
+  
+  factory RecipeInstruction.fromJson(Map<String, dynamic> json) => _$RecipeInstructionFromJson(json);
+  Map<String, dynamic> toJson() => _$RecipeInstructionToJson(this);
+}
+
+@JsonSerializable()
 class Recipe {
   final String id;
+  final String? userId;
   final String title;
   final String? description;
+  
+  @JsonKey(name: 'mainPhotoUrl')
   final String? imageUrl;
-  final List<String> ingredients;
-  final List<String> instructions;
+  
+  final List<RecipeIngredient> ingredients;
+  final List<RecipeInstruction> instructions;
+  
+  @JsonKey(name: 'totalTimeMinutes')
   final int? prepTimeMinutes;
+  
   final int? cookTimeMinutes;
   final int? servings;
   final String? cuisine;
-  final List<String> tags;
+  final List<String>? tags;
   final String sourceUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool? isDeleted;
+  final int? version;
   
   // Nutrition info (optional)
   final int? calories;
@@ -26,12 +56,13 @@ class Recipe {
   final double? fat;
   
   // User metadata
-  final bool isFavorite;
+  final bool? isFavorite;
   final int? userRating; // 1-5 stars
   final String? userNotes;
 
   const Recipe({
     required this.id,
+    this.userId,
     required this.title,
     this.description,
     this.imageUrl,
@@ -41,15 +72,17 @@ class Recipe {
     this.cookTimeMinutes,
     this.servings,
     this.cuisine,
-    this.tags = const [],
+    this.tags,
     required this.sourceUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.isDeleted,
+    this.version,
     this.calories,
     this.protein,
     this.carbs,
     this.fat,
-    this.isFavorite = false,
+    this.isFavorite,
     this.userRating,
     this.userNotes,
   });
@@ -57,8 +90,12 @@ class Recipe {
   factory Recipe.fromJson(Map<String, dynamic> json) => _$RecipeFromJson(json);
   Map<String, dynamic> toJson() => _$RecipeToJson(this);
 
+  // Convenience getters for ingredients and instructions as strings
+  List<String> get ingredientTexts => ingredients.map((i) => i.text).toList();
+  List<String> get instructionTexts => instructions.map((i) => i.text).toList();
+  
   // Convenience getters
-  int get totalTimeMinutes => (prepTimeMinutes ?? 0) + (cookTimeMinutes ?? 0);
+  int get totalTimeMinutes => prepTimeMinutes ?? 0;
   
   String get formattedTime {
     if (totalTimeMinutes == 0) return 'Time not specified';
@@ -79,11 +116,12 @@ class Recipe {
   // Copy with method for immutable updates
   Recipe copyWith({
     String? id,
+    String? userId,
     String? title,
     String? description,
     String? imageUrl,
-    List<String>? ingredients,
-    List<String>? instructions,
+    List<RecipeIngredient>? ingredients,
+    List<RecipeInstruction>? instructions,
     int? prepTimeMinutes,
     int? cookTimeMinutes,
     int? servings,
@@ -92,6 +130,8 @@ class Recipe {
     String? sourceUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isDeleted,
+    int? version,
     int? calories,
     double? protein,
     double? carbs,
@@ -102,6 +142,7 @@ class Recipe {
   }) {
     return Recipe(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       title: title ?? this.title,
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -115,6 +156,8 @@ class Recipe {
       sourceUrl: sourceUrl ?? this.sourceUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isDeleted: isDeleted ?? this.isDeleted,
+      version: version ?? this.version,
       calories: calories ?? this.calories,
       protein: protein ?? this.protein,
       carbs: carbs ?? this.carbs,

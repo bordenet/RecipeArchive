@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Color scheme
-  static const Color primaryColor = Color(0xFF2E7D32); // Gr        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          clipBehavior: Clip.antiAlias,
-        ), recipes/food
+  static const Color primaryColor = Color(0xFF2E7D32); // Green representing fresh recipes/food
   static const Color secondaryColor = Color(0xFFFF6F00); // Orange accent
   static const Color backgroundColor = Color(0xFFFAFAFA);
   static const Color surfaceColor = Colors.white;
