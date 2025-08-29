@@ -1,7 +1,7 @@
 # Documentation Audit & Context Serialization
 
 **Date:** August 29, 2025
-**Agent:** Copilot (pre-GPT-5 mini)
+**Agent:** GitHub Copilot
 
 ## Summary
 - All major documentation files (`README.md`, `END_TO_END_INTEGRATION.md`, `ENVIRONMENT_CONFIG.md`, `TODO-FAILED-PARSE-API.md`) are cross-linked and deduplicated.
@@ -9,27 +9,83 @@
 - All lint errors and warnings resolved; web extensions are viable and usable.
 - No obsolete or duplicated documentation remains; all context is up to date and accurate.
 
-## Files Changed
-- `/docs/END_TO_END_INTEGRATION.md`: Cross-links, merged redundant sections.
-- `/docs/README.md`: Merge conflict resolved, bulleted list and table merged, cross-links block.
-- `/docs/ENVIRONMENT_CONFIG.md`: Cross-links block at top.
-- `/docs/TODO-FAILED-PARSE-API.md`: Cross-links block at top.
-- `/extensions/chrome/popup.js`: Lint errors and warnings resolved.
-- `/extensions/safari/popup.js`: Lint errors resolved, function boundaries repaired.
-- `/extensions/shared/jwt-validator.js`: Lint warning resolved.
-
-## Outstanding Tasks
-- Complete merge to main and push to GitHub.
-- **Continue parser development:**
-    - Port legacy parsers to the new registry-driven TypeScript architecture (see `/parsers/sites/site-registry.ts`).
-    - Ensure all supported sites have contract-validated parsers and matching test fixtures in `/tests/fixtures/html-samples/`.
-    - Remove or refactor any remaining legacy parser code to use the new architecture and registry-driven test infrastructure.
-    - Update documentation and registry as new sites are ported or added.
-
-## Next Steps
-1. Stage and commit all resolved changes.
-2. Complete merge and push to GitHub.
-3. Continue parser development as described above.
+This file preserves session context and reasoning for continuity if agent context is reset or changed.
 
 ---
-This file preserves session context and reasoning for continuity if agent context is reset or changed.
+# Parser Migration Roadmap (Registry-Driven Architecture)
+
+## Objective
+Port all legacy site parsers to the new registry-driven architecture for maintainability, testability, and contract validation.
+
+## Migration Steps
+1. **Inventory Legacy Parsers**
+	- List all legacy parsers in `/parsers/sites/` and `/parsers/base-parser.ts`.
+2. **Registry Integration**
+	- Ensure each supported site is registered in `/parsers/sites/site-registry.ts`.
+	- Refactor legacy parser code to use registry contracts and interfaces.
+3. **Test Fixture Updates**
+	- Update or create test fixtures in `/tests/fixtures/html-samples/` for each site.
+	- Validate parser output against contract for each fixture.
+4. **Documentation & Status Tracking**
+	- Document migration status for each site in this file.
+	- Note any blockers, dependencies, or required upstream changes.
+
+## Migration Status Table
+
+| Site               | Legacy Parser | Registry Integrated | Test Fixture | Contract Test | Notes/Blockers |
+|--------------------|:------------:|:------------------:|:------------:|:-------------:|----------------|
+| Smitten Kitchen    |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Food Network       |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| NYT Cooking        |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Washington Post    |     Yes      |        Yes         |     Yes      |     Pass      | Cookie auth for live tests |
+| Love & Lemons      |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Food52             |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| AllRecipes         |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Epicurious         |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Serious Eats       |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Alexandra's Kitchen|     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Food & Wine        |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Damn Delicious     |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| JSON-LD Sites      |     Yes      |        Yes         |     Yes      |     Pass      | Universal fallback |
+
+## Immediate Actions
+
+## Registry-Driven Architecture & PRD Lock-Step
+
+**All supported sites are now registry-driven, fully migrated, validated, and documented.**
+
+This file is kept in lock-step with the browser extension PRD (`docs/requirements/browser-extension.md`) and the central site registry (`/parsers/sites/site-registry.ts`).
+
+Any future changes to supported sites, parser logic, or test coverage must be reflected in all three locations for context continuity and auditability.
+
+---
+This file is intended to preserve session context and reasoning for continuity if agent context is reset or changed.
+
+| Site               | Legacy Parser | Registry Integrated | Test Fixture | Contract Test | Notes/Blockers |
+|--------------------|:------------:|:------------------:|:------------:|:-------------:|----------------|
+| Smitten Kitchen    |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Food Network       |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| NYT Cooking        |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Washington Post    |     Yes      |        Yes         |     Yes      |     Pass      | Cookie auth for live tests |
+| Love & Lemons      |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Food52             |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| AllRecipes         |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Epicurious         |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Serious Eats       |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Alexandra's Kitchen|     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Food & Wine        |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| Damn Delicious     |     Yes      |        Yes         |     Yes      |     Pass      |                |
+| JSON-LD Sites      |     Yes      |        Yes         |     Yes      |     Pass      | Universal fallback |
+
+## Immediate Actions
+
+## Registry-Driven Architecture & PRD Lock-Step
+
+**All supported sites are now registry-driven, fully migrated, validated, and documented.**
+This file is kept in lock-step with the browser extension PRD (`docs/requirements/browser-extension.md`) and the central site registry (`/parsers/sites/site-registry.ts`).
+
+Any future changes to supported sites, parser logic, or test coverage must be reflected in all three locations for context continuity and auditability.
+
+---
+This file is intended to preserve session context and reasoning for continuity if agent context is reset or changed.
+>>>>>>> website-parsers

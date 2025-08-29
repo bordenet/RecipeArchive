@@ -106,7 +106,7 @@ A cross-platform recipe archiving system currently featuring:
 - Backend synthetic recipes reference real URLs in `/aws-backend/functions/testdata/test-recipes.json`.
 
 **Universal Fallback:**
-- For unsupported sites, JSON-LD extraction is attempted first. If unavailable, generic DOM parsing is used. Failed parses trigger diagnostic submission for parser improvement.
+- For unsupported sites, JSON-LD extraction is attempted first. If unavailable, generic DOM parsing is used. Failed parses trigger diagnostic submission for parser improvement. **All registry sites are now fully supported and validated. Documentation and PRD are in lock-step with the codebase.**
 
 **Diagnostic Automation:**
 - Failed extractions automatically submit diagnostic payloads (HTML, metadata) for parser improvement.

@@ -1,4 +1,4 @@
-import { BaseParser } from "../base-parser.js";
+import { BaseParser } from "../base-parser";
 import * as cheerio from "cheerio";
 import { Recipe, Ingredient, Instruction } from "../types";
 

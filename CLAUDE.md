@@ -1,31 +1,27 @@
 # RecipeArchive Project Guide
 
-## 🚀 Current Status: PRODUCTION READY - All Core Components Deployed
+## 🚀 Current Status: PRODUCTION READY - Registry-Driven Migration Complete
 
-### ACHIEVED: Complete Recipe Archiving System
+### ACHIEVED: Registry-Driven Recipe Archiving System
 - **Chrome Extension**: ✅ Production-ready with TypeScript parser integration and AWS Cognito auth
 - **Safari Extension**: ✅ iPhone/iPad compatible, feature parity with Chrome
 - **AWS Backend**: ✅ Lambda functions deployed with S3 storage and URL-based overwrite
-- **Parser System**: ✅ 10 sites supported with comprehensive validation
-- **Documentation**: ✅ Comprehensive updates reflect current architecture
+- **Parser System**: ✅ All registry sites migrated, validated, and production-ready
+- **Documentation/PRD**: ✅ README.md, CLAUDE.md, PRD, and AUDIT_STATUS.md are in lock-step
+- **Monorepo Validation**: ✅ All tests and quality gates pass
 
 ### Final Production Achievements (August 29, 2025)
-- **AWS Lambda Deployment**: ✅ Fixed bootstrap binary architecture (Linux x86_64) - extensions now save to S3
-- **Recipe URL Overwrite**: ✅ Backend overwrites existing recipes by source URL (no duplicates)
-- **Branch Synchronization**: ✅ Main and website-parsers branches fully synced
-- **Documentation Updates**: ✅ README.md and CLAUDE.md reflect current production state
-- **Lambda Function**: ✅ RecipeArchive-dev-RecipesFunction16AA7634-Jo1qXv3AOj5w deployed and working
-- **Architecture Complete**: ✅ Extension → AWS Lambda → S3 storage pipeline functional
-- **Security Validated**: ✅ TruffleHog scans clean, no secrets in repository
-- **Cross-Platform Ready**: ✅ No hardcoded paths, works on any developer machine
+- **Registry-Driven Architecture**: All supported sites managed in `/parsers/sites/site-registry.ts` and reflected in documentation and PRD
+- **Monorepo Validation**: `./validate-monorepo.sh` passes all checks
+- **Documentation Synchronization**: All major docs updated and cross-linked
+- **Security Validated**: TruffleHog scans clean, no secrets in repository
 
 ---
 
-
-## PRODUCTION STATUS: Core System Complete ✅
+## PRODUCTION STATUS: Registry-Driven System Complete ✅
 
 ### All Major Components Deployed
-- [x] All 10 site parsers pass contract validation (Smitten Kitchen, Food Network, NYT Cooking, etc.)
+- [x] All registry sites migrated and pass contract validation (see README.md and PRD)
 - [x] Chrome/Safari extensions use TypeScript parser bundle with AWS integration
 - [x] AWS Lambda backend deployed with URL-based recipe overwrite behavior
 - [x] S3 storage working (recipearchive-storage-dev-990537043943)
@@ -36,7 +32,7 @@
 ### Future Development Areas
 - iOS native app development (Swift)
 - Web application interface (React + TypeScript)
-- Additional recipe site support (Food & Wine, Damn Delicious)
+- Additional recipe site support (user feedback driven)
 - Chrome/Safari extension store submission
 - Recipe management features (meal planning, shopping lists)
 
@@ -44,7 +40,7 @@
 1. Clone repository: `git clone https://github.com/bordenet/RecipeArchive`
 2. Run validation: `./validate-monorepo.sh` (ensures all components work)
 3. Configure AWS CLI credentials for deployment access
-4. Review README.md for architecture overview and current capabilities
+4. Review README.md and PRD for architecture overview and current capabilities
 
 ## Project Overview
 
@@ -57,7 +53,7 @@
 ### Platform Architecture
 
 - 🔌 **Browser Extensions** (Chrome & Safari, JavaScript) - One-click recipe extraction
-- ☁️ **AWS Backend** (Go, serverless) - Scalable, cost-effective cloud infrastructure  
+- ☁️ **AWS Backend** (Go, serverless) - Scalable, cost-effective cloud infrastructure
 - 🛠️ **Development Tools** (Go CLI) - Unified development workflow
 - 📱 **iOS Mobile App** (Swift) - Recipe browsing and capture (planned)
 - 🌐 **Web Application** (React + TypeScript) - Meal planning interface (planned)

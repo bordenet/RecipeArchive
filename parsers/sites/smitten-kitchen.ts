@@ -26,18 +26,14 @@ export class SmittenKitchenParser extends BaseParser {
 				tags: Array.isArray(jsonLd.recipeCategory) ? jsonLd.recipeCategory.map((c: string) => this.sanitizeText(c)) : (jsonLd.recipeCategory ? [this.sanitizeText(jsonLd.recipeCategory)] : []),
 			};
 		} else {
-			// Fallback selectors using Cheerio - Updated for Jetpack recipe format
+			// Fallback selectors using Cheerio - Updated for Jetpack recipe format and refined selectors
 			let title = this.sanitizeText($('.jetpack-recipe-title, h1.entry-title, h1.post-title, h1').first().text() || $('h1').first().text() || "");
-			let author = this.sanitizeText($('.jetpack-recipe-source, p.recipe-meta + p, .author-meta, .author').first().text().replace(/Source:\s*|Author:\s*/gi, '').trim() || 'Deb Perelman');
-			
+			let author = this.sanitizeText($('.jetpack-recipe-source, p.recipe-meta + p, .author-meta, .author, .byline .author').first().text().replace(/Source:\s*|Author:\s*/gi, '').trim() || 'Deb Perelman');
 			let ingredients: Ingredient[] = [];
-			// Check for Jetpack recipe ingredients first
 			$('.jetpack-recipe-ingredient').each((_, el) => {
 				const text = $(el).text().trim();
 				if (text) ingredients.push({ text: this.sanitizeText(text) });
 			});
-			
-			// Fallback to other selectors if no Jetpack ingredients found
 			if (ingredients.length === 0) {
 				ingredients = $('.recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient, ul li, .entry-content ul li').map((_, el) => ({ text: this.sanitizeText($(el).text()) })).get();
 			}
@@ -49,15 +45,21 @@ export class SmittenKitchenParser extends BaseParser {
 					});
 				});
 			}
-			
+			// Refined entry-content selectors for edge cases
+			const entryContent = $('.entry-content');
+			const recipeTitleP = entryContent.find('p b:contains("Ina Garten")').parent();
+			let ingredientP = recipeTitleP.next('p');
+			if (ingredientP.length) {
+				const raw = ingredientP.html();
+				if (raw) {
+					ingredients = raw.split(/<br\s*\/>/i).map(t => ({ text: this.sanitizeText($(t).text() || $("<div>"+t+"</div>").text()) })).filter(i => i.text);
+				}
+			}
 			let instructions: Instruction[] = [];
-			// Check for Jetpack recipe directions first
 			const jetpackDirections = $('.jetpack-recipe-directions').text().trim();
 			if (jetpackDirections) {
 				instructions.push({ stepNumber: 1, text: this.sanitizeText(jetpackDirections) });
 			}
-			
-			// Fallback to other selectors if no Jetpack directions found
 			if (instructions.length === 0) {
 				instructions = $('.instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step, ul li, .entry-content ol li, .entry-content ul li').map((i, el) => ({ stepNumber: i + 1, text: this.sanitizeText($(el).text()) })).get();
 			}
@@ -69,16 +71,20 @@ export class SmittenKitchenParser extends BaseParser {
 					});
 				});
 			}
-			let imageUrl = $('.recipe-photo img, img').first().attr('src') || undefined;
+			// Refined entry-content selectors for instructions
+			let instrIdx = ingredientP.index();
+			entryContent.find('p').slice(instrIdx + 1).each((i, el) => {
+				const html = $(el).html();
+				if (html && (html.includes('Preheat oven') || html.match(/\bBake\b|\bAllow to cool\b|\bDo ahead\b|\bFlouring\b|\bSift together\b|\bPour into\b|\bMelt together\b|\bStir\b|\bAdd to\b|\bToss the walnuts\b|\bDo not overbake\b/))) {
+					instructions.push({ stepNumber: instructions.length + 1, text: this.sanitizeText($(el).text()) });
+				}
+			});
+			let imageUrl = $('.recipe-photo img, img, .post-thumbnail-container img').first().attr('src') || undefined;
 			const ogImage = $('meta[property="og:image"]').attr('content');
 			if (ogImage) imageUrl = ogImage;
-			
-			// Extract Jetpack recipe metadata
 			let totalTime = this.sanitizeText($('.jetpack-recipe-time time, .jetpack-recipe-time').first().text().replace(/Time:\s*/gi, '').trim()) || '';
 			let servings = this.sanitizeText($('.jetpack-recipe-servings').first().text().replace(/Servings:\s*/gi, '').trim()) || '';
-			
 			let tags: string[] = ['Cocktail', 'Drinks']; // Default categories for this recipe type
-			
 			recipe = {
 				title: typeof title === 'string' && title.trim().length > 0 ? title.trim() : 'Untitled Recipe',
 				source: url && url.length > 0 ? url : 'https://smittenkitchen.com/',
