@@ -330,7 +330,8 @@ validate_parsers() {
     
     print_step "Site-specific parsers"
     if [ -f "tools/test-tools/website-parser-validator.cjs" ]; then
-    if (cd tools/test-tools && timeout 60 node website-parser-validator.cjs > /dev/null 2>&1); then
+        # Run parser validation without timeout (macOS doesn't have timeout command)
+        if (cd tools/test-tools && node website-parser-validator.cjs > /dev/null 2>&1); then
             print_success
             ((PASSED_TESTS++))
         else
@@ -340,7 +341,7 @@ validate_parsers() {
         fi
     else
         print_error
-    echo "    Parser validation tool not found at tools/test-tools/website-parser-validator.cjs"
+        echo "    Parser validation tool not found at tools/test-tools/website-parser-validator.cjs"
     fi
     
     ((TOTAL_TESTS+=1))
