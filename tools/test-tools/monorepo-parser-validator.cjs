@@ -100,9 +100,11 @@ const SITES = [
       name: 'washington-post',
       parserPath: path.resolve(__dirname, '../../parsers/sites/washington-post.ts'),
       urls: [
-        'https://www.washingtonpost.com/food/2025/06/28/30-minute-summer-meals/',
-        'https://www.washingtonpost.com/food/2025/06/07/blueberry-recipes-muffins-cake-salad/',
-        'https://www.washingtonpost.com/food/2025/04/05/30-minute-pasta-recipes-spring/'
+  'https://www.washingtonpost.com/recipes/summer-vegetable-korma/',
+  'https://www.washingtonpost.com/recipes/lemon-rosemary-chicken-and-orzo-skillet/',
+  'https://www.washingtonpost.com/recipes/seven-layer-dip/',
+  'https://www.washingtonpost.com/recipes/cold-miso-noodle-soup/',
+  'https://www.washingtonpost.com/recipes/italian-sub-salad/'
       ]
     },
     // Food & Wine
