@@ -359,9 +359,8 @@ async function captureRecipe() {
         console.log("🔧 sendToAWSBackend result:", result);
 
         if (result.success) {
-            const recipeId = result.data && (result.data.id || result.data.recipeId);
-            if (recipeId) {
-                showStatus(`✅ Saved to AWS! Recipe ID: ${recipeId}`, "#d4edda");
+            if (result.id) {
+                showStatus(`✅ Saved to AWS! Recipe ID: ${result.id}`, "#d4edda");
             } else {
                 showStatus("✅ Recipe saved successfully!", "#e8f5e8");
             }
