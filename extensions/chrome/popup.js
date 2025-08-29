@@ -254,6 +254,13 @@ async function captureRecipe() {
             return;
         }
 
+        // Check if the current site is supported
+        if (typeof window.RecipeArchiveSites !== 'undefined' && !window.RecipeArchiveSites.isSupportedSite(tab.url)) {
+            const supportedSites = window.RecipeArchiveSites.getSupportedSites();
+            showStatus(`❌ This site is not supported. Supported sites include: ${supportedSites.slice(0, 3).join(', ')}, and ${supportedSites.length - 3} more.`, "#ffebee");
+            return;
+        }
+
         // Use content script message system to leverage TypeScript parsers
         showStatus("🔍 Extracting recipe...", "#e3f2fd");
         
@@ -327,7 +334,7 @@ async function captureRecipe() {
         showStatus("☁️ Saving to AWS...", "#e7f3ff");
         console.log("🔧 About to call sendToAWSBackend with data:", recipeData);
         
-        const result = await sendToAWSBackend(recipeData);
+        const result = await sendToAWSBackend(recipeData, tab.url);
         console.log("🔧 sendToAWSBackend result:", result);
         
         if (result.success) {
@@ -340,6 +347,16 @@ async function captureRecipe() {
     } catch (error) {
         console.error("❌ Recipe capture error:", error);
         showStatus("❌ Capture failed: " + error.message, "#ffebee");
+        
+        // Submit diagnostic data for parsing failures
+        await submitDiagnosticData({
+            error: error.message,
+            errorType: "recipe_capture_failed",
+            url: tab ? tab.url : "unknown",
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            stage: "recipe_capture"
+        });
     }
 }
 
@@ -492,7 +509,7 @@ function transformRecipeDataForAWS(recipeData) {
     return transformedData;
 }
 
-async function sendToAWSBackend(recipeData) {
+async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
     console.log("🔧 sendToAWSBackend called with:", recipeData);
     
     try {
@@ -540,9 +557,30 @@ async function sendToAWSBackend(recipeData) {
         // Sending recipe data to AWS backend
 
         // Transform data to match AWS backend expected format
-        const transformedData = transformRecipeDataForAWS(recipeData);
-        console.log("🔧 Transformed recipe data for AWS:", transformedData);
-        console.log("🔧 JSON payload being sent:", JSON.stringify(transformedData, null, 2));
+        let transformedData;
+        try {
+            transformedData = transformRecipeDataForAWS(recipeData);
+            console.log("🔧 Transformed recipe data for AWS:", transformedData);
+            console.log("🔧 JSON payload being sent:", JSON.stringify(transformedData, null, 2));
+        } catch (transformError) {
+            console.error("❌ Recipe transformation failed:", transformError);
+            
+            // Submit diagnostic data for transformation failures
+            await submitDiagnosticData({
+                error: transformError.message,
+                errorType: "recipe_transformation_failed",
+                url: currentUrl,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                stage: "data_transformation",
+                rawRecipeData: recipeData
+            });
+            
+            return {
+                success: false,
+                error: `Recipe parsing failed: ${transformError.message}`
+            };
+        }
 
         // Use the correct API endpoint from CONFIG
         const apiEndpoint = CONFIG.getCurrentAPI().recipes;
@@ -588,5 +626,32 @@ function showStatus(message, backgroundColor) {
         statusDiv.textContent = message;
         statusDiv.style.background = backgroundColor;
         statusDiv.style.display = "block";
+    }
+}
+
+// Submit diagnostic data to AWS backend for debugging parsing failures
+async function submitDiagnosticData(diagnosticPayload) {
+    try {
+        const diagnosticsEndpoint = CONFIG.getCurrentAPI().diagnostics;
+        console.log("🔍 Submitting diagnostic data to:", diagnosticsEndpoint);
+        console.log("🔍 Diagnostic payload:", diagnosticPayload);
+
+        const response = await fetch(diagnosticsEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(diagnosticPayload)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log("📊 Diagnostic data submitted successfully:", result);
+        } else {
+            console.warn("⚠️ Diagnostic submission failed:", response.status, await response.text());
+        }
+    } catch (error) {
+        console.warn("⚠️ Failed to submit diagnostic data:", error.message);
+        // Don't throw - diagnostic submission failures shouldn't break the main flow
     }
 }

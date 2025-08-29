@@ -268,6 +268,14 @@ async function captureRecipe() {
             showStatus("❌ No active tab found", "#ffebee");
             return;
         }
+
+        // Check if the current site is supported
+        const currentTab = tabs[0];
+        if (typeof window.RecipeArchiveSites !== 'undefined' && !window.RecipeArchiveSites.isSupportedSite(currentTab.url)) {
+            const supportedSites = window.RecipeArchiveSites.getSupportedSites();
+            showStatus(`❌ This site is not supported. Supported sites include: ${supportedSites.slice(0, 3).join(', ')}, and ${supportedSites.length - 3} more.`, "#ffebee");
+            return;
+        }
         
         const tab = tabs[0];
         console.log("🔧 Active tab:", tab);
@@ -864,7 +872,7 @@ function transformRecipeDataForAWS(recipeData) {
     return transformedData;
 }
 
-async function sendToAWSBackend(recipeData) {
+async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
     try {
         if (typeof CONFIG === "undefined") {
             return {
@@ -921,8 +929,29 @@ async function sendToAWSBackend(recipeData) {
         console.log("📤 Recipe data:", recipeData.title);
         
         // Transform data to match AWS backend expected format
-        const transformedData = transformRecipeDataForAWS(recipeData);
-        console.log("🔧 Transformed recipe data for AWS:", transformedData);
+        let transformedData;
+        try {
+            transformedData = transformRecipeDataForAWS(recipeData);
+            console.log("🔧 Transformed recipe data for AWS:", transformedData);
+        } catch (transformError) {
+            console.error("❌ Recipe transformation failed:", transformError);
+            
+            // Submit diagnostic data for transformation failures
+            await submitDiagnosticData({
+                error: transformError.message,
+                errorType: "recipe_transformation_failed",
+                url: currentUrl,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                stage: "data_transformation",
+                rawRecipeData: recipeData
+            });
+            
+            return {
+                success: false,
+                error: `Recipe parsing failed: ${transformError.message}`
+            };
+        }
         
         // Use proper AWS API authentication format (same as Chrome extension)
         // Using Bearer token authentication for AWS API
