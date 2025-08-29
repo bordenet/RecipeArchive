@@ -90,7 +90,7 @@ const FOOD52_RECIPES = [
 
 async function aggressivePopupBlocking(page) {
   // Enhanced popup and overlay removal
-  await page.evaluateOnNewDocument(() => {
+  await page.addInitScript(() => {
     // Block common popup/overlay patterns as soon as DOM loads
     const blockPatterns = [
       '.modal',
