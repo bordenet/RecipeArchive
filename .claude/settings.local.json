@@ -72,7 +72,11 @@
       "WebFetch(domain:www.foodandwine.com)",
       "Read(/tmp/recipearchive-cache/**)",
       "Bash(sed:*)",
-      "Bash(gtimeout:*)"
+      "Bash(gtimeout:*)",
+      "Bash(git show-branch:*)",
+      "Read(/private/tmp/recipearchive-cache/**)",
+      "WebFetch(domain:food52.com)",
+      "Read(/private/tmp/**)"
     ],
     "deny": [],
     "ask": []
