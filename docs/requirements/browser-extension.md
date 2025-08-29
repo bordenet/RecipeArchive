@@ -103,21 +103,15 @@ function shouldPushToAWS(recipeData) {
 
 ### 3.2 Supported Websites
 
-**CRITICAL**: This section defines the authoritative list of websites that RecipeArchive must support. Any deviation requires PRD update to maintain implementation alignment.
 
-#### 3.2.1 Currently Implemented Sites (Tier 1 - Production Ready)
+#### 3.2.1 Supported Sites (Registry-Driven, Production Ready)
 
-These sites have **dedicated TypeScript parsers** with comprehensive test coverage:
 
-| Website | URL Pattern | Parser Status | Special Requirements |
-|---------|-------------|---------------|---------------------|
-| **Smitten Kitchen** | `smittenkitchen.com` | ✅ Complete | JSON-LD + DOM fallback |
-| **Food Network** | `foodnetwork.com` | ✅ Complete | Complex CSS selectors |
-| **NYT Cooking** | `cooking.nytimes.com` | ✅ Complete | data-testid attributes |
-
-**Parser Location**: `extensions/shared/parsers/sites/`
-**Test Coverage**: Unit tests + integration tests
-**Success Rate Target**: 95% extraction accuracy
+**All supported sites listed above are registry-driven, fully migrated, validated, and production-ready.**
+Documentation and PRD are kept in lock-step with the central site registry (`/parsers/sites/site-registry.ts`).
+Parser location: `/parsers/sites/` (monorepo) and `extensions/shared/parsers/sites/` (extension bundle)
+Test coverage: Unit tests + integration tests for all registry sites
+Success rate target: 95% extraction accuracy
 
 #### 3.2.2 Previously Implemented Sites (Legacy - Requires Migration)
 
