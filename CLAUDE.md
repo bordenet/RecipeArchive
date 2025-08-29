@@ -130,10 +130,13 @@ This project is guided by **four comprehensive PRD documents** that define the c
 - **Location**: `/aws-backend/functions/recipes/`
 - **Lambda Function**: RecipeArchive-dev-RecipesFunction16AA7634-Jo1qXv3AOj5w (deployed)
 - **Recipe URL Overwrite**: ✅ Overwrites existing recipes by source URL, preventing duplicates
-- **S3 Storage**: recipearchive-storage-dev-990537043943 (95% cost savings vs DynamoDB)
+- **S3 Storage Architecture**:
+  - **Primary**: recipearchive-storage-dev-990537043943 (recipe data)
+  - **Temporary**: recipearchive-temp-dev-990537043943 (processing)
+  - **Failed Parsing**: recipearchive-failed-parsing-dev-990537043943 (HTML diagnostics, 20MB limit, 30-day auto-purge)
 - **Authentication**: JWT token validation with AWS Cognito User Pool
 - **API Gateway**: https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/v1/recipes
-- **Test Tools**: Duplicate cleanup, recipe reporting, backup validation
+- **Diagnostic Collection**: Failed parsing HTML stored in dedicated S3 bucket with cost controls
 
 **Key Files:**
 - `main.go` - Recipe creation with URL-based overwrite logic (lines 341-402)
@@ -392,10 +395,14 @@ aws lambda update-function-code --function-name RecipeArchive-dev-RecipesFunctio
 ### Production Architecture (Deployed)
 - **AWS Cognito Authentication**: User Pool `us-west-2_qJ1i9RhxD` with JWT tokens
 - **TypeScript Parser System**: 10 sites supported with bundled JavaScript integration  
-- **S3 Storage**: `recipearchive-storage-dev-990537043943` (95% cost savings vs DynamoDB)
+- **S3 Storage Architecture**: Three dedicated buckets with lifecycle policies
+  - Primary: `recipearchive-storage-dev-990537043943` (recipe data)
+  - Failed Parsing: `recipearchive-failed-parsing-dev-990537043943` (diagnostics, 20MB limit, 30-day purge)
+  - Temporary: `recipearchive-temp-dev-990537043943` (processing)
 - **Lambda Function**: `RecipeArchive-dev-RecipesFunction16AA7634-Jo1qXv3AOj5w` (deployed)
 - **URL-Based Overwrite**: Recipe duplicates prevented by source URL per user
 - **Extension Pipeline**: Chrome/Safari → TypeScript Parsers → AWS Lambda → S3 Storage
+- **Diagnostic Collection**: Failed parsing HTML automatically stored for parser improvement
 
 ### Critical Architecture Standards
 - **S3-Only Storage**: Cost-effective JSON storage, never use DynamoDB

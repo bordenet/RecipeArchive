@@ -22,6 +22,7 @@ export class RecipeArchiveStack extends cdk.Stack {
   public readonly recipesTable: dynamodb.Table;
   public readonly storageBucket: s3.Bucket;
   public readonly tempBucket: s3.Bucket;
+  public readonly failedParsingBucket: s3.Bucket;
   public readonly api: apigateway.RestApi;
   public readonly billingAlertTopic: sns.Topic;
 
@@ -202,6 +203,23 @@ export class RecipeArchiveStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Always destroy temp bucket
     });
 
+    // Failed Parsing HTML Storage Bucket with Size and Time Limits
+    this.failedParsingBucket = new s3.Bucket(this, 'RecipeArchiveFailedParsing', {
+      bucketName: `recipearchive-failed-parsing-${props.environment}-${this.account}`,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      versioned: false, // No versioning needed for failed parsing data
+      lifecycleRules: [
+        {
+          id: 'delete-failed-parsing-data',
+          expiration: cdk.Duration.days(30), // Auto-purge after 30 days
+          abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
+        },
+      ],
+      // Bucket notification to monitor size (will be handled by CloudWatch metrics)
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Always safe to destroy failed parsing data
+    });
+
     // IAM Role for Lambda Functions (TODO: Implement Lambda functions)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const lambdaRole = new iam.Role(this, 'RecipeArchiveLambdaRole', {
@@ -244,6 +262,7 @@ export class RecipeArchiveStack extends cdk.Stack {
               resources: [
                 `${this.storageBucket.bucketArn}/*`,
                 `${this.tempBucket.bucketArn}/*`,
+                `${this.failedParsingBucket.bucketArn}/*`,
               ],
             }),
             new iam.PolicyStatement({
@@ -252,6 +271,7 @@ export class RecipeArchiveStack extends cdk.Stack {
               resources: [
                 this.storageBucket.bucketArn,
                 this.tempBucket.bucketArn,
+                this.failedParsingBucket.bucketArn,
               ],
             }),
           ],
@@ -329,6 +349,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         DYNAMODB_TABLE_NAME: this.recipesTable.tableName,
         S3_STORAGE_BUCKET: this.storageBucket.bucketName,
         S3_TEMP_BUCKET: this.tempBucket.bucketName,
+        S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
         COGNITO_USER_POOL_ID: this.userPool.userPoolId,
       },
       role: lambdaRole,
@@ -346,6 +367,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         DYNAMODB_TABLE_NAME: this.recipesTable.tableName,
         S3_STORAGE_BUCKET: this.storageBucket.bucketName,
         S3_TEMP_BUCKET: this.tempBucket.bucketName,
+        S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
         COGNITO_USER_POOL_ID: this.userPool.userPoolId,
       },
       role: lambdaRole,
@@ -519,6 +541,34 @@ export class RecipeArchiveStack extends cdk.Stack {
       bind: () => ({ alarmActionArn: this.billingAlertTopic.topicArn }),
     });
 
+    // CloudWatch Alarm for Failed Parsing Bucket Size (20MB limit)
+    const failedParsingBucketSizeAlarm = new cloudwatch.Alarm(
+      this,
+      'FailedParsingBucketSizeAlarm',
+      {
+        alarmName: `RecipeArchive-FailedParsingBucketSize-${props.environment}`,
+        alarmDescription: 'Alert when failed parsing bucket exceeds 20MB to prevent cost overruns',
+        metric: new cloudwatch.Metric({
+          namespace: 'AWS/S3',
+          metricName: 'BucketSizeBytes',
+          dimensionsMap: {
+            BucketName: this.failedParsingBucket.bucketName,
+            StorageType: 'StandardStorage',
+          },
+          statistic: 'Average',
+          period: cdk.Duration.hours(6), // Check 4 times daily
+        }),
+        threshold: 20 * 1024 * 1024, // 20MB in bytes
+        evaluationPeriods: 1,
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      }
+    );
+
+    // Connect the bucket size alarm to SNS topic
+    failedParsingBucketSizeAlarm.addAlarmAction({
+      bind: () => ({ alarmActionArn: this.billingAlertTopic.topicArn }),
+    });
+
     // Outputs
     new cdk.CfnOutput(this, 'UserPoolId', {
       value: this.userPool.userPoolId,
@@ -543,6 +593,11 @@ export class RecipeArchiveStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'TempBucketName', {
       value: this.tempBucket.bucketName,
       description: 'S3 Temporary Bucket Name (Processing & Uploads)',
+    });
+
+    new cdk.CfnOutput(this, 'FailedParsingBucketName', {
+      value: this.failedParsingBucket.bucketName,
+      description: 'S3 Failed Parsing Bucket Name (HTML from failed recipe extractions)',
     });
 
     new cdk.CfnOutput(this, 'ApiGatewayUrl', {
