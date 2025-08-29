@@ -10,6 +10,14 @@ export class LoveAndLemonsParser extends BaseParser {
 
     async parse(html: string, url: string): Promise<Recipe> {
         const $ = cheerio.load(html);
+
+        // Detect Love and Lemons 404/error page
+        const pageTitle = $('title').text();
+        const ogTitle = $('meta[property="og:title"]').attr('content');
+        if ((pageTitle && pageTitle.toLowerCase().includes('page not found')) || (ogTitle && ogTitle.toLowerCase().includes('page not found'))) {
+            throw new Error('Love and Lemons: 404 or error page detected');
+        }
+
         const jsonLd = this.extractJsonLD(html);
         if (jsonLd) {
             const recipe: Recipe = {

@@ -12,6 +12,9 @@ config/secrets.yml
 *.pem
 *.key
 
+# Other sites
+external-references/
+
 # AWS
 .aws/
 cdk.out/

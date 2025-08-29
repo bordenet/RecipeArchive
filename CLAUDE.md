@@ -103,7 +103,7 @@ This project is guided by **four comprehensive PRD documents** that define the c
 - **Architecture**: Fixed content script messaging, no more script injection complexity
 
 #### TypeScript Parser System (Production Ready)
-- **Location**: `/extensions/shared/parsers/` and `/tools/test-tools/monorepo-parser-validator.cjs`
+- **Location**: `/extensions/shared/parsers/` and `/tools/test-tools/website-parser-validator.cjs`
 - **Architecture**: BaseParser abstract class with ParserRegistry pattern
 - **Site Coverage**: 8 sites supported (Food Network, Food52, Serious Eats, AllRecipes, etc.)
 - **Cache System**: 48-hour intelligent caching to reduce network requests

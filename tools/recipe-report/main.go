@@ -24,15 +24,15 @@ import (
 
 const (
 	// AWS Configuration
-	AWSRegion    = "us-west-2"
-	UserPoolID   = "us-west-2_qJ1i9RhxD"
-	ClientID     = "5grdn7qhf1el0ioqb6hkelr29s"
+	AWSRegion     = "us-west-2"
+	UserPoolID    = "us-west-2_qJ1i9RhxD"
+	ClientID      = "5grdn7qhf1el0ioqb6hkelr29s"
 	DefaultBucket = "recipearchive-storage-dev-990537043943" // From CLAUDE.md context
-	
+
 	// S3 Path Structure
-	RecipePath   = "recipes/"
-	FailurePath  = "parsing-failures/"
-	ErrorPath    = "errors/"
+	RecipePath  = "recipes/"
+	FailurePath = "parsing-failures/"
+	ErrorPath   = "errors/"
 )
 
 // JWTPayload represents the JWT token payload
@@ -72,18 +72,18 @@ type ReportEntry struct {
 
 // RecipeReporter handles S3 scanning and reporting
 type RecipeReporter struct {
-	s3Client     *s3.Client
+	s3Client      *s3.Client
 	cognitoClient *cognitoidentityprovider.Client
-	bucketName   string
-	ctx          context.Context
-	userID       string // JWT-extracted user ID (UUID)
-	userEmail    string // User email from JWT
+	bucketName    string
+	ctx           context.Context
+	userID        string // JWT-extracted user ID (UUID)
+	userEmail     string // User email from JWT
 }
 
 // NewRecipeReporter creates a new recipe reporter
 func NewRecipeReporter(bucketName string) (*RecipeReporter, error) {
 	ctx := context.Background()
-	
+
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(AWSRegion))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
@@ -172,19 +172,19 @@ func extractDomain(rawURL string) string {
 	if rawURL == "" {
 		return "unknown-domain"
 	}
-	
+
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return "unknown-domain"
 	}
-	
+
 	return parsed.Hostname()
 }
 
 // listS3Objects lists all objects with given prefix
 func (r *RecipeReporter) listS3Objects(prefix string) ([]types.Object, error) {
 	var objects []types.Object
-	
+
 	paginator := s3.NewListObjectsV2Paginator(r.s3Client, &s3.ListObjectsV2Input{
 		Bucket: aws.String(r.bucketName),
 		Prefix: aws.String(prefix),
@@ -195,7 +195,7 @@ func (r *RecipeReporter) listS3Objects(prefix string) ([]types.Object, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to list objects: %w", err)
 		}
-		
+
 		objects = append(objects, page.Contents...)
 	}
 
@@ -344,7 +344,7 @@ func PrintReport(entries []ReportEntry) {
 	successCount := 0
 	failureCount := 0
 	errorCount := 0
-	
+
 	for _, entry := range entries {
 		switch entry.Type {
 		case "success":
@@ -360,7 +360,7 @@ func PrintReport(entries []ReportEntry) {
 
 	fmt.Printf("📈 RECIPE ARCHIVE REPORT\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
-	
+
 	// Summary
 	fmt.Printf("📊 SUMMARY:\n")
 	fmt.Printf("   ✅ Successful recipes: %d\n", successCount)
@@ -376,35 +376,35 @@ func PrintReport(entries []ReportEntry) {
 	// Main table
 	fmt.Printf("📋 DETAILED REPORT:\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-	
+
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintf(w, "Recipe Name\tDomain\tDate Submitted\tStatus\n")
 	fmt.Fprintf(w, "━━━━━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━\n")
-	
+
 	for _, entry := range entries {
 		name := entry.Name
 		if len(name) > 25 {
 			name = name[:22] + "..."
 		}
-		
+
 		domain := entry.Domain
 		if len(domain) > 20 {
 			domain = domain[:17] + "..."
 		}
-		
+
 		dateStr := entry.Date.Format("2006-01-02 15:04")
-		
+
 		status := "✅"
 		if entry.Type == "failure" {
 			status = "❌"
 		} else if entry.Type == "error" {
 			status = "🚨"
 		}
-		
+
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, domain, dateStr, status)
 	}
 	w.Flush()
-	
+
 	// Domain breakdown
 	domainStats := make(map[string]int)
 	for _, entry := range entries {
@@ -414,7 +414,7 @@ func PrintReport(entries []ReportEntry) {
 	if len(domainStats) > 0 {
 		fmt.Printf("\n🌐 DOMAIN BREAKDOWN:\n")
 		fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-		
+
 		// Sort domains by count
 		type domainCount struct {
 			domain string
@@ -431,7 +431,7 @@ func PrintReport(entries []ReportEntry) {
 		w2 := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintf(w2, "Domain\tRecipe Count\n")
 		fmt.Fprintf(w2, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━\n")
-		
+
 		for _, dc := range domains {
 			fmt.Fprintf(w2, "%s\t%d\n", dc.domain, dc.count)
 		}
