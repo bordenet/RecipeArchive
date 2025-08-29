@@ -3,7 +3,7 @@
 
 // State management
 let isSignedIn = false;
-let currentUser = null;
+// let currentUser = null; // Removed unused variable
 
 // Credential management functions for convenience
 function saveCredentials(email, password) {
@@ -41,15 +41,12 @@ function checkAuthenticationStatus() {
     const storedAuth = localStorage.getItem("recipeArchive.auth");
     if (storedAuth) {
         try {
-            currentUser = JSON.parse(storedAuth);
             isSignedIn = true;
         } catch (error) {
             console.error("Error parsing stored auth:", error);
             isSignedIn = false;
-            currentUser = null;
         }
     }
-    
     renderUI();
 }
 
@@ -63,22 +60,30 @@ function renderUI() {
                 <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333;">RecipeArchive</h1>
                 <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
             </div>
-            <div style="margin-bottom: 15px; padding: 10px; background: #e8f5e8; border-radius: 4px; font-size: 12px;">
-                ✅ Signed in as ${currentUser ? currentUser.email : "user"}
-            </div>
             <button id="capture" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
             <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 12px; display: none;"></div>
         `;
         
         // Attach event listeners for signed-in state
-        document.getElementById("capture").onclick = function() {
+        const captureBtn = document.getElementById("capture");
+        captureBtn.onclick = function() {
             captureRecipe();
         };
-        
         document.getElementById("signout-link").onclick = function(e) {
             e.preventDefault();
             signOut();
         };
+        // Check if current site is supported and enable/disable button
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            const tab = tabs[0];
+            let isSupported = false;
+            if (tab && typeof window.RecipeArchiveSites !== "undefined") {
+                isSupported = window.RecipeArchiveSites.isSupportedSite(tab.url);
+            }
+            captureBtn.disabled = !isSupported;
+            captureBtn.style.opacity = isSupported ? "1" : "0.5";
+            captureBtn.title = isSupported ? "Capture Recipe" : "This site is not supported";
+        });
         
     } else {
         // Not signed in UI - show sign in form
@@ -197,11 +202,6 @@ async function handleSignIn() {
             // Store authentication data
             
             // Store auth data
-            currentUser = { 
-                email: email, 
-                token: result.data.IdToken,
-                accessToken: result.data.AccessToken
-            };
             isSignedIn = true;
             localStorage.setItem("recipeArchive.auth", JSON.stringify(authData));
             
@@ -230,7 +230,6 @@ async function handleSignIn() {
 
 function signOut() {
     isSignedIn = false;
-    currentUser = null;
     localStorage.removeItem("recipeArchive.auth");
     // Note: Keeping saved credentials for convenience
     // Users can clear them manually if desired
@@ -257,9 +256,9 @@ async function captureRecipe() {
         }
 
         // Check if the current site is supported
-        if (typeof window.RecipeArchiveSites !== 'undefined' && !window.RecipeArchiveSites.isSupportedSite(tab.url)) {
+        if (typeof window.RecipeArchiveSites !== "undefined" && !window.RecipeArchiveSites.isSupportedSite(tab.url)) {
             const supportedSites = window.RecipeArchiveSites.getSupportedSites();
-            showStatus(`❌ This site is not supported. Supported sites include: ${supportedSites.slice(0, 3).join(', ')}, and ${supportedSites.length - 3} more.`, "#ffebee");
+            showStatus(`❌ This site is not supported. Supported sites include: ${supportedSites.slice(0, 3).join(", ")}, and ${supportedSites.length - 3} more.`, "#ffebee");
             return;
         }
 
@@ -317,50 +316,103 @@ async function captureRecipe() {
             return;
         }
 
-        const results = [{ result: response.data }];
 
+        const results = [{ result: response.data }];
         if (!results || !results[0] || !results[0].result) {
             showStatus("❌ Could not extract recipe data", "#ffebee");
+            // Fallback: submit to failed-parse API
+            await submitFallbackParse(tab);
             return;
         }
 
         const recipeData = results[0].result;
         console.log("📝 Extracted recipe data:", recipeData);
 
+        // Fallback logic: check for missing ingredients/instructions
+        const missingIngredients = !recipeData.ingredients || recipeData.ingredients.length === 0;
+        const missingInstructions = (!recipeData.instructions || recipeData.instructions.length === 0) && (!recipeData.steps || recipeData.steps.length === 0);
+        if (missingIngredients || missingInstructions) {
+            showStatus("❌ Recipe extraction incomplete. Attempting fallback...", "#ffebee");
+            await submitFallbackParse(tab, recipeData);
+            // TODO: Post-MVP: Allow manual copy/paste fallback for failed extractions
+            return;
+        }
+
         if (!recipeData.title) {
             showStatus("❌ No recipe found on this page", "#ffebee");
+            await submitFallbackParse(tab, recipeData);
             return;
         }
 
         // Send to AWS backend
         showStatus("☁️ Saving to AWS...", "#e7f3ff");
         console.log("🔧 About to call sendToAWSBackend with data:", recipeData);
-        let tabUrl = "unknown";
-        if (typeof tab !== 'undefined' && tab && tab.url) {
-            tabUrl = tab.url;
-        }
-        // Send to AWS backend
-        showStatus("☁️ Saving to AWS...", "#e7f3ff");
-        console.log("🔧 About to call sendToAWSBackend with data:", recipeData);
         const result = await sendToAWSBackend(recipeData, tab && tab.url ? tab.url : "unknown");
         console.log("🔧 sendToAWSBackend result:", result);
-        
+
         if (result.success) {
-            showStatus("✅ Recipe saved successfully!", "#e8f5e8");
+            const recipeId = result.data && (result.data.id || result.data.recipeId);
+            if (recipeId) {
+                showStatus(`✅ Saved to AWS! Recipe ID: ${recipeId}`, "#d4edda");
+            } else {
+                showStatus("✅ Recipe saved successfully!", "#e8f5e8");
+            }
         } else {
             console.error("❌ AWS save failed:", result.error);
             showStatus("❌ Failed to save: " + result.error, "#ffebee");
         }
+// Fallback: submit page HTML and metadata to failed-parse API
+async function submitFallbackParse(tab, recipeData = {}) {
+    try {
+        showStatus("🔍 Submitting fallback parse request...", "#e3f2fd");
+        const diagnosticsEndpoint = CONFIG.getCurrentAPI().diagnostics;
+        const html = await new Promise((resolve) => {
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => document.documentElement.outerHTML
+            }, (results) => {
+                resolve(results && results[0] && results[0].result ? results[0].result : "");
+            });
+        });
+        const payload = {
+            url: tab.url,
+            html,
+            userAgent: navigator.userAgent,
+            extensionVersion: chrome.runtime.getManifest().version,
+            extractionAttempt: {
+                method: recipeData && recipeData._extractionMethod ? recipeData._extractionMethod : "unknown",
+                timeElapsed: recipeData && recipeData._extractionTime ? recipeData._extractionTime : 0,
+                elementsFound: {},
+                partialData: recipeData || {}
+            },
+            timestamp: new Date().toISOString(),
+            failureReason: "Incomplete extraction"
+        };
+        const response = await fetch(diagnosticsEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+            showStatus("📊 Fallback parse request submitted.", "#d4edda");
+        } else {
+            showStatus("⚠️ Fallback parse submission failed.", "#ffebee");
+        }
+    } catch (error) {
+        showStatus("⚠️ Fallback parse error: " + error.message, "#ffebee");
+    }
+}
 
     } catch (error) {
-        let tabUrl = tab && tab.url ? tab.url : "unknown";
         console.error("❌ Recipe capture error:", error);
         showStatus("❌ Capture failed: " + error.message, "#ffebee");
         // Submit diagnostic data for parsing failures
         await submitDiagnosticData({
             error: error.message,
             errorType: "recipe_capture_failed",
-            url: tabUrl,
+            url: tab && tab.url ? tab.url : "unknown",
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
             stage: "recipe_capture"
@@ -488,7 +540,7 @@ function transformRecipeDataForAWS(recipeData) {
     // Ensure sourceUrl is a valid URL - AWS backend validates this
     try {
         new URL(transformedData.sourceUrl);
-    } catch (e) {
+    } catch {
         // If the sourceUrl is invalid, use current page URL as fallback
         transformedData.sourceUrl = window.location.href;
     }
