@@ -9,6 +9,10 @@ export class FoodNetworkParser extends BaseParser {
     }
 
     async parse(html: string, url: string): Promise<Recipe> {
+    // Detect Food Network 404 page and throw error
+    if (html.includes('Page Not Found | Food Network') || html.includes('The page you\'re looking for seems to have disappeared!')) {
+        throw new Error(`[FoodNetwork] 404 page detected for URL: ${url}`);
+    }
     const $ = cheerio.load(html);
 
         // First try JSON-LD

@@ -10,7 +10,21 @@ export class AllRecipesParser extends BaseParser {
 
     async parse(html: string, url: string): Promise<Recipe> {
         const $ = cheerio.load(html);
-        
+
+        // Detect AllRecipes 404/error page
+        const canonicalUrl = $('link[rel="canonical"]').attr('href');
+        const ogUrl = $('meta[property="og:url"]').attr('content');
+        const pageTitle = $('title').text().trim();
+        if ((canonicalUrl && canonicalUrl.includes('/404')) || (ogUrl && ogUrl.includes('/404')) || pageTitle === 'Page Not Found') {
+            // Strictly return empty contract fields for error pages
+            return {
+                title: '',
+                source: url,
+                ingredients: [],
+                instructions: [],
+            };
+        }
+
         // First try JSON-LD extraction
         const jsonLd = this.extractJsonLD(html);
         if (jsonLd) {
@@ -33,10 +47,12 @@ export class AllRecipesParser extends BaseParser {
                 servings: Array.isArray(jsonLd.recipeYield) ? jsonLd.recipeYield.join(", ") : jsonLd.recipeYield?.toString(),
                 notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : undefined
             };
-            
             const validation = this.validateRecipe(recipe);
             if (validation.isValid) {
-                return recipe;
+                // Ensure required contract fields are present and non-empty
+                if (recipe.title && recipe.ingredients.length > 0 && recipe.instructions.length > 0) {
+                    return recipe;
+                }
             }
         }
 
