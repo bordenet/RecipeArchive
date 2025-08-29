@@ -48,7 +48,7 @@ class JWTValidator {
     return typeof token === 'string' && token.split('.').length === 3;
   }
 
-  getUser(token) {
+  getUser(_token) {
     // Return mock user info
     return { email: 'test@example.com', sub: 'user-123' };
   }

@@ -245,9 +245,11 @@ async function captureRecipe() {
 
     showStatus("📝 Capturing recipe from page...", "#e7f3ff");
 
+    let tab;
     try {
         // Get the active tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        tab = activeTab;
         
         if (!tab) {
             showStatus("❌ Cannot access current tab", "#ffebee");
@@ -333,8 +335,14 @@ async function captureRecipe() {
         // Send to AWS backend
         showStatus("☁️ Saving to AWS...", "#e7f3ff");
         console.log("🔧 About to call sendToAWSBackend with data:", recipeData);
-        
-        const result = await sendToAWSBackend(recipeData, tab.url);
+        let tabUrl = "unknown";
+        if (typeof tab !== 'undefined' && tab && tab.url) {
+            tabUrl = tab.url;
+        }
+        // Send to AWS backend
+        showStatus("☁️ Saving to AWS...", "#e7f3ff");
+        console.log("🔧 About to call sendToAWSBackend with data:", recipeData);
+        const result = await sendToAWSBackend(recipeData, tab && tab.url ? tab.url : "unknown");
         console.log("🔧 sendToAWSBackend result:", result);
         
         if (result.success) {
@@ -345,14 +353,14 @@ async function captureRecipe() {
         }
 
     } catch (error) {
+        let tabUrl = tab && tab.url ? tab.url : "unknown";
         console.error("❌ Recipe capture error:", error);
         showStatus("❌ Capture failed: " + error.message, "#ffebee");
-        
         // Submit diagnostic data for parsing failures
         await submitDiagnosticData({
             error: error.message,
             errorType: "recipe_capture_failed",
-            url: tab ? tab.url : "unknown",
+            url: tabUrl,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
             stage: "recipe_capture"

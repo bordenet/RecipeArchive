@@ -42,16 +42,13 @@ function checkAuthenticationStatus() {
     if (storedAuth) {
         try {
             const authData = JSON.parse(storedAuth);
-            
             // Check if token is still valid (not expired)
             const now = Date.now();
             const tokenAge = now - (authData.issuedAt || 0);
             const maxAge = (authData.expiresIn || 3600) * 1000; // Convert to milliseconds
-            
             if (tokenAge < maxAge && authData.email && authData.accessToken) {
                 currentUser = { email: authData.email };
                 isSignedIn = true;
-                
                 // Switch to production mode for authenticated users
                 CONFIG.enableProduction();
             } else {
@@ -60,14 +57,16 @@ function checkAuthenticationStatus() {
                 isSignedIn = false;
                 currentUser = null;
             }
-        } catch {
+        } catch (e) {
             // Invalid auth data, clear it
             localStorage.removeItem("recipeArchive.auth");
             isSignedIn = false;
             currentUser = null;
         }
+    } else {
+        isSignedIn = false;
+        currentUser = null;
     }
-    
     renderUI();
 }
 
@@ -718,17 +717,15 @@ async function sendToBackends(recipeData) {
                 showStatus("❌ Failed to save: " + devResult.error, "#f8d7da");
             }
         } catch (error) {
-            console.error("❌ Backend error:", error);
-            showStatus("❌ Save error: " + error.message, "#f8d7da");
+            showStatus("❌ Error saving to development backend: " + error.message, "#ffebee");
         }
     }
 }
 
 async function sendToDevBackend(recipeData) {
+    // Development server is always on port 8081 for testing
+    const devEndpoint = "http://localhost:8081/api/recipes";
     try {
-        // Development server is always on port 8081 for testing
-        const devEndpoint = "http://localhost:8081/api/recipes";
-        
         const response = await fetch(devEndpoint, {
             method: "POST",
             headers: {
@@ -744,7 +741,6 @@ async function sendToDevBackend(recipeData) {
                 source: "safari-extension"
             })
         });
-        
         if (response.ok) {
             const result = await response.json();
             return {
@@ -880,7 +876,6 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
                 error: "AWS backend skipped (CONFIG not loaded)"
             };
         }
-        
         // Get current user auth (check localStorage for auth token)
         const authData = localStorage.getItem("recipeArchive.auth");
         if (!authData) {
@@ -889,73 +884,56 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
                 error: "No authentication token found. Please sign in again."
             };
         }
-        
         let userToken;
         try {
             const auth = JSON.parse(authData);
-            console.log("🔧 Full auth data from localStorage:", auth);
             userToken = auth.token || auth.accessToken || auth.idToken;
-            console.log("🔧 Retrieved auth data:", {
-                email: auth.email,
-                provider: auth.provider,
-                tokenType: auth.tokenType,
-                tokenPreview: userToken ? userToken.substring(0, 50) + "..." : "null",
-                issuedAt: new Date(auth.issuedAt).toISOString(),
-                hasToken: !!auth.token,
-                hasAccessToken: !!auth.accessToken,
-                hasIdToken: !!auth.idToken,
-                tokenValue: auth.token ? "HAS_TOKEN" : "NO_TOKEN",
-                accessTokenValue: auth.accessToken ? "HAS_ACCESS_TOKEN" : "NO_ACCESS_TOKEN", 
-                idTokenValue: auth.idToken ? "HAS_ID_TOKEN" : "NO_ID_TOKEN",
-                finalUserToken: userToken ? "FOUND_USER_TOKEN" : "NO_USER_TOKEN"
-            });
         } catch {
             return {
                 success: false,
                 error: "Invalid authentication data. Please sign in again."
             };
         }
-        
         if (!userToken) {
             return {
                 success: false,
                 error: "No valid authentication token. Please sign in again."
             };
         }
-        
-        // Make real API call to AWS
-        const awsAPI = CONFIG.getCurrentAPI();
-        console.log("📤 Sending to AWS API:", awsAPI.recipes);
-        console.log("📤 Recipe data:", recipeData.title);
-        
         // Transform data to match AWS backend expected format
         let transformedData;
         try {
             transformedData = transformRecipeDataForAWS(recipeData);
-            console.log("🔧 Transformed recipe data for AWS:", transformedData);
         } catch (transformError) {
-            console.error("❌ Recipe transformation failed:", transformError);
-            
             // Submit diagnostic data for transformation failures
-            await submitDiagnosticData({
-                error: transformError.message,
-                errorType: "recipe_transformation_failed",
-                url: currentUrl,
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                stage: "data_transformation",
-                rawRecipeData: recipeData
-            });
-            
+            if (typeof submitDiagnosticData === 'function') {
+                await submitDiagnosticData({
+                    error: transformError.message,
+                    errorType: "recipe_transformation_failed",
+                    url: currentUrl,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    stage: "data_transformation",
+                    rawRecipeData: recipeData
+                });
+            } else if (typeof window !== 'undefined' && typeof window.submitDiagnosticData === 'function') {
+                await window.submitDiagnosticData({
+                    error: transformError.message,
+                    errorType: "recipe_transformation_failed",
+                    url: currentUrl,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    stage: "data_transformation",
+                    rawRecipeData: recipeData
+                });
+            }
             return {
                 success: false,
                 error: `Recipe parsing failed: ${transformError.message}`
             };
         }
-        
         // Use proper AWS API authentication format (same as Chrome extension)
-        // Using Bearer token authentication for AWS API
-        
+        const awsAPI = CONFIG.getCurrentAPI();
         const response = await fetch(awsAPI.recipes, {
             method: "POST",
             headers: {
@@ -964,10 +942,8 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
             },
             body: JSON.stringify(transformedData)
         });
-        
         if (response.ok) {
             const result = await response.json();
-            console.log("✅ AWS API success:", result);
             return {
                 success: true,
                 id: result.id || result.recipeId || "aws-" + Date.now(),
@@ -976,11 +952,6 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
             };
         } else {
             const errorText = await response.text();
-            console.error("❌ AWS API error:", response.status, response.statusText);
-            console.error("❌ AWS API response:", errorText);
-            console.error("❌ AWS API headers:", Object.fromEntries(response.headers.entries()));
-            
-            // Try to parse as JSON for better error messages
             let errorMessage = errorText;
             try {
                 const errorJson = JSON.parse(errorText);
@@ -988,20 +959,22 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
             } catch {
                 // Keep original text if not JSON
             }
-            
             return {
                 success: false,
                 error: `AWS API ${response.status}: ${errorMessage}`
             };
         }
-        
     } catch (error) {
-        console.error("❌ AWS backend error:", error);
         return {
             success: false,
             error: `AWS connection failed: ${error.message}`
         };
     }
+}
+
+// Ensure submitDiagnosticData is defined or fallback to window.submitDiagnosticData
+if (typeof submitDiagnosticData !== 'function' && typeof window !== 'undefined' && typeof window.submitDiagnosticData === 'function') {
+    var submitDiagnosticData = window.submitDiagnosticData;
 }
 
 // Credential management functions for convenience
