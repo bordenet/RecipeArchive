@@ -68,7 +68,8 @@ A cross-platform recipe archiving system currently featuring:
 | Serious Eats        | seriouseats.com              | ✅           | Yes          | Technical cooking focus       |
 | Alexandra's Kitchen | alexandracooks.com           | ✅           | Yes          | Standard extraction           |
 | Food & Wine         | foodandwine.com              | 🔄 Planned   | Yes          | Parser framework ready        |
-| Damn Delicious      | damndelicious.net            | 🔄 Planned   | Yes          | PRD specified site            |
+| Food & Wine         | foodandwine.com              | ✅           | Yes          | Magazine recipes              |
+| Damn Delicious      | damndelicious.net            | ✅           | Yes          | High-traffic food blog        |
 | JSON-LD Sites       | (universal fallback)         | ✅           | Yes          | Structured data support       |
 
 **Legend:**
@@ -182,8 +183,7 @@ Use the right tool for each job:
 
 **Additional Sites in Development:**
 
-- 🍽️ **Food & Wine** - Parser framework ready, needs implementation
-- 🌶️ **Damn Delicious** - PRD specified site, needs implementation
+
 
 _All sites with ✅ status are production-ready with comprehensive test coverage and validation._
 
