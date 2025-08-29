@@ -12,18 +12,15 @@ Are there commercial solutions available for this? Why yes, of course there are.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/RecipeArchive
+git clone https://github.com/bordenet/RecipeArchive
 cd RecipeArchive
 
 # 🔒 SECURITY FIRST: Set up environment variables
 cp .env.template .env
 # Edit .env with your actual credentials (NEVER commit this file!)
 
-# Build the unified CLI tool
-cd tools && make build-recipe-cli && cd ..
-
-# Setup everything automatically with our unified CLI  
-npm run validate  # Uses recipe-cli validate env
+# Setup everything automatically  
+npm run validate  # Runs comprehensive monorepo validation
 ```
 
 ### 🔐 Security Notice
@@ -33,23 +30,20 @@ npm run validate  # Uses recipe-cli validate env
 ### Development Workflow
 
 ```bash
-# Set up development environment (compiles parsers, builds tools)
-npm run dev:start
-
 # Run comprehensive monorepo validation
-npm test
+./validate-monorepo.sh
 
-# Deploy to AWS when ready
-npm run deploy
+# Or use npm shortcut
+npm test
 ```
 
 **Development Features:**
 
 - 🔨 **Build Tools**: Compiles TypeScript parsers and builds Go CLI tools
 - 🧪 **Comprehensive Testing**: All tests across Go, JavaScript, and integrations
-- ☁️ **AWS Deployment**: Streamlined cloud deployment
-- 🔧 **Development Tools**: High-performance Go utilities
-- 📊 **Monorepo Validation**: 8-tier quality gate system
+- ☁️ **AWS Deployment**: CDK-based infrastructure deployment
+- 🔧 **Development Tools**: High-performance Go utilities for reporting and testing
+- 📊 **Monorepo Validation**: 8-tier quality gate system with security scanning
 - ⚡ **Direct AWS Integration**: Extensions authenticate with AWS Cognito, store to S3
 
 ## 🎯 What We're Building
@@ -76,7 +70,7 @@ A cross-platform recipe archiving system currently featuring:
 - ✅ Cross-platform compatibility (no hardcoded paths)
 - ✅ Comprehensive contract validation for all sites (100% passing)
 - ✅ Both Chrome and Safari extension integration (production-ready)
-- ✅ AWS backend with recipe de-duplication and S3 storage
+- ✅ AWS backend with recipe URL-based overwrite and S3 storage
 
 - 🔌 **Browser Extensions** - Chrome & Safari extensions for one-click recipe archiving (PRODUCTION READY)
 - ☁️ **AWS Backend** - Go-based serverless backend with S3 storage (PRODUCTION READY)
@@ -104,12 +98,17 @@ Transform your recipe management with a complete archiving solution:
 - **Browser Extensions:** JavaScript + Manifest V3 (Chrome & Safari)
 - **Backend API:** Go serverless functions with AWS Lambda + comprehensive tests
 - **Authentication:** AWS Cognito with JWT token management
-- **Recipe Parsing:** JSON-LD structured data + site-specific parsers
-- **Testing:** Jest + Go testing with 40/40 tests passing
+- **Recipe Parsing:** JSON-LD structured data + site-specific TypeScript parsers
+- **Testing:** Jest + Go testing with comprehensive validation
+
+**Deployed Infrastructure:**
+
+- **Cloud Infrastructure:** AWS Lambda, S3, API Gateway (TypeScript CDK)
+- **Authentication:** AWS Cognito with JWT token management
+- **Storage:** S3-based JSON storage with 95% cost savings vs DynamoDB
 
 **In Development:**
 
-- **Cloud Infrastructure:** AWS Lambda, S3, API Gateway (TypeScript CDK)
 - **Mobile App:** Swift for iOS
 - **Web Interface:** React + TypeScript
 
@@ -158,86 +157,83 @@ Use the right tool for each job:
 - 🍽️ **Food Network** - JSON-LD + custom parser for Alton Brown recipes and more
 - 📄 **JSON-LD Sites** - Universal structured data support for compliant recipe sites
 
-**Ready for Implementation:**
+**Additional Sites in Development:**
 
-- 📰 **Washington Post** - Authentication-ready parser implemented
-- 🍽️ **Food & Wine** - High priority per PRD requirements
-- 🗞️ **New York Times Cooking** - Premium recipes target
-- 🌶️ **Damn Delicious** - PRD specified site
-- 🧪 **Serious Eats** - Science-based cooking target
+- 🍽️ **Food & Wine** - Parser framework ready, needs implementation
+- 🌶️ **Damn Delicious** - PRD specified site, needs implementation
 
-_HTML fixtures and parsing validation framework ready for rapid expansion to all priority sites._
+_All sites with ✅ status are production-ready with comprehensive test coverage and validation._
 
 ## 📊 Test Coverage & Quality
 
 | Component                 | Tests         | Status | Coverage                  |
 | ------------------------- | ------------- | ------ | ------------------------- |
 | **Go Backend**            | 5/5 passing   | ✅     | Health, Auth, CRUD APIs   |
-| **Recipe Parsing Logic**  | 30/30 passing | ✅     | Real business logic tests |
+| **Recipe Parsing Logic**  | 10+ sites     | ✅     | Real business logic tests |
 | **Integration Tests**     | 5/5 passing   | ✅     | Server lifecycle & APIs   |
-| **ESLint (Code Quality)** | 0 errors      | ✅     | 100% compliant            |
-| **Overall Test Suite**    | 40/40 tests   | ✅     | 100% pass rate            |
+| **ESLint (Code Quality)** | 1 warning     | ⚠️     | Near 100% compliant      |
+| **Monorepo Validation**   | 8-tier gates  | ✅     | Security, linting, tests  |
 
 _Testing focuses on catching real bugs rather than metrics. Recipe parsing tests validate actual business logic and HTML extraction patterns._
 
-### Unified CLI Commands
+### Development Commands
 
 ```bash
-# Development workflow
-recipe-cli dev start        # Start development build process
-recipe-cli dev stop         # Stop development services
-recipe-cli dev status       # Check development environment status
+# Comprehensive validation (recommended)
+./validate-monorepo.sh      # Full 8-tier validation
+npm test                    # Shortcut for validation
 
-# Testing
-recipe-cli test run         # Run comprehensive test suite
-recipe-cli test unit        # Run unit tests only
-recipe-cli test integration # Run integration tests only
+# Individual components
+npm run lint                # ESLint for web extensions
+npm run test:go             # Go backend tests
+npm run test:parsers        # TypeScript parser tests
 
-# Deployment
-recipe-cli deploy aws       # Deploy to AWS
-recipe-cli deploy validate  # Validate deployment configuration
+# Build and deploy
+npm run build:parsers       # Compile TypeScript parsers
+cd aws-backend/functions/recipes && go build -o bootstrap main.go  # Build Lambda
 
 # Utilities
-recipe-cli setup            # One-time project setup
-recipe-cli --version        # Show CLI version
-recipe-cli --help          # Show available commands
+npm run security:scan       # TruffleHog security scan
+npm run docs:review         # CLAUDE.md maintenance check
 ```
 
 ## 🚀 Current Status
 
 **Chrome Extension: Production Ready** 🔥
 
-- ✅ 10 recipe sites supported with contract validation
-- ✅ Fixed async handling and data transformation issues
-- ✅ JWT authentication unified with backend systems
-- ✅ One-click capture with complete HTML archiving
+- ✅ 10 recipe sites supported with comprehensive validation
+- ✅ TypeScript parser system with decoupled site-specific parsers
+- ✅ JWT authentication with AWS Cognito integration
+- ✅ Recipe URL-based overwrite behavior (no duplicates)
 
 **Safari Extension: Production Ready** 🍎
 
 - ✅ iPhone/iPad compatible Web Extension
-- ✅ Same async fixes applied as Chrome for consistency
-- ✅ Mobile-optimized interface with dark mode support
-- ✅ Feature parity with Chrome version
+- ✅ Feature parity with Chrome extension
+- ✅ Mobile-optimized interface
+- ✅ Same TypeScript parser bundle integration
 
 **AWS Backend: Production Ready** ☁️
 
-- ✅ Recipe de-duplication logic prevents duplicate saves per user
+- ✅ Recipe URL-based overwrite prevents duplicates per user
 - ✅ S3-based JSON storage with 95% cost savings vs DynamoDB
-- ✅ Recipe report tool with correct domain extraction
-- ✅ JWT authentication integrated with Cognito user management
+- ✅ Recipe report tool with domain extraction (SourceURL field)
+- ✅ JWT authentication with AWS Cognito User Pool
+- ✅ Test tools for duplicate cleanup and validation
 
-**Unified CLI: Development Ready** ⚡
+**Development Tools: Production Ready** ⚡
 
-- ✅ Go-based `recipe-cli` for streamlined development operations
-- ✅ Automated development environment setup
-- ✅ Comprehensive testing across all components
-- ✅ Integrated AWS deployment workflow
+- ✅ Monorepo validation script with 8-tier quality gates
+- ✅ TypeScript parser compilation and bundling
+- ✅ Security scanning with TruffleHog (zero secrets detected)
+- ✅ Cross-platform compatibility (no hardcoded paths)
 
-**Next Priorities:**
+**Current Status:**
 
-- Fix web extension linting errors blocking monorepo validation
-- AWS Lambda deployment optimization  
-- iOS app development
+- All core components are production-ready and deployed
+- Extensions successfully save recipes to AWS S3 storage
+- Branch synchronization complete (main ↔ website-parsers)
+- Comprehensive documentation updated and current
 
 **Development Requirements:**
 - AWS Account with Cognito and S3 access
@@ -273,21 +269,17 @@ recipe-cli --help          # Show available commands
 - ☁️ AWS Backend (Go services)  
 - 🌐 Frontend Clients (coming soon)
 
-#### Legacy Commands
+#### Extension Development
 ```bash
-# Run comprehensive test suite with CLI
-recipe-cli test run
-
 # Extension development workflow
 cd extensions/chrome
 npm install && npm test && npm run lint
 
 # Load extension: chrome://extensions/ → Developer Mode → Load unpacked
 
-# Recommended CLI workflow
-recipe-cli setup           # One-time setup
-recipe-cli dev start       # Start everything needed for development
-recipe-cli test run        # Validate all components
+# Parser development
+cd parsers && npm run build  # Compile TypeScript parsers
+cp dist/bundle.js ../extensions/chrome/typescript-parser-bundle.js
 ```
 
 ## 🛡️ Infrastructure
@@ -302,38 +294,45 @@ Our AWS backend includes:
 
 _Designed for home cooks who value organization and accessibility in their recipe collection 🍳_
 
-# 🧪 Website Parser Validation Tests
+# 🏗️ Architecture Overview
 
-These tests are the backbone of RecipeArchive's site parser quality and release workflow. The monorepo-wide parser validator automatically fetches and caches HTML for a large set of real recipe URLs from all supported sites (Smitten Kitchen, Food Network, Food52, Epicurious, AllRecipes, Love & Lemons, Alexandra's Kitchen, NYT Cooking, etc.).
+## TypeScript Parser System
 
-For each site, the validator runs the corresponding parser against cached HTML and strictly enforces contract validation for required fields (`title`, `ingredients`, `instructions`, etc.). If any parser fails for any test URL, the release is blocked until all pass. This ensures:
+**Production-Ready Architecture:** Decoupled site-specific parsers with contract validation
 
-- **Strict contract compliance** for all site parsers
-- **Automated, release-gating validation** for every supported site
-- **Compatibility for both Node.js and web extensions**
-- **Iterative, test-driven parser refinement**
+- **Base Parser:** Abstract class defining standard interface and validation
+- **Site Parsers:** Specialized parsers for each supported recipe website
+- **Parser Registry:** Dynamic loading system for parser selection
+- **Contract Validation:** Strict enforcement of required fields (title, ingredients, instructions)
+- **Extension Integration:** Bundled JavaScript works in both Chrome and Safari
 
-**How it works:**
+**Quality Assurance:** 
 
-- Caches HTML for each test URL (fetches if missing)
-- Runs parser against cached content
-- Validates output against contract
-- Logs pass/fail for each site/URL
-- Blocks release if any fail
+- Comprehensive validation against real recipe URLs
+- 48-hour intelligent caching system
+- Cross-platform compatibility testing
+- Authentication support (Washington Post cookie auth)
 
-**Supported Sites:**
+## AWS Backend Architecture
 
-- Smitten Kitchen
-- Food Network
-- Food52
-- Epicurious
-- AllRecipes
-- Love & Lemons
-- Alexandra's Kitchen
-- NYT Cooking
+**S3-Based Storage:** Cost-effective JSON storage with 95% savings vs DynamoDB
 
-**Next Steps:**
+- **Recipe Storage:** Individual JSON files per recipe in S3
+- **URL-Based Overwrite:** Prevents duplicates by source URL per user
+- **Version Management:** Incremental versioning for recipe updates
+- **Authentication:** JWT token validation with AWS Cognito
+- **Cleanup Tools:** Duplicate detection and removal utilities
 
-- Continue refining all site parsers until every test URL passes
-- Ensure web extensions use the same parser system for full coverage
-- Push changes to GitHub after all tests pass
+## Browser Extension Integration
+
+**Production Deployment:** Both Chrome and Safari extensions ready for store submission
+
+- **Authentication:** AWS Cognito with secure token storage
+- **Recipe Extraction:** TypeScript parser system integration
+- **Data Pipeline:** Extension → AWS Lambda → S3 storage
+- **Cross-Browser:** Shared codebase with browser-specific adaptations
+- **Mobile Support:** Safari Web Extension works on iPhone/iPad
+
+---
+
+*Last Updated: August 29, 2025 - Production-ready status across all core components*
