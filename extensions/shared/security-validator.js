@@ -87,28 +87,39 @@ class SecurityValidator {
   }
 
   // Field length limits
-  limits = {
-    title: 200,
-    description: 1000,
-    ingredient: 200,
-    url: 500
-  };
+  static getLimits() {
+    return {
+      title: 200,
+      description: 1000,
+      ingredient: 200,
+      url: 500
+    };
+  }
 
   // Regex patterns
-  patterns = {
-    email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
-    url: /^https?:\/\/.+/, 
-    time: /\d+\s*(minutes?|hours?)/i,
-    serving: /\d+\s*(servings?|cookies?)/i
-  };
-}
+  getPatterns() {
+    return {
+      email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
+      url: /^https?:\/\/.+/, 
+      time: /\d+\s*(minutes?|hours?)/i,
+      serving: /\d+\s*(servings?|cookies?)/i
+    };
+  }
 
 // Add static methods for compatibility
-Object.getOwnPropertyNames(SecurityValidator.prototype).forEach(method => {
-  if (method !== 'constructor') {
-    SecurityValidator[method] = SecurityValidator.prototype[method];
-  }
-});
+SecurityValidator.limits = {
+  title: 200,
+  description: 1000,
+  ingredient: 200,
+  url: 500
+};
+
+SecurityValidator.patterns = {
+  email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
+  url: /^https?:\/\/.+/, 
+  time: /\d+\s*(minutes?|hours?)/i,
+  serving: /\d+\s*(servings?|cookies?)/i
+};
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SecurityValidator;
