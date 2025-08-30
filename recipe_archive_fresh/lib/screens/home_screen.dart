@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/recipe_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 
@@ -18,23 +19,23 @@ class HomeScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Search coming soon!')),
-              );
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.account_circle),
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authStateProvider.notifier).signOut();
+              }
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              // TODO: Implement add recipe
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Add recipe coming soon!')),
-              );
-            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout),
+                  title: Text('Sign Out'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -167,16 +168,6 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add recipe feature coming soon!')),
-          );
-        },
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
       ),
     );
   }
