@@ -113,6 +113,11 @@ class Recipe {
   @JsonKey(name: 'mainPhotoUrl')
   final String? imageUrl;
   
+  final String? sourceUrl;
+  final String? sourceName;
+  final String? difficulty;
+  final int? prepTime;
+  
   final List<RecipeIngredient> ingredients;
   final List<RecipeInstruction> instructions;
   
@@ -135,6 +140,10 @@ class Recipe {
     required this.title,
     this.description,
     this.imageUrl,
+    this.sourceUrl,
+    this.sourceName,
+    this.difficulty,
+    this.prepTime,
     this.ingredients = const [],
     this.instructions = const [],
     this.cookingTime,
