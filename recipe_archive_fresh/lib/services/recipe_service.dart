@@ -84,7 +84,7 @@ class RecipeService {
         id: '1',
         title: 'Classic Chocolate Chip Cookies',
         description: 'Soft and chewy chocolate chip cookies that are perfect for any occasion.',
-        cookTime: 25,
+        cookingTime: 25,
         prepTime: 15,
         servings: 24,
         difficulty: 'Easy',
@@ -101,15 +101,15 @@ class RecipeService {
           RecipeIngredient(text: '2 cups chocolate chips'),
         ],
         instructions: [
-          'Preheat oven to 375°F (190°C).',
-          'Mix flour, baking soda, and salt in a bowl.',
-          'Cream butter and both sugars until fluffy.',
-          'Beat in eggs and vanilla.',
-          'Gradually add flour mixture.',
-          'Stir in chocolate chips.',
-          'Drop rounded tablespoons onto ungreased cookie sheets.',
-          'Bake 9-11 minutes until golden brown.',
-          'Cool on baking sheet 2 minutes; remove to wire rack.',
+          RecipeInstruction(stepNumber: 1, text: 'Preheat oven to 375°F (190°C).'),
+          RecipeInstruction(stepNumber: 2, text: 'Mix flour, baking soda, and salt in a bowl.'),
+          RecipeInstruction(stepNumber: 3, text: 'Cream butter and both sugars until fluffy.'),
+          RecipeInstruction(stepNumber: 4, text: 'Beat in eggs and vanilla.'),
+          RecipeInstruction(stepNumber: 5, text: 'Gradually add flour mixture.'),
+          RecipeInstruction(stepNumber: 6, text: 'Stir in chocolate chips.'),
+          RecipeInstruction(stepNumber: 7, text: 'Drop rounded tablespoons onto ungreased cookie sheets.'),
+          RecipeInstruction(stepNumber: 8, text: 'Bake 9-11 minutes until golden brown.'),
+          RecipeInstruction(stepNumber: 9, text: 'Cool on baking sheet 2 minutes; remove to wire rack.'),
         ],
         tags: ['dessert', 'cookies', 'chocolate'],
         imageUrl: 'https://via.placeholder.com/300x200?text=Chocolate+Chip+Cookies',
@@ -120,7 +120,7 @@ class RecipeService {
         id: '2',
         title: 'Homemade Pizza Margherita',
         description: 'Authentic Italian pizza with fresh tomatoes, mozzarella, and basil.',
-        cookTime: 12,
+        cookingTime: 12,
         prepTime: 120,
         servings: 4,
         difficulty: 'Medium',
@@ -135,16 +135,16 @@ class RecipeService {
           RecipeIngredient(text: '1/4 teaspoon black pepper'),
         ],
         instructions: [
-          'Preheat oven to 500°F (260°C).',
-          'Roll out pizza dough on floured surface.',
-          'Transfer to pizza stone or baking sheet.',
-          'Spread sauce evenly over dough.',
-          'Add mozzarella slices.',
-          'Drizzle with olive oil.',
-          'Bake 10-12 minutes until crust is golden.',
-          'Top with fresh basil leaves.',
-          'Season with salt and pepper.',
-          'Slice and serve immediately.',
+          RecipeInstruction(stepNumber: 1, text: 'Preheat oven to 500°F (260°C).'),
+          RecipeInstruction(stepNumber: 2, text: 'Roll out pizza dough on floured surface.'),
+          RecipeInstruction(stepNumber: 3, text: 'Transfer to pizza stone or baking sheet.'),
+          RecipeInstruction(stepNumber: 4, text: 'Spread sauce evenly over dough.'),
+          RecipeInstruction(stepNumber: 5, text: 'Add mozzarella slices.'),
+          RecipeInstruction(stepNumber: 6, text: 'Drizzle with olive oil.'),
+          RecipeInstruction(stepNumber: 7, text: 'Bake 10-12 minutes until crust is golden.'),
+          RecipeInstruction(stepNumber: 8, text: 'Top with fresh basil leaves.'),
+          RecipeInstruction(stepNumber: 9, text: 'Season with salt and pepper.'),
+          RecipeInstruction(stepNumber: 10, text: 'Slice and serve immediately.'),
         ],
         tags: ['dinner', 'pizza', 'italian', 'vegetarian'],
         imageUrl: 'https://via.placeholder.com/300x200?text=Pizza+Margherita',
@@ -155,7 +155,7 @@ class RecipeService {
         id: '3',
         title: 'Thai Green Curry',
         description: 'Aromatic and spicy Thai curry with coconut milk, vegetables, and your choice of protein.',
-        cookTime: 25,
+        cookingTime: 25,
         prepTime: 20,
         servings: 4,
         difficulty: 'Medium',
@@ -172,15 +172,15 @@ class RecipeService {
           RecipeIngredient(text: '2 kaffir lime leaves'),
         ],
         instructions: [
-          'Heat oil in a wok over medium-high heat.',
-          'Fry curry paste for 1-2 minutes until fragrant.',
-          'Add thick coconut cream, stir until combined.',
-          'Add chicken and cook until nearly done.',
-          'Add remaining coconut milk and bring to simmer.',
-          'Add vegetables and cook until tender.',
-          'Season with fish sauce and palm sugar.',
-          'Add lime leaves and basil.',
-          'Serve over jasmine rice.',
+          RecipeInstruction(stepNumber: 1, text: 'Heat oil in a wok over medium-high heat.'),
+          RecipeInstruction(stepNumber: 2, text: 'Fry curry paste for 1-2 minutes until fragrant.'),
+          RecipeInstruction(stepNumber: 3, text: 'Add thick coconut cream, stir until combined.'),
+          RecipeInstruction(stepNumber: 4, text: 'Add chicken and cook until nearly done.'),
+          RecipeInstruction(stepNumber: 5, text: 'Add remaining coconut milk and bring to simmer.'),
+          RecipeInstruction(stepNumber: 6, text: 'Add vegetables and cook until tender.'),
+          RecipeInstruction(stepNumber: 7, text: 'Season with fish sauce and palm sugar.'),
+          RecipeInstruction(stepNumber: 8, text: 'Add lime leaves and basil.'),
+          RecipeInstruction(stepNumber: 9, text: 'Serve over jasmine rice.'),
         ],
         tags: ['dinner', 'curry', 'thai', 'spicy'],
         imageUrl: 'https://via.placeholder.com/300x200?text=Thai+Green+Curry',
@@ -213,6 +213,39 @@ class RecipeService {
       }
     } catch (e) {
       throw Exception('Failed to load recipe: $e');
+    }
+  }
+
+  // Delete recipe
+  Future<void> deleteRecipe(String id) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+    
+    // In development mode, just simulate deletion
+    if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
+      print('Development mode: Simulating recipe deletion for ID: $id');
+      await Future.delayed(const Duration(milliseconds: 500));
+      return;
+    }
+    
+    try {
+      final response = await http.delete(
+        Uri.parse('$apiUrl/v1/recipes/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.accessToken}',
+        },
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      } else {
+        throw Exception('Failed to delete recipe: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error while deleting recipe: $e');
     }
   }
 
