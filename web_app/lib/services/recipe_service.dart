@@ -1,7 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe.dart';
 import 'auth_service.dart';
+
+// Create a provider for the RecipeService
+final recipeServiceProvider = Provider<RecipeService>((ref) {
+  return RecipeService();
+});
 
 class RecipeService {
   static const String baseUrl = 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod';

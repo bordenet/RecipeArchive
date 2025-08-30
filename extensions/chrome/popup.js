@@ -181,11 +181,12 @@ async function handleSignIn() {
     showStatus("Signing in to AWS Cognito...", "#e3f2fd");
     
     try {
-        // Initialize CognitoAuth with configuration
+        // Initialize CognitoAuth with configuration from CONFIG
+        const cognitoConfig = CONFIG.getCognitoConfig();
         const cognitoAuth = new ChromeCognitoAuth({
-            region: "us-west-2",
-            userPoolId: "us-west-2_qJ1i9RhxD",
-            clientId: "5grdn7qhf1el0ioqb6hkelr29s"
+            region: cognitoConfig.region,
+            userPoolId: cognitoConfig.userPoolId,
+            clientId: cognitoConfig.clientId
         });
         
         // Perform real Cognito authentication

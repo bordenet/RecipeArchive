@@ -36,11 +36,11 @@ const CONFIG = {
     }
   },
 
-  // AWS Cognito Configuration (production)
+  // AWS Cognito Configuration (loaded from environment/localStorage)
   COGNITO: {
-    region: "us-west-2",
-    userPoolId: "us-west-2_qJ1i9RhxD",
-    clientId: "5grdn7qhf1el0ioqb6hkelr29s" // Fixed: was userPoolClientId
+    region: (typeof localStorage !== "undefined" ? localStorage.getItem('AWS_REGION') : null) || "us-west-2",
+    userPoolId: (typeof localStorage !== "undefined" ? localStorage.getItem('COGNITO_USER_POOL_ID') : null) || "CONFIGURE_ME",
+    clientId: (typeof localStorage !== "undefined" ? localStorage.getItem('COGNITO_APP_CLIENT_ID') : null) || "CONFIGURE_ME"
   },
 
   // Development test user (use environment variables for real values)
