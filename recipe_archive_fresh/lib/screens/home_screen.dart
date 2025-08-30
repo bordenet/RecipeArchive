@@ -149,10 +149,39 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: const TextStyle(color: Colors.grey),
-                textAlign: TextAlign.center,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  error.toString(),
+                  style: const TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.1),
+                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.amber, size: 24),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'CORS Issue Detected',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'This appears to be a browser CORS policy blocking the API request. You\'re successfully authenticated, but the browser can\'t reach the AWS API directly.',
+                      style: TextStyle(color: Colors.amber[800], fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(

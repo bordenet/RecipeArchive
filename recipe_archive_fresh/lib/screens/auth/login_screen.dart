@@ -182,7 +182,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                     
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
+                    
+                    // Show Password Checkbox
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: !_obscurePassword,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              _obscurePassword = !(value ?? false);
+                            });
+                          },
+                          activeColor: Colors.green,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          child: const Text(
+                            'Show password',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 4),
                     
                     // Forgot Password Link
                     Align(
