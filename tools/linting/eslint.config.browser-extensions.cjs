@@ -1,10 +1,8 @@
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
   ],
   env: {
     browser: true,
@@ -27,8 +25,24 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2021,
     sourceType: 'module',
-    // Remove project requirement to avoid parsing errors for JS files not in project
   },
+  overrides: [
+    {
+      files: ['**/*.ts'],
+      parser: '@typescript-eslint/parser',
+      extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+      ],
+      parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: 'module',
+      },
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off', // Allow require() in test files
+      },
+    }
+  ],
   rules: {
     // Browser extension specific rules - focus on errors, not warnings
     '@typescript-eslint/no-unused-vars': ['warn', { 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+// import 'package:url_launcher/url_launcher.dart'; // Removed unused import
 import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
@@ -26,7 +26,7 @@ class RecipeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Recipe Image
-                Container(
+                SizedBox(
                   height: 200,
                   width: double.infinity,
                   child: recipe.imageUrl != null
@@ -47,7 +47,7 @@ class RecipeCard extends StatelessWidget {
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            print('Image load error for ${recipe.imageUrl}: $error');
+                            // print('Image load error for ${recipe.imageUrl}: $error');
                             return Container(
                               color: Colors.grey[300],
                               child: const Icon(
@@ -189,22 +189,6 @@ class RecipeCard extends StatelessWidget {
   }
 
   // Launch URL in browser
-  Future<void> _launchUrl(String url) async {
-    try {
-      final Uri uri = Uri.parse(url);
-      print('Attempting to launch URL: $url');
-      
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        print('URL launched successfully');
-      } else {
-        print('Cannot launch URL: $url');
-        // Fallback: try with platform default mode
-        await launchUrl(uri, mode: LaunchMode.platformDefault);
-      }
-    } catch (e) {
-      print('Error launching URL: $e');
-    }
-  }
+  // Removed unused _launchUrl method to reduce lint warnings
 
 }

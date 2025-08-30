@@ -22,14 +22,13 @@ final recipesProvider = FutureProvider<List<Recipe>>((ref) async {
   try {
     return await recipeService.getRecipes();
   } catch (e) {
-    print('Recipe fetch error: $e');
+    // Recipe fetch error: $e
     throw Exception('Failed to load recipes: ${e.toString()}');
   }
 });
 
 class RecipeService {
   final AuthenticationService _authService;
-  List<Recipe>? _mockRecipes; // Cache for mock data
   
   RecipeService(this._authService);
   
@@ -75,7 +74,8 @@ class RecipeService {
   }
 
   // Enhanced mock data with 12 recipes for development
-  List<Recipe> _getEnhancedMockRecipes() {
+  // Commented out to reduce lint warnings - unused method
+  /* List<Recipe> _getEnhancedMockRecipes() {
     return [
       Recipe(
         id: '1',
@@ -478,7 +478,7 @@ class RecipeService {
         sourceName: 'Food Network',
       ),
     ];
-  }
+  } */
 
   // Get single recipe
   Future<Recipe?> getRecipe(String id) async {
