@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
@@ -20,6 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _rememberMe = false;
+  bool _autoLoginEnabled = false;
 
   @override
   void initState() {
@@ -36,6 +38,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _loadSavedCredentials() async {
     try {
+      // Check for environment variables first (developer convenience)
+      final envEmail = dotenv.env['TEST_USER_EMAIL'];
+      final envPassword = dotenv.env['TEST_USER_PASSWORD'];
+      final envAutoLogin = dotenv.env['AUTO_LOGIN']?.toLowerCase() == 'true';
+      
+      if (envEmail != null && envPassword != null) {
+        print('🔧 Using credentials from environment variables');
+        setState(() {
+          _emailController.text = envEmail;
+          _passwordController.text = envPassword;
+          _rememberMe = true;
+          _autoLoginEnabled = envAutoLogin;
+        });
+        
+        // Auto-login if enabled in environment
+        if (envAutoLogin && !_isLoading) {
+          print('🚀 Auto-login enabled, signing in...');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _signIn();
+          });
+        }
+        return;
+      }
+      
+      // Fall back to stored credentials
       final savedEmail = await _storage.read(key: 'saved_email');
       final savedPassword = await _storage.read(key: 'saved_password');
       final rememberMe = await _storage.read(key: 'remember_me') == 'true';

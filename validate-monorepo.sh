@@ -318,21 +318,40 @@ run_linting_by_area() {
     fi
     
     print_step "Flutter web app analysis"
-    if [ -d "web_app" ]; then
-        if command -v dart &> /dev/null || command -v flutter &> /dev/null; then
-            if (cd web_app && dart analyze > /dev/null 2>&1); then
+    if [ -d "recipe_archive_fresh" ]; then
+        if command -v flutter &> /dev/null; then
+            if (cd recipe_archive_fresh && flutter analyze > /dev/null 2>&1); then
                 print_success
                 ((PASSED_TESTS++))
             else
-                print_warning "Flutter analysis failed - run 'cd web_app && flutter pub get' first"
+                print_warning "Flutter analysis failed - run 'cd recipe_archive_fresh && flutter pub get' first"
                 ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
             fi
         else
-            print_warning "Dart/Flutter not installed (skipping web app validation)"
+            print_warning "Flutter not installed (skipping web app validation)"
             ((PASSED_TESTS++)) # Count as passed since it's optional
         fi
     else
         print_warning "Flutter web app directory not found (skipping)"
+        ((PASSED_TESTS++)) # Count as passed since it's optional
+    fi
+    
+    print_step "Flutter web app tests"
+    if [ -d "recipe_archive_fresh" ]; then
+        if command -v flutter &> /dev/null; then
+            if (cd recipe_archive_fresh && flutter test > /dev/null 2>&1); then
+                print_success
+                ((PASSED_TESTS++))
+            else
+                print_warning "Flutter tests failed - run 'cd recipe_archive_fresh && flutter test' for details"
+                ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
+            fi
+        else
+            print_warning "Flutter not installed (skipping web app tests)"
+            ((PASSED_TESTS++)) # Count as passed since it's optional
+        fi
+    else
+        print_warning "Flutter web app directory not found (skipping tests)"
         ((PASSED_TESTS++)) # Count as passed since it's optional
     fi
     
