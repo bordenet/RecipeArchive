@@ -5,13 +5,11 @@ import '../models/recipe.dart';
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
 
   const RecipeCard({
     super.key,
     required this.recipe,
     this.onTap,
-    this.onDelete,
   });
 
   @override
@@ -35,14 +33,30 @@ class RecipeCard extends StatelessWidget {
                       ? Image.network(
                           recipe.imageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.restaurant_menu,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: Colors.green,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Image load error for ${recipe.imageUrl}: $error');
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.restaurant_menu,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
                         )
                       : Container(
                           color: Colors.grey[300],
@@ -168,52 +182,6 @@ class RecipeCard extends StatelessWidget {
               ],
             ),
             
-            // Action Buttons Overlay
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Row(
-                children: [
-                  // Original Recipe Link Button
-                  if (recipe.sourceUrl != null)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.link, color: Colors.white, size: 20),
-                        onPressed: () => _launchUrl(recipe.sourceUrl!),
-                        tooltip: 'View Original Recipe',
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
-                        ),
-                      ),
-                    ),
-                  
-                  const SizedBox(width: 4),
-                  
-                  // Delete Button
-                  if (onDelete != null)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.white, size: 20),
-                        onPressed: () => _showDeleteConfirmation(context),
-                        tooltip: 'Delete Recipe',
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -222,59 +190,21 @@ class RecipeCard extends StatelessWidget {
 
   // Launch URL in browser
   Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final Uri uri = Uri.parse(url);
+      print('Attempting to launch URL: $url');
+      
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        print('URL launched successfully');
+      } else {
+        print('Cannot launch URL: $url');
+        // Fallback: try with platform default mode
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
     }
   }
 
-  // Show delete confirmation dialog
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.red[600]),
-              const SizedBox(width: 8),
-              const Text('Delete Recipe'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Are you sure you want to delete "${recipe.title}"?',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'This action cannot be undone. The recipe and all associated data will be permanently removed from your account.',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(true);
-                onDelete?.call();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

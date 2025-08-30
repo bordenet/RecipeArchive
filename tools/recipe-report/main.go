@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -41,6 +42,37 @@ type JWTPayload struct {
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
 	Username      string `json:"cognito:username"`
+}
+
+// loadEnvFile loads environment variables from .env file
+func loadEnvFile() {
+	// Look for .env file in current directory and parent directories
+	paths := []string{".env", "../.env", "../../.env"}
+	
+	for _, path := range paths {
+		if file, err := os.Open(path); err == nil {
+			defer file.Close()
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if line == "" || strings.HasPrefix(line, "#") {
+					continue
+				}
+				
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					key := strings.TrimSpace(parts[0])
+					value := strings.TrimSpace(parts[1])
+					// Only set if not already in environment
+					if os.Getenv(key) == "" {
+						os.Setenv(key, value)
+					}
+				}
+			}
+			fmt.Printf("📁 Loaded environment variables from: %s\n", path)
+			return
+		}
+	}
 }
 
 // Recipe represents a stored recipe
@@ -440,10 +472,17 @@ func PrintReport(entries []ReportEntry) {
 }
 
 func main() {
-	// Command line flags
+	// Load environment variables from .env file
+	loadEnvFile()
+	
+	// Get defaults from environment variables
+	defaultEmail := os.Getenv("TEST_USER_EMAIL")
+	defaultPassword := os.Getenv("TEST_USER_PASSWORD")
+	
+	// Command line flags with environment variable defaults
 	var (
-		userEmail  = flag.String("user", "", "Email address for authentication (required)")
-		password   = flag.String("password", "", "Password for authentication (required)")
+		userEmail  = flag.String("user", defaultEmail, "Email address for authentication")
+		password   = flag.String("password", defaultPassword, "Password for authentication")
 		bucketName = flag.String("bucket", DefaultBucket, "S3 bucket name")
 		help       = flag.Bool("help", false, "Show help message")
 	)
@@ -453,28 +492,34 @@ func main() {
 		fmt.Printf(`Recipe Archive S3 Reporting Tool
 
 Usage:
-  go run main.go -user email@example.com -password mypassword
+  go run main.go [-user email@example.com] [-password mypassword]
 
 Options:
-  -user string      Email address for authentication (required)
-  -password string  Password for authentication (required)
+  -user string      Email address for authentication (defaults to TEST_USER_EMAIL from .env)
+  -password string  Password for authentication (defaults to TEST_USER_PASSWORD from .env)
   -bucket string    S3 bucket name (default: %s)
   -help            Show this help message
 
 Examples:
-  go run main.go -user matt@example.com -password mypassword
-  go run main.go -user test@example.com -password testpass -bucket my-recipe-bucket
+  go run main.go                                          # Uses .env file credentials
+  go run main.go -user matt@example.com -password mypass  # Override with command line
+  go run main.go -bucket my-recipe-bucket                 # Custom bucket with .env credentials
 
-Environment Variables:
-  AWS_REGION       AWS region (default: %s)
-  AWS_PROFILE      AWS profile to use for credentials
+Environment Variables (.env file support):
+  TEST_USER_EMAIL     Default email for authentication
+  TEST_USER_PASSWORD  Default password for authentication  
+  AWS_REGION          AWS region (default: %s)
+  AWS_PROFILE         AWS profile to use for credentials
 
 `, DefaultBucket, AWSRegion)
 		os.Exit(0)
 	}
 
 	if *userEmail == "" || *password == "" {
-		fmt.Fprintf(os.Stderr, "❌ Error: -user and -password are required\n")
+		fmt.Fprintf(os.Stderr, "❌ Error: Email and password are required\n")
+		if defaultEmail == "" || defaultPassword == "" {
+			fmt.Fprintf(os.Stderr, "💡 Tip: Set TEST_USER_EMAIL and TEST_USER_PASSWORD in .env file, or use -user and -password flags\n")
+		}
 		fmt.Fprintf(os.Stderr, "Use -help for usage information\n")
 		os.Exit(1)
 	}

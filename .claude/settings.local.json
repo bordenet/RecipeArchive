@@ -92,7 +92,8 @@
       "Bash(flutter run:*)",
       "Bash(flutter pub:*)",
       "Bash(./start.sh:*)",
-      "Bash(flutter packages pub run:*)"
+      "Bash(flutter packages pub run:*)",
+      "Bash(./scripts/extension-helper.sh:*)"
     ],
     "deny": [],
     "ask": []

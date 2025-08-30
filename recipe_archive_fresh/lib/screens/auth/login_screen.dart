@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
@@ -15,14 +16,65 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _storage = const FlutterSecureStorage();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final savedEmail = await _storage.read(key: 'saved_email');
+      final savedPassword = await _storage.read(key: 'saved_password');
+      final rememberMe = await _storage.read(key: 'remember_me') == 'true';
+      
+      if (savedEmail != null && savedPassword != null && rememberMe) {
+        setState(() {
+          _emailController.text = savedEmail;
+          _passwordController.text = savedPassword;
+          _rememberMe = true;
+        });
+      } else {
+        // Set default credentials for convenience
+        setState(() {
+          _emailController.text = 'mattbordenet@hotmail.com';
+          _passwordController.text = 'Recipe123';
+          _rememberMe = true;
+        });
+      }
+    } catch (e) {
+      print('Error loading saved credentials: $e');
+      // Fallback to default credentials
+      setState(() {
+        _emailController.text = 'mattbordenet@hotmail.com';
+        _passwordController.text = 'Recipe123';
+        _rememberMe = true;
+      });
+    }
+  }
+
+  Future<void> _saveCredentials() async {
+    if (_rememberMe) {
+      await _storage.write(key: 'saved_email', value: _emailController.text.trim());
+      await _storage.write(key: 'saved_password', value: _passwordController.text);
+      await _storage.write(key: 'remember_me', value: 'true');
+    } else {
+      await _storage.delete(key: 'saved_email');
+      await _storage.delete(key: 'saved_password');
+      await _storage.write(key: 'remember_me', value: 'false');
+    }
   }
 
   Future<void> _signIn() async {
@@ -33,6 +85,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
+      // Save credentials before attempting sign in
+      await _saveCredentials();
+      
       await ref.read(authStateProvider.notifier).signIn(
         _emailController.text.trim(),
         _passwordController.text,
@@ -184,30 +239,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     
                     const SizedBox(height: 8),
                     
-                    // Show Password Checkbox
+                    // Options Row (Show Password + Remember Me)
                     Row(
                       children: [
-                        Checkbox(
-                          value: !_obscurePassword,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              _obscurePassword = !(value ?? false);
-                            });
-                          },
-                          activeColor: Colors.green,
+                        // Show Password Checkbox
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: !_obscurePassword,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    _obscurePassword = !(value ?? false);
+                                  });
+                                },
+                                activeColor: Colors.green,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                child: const Text(
+                                  'Show password',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                          child: const Text(
-                            'Show password',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
+                        // Remember Me Checkbox
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: _rememberMe,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    _rememberMe = value ?? false;
+                                  });
+                                },
+                                activeColor: Colors.green,
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _rememberMe = !_rememberMe;
+                                  });
+                                },
+                                child: const Text(
+                                  'Remember me',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
