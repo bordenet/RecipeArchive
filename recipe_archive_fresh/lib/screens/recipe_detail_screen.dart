@@ -36,6 +36,14 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             pinned: true,
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => _showDeleteConfirmation(context),
+                tooltip: 'Delete Recipe',
+                key: const Key('banner_delete_button'),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.recipe.title,
