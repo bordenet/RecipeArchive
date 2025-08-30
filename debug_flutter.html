@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Recipe Archive Direct Test</title>
+</head>
+<body>
+  <h1>🧪 Flutter Loading Test</h1>
+  <p>This will help us diagnose the Flutter loading issue.</p>
+  
+  <div id="loading">
+    <h2>Loading Flutter App...</h2>
+    <div style="text-align: center; margin: 20px;">
+      <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: auto;"></div>
+    </div>
+  </div>
+  
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  
+  <script>
+    console.log('Starting Flutter initialization test...');
+    
+    // Simulate what Flutter web does
+    setTimeout(() => {
+      document.getElementById('loading').innerHTML = '<h2>✅ Basic JavaScript Working</h2><p>Flutter should load any moment...</p>';
+      console.log('JavaScript execution working');
+    }, 1000);
+    
+    // Check if Flutter files are loading
+    setTimeout(() => {
+      console.log('Checking Flutter.js availability...');
+      // This would normally load Flutter
+    }, 2000);
+  </script>
+  
+  <h3>Manual Links to Test:</h3>
+  <ul>
+    <li><a href="http://localhost:9002" target="_blank">Flutter App (Port 9002)</a></li>
+    <li><a href="http://localhost:8080" target="_blank">Flutter Debug (Port 8080)</a></li>
+    <li><a href="http://localhost:9000" target="_blank">Flutter Previous (Port 9000)</a></li>
+  </ul>
+  
+  <h3>Debug Instructions:</h3>
+  <p>1. Open browser dev tools (F12)</p>
+  <p>2. Check Console for errors</p>
+  <p>3. Check Network tab for failed requests</p>
+  <p>4. Look for any red errors or warnings</p>
+</body>
+</html>
