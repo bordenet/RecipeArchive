@@ -253,11 +253,7 @@ Use the right tool for each job:
 
 **Parser Development Status:**
 
-<<<<<<< HEAD
 All 13 sites have complete TypeScript parsers with comprehensive contract validation. Each parser handles both JSON-LD structured data and site-specific HTML extraction patterns.
-=======
-
->>>>>>> website-parsers
 
 _All sites with ✅ status are production-ready with comprehensive test coverage and validation._
 
