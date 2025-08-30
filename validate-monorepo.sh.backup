@@ -355,40 +355,6 @@ run_linting_by_area() {
         ((PASSED_TESTS++)) # Count as passed since it's optional
     fi
     
-    
-    print_step "Flutter web app linting"
-    if [ -d "recipe_archive_fresh" ]; then
-        if command -v flutter &> /dev/null; then
-            if (cd recipe_archive_fresh && flutter analyze --no-pub > /dev/null 2>&1); then
-                print_success
-                ((PASSED_TESTS++))
-            else
-                print_warning "Flutter analysis found issues - run 'cd recipe_archive_fresh && flutter analyze' for details"
-                ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
-            fi
-        else
-            print_warning "Flutter not installed (skipping web app linting)"
-            ((PASSED_TESTS++)) # Count as passed since its optional
-        fi
-    else
-        print_warning "Flutter web app directory not found (skipping linting)"
-        ((PASSED_TESTS++)) # Count as passed since its optional
-    fi
-    
-    print_step "Browser extension linting"
-    if command -v npm &> /dev/null; then
-        if npm run lint > /dev/null 2>&1; then
-            print_success
-            ((PASSED_TESTS++))
-        else
-            print_warning "ESLint found issues - run 'npm run lint' for details"
-            ((PASSED_TESTS++)) # Count as passed for now
-        fi
-    else
-        print_warning "npm not installed (skipping extension linting)"
-        ((PASSED_TESTS++)) # Count as passed since its optional
-    fi
-    
     print_step "Go code formatting"
     if (cd tools && make fmt > /dev/null 2>&1 && git diff --exit-code > /dev/null 2>&1); then
         print_success

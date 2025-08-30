@@ -13,7 +13,7 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+  ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
 class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
@@ -81,7 +81,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            print('Detail image load error for ${widget.recipe.imageUrl}: $error');
+                            // Detail image load error for ${widget.recipe.imageUrl}: $error
                             return Container(
                               color: Colors.grey[300],
                               child: const Icon(
@@ -99,7 +99,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.5),
+                                Colors.black.withValues(alpha: 0.5),
                               ],
                             ),
                           ),
@@ -366,18 +366,18 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   Future<void> _launchUrl(String url) async {
     try {
       final Uri uri = Uri.parse(url);
-      print('Attempting to launch URL: $url');
+      // Attempting to launch URL: $url
       
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        print('URL launched successfully');
+        // URL launched successfully
       } else {
-        print('Cannot launch URL: $url');
+        // Cannot launch URL: $url
         // Fallback: try with platform default mode
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      // Error launching URL: $e
     }
   }
 
@@ -524,9 +524,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           '$tempServings',
@@ -592,10 +592,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: (color ?? Colors.grey).withOpacity(0.1),
+        color: (color ?? Colors.grey).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (color ?? Colors.grey).withOpacity(0.3),
+          color: (color ?? Colors.grey).withValues(alpha: 0.3),
         ),
       ),
       child: Row(

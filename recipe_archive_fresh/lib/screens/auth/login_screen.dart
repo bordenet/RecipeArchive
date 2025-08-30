@@ -21,7 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _rememberMe = false;
-  bool _autoLoginEnabled = false;
+  // bool _autoLoginEnabled = false; // Used in _loadSavedCredentials
 
   @override
   void initState() {
@@ -44,17 +44,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final envAutoLogin = dotenv.env['AUTO_LOGIN']?.toLowerCase() == 'true';
       
       if (envEmail != null && envPassword != null) {
-        print('🔧 Using credentials from environment variables');
+        // Developer convenience: using credentials from environment variables
         setState(() {
           _emailController.text = envEmail;
           _passwordController.text = envPassword;
           _rememberMe = true;
-          _autoLoginEnabled = envAutoLogin;
+          // _autoLoginEnabled = envAutoLogin;
         });
         
         // Auto-login if enabled in environment
         if (envAutoLogin && !_isLoading) {
-          print('🚀 Auto-login enabled, signing in...');
+          // Auto-login enabled, signing in...
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _signIn();
           });
@@ -82,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         });
       }
     } catch (e) {
-      print('Error loading saved credentials: $e');
+      // Error loading saved credentials: $e
       // Fallback to default credentials
       setState(() {
         _emailController.text = 'mattbordenet@hotmail.com';
