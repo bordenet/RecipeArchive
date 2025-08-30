@@ -14,8 +14,8 @@ All major components are production-ready and functional:
 ### AWS Infrastructure (Deployed)
 - **Lambda Function**: `RecipeArchive-dev-RecipesFunction16AA7634-Jo1qXv3AOj5w`
 - **S3 Storage**: `recipearchive-storage-dev-990537043943`
-- **API Gateway**: `https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/v1/recipes`
-- **Cognito User Pool**: `us-west-2_qJ1i9RhxD`
+- **API Gateway**: `[CONFIGURED_VIA_ENVIRONMENT]`
+- **Cognito User Pool**: `[CONFIGURED_VIA_ENVIRONMENT]`
 - **Architecture**: Extension → AWS Lambda → S3 Storage (functional pipeline)
 
 ### Supported Recipe Sites (10 Total)

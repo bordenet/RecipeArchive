@@ -47,8 +47,8 @@ class RecipeCard extends StatelessWidget {
                         IconButton(
                           onPressed: onFavorite,
                           icon: Icon(
-                            recipe.isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: recipe.isFavorite 
+                            recipe.isFavoriteOrFalse ? Icons.favorite : Icons.favorite_border,
+                            color: recipe.isFavoriteOrFalse 
                               ? Colors.red 
                               : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
@@ -73,7 +73,7 @@ class RecipeCard extends StatelessWidget {
                   _buildRecipeStats(context),
                   
                   // Tags
-                  if (recipe.tags.isNotEmpty) ...[
+                  if (recipe.tagsOrEmpty.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     _buildTags(context),
                   ],
@@ -191,8 +191,8 @@ class RecipeCard extends StatelessWidget {
   }
 
   Widget _buildTags(BuildContext context) {
-    final displayTags = recipe.tags.take(3).toList();
-    final hasMoreTags = recipe.tags.length > 3;
+    final displayTags = recipe.tagsOrEmpty.take(3).toList();
+    final hasMoreTags = recipe.tagsOrEmpty.length > 3;
 
     return Row(
       children: [
@@ -211,7 +211,7 @@ class RecipeCard extends StatelessWidget {
         )),
         if (hasMoreTags)
           Text(
-            '+${recipe.tags.length - 3}',
+            '+${recipe.tagsOrEmpty.length - 3}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),

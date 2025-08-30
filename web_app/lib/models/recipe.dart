@@ -10,6 +10,13 @@ class RecipeIngredient {
   
   factory RecipeIngredient.fromJson(Map<String, dynamic> json) => _$RecipeIngredientFromJson(json);
   Map<String, dynamic> toJson() => _$RecipeIngredientToJson(this);
+  
+  // Add toString method for easier comparison and display
+  @override
+  String toString() => text;
+  
+  // Add toLowerCase method for search functionality
+  String toLowerCase() => text.toLowerCase();
 }
 
 @JsonSerializable()
@@ -21,6 +28,10 @@ class RecipeInstruction {
   
   factory RecipeInstruction.fromJson(Map<String, dynamic> json) => _$RecipeInstructionFromJson(json);
   Map<String, dynamic> toJson() => _$RecipeInstructionToJson(this);
+  
+  // Add toString method for easier display
+  @override
+  String toString() => text;
 }
 
 @JsonSerializable()
@@ -93,6 +104,10 @@ class Recipe {
   // Convenience getters for ingredients and instructions as strings
   List<String> get ingredientTexts => ingredients.map((i) => i.text).toList();
   List<String> get instructionTexts => instructions.map((i) => i.text).toList();
+  
+  // Safe getters for nullable fields
+  bool get isFavoriteOrFalse => isFavorite ?? false;
+  List<String> get tagsOrEmpty => tags ?? [];
   
   // Convenience getters
   int get totalTimeMinutes => prepTimeMinutes ?? 0;

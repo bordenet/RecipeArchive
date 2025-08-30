@@ -4,10 +4,10 @@
 
 RESTful API for the RecipeArchive application, designed for AWS Free Tier deployment with high performance and security.
 
-**Base URL**: `https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/`  
+**Base URL**: `[CONFIGURED_VIA_ENVIRONMENT]`  
 **Version**: v1  
 **Authentication**: AWS Cognito JWT tokens  
-**Region**: us-west-2
+**Region**: [CONFIGURED_VIA_ENVIRONMENT]
 
 ## Authentication
 

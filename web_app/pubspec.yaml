@@ -10,34 +10,34 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # UI & Material Design
+  # UI & Material Design - BASIC ONLY FOR TESTING
   cupertino_icons: ^1.0.6
-  material_color_utilities: ^0.11.1
   
+  # TEMPORARILY COMMENTED OUT FOR DEBUGGING
   # State Management
-  provider: ^6.1.1
-  flutter_riverpod: ^2.4.9
+  # provider: ^6.1.1
+  # flutter_riverpod: ^2.4.9
   
   # HTTP & API
-  http: ^1.1.2
-  dio: ^5.4.0
+  # http: ^1.1.2
+  # dio: ^5.4.0
   
   # Local Storage & Caching
-  shared_preferences: ^2.2.2
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # shared_preferences: ^2.2.2
+  # hive: ^2.2.3
+  # hive_flutter: ^1.1.0
   
   # Image Handling
-  cached_network_image: ^3.3.0
+  # cached_network_image: ^3.3.0
   
   # URL Launching
-  url_launcher: ^6.2.1
+  # url_launcher: ^6.2.1
   
   # JSON Serialization
-  json_annotation: ^4.8.1
+  # json_annotation: ^4.8.1
   
   # Authentication & Security
-  crypto: ^3.0.3
+  # crypto: ^3.0.3
   
   # Environment Configuration
   flutter_dotenv: ^5.1.0

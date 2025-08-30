@@ -66,12 +66,12 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           FloatingActionButton(
             heroTag: 'favorite',
             onPressed: _toggleFavorite,
-            backgroundColor: _recipe.isFavorite 
+            backgroundColor: _recipe.isFavoriteOrFalse 
               ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.surface,
             child: Icon(
-              _recipe.isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _recipe.isFavorite 
+              _recipe.isFavoriteOrFalse ? Icons.favorite : Icons.favorite_border,
+              color: _recipe.isFavoriteOrFalse 
                 ? Colors.white 
                 : Theme.of(context).colorScheme.primary,
             ),
@@ -295,7 +295,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          ingredient,
+                          ingredient.text,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ),
@@ -352,7 +352,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          instruction,
+                          instruction.text,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ),
@@ -424,7 +424,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   }
 
   Widget _buildTags() {
-    if (_recipe.tags.isEmpty) return const SizedBox.shrink();
+    if (_recipe.tagsOrEmpty.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,7 +437,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _recipe.tags.map((tag) {
+          children: _recipe.tagsOrEmpty.map((tag) {
             return Chip(
               label: Text(tag),
               backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
