@@ -10,6 +10,11 @@ final recipeServiceProvider = Provider<RecipeService>((ref) {
   return RecipeService();
 });
 
+// Create a provider for the RecipeService
+final recipeServiceProvider = Provider<RecipeService>((ref) {
+  return RecipeService();
+});
+
 class RecipeService {
   static const String baseUrl = 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod';
   
