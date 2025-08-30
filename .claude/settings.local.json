@@ -88,7 +88,11 @@
       "Bash(S3_STORAGE_BUCKET=recipearchive-storage-dev-990537043943 ./aws-backend/functions/test-tools/test-tools -action=test-url-overwrite)",
       "Bash(GOOS=linux GOARCH=amd64 go build -o bootstrap main.go)",
       "Bash(npm install:*)",
-      "Bash(./scripts/package-extensions.sh:*)"
+      "Bash(./scripts/package-extensions.sh:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter pub:*)",
+      "Bash(./start.sh:*)",
+      "Bash(flutter packages pub run:*)"
     ],
     "deny": [],
     "ask": []
