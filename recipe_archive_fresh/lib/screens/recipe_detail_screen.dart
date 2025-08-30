@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/recipe.dart';
+import '../services/recipe_service.dart';
 
-class RecipeDetailScreen extends StatefulWidget {
+class RecipeDetailScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
 
   const RecipeDetailScreen({
@@ -13,7 +16,7 @@ class RecipeDetailScreen extends StatefulWidget {
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
-class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   late int currentServings;
 
   @override
@@ -56,14 +59,30 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.restaurant_menu,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                          ),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: Colors.white,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Detail image load error for ${widget.recipe.imageUrl}: $error');
+                            return Container(
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.restaurant_menu,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -132,6 +151,47 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   
                   const SizedBox(height: 16),
                   
+                  // Action Buttons
+                  Row(
+                    children: [
+                      // Original Recipe Link
+                      if (widget.recipe.sourceUrl != null)
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _launchUrl(widget.recipe.sourceUrl!),
+                            icon: const Icon(Icons.launch),
+                            label: Text('View Original at ${widget.recipe.sourceName ?? 'Source'}'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                      if (widget.recipe.sourceUrl != null) const SizedBox(width: 12),
+                      
+                      // Delete Button
+                      ElevatedButton.icon(
+                        onPressed: () => _showDeleteConfirmation(context),
+                        icon: const Icon(Icons.delete),
+                        label: const Text('Delete'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
                   // Description
                   if (widget.recipe.description != null) ...[
                     Text(
@@ -145,6 +205,44 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       widget.recipe.description!,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
+                    
+                    // Original Recipe URL
+                    if (widget.recipe.sourceUrl != null) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.link,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Original Recipe: ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                              fontSize: 14,
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _launchUrl(widget.recipe.sourceUrl!),
+                              child: Text(
+                                widget.recipe.sourceUrl!,
+                                style: TextStyle(
+                                  color: Colors.blue[600],
+                                  decoration: TextDecoration.underline,
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    
                     const SizedBox(height: 24),
                   ],
                   
@@ -256,6 +354,137 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
+  // Launch URL in browser
+  Future<void> _launchUrl(String url) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      print('Attempting to launch URL: $url');
+      
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        print('URL launched successfully');
+      } else {
+        print('Cannot launch URL: $url');
+        // Fallback: try with platform default mode
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
+    }
+  }
+
+  // Show delete confirmation dialog
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red[600]),
+              const SizedBox(width: 8),
+              const Text('Delete Recipe'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to delete "${widget.recipe.title}"?',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'This action cannot be undone. The recipe and all associated data will be permanently removed from your account.',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+                _deleteRecipe(widget.recipe.id);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Delete recipe with loading state
+  Future<void> _deleteRecipe(String recipeId) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.green),
+                  SizedBox(height: 16),
+                  Text('Deleting recipe...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Call the delete API
+      final recipeService = ref.read(recipeServiceProvider);
+      await recipeService.deleteRecipe(recipeId);
+
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+        
+        // Close detail screen and return to home
+        Navigator.of(context).pop();
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recipe deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Refresh the recipes list
+        ref.invalidate(recipesProvider);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+        
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete recipe: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _showServingsDialog() {
     showDialog<int>(
       context: context,
@@ -303,7 +532,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       
                       // Increase button
                       IconButton(
-                        onPressed: tempServings < 20 
+                        onPressed: tempServings < 100 
                           ? () => setState(() => tempServings++)
                           : null,
                         icon: const Icon(Icons.add_circle_outline),

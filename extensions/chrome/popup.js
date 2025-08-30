@@ -25,6 +25,34 @@ function clearCredentials() {
     localStorage.removeItem("recipeArchive.credentials");
 }
 
+// Ensure AWS configuration is set before authentication attempts
+async function ensureAWSConfiguration() {
+    console.log('🔧 Checking AWS configuration...');
+    
+    // Check if configuration is already set and valid
+    const currentUserPoolId = localStorage.getItem('COGNITO_USER_POOL_ID');
+    const currentClientId = localStorage.getItem('COGNITO_APP_CLIENT_ID');
+    
+    if (currentUserPoolId && currentClientId && 
+        currentUserPoolId !== 'CONFIGURE_ME' && 
+        currentClientId !== 'CONFIGURE_ME') {
+        console.log('✅ AWS configuration already set');
+        return;
+    }
+    
+    // Set correct AWS configuration
+    console.log('🔧 Setting correct AWS configuration...');
+    localStorage.setItem('AWS_REGION', 'us-west-2');
+    localStorage.setItem('COGNITO_USER_POOL_ID', 'us-west-2_qJ1i9RhxD');
+    localStorage.setItem('COGNITO_APP_CLIENT_ID', '5grdn7qhf1el0ioqb6hkelr29s');
+    localStorage.setItem('API_BASE_URL', 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod');
+    
+    // Enable production mode for the extension
+    localStorage.setItem('recipeArchive.dev', 'false');
+    
+    console.log('✅ AWS configuration set successfully');
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     const container = document.createElement("div");
     container.style.cssText = "padding: 20px; min-width: 320px; font-family: Arial, sans-serif;";
@@ -181,6 +209,9 @@ async function handleSignIn() {
     showStatus("Signing in to AWS Cognito...", "#e3f2fd");
     
     try {
+        // Ensure AWS configuration is set before authentication
+        await ensureAWSConfiguration();
+        
         // Initialize CognitoAuth with configuration from CONFIG
         const cognitoConfig = CONFIG.getCognitoConfig();
         const cognitoAuth = new ChromeCognitoAuth({
