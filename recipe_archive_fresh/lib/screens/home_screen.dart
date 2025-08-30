@@ -107,6 +107,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         );
                       },
+                      onDelete: () => _deleteRecipe(recipe.id, ref, context),
                     );
                   },
                 );
@@ -199,5 +200,64 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  // Delete recipe with loading state
+  Future<void> _deleteRecipe(String recipeId, WidgetRef ref, BuildContext context) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.green),
+                  SizedBox(height: 16),
+                  Text('Deleting recipe...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Call the delete API
+      final recipeService = ref.read(recipeServiceProvider);
+      await recipeService.deleteRecipe(recipeId);
+
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recipe deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Refresh the recipes list
+        ref.invalidate(recipesProvider);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        // Close loading dialog
+        Navigator.of(context).pop();
+        
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete recipe: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
