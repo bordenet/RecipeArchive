@@ -201,11 +201,6 @@ Transform your recipe management with a complete archiving solution:
 - **Authentication:** AWS Cognito with JWT token management
 - **Storage:** S3-based JSON storage with 95% cost savings vs DynamoDB
 
-**In Development:**
-
-- **Mobile App:** Swift for iOS
-- **Web Interface:** React + TypeScript
-
 **Language Strategy:**
 
 - **Go:** Backend services, CLI tools, web scraping, high-performance operations
