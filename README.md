@@ -6,7 +6,11 @@ RecipeArchive streamlines the way you capture, organize, and access your favorit
 
 Are there commercial solutions available for this? Why yes, of course there are. (AnyList, as an example.) But this one is mine, and this is a vibe coding opportunity!
 
-## 🚀 Quick Start
+## � Security First
+
+**IMPORTANT**: This project uses environment-based configuration to ensure no credentials are hardcoded in source code. Before running any components, you must configure your environment variables.
+
+## �🚀 Quick Start
 
 ### One-Command Setup
 
@@ -17,7 +21,9 @@ cd RecipeArchive
 
 # 🔒 SECURITY FIRST: Set up environment variables
 cp .env.template .env
-# Edit .env with your actual credentials (NEVER commit this file!)
+cp web_app/.env.template web_app/.env
+cp extensions/.env.template extensions/.env
+# Edit ALL .env files with your actual credentials (NEVER commit .env files!)
 
 # Environment validation (quick check)
 npm run validate  # Checks Node.js, Go, Git, and project structure
@@ -27,6 +33,15 @@ npm test  # Runs complete 8-tier quality gate system including Flutter
 # OR run directly: ./validate-monorepo.sh
 ```
 
+### 🔧 Environment Configuration
+
+See [Environment Setup Guide](docs/setup/ENVIRONMENT_SETUP.md) for detailed configuration instructions.
+
+**Required for all components:**
+- AWS Cognito credentials
+- API Gateway endpoints  
+- Test user credentials (development only)
+
 ### 🌐 Flutter Web App Quick Start
 
 The Recipe Archive web application is built with Flutter and provides a modern, responsive interface for managing your recipe collection.
@@ -34,6 +49,8 @@ The Recipe Archive web application is built with Flutter and provides a modern, 
 ```bash
 # Navigate to the web app directory
 cd web_app
+
+# Ensure .env file is configured (see above)
 
 # Install Flutter dependencies
 flutter pub get

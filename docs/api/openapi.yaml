@@ -1,0 +1,506 @@
+openapi: 3.1.0
+info:
+  title: Recipe Archive API
+  description: |
+    Recipe Archive API for managing recipes, user authentication, and data operations.
+    
+    **CRITICAL**: This documentation MUST be maintained in sync with actual API implementations.
+    Any changes to endpoints, parameters, or responses MUST be immediately reflected here.
+  version: 1.0.0
+  contact:
+    name: Recipe Archive Team
+  license:
+    name: MIT
+
+servers:
+  - url: https://{api-gateway-domain}/prod
+    description: Production API Gateway
+    variables:
+      api-gateway-domain:
+        default: your-api-gateway-domain
+        description: AWS API Gateway domain
+  - url: http://localhost:8080
+    description: Local development server
+
+security:
+  - CognitoAuth: []
+
+components:
+  securitySchemes:
+    CognitoAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: AWS Cognito JWT token
+
+  schemas:
+    Recipe:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique recipe identifier
+        userId:
+          type: string
+          description: ID of user who created the recipe
+        title:
+          type: string
+          maxLength: 200
+          description: Recipe title
+        description:
+          type: string
+          maxLength: 1000
+          description: Recipe description
+        mainPhotoUrl:
+          type: string
+          format: uri
+          description: URL to main recipe photo
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeIngredient'
+        instructions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeInstruction'
+        totalTimeMinutes:
+          type: integer
+          minimum: 1
+          maximum: 1440
+          description: Total cooking time in minutes
+        servings:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of servings
+        cuisine:
+          type: string
+          maxLength: 50
+          description: Cuisine type
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 30
+          maxItems: 10
+          description: Recipe tags
+        dateCreated:
+          type: string
+          format: date-time
+          description: Recipe creation timestamp
+        dateModified:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+        isPublic:
+          type: boolean
+          default: false
+          description: Whether recipe is publicly visible
+
+    RecipeIngredient:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          maxLength: 200
+          description: Ingredient description
+
+    RecipeInstruction:
+      type: object
+      required:
+        - stepNumber
+        - text
+      properties:
+        stepNumber:
+          type: integer
+          minimum: 1
+          description: Step number in sequence
+        text:
+          type: string
+          maxLength: 500
+          description: Instruction text
+
+    RecipeList:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        cursor:
+          type: string
+          description: Cursor for next page
+        hasMore:
+          type: boolean
+          description: Whether more results exist
+        limit:
+          type: integer
+          description: Current page size
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        checks:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [pass, fail]
+              message:
+                type: string
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Check API health and status
+      tags:
+        - Health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/recipes:
+    get:
+      summary: List recipes
+      description: Retrieve a paginated list of recipes
+      tags:
+        - Recipes
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of recipes to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: Pagination cursor
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search query for recipe titles and descriptions
+          schema:
+            type: string
+            maxLength: 100
+        - name: tags
+          in: query
+          description: Comma-separated list of tags to filter by
+          schema:
+            type: string
+        - name: cuisine
+          in: query
+          description: Cuisine type to filter by
+          schema:
+            type: string
+            maxLength: 50
+        - name: userId
+          in: query
+          description: Filter by user ID (admin only)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of recipes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeList'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create new recipe
+      description: Create a new recipe
+      tags:
+        - Recipes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 1000
+                mainPhotoUrl:
+                  type: string
+                  format: uri
+                ingredients:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RecipeIngredient'
+                instructions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RecipeInstruction'
+                totalTimeMinutes:
+                  type: integer
+                  minimum: 1
+                  maximum: 1440
+                servings:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                cuisine:
+                  type: string
+                  maxLength: 50
+                tags:
+                  type: array
+                  items:
+                    type: string
+                    maxLength: 30
+                  maxItems: 10
+                isPublic:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Recipe created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Invalid recipe data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/recipes/{recipeId}:
+    get:
+      summary: Get recipe by ID
+      description: Retrieve a specific recipe by its ID
+      tags:
+        - Recipes
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recipe details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '404':
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update recipe
+      description: Update an existing recipe (owner only)
+      tags:
+        - Recipes
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 1000
+                mainPhotoUrl:
+                  type: string
+                  format: uri
+                ingredients:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RecipeIngredient'
+                instructions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RecipeInstruction'
+                totalTimeMinutes:
+                  type: integer
+                  minimum: 1
+                  maximum: 1440
+                servings:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                cuisine:
+                  type: string
+                  maxLength: 50
+                tags:
+                  type: array
+                  items:
+                    type: string
+                    maxLength: 30
+                  maxItems: 10
+                isPublic:
+                  type: boolean
+      responses:
+        '200':
+          description: Recipe updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Invalid recipe data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not recipe owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete recipe
+      description: Delete a recipe (owner only)
+      tags:
+        - Recipes
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Recipe deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not recipe owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Recipes
+    description: Recipe management operations

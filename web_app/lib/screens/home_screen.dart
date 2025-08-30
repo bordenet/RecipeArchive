@@ -289,7 +289,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                recipe.description?.toLowerCase().contains(query) == true ||
                recipe.ingredients.any((ingredient) => 
                  ingredient.toLowerCase().contains(query)) ||
-               recipe.tags.any((tag) => 
+               recipe.tagsOrEmpty.any((tag) => 
                  tag.toLowerCase().contains(query)) ||
                recipe.cuisine?.toLowerCase().contains(query) == true;
       }).toList();
@@ -307,7 +307,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (selectedTags != null && selectedTags.isNotEmpty) {
       filtered = filtered.where((recipe) {
         return selectedTags.every((tag) =>
-          recipe.tags.any((recipeTag) => 
+          recipe.tagsOrEmpty.any((recipeTag) => 
             recipeTag.toLowerCase() == tag.toLowerCase()));
       }).toList();
     }
@@ -315,7 +315,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Apply favorites filter
     final showFavoritesOnly = filters['favoritesOnly'] as bool?;
     if (showFavoritesOnly == true) {
-      filtered = filtered.where((recipe) => recipe.isFavorite).toList();
+      filtered = filtered.where((recipe) => recipe.isFavoriteOrFalse).toList();
     }
 
     // Apply time filter

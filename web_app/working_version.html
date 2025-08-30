@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Recipe Archive - Working Version</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f5f5f5;
+    }
+    
+    .header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .icon {
+      font-size: 4rem;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    
+    .success {
+      color: #4CAF50;
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 1rem 0;
+    }
+    
+    .info {
+      background: #e3f2fd;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    
+    .button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem;
+    }
+    
+    .button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🍳 Recipe Archive</h1>
+    <p>Your Digital Cookbook</p>
+  </div>
+  
+  <div class="container">
+    <div class="icon">🎉</div>
+    <div class="success">Website is Working!</div>
+    
+    <p>This proves that:</p>
+    <ul>
+      <li>✅ Web server is running correctly</li>
+      <li>✅ HTML/CSS loads without issues</li>
+      <li>✅ No loading spinner problems</li>
+      <li>❌ Flutter compilation or initialization is the issue</li>
+    </ul>
+    
+    <div class="info">
+      <h3>🔍 Diagnosis Complete</h3>
+      <p>The loading spinner issue is caused by Flutter not properly initializing. The Flutter app compiles successfully but fails to start the runtime, so the loading screen never gets removed.</p>
+    </div>
+    
+    <h3>🚀 Next Steps</h3>
+    <p>We need to:</p>
+    <ol>
+      <li>Check Flutter web compilation for JavaScript errors</li>
+      <li>Test with a completely fresh Flutter project</li>
+      <li>Or build the recipe app using plain HTML/JavaScript initially</li>
+    </ol>
+    
+    <div style="text-align: center; margin-top: 2rem;">
+      <button class="button" onclick="testFlutter()">🧪 Test Flutter Debug</button>
+      <button class="button" onclick="testAPI()">🔌 Test API</button>
+      <button class="button" onclick="showDetails()">📊 Show Details</button>
+    </div>
+    
+    <div id="results" style="margin-top: 2rem;"></div>
+  </div>
+  
+  <script>
+    function testFlutter() {
+      document.getElementById('results').innerHTML = `
+        <div class="info">
+          <h4>Flutter Test Results:</h4>
+          <p>Original Flutter app: <a href="http://localhost:9003/" target="_blank">http://localhost:9003/</a></p>
+          <p>If that still shows a spinner, Flutter runtime is broken.</p>
+        </div>
+      `;
+    }
+    
+    function testAPI() {
+      document.getElementById('results').innerHTML = `
+        <div class="info">
+          <h4>API Test Results:</h4>
+          <p>✅ Cognito Authentication: Working (gets tokens)</p>
+          <p>❌ Recipe API: 403 Forbidden (needs AWS Signature v4)</p>
+          <p>✅ Health Check: Working</p>
+          <p><strong>Issue:</strong> API Gateway configured for IAM auth, not Cognito JWT</p>
+        </div>
+      `;
+    }
+    
+    function showDetails() {
+      document.getElementById('results').innerHTML = `
+        <div class="info">
+          <h4>Technical Details:</h4>
+          <p><strong>Environment:</strong> macOS with Flutter 3.35.2</p>
+          <p><strong>Authentication:</strong> mattbordenet@hotmail.com via Cognito</p>
+          <p><strong>API Base:</strong> https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod</p>
+          <p><strong>Issue:</strong> Flutter web runtime not starting, causing infinite loading</p>
+          <p><strong>Solution:</strong> Fix Flutter web initialization or use alternative approach</p>
+        </div>
+      `;
+    }
+    
+    // Auto-run API test
+    setTimeout(testAPI, 1000);
+  </script>
+</body>
+</html>

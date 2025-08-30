@@ -1,5 +1,7 @@
 // Configuration for Recipe Archive Browser Extensions
 // This handles switching between local development and production AWS endpoints
+// SECURITY: Uses environment-based configuration to avoid hardcoded credentials
+
 type Environment = "development" | "production";
 type APIConfig = {
   base: string;
@@ -19,6 +21,26 @@ type Status = {
   isLocal: boolean;
 };
 
+// Environment configuration loader for TypeScript
+function loadEnvironmentConfig() {
+  return {
+    COGNITO_USER_POOL_ID: typeof localStorage !== "undefined" 
+      ? localStorage.getItem('COGNITO_USER_POOL_ID') || 'CONFIGURE_ME'
+      : 'CONFIGURE_ME',
+    COGNITO_APP_CLIENT_ID: typeof localStorage !== "undefined"
+      ? localStorage.getItem('COGNITO_APP_CLIENT_ID') || 'CONFIGURE_ME'
+      : 'CONFIGURE_ME',
+    AWS_REGION: typeof localStorage !== "undefined"
+      ? localStorage.getItem('AWS_REGION') || 'us-west-2'
+      : 'us-west-2',
+    API_BASE_URL: typeof localStorage !== "undefined"
+      ? localStorage.getItem('API_BASE_URL') || 'CONFIGURE_ME'
+      : 'CONFIGURE_ME'
+  };
+}
+
+const envConfig = loadEnvironmentConfig();
+
 export const CONFIG = {
   ENVIRONMENT: (function determineEnvironment() {
     const isDevelopment = typeof localStorage !== "undefined" && localStorage.getItem("recipeArchive.dev") !== "false";
@@ -33,17 +55,17 @@ export const CONFIG = {
       health: "http://localhost:8080/health"
     },
     production: {
-      base: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod",
-      recipes: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/v1/recipes",
-      diagnostics: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/v1/diagnostics",
-      health: "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod/health"
+      base: envConfig.API_BASE_URL,
+      recipes: `${envConfig.API_BASE_URL}/v1/recipes`,
+      diagnostics: `${envConfig.API_BASE_URL}/v1/diagnostics`,
+      health: `${envConfig.API_BASE_URL}/health`
     }
   } as Record<Environment, APIConfig>,
 
   COGNITO: {
-    region: "us-west-2",
-    userPoolId: "us-west-2_qJ1i9RhxD",
-    clientId: "5grdn7qhf1el0ioqb6hkelr29s"
+    region: envConfig.AWS_REGION,
+    userPoolId: envConfig.COGNITO_USER_POOL_ID,
+    clientId: envConfig.COGNITO_APP_CLIENT_ID
   },
 
   DEFAULT_TEST_USER: {
