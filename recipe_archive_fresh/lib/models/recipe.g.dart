@@ -27,6 +27,10 @@ Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(
   title: json['title'] as String,
   description: json['description'] as String?,
   imageUrl: json['mainPhotoUrl'] as String?,
+  sourceUrl: json['sourceUrl'] as String?,
+  sourceName: json['sourceName'] as String?,
+  difficulty: json['difficulty'] as String?,
+  prepTime: (json['prepTime'] as num?)?.toInt(),
   ingredients:
       (json['ingredients'] as List<dynamic>?)
           ?.map((e) => RecipeIngredient.fromJson(e as Map<String, dynamic>))
@@ -57,6 +61,10 @@ Map<String, dynamic> _$RecipeToJson(Recipe instance) => <String, dynamic>{
   'title': instance.title,
   'description': instance.description,
   'mainPhotoUrl': instance.imageUrl,
+  'sourceUrl': instance.sourceUrl,
+  'sourceName': instance.sourceName,
+  'difficulty': instance.difficulty,
+  'prepTime': instance.prepTime,
   'ingredients': instance.ingredients,
   'instructions': instance.instructions,
   'totalTimeMinutes': instance.cookingTime,
