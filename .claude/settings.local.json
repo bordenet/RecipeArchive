@@ -94,7 +94,9 @@
       "Bash(./start.sh:*)",
       "Bash(flutter packages pub run:*)",
       "Bash(./scripts/extension-helper.sh:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []
