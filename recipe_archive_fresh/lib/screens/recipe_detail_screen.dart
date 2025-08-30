@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
 
   const RecipeDetailScreen({
     super.key,
     required this.recipe,
   });
+
+  @override
+  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  late int currentServings;
+
+  @override
+  void initState() {
+    super.initState();
+    currentServings = widget.recipe.servings ?? 4;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +35,7 @@ class RecipeDetailScreen extends StatelessWidget {
             foregroundColor: Colors.white,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                recipe.title,
+                widget.recipe.title,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -35,11 +48,11 @@ class RecipeDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              background: recipe.imageUrl != null
+              background: widget.recipe.imageUrl != null
                   ? Stack(
                       children: [
                         Image.network(
-                          recipe.imageUrl!,
+                          widget.recipe.imageUrl!,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
@@ -90,24 +103,28 @@ class RecipeDetailScreen extends StatelessWidget {
                       // Cooking Time
                       _buildInfoChip(
                         Icons.access_time,
-                        recipe.displayTime,
+                        widget.recipe.displayTime,
                       ),
                       
                       const SizedBox(width: 12),
                       
-                      // Servings
-                      _buildInfoChip(
-                        Icons.people,
-                        recipe.displayServings,
+                      // Servings (clickable)
+                      GestureDetector(
+                        onTap: _showServingsDialog,
+                        child: _buildInfoChip(
+                          Icons.people,
+                          '$currentServings servings',
+                          color: Colors.green,
+                        ),
                       ),
                       
                       const SizedBox(width: 12),
                       
                       // Cuisine
-                      if (recipe.cuisine != null)
+                      if (widget.recipe.cuisine != null)
                         _buildInfoChip(
                           Icons.public,
-                          recipe.cuisine!,
+                          widget.recipe.cuisine!,
                           color: Colors.green,
                         ),
                     ],
@@ -116,7 +133,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   
                   // Description
-                  if (recipe.description != null) ...[
+                  if (widget.recipe.description != null) ...[
                     Text(
                       'Description',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -125,14 +142,14 @@ class RecipeDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      recipe.description!,
+                      widget.recipe.description!,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 24),
                   ],
                   
                   // Tags
-                  if (recipe.tags.isNotEmpty) ...[
+                  if (widget.recipe.tags.isNotEmpty) ...[
                     Text(
                       'Tags',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -143,7 +160,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: recipe.tags.map((tag) => Chip(
+                      children: widget.recipe.tags.map((tag) => Chip(
                         label: Text('#$tag'),
                         backgroundColor: Colors.grey[200],
                         labelStyle: TextStyle(
@@ -162,7 +179,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...recipe.ingredients.map((ingredient) => Padding(
+                  ...widget.recipe.getScaledIngredients(currentServings).map((ingredient) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,7 +213,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...recipe.instructions.map((instruction) => Padding(
+                  ...widget.recipe.instructions.map((instruction) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,6 +254,101 @@ class RecipeDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showServingsDialog() {
+    showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        int tempServings = currentServings;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Adjust Servings'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('How many servings would you like?'),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Decrease button
+                      IconButton(
+                        onPressed: tempServings > 1 
+                          ? () => setState(() => tempServings--)
+                          : null,
+                        icon: const Icon(Icons.remove_circle_outline),
+                        iconSize: 32,
+                        color: Colors.green,
+                      ),
+                      
+                      // Current servings display
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          '$tempServings',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ),
+                      
+                      // Increase button
+                      IconButton(
+                        onPressed: tempServings < 20 
+                          ? () => setState(() => tempServings++)
+                          : null,
+                        icon: const Icon(Icons.add_circle_outline),
+                        iconSize: 32,
+                        color: Colors.green,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'servings',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(tempServings);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((newServings) {
+      if (newServings != null && newServings != currentServings) {
+        setState(() {
+          currentServings = newServings;
+        });
+      }
+    });
   }
 
   Widget _buildInfoChip(IconData icon, String text, {Color? color}) {
