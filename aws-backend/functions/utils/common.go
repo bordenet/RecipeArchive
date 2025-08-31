@@ -57,10 +57,11 @@ func NewAPIResponse(statusCode int, body interface{}) (events.APIGatewayProxyRes
 	return events.APIGatewayProxyResponse{
 		StatusCode: statusCode,
 		Headers: map[string]string{
-			"Content-Type":                 "application/json",
-			"Access-Control-Allow-Origin":  "*",
-			"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-			"Access-Control-Allow-Headers": "Content-Type, Authorization",
+			"Content-Type":                     "application/json",
+			"Access-Control-Allow-Origin":      "https://d1jcaphz4458q7.cloudfront.net",
+			"Access-Control-Allow-Methods":     "GET, POST, PUT, DELETE, OPTIONS",
+			"Access-Control-Allow-Headers":     "Content-Type, Authorization",
+			"Access-Control-Allow-Credentials": "true",
 		},
 		Body: string(bodyJSON),
 	}, nil
@@ -198,10 +199,11 @@ func HandleCORS(request events.APIGatewayProxyRequest) *APIResponse {
 		response := APIResponse{
 			StatusCode: http.StatusOK,
 			Headers: map[string]string{
-				"Access-Control-Allow-Origin":  "*",
-				"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-				"Access-Control-Allow-Headers": "Content-Type, Authorization",
-				"Access-Control-Max-Age":       "86400",
+				"Access-Control-Allow-Origin":      "https://d1jcaphz4458q7.cloudfront.net",
+				"Access-Control-Allow-Methods":     "GET, POST, PUT, DELETE, OPTIONS",
+				"Access-Control-Allow-Headers":     "Content-Type, Authorization",
+				"Access-Control-Allow-Credentials": "true",
+				"Access-Control-Max-Age":           "86400",
 			},
 			Body: "",
 		}

@@ -284,7 +284,7 @@ export class RecipeArchiveStack extends cdk.Stack {
       restApiName: `recipeArchive-api-${props.environment}`,
       description: 'RecipeArchive Backend API',
       defaultCorsPreflightOptions: {
-        allowOrigins: ['https://localhost:3000', 'https://recipearchive.com'], // Restrict origins
+        allowOrigins: ['https://localhost:3000', 'https://recipearchive.com', 'https://d1jcaphz4458q7.cloudfront.net'], // Restrict origins
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowHeaders: [
           'Content-Type',
