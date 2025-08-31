@@ -1,9 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import '../services/auth_service.dart';
 
 // Recipe service provider
-final recipeServiceProvider = Provider<RecipeService>((ref) => RecipeService());
+final recipeServiceProvider = Provider<RecipeService>((ref) {
+  final authService = ref.read(authServiceProvider);
+  return RecipeService(authService);
+});
 
 // Recipe state notifier
 class RecipeNotifier extends StateNotifier<AsyncValue<List<Recipe>>> {
@@ -128,12 +132,12 @@ class RecipeNotifier extends StateNotifier<AsyncValue<List<Recipe>>> {
     });
   }
 
-  Future<void> updatePersonalYield(String recipeId, int? yield) async {
+  Future<void> updatePersonalYield(String recipeId, int? personalYield) async {
     state.whenData((recipes) async {
       final recipeIndex = recipes.indexWhere((r) => r.id == recipeId);
       if (recipeIndex != -1) {
         final recipe = recipes[recipeIndex];
-        final updatedRecipe = recipe.copyWith(personalYield: yield);
+        final updatedRecipe = recipe.copyWith(personalYield: personalYield);
         await updateRecipe(updatedRecipe);
       }
     });
