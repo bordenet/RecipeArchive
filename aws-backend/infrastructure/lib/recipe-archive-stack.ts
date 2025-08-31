@@ -423,6 +423,43 @@ export class RecipeArchiveStack extends cdk.Stack {
       authorizer: cognitoAuthorizer,
     });
 
+    // Add Gateway Responses to include CORS headers on API Gateway error responses
+    this.api.addGatewayResponse('unauthorized', {
+      type: apigateway.ResponseType.UNAUTHORIZED,
+      responseHeaders: {
+        'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
+        'Access-Control-Allow-Credentials': `'true'`,
+        'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+      },
+    });
+
+    this.api.addGatewayResponse('access-denied', {
+      type: apigateway.ResponseType.ACCESS_DENIED,
+      responseHeaders: {
+        'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
+        'Access-Control-Allow-Credentials': `'true'`,
+        'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+      },
+    });
+
+    this.api.addGatewayResponse('default-4xx', {
+      type: apigateway.ResponseType.DEFAULT_4XX,
+      responseHeaders: {
+        'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
+        'Access-Control-Allow-Credentials': `'true'`,
+        'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+      },
+    });
+
+    this.api.addGatewayResponse('default-5xx', {
+      type: apigateway.ResponseType.DEFAULT_5XX,
+      responseHeaders: {
+        'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
+        'Access-Control-Allow-Credentials': `'true'`,
+        'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+      },
+    });
+
     // 🚨 COST MONITORING & BILLING ALERTS 🚨
 
     // SNS Topic for billing alerts
