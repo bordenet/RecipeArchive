@@ -506,6 +506,160 @@ class RecipeService {
     }
   }
 
+  // Save new recipe
+  Future<Recipe> saveRecipe(Recipe recipe) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$apiUrl/v1/recipes'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.accessToken}',
+        },
+        body: json.encode(recipe.toJson()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return Recipe.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to save recipe: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error while saving recipe: $e');
+    }
+  }
+
+  // Update existing recipe
+  Future<Recipe> updateRecipe(Recipe recipe) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('$apiUrl/v1/recipes/${recipe.id}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.accessToken}',
+        },
+        body: json.encode(recipe.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        return Recipe.fromJson(json.decode(response.body));
+      } else {
+        throw Exception('Failed to update recipe: HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error while updating recipe: $e');
+    }
+  }
+
+  // Search recipes
+  Future<List<Recipe>> searchRecipes(String query) async {
+    return await getRecipes(search: query);
+  }
+
+  // Get recipes by category
+  Future<List<Recipe>> getRecipesByCategory(String category) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final uri = Uri.parse('$apiUrl/v1/recipes').replace(
+        queryParameters: {'category': category}
+      );
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.accessToken}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> recipesJson = data['recipes'] ?? [];
+        return recipesJson.map((json) => Recipe.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load recipes by category: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Get favorite recipes
+  Future<List<Recipe>> getFavoriteRecipes() async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final uri = Uri.parse('$apiUrl/v1/recipes').replace(
+        queryParameters: {'favorites': 'true'}
+      );
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.accessToken}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> recipesJson = data['recipes'] ?? [];
+        return recipesJson.map((json) => Recipe.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load favorite recipes: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Bulk update recipes (for offline sync scenarios)
+  Future<List<Recipe>> bulkUpdateRecipes(List<Recipe> recipes) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$apiUrl/v1/recipes/bulk'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.accessToken}',
+        },
+        body: json.encode({
+          'recipes': recipes.map((r) => r.toJson()).toList(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> recipesJson = data['recipes'] ?? [];
+        return recipesJson.map((json) => Recipe.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to bulk update recipes: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error during bulk update: $e');
+    }
+  }
+
   // Delete recipe
   Future<void> deleteRecipe(String id) async {
     final user = _authService.currentUser;

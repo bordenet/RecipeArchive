@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Recipe Archive</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="create_account">Create Account</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="search_recipes">Search recipes, ingredients, cuisine...</string>
+    <string name="add_recipe">Add Recipe</string>
+    <string name="my_recipes">My Recipes</string>
+    <string name="profile">Profile</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="delete">Delete</string>
+    <string name="clear_search">Clear Search</string>
+    <string name="no_recipes_yet">No Recipes Yet</string>
+    <string name="no_search_results">No results for \"%1$s\"</string>
+    <string name="recipe_archive_description">Your personal recipe collection</string>
+    <string name="features_description">• Save recipes from any website\n• Search your collection\n• Sync across devices</string>
+</resources>

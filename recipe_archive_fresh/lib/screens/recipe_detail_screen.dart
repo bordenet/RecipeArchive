@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import 'recipe_edit_screen.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
@@ -37,6 +38,12 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
             actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _navigateToEditScreen(context),
+                tooltip: 'Edit Recipe',
+                key: const Key('banner_edit_button'),
+              ),
               IconButton(
                 icon: const Icon(Icons.delete),
                 onPressed: () => _showDeleteConfirmation(context),
@@ -586,6 +593,35 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         });
       }
     });
+  }
+
+  // Navigate to edit screen
+  Future<void> _navigateToEditScreen(BuildContext context) async {
+    final result = await Navigator.of(context).push<Recipe>(
+      MaterialPageRoute(
+        builder: (context) => RecipeEditScreen(recipe: widget.recipe),
+      ),
+    );
+
+    if (result != null) {
+      // Recipe was updated, refresh the UI
+      setState(() {
+        // The parent widget will be rebuilt with updated recipe data
+      });
+      
+      // Refresh the recipes provider
+      ref.invalidate(recipesProvider);
+      
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recipe updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildInfoChip(IconData icon, String text, {Color? color}) {

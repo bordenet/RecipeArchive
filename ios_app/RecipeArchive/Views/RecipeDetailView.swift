@@ -4,6 +4,7 @@ struct RecipeDetailView: View {
     let recipe: Recipe
     @EnvironmentObject var recipeService: RecipeService
     @State private var showingDeleteAlert = false
+    @State private var showingEditView = false
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -136,12 +137,19 @@ struct RecipeDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button("Edit") {
+                    showingEditView = true
+                }
+                
                 Button("Delete") {
                     showingDeleteAlert = true
                 }
                 .foregroundColor(.red)
             }
+        }
+        .sheet(isPresented: $showingEditView) {
+            RecipeEditView(recipe: recipe)
         }
         .alert("Delete Recipe", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {

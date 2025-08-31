@@ -5,6 +5,7 @@ struct RecipeDetailView: View {
     var isInSplitView: Bool = false
     @EnvironmentObject var recipeService: RecipeService
     @State private var showingDeleteAlert = false
+    @State private var showingEditView = false
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -108,7 +109,11 @@ struct RecipeDetailView: View {
         .navigationBarTitleDisplayMode(.never)
         .toolbar {
             if !isInSplitView {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button("Edit") {
+                        showingEditView = true
+                    }
+                    
                     Button("Delete") {
                         showingDeleteAlert = true
                     }
@@ -117,6 +122,10 @@ struct RecipeDetailView: View {
             } else {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
+                        Button("Edit Recipe") {
+                            showingEditView = true
+                        }
+                        
                         Button("Delete Recipe", role: .destructive) {
                             showingDeleteAlert = true
                         }
@@ -130,6 +139,9 @@ struct RecipeDetailView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingEditView) {
+            RecipeEditView(recipe: recipe)
         }
         .alert("Delete Recipe", isPresented: $showingDeleteAlert) {
             Button("Delete", role: .destructive) {

@@ -128,6 +128,18 @@ class Recipe {
   final String? cuisine;
   final List<String> tags;
   
+  // User feedback and notes
+  final String? personalNotes;
+  final double? personalRating; // 1-5 stars
+  final String? cookingNotes;
+  final List<String> categories; // User-defined categories
+  final bool isFavorite;
+  final int? personalYield; // User's preferred serving size
+  
+  // Modification tracking
+  final bool hasUserModifications;
+  final Map<String, dynamic>? originalData; // Store original recipe data
+  
   @JsonKey(name: 'dateCreated')
   final DateTime? createdAt;
   
@@ -150,6 +162,14 @@ class Recipe {
     this.servings,
     this.cuisine,
     this.tags = const [],
+    this.personalNotes,
+    this.personalRating,
+    this.cookingNotes,
+    this.categories = const [],
+    this.isFavorite = false,
+    this.personalYield,
+    this.hasUserModifications = false,
+    this.originalData,
     this.createdAt,
     this.updatedAt,
   });
@@ -177,4 +197,69 @@ class Recipe {
     final ratio = newServings / servings!;
     return ingredients.map((ingredient) => ingredient.scaleForServings(ratio)).toList();
   }
+  
+  // Helper method to create an edited copy of the recipe
+  Recipe copyWith({
+    String? title,
+    String? description,
+    String? imageUrl,
+    String? difficulty,
+    int? prepTime,
+    List<RecipeIngredient>? ingredients,
+    List<RecipeInstruction>? instructions,
+    int? cookingTime,
+    int? servings,
+    String? cuisine,
+    List<String>? tags,
+    String? personalNotes,
+    double? personalRating,
+    String? cookingNotes,
+    List<String>? categories,
+    bool? isFavorite,
+    int? personalYield,
+    bool? hasUserModifications,
+    DateTime? updatedAt,
+  }) {
+    return Recipe(
+      id: id,
+      userId: userId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      sourceUrl: sourceUrl,
+      sourceName: sourceName,
+      difficulty: difficulty ?? this.difficulty,
+      prepTime: prepTime ?? this.prepTime,
+      ingredients: ingredients ?? this.ingredients,
+      instructions: instructions ?? this.instructions,
+      cookingTime: cookingTime ?? this.cookingTime,
+      servings: servings ?? this.servings,
+      cuisine: cuisine ?? this.cuisine,
+      tags: tags ?? this.tags,
+      personalNotes: personalNotes ?? this.personalNotes,
+      personalRating: personalRating ?? this.personalRating,
+      cookingNotes: cookingNotes ?? this.cookingNotes,
+      categories: categories ?? this.categories,
+      isFavorite: isFavorite ?? this.isFavorite,
+      personalYield: personalYield ?? this.personalYield,
+      hasUserModifications: hasUserModifications ?? true,
+      originalData: originalData ?? toJson(),
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? DateTime.now(),
+    );
+  }
+  
+  // Check if recipe has any user modifications
+  bool get hasPersonalizations {
+    return personalNotes != null || 
+           personalRating != null || 
+           cookingNotes != null || 
+           categories.isNotEmpty || 
+           isFavorite || 
+           personalYield != null ||
+           hasUserModifications;
+  }
+  
+  // Get effective yield (user's preferred or original)
+  int get effectiveYield => personalYield ?? servings ?? 1;
 }

@@ -16,9 +16,88 @@ struct Recipe: Identifiable, Codable {
     let sourceUrl: String?
     let sourceName: String?
     
+    // User personalization fields
+    let personalNotes: String?
+    let personalRating: Double?
+    let cookingNotes: String?
+    let categories: [String]
+    let isFavorite: Bool
+    let personalYield: Int?
+    
+    // Modification tracking
+    let hasUserModifications: Bool
+    let originalData: [String: Any]?
+    let createdAt: Date?
+    let updatedAt: Date?
+    
     var totalTime: Int? {
         guard let prep = prepTime, let cook = cookingTime else { return nil }
         return prep + cook
+    }
+    
+    // Get effective yield (user's preferred or original)
+    var effectiveYield: Int {
+        return personalYield ?? servings
+    }
+    
+    // Check if recipe has any user modifications
+    var hasPersonalizations: Bool {
+        return personalNotes != nil || 
+               personalRating != nil || 
+               cookingNotes != nil || 
+               !categories.isEmpty || 
+               isFavorite || 
+               personalYield != nil ||
+               hasUserModifications
+    }
+    
+    // Helper for creating an edited copy
+    func copyWith(
+        title: String? = nil,
+        description: String? = nil,
+        ingredients: [RecipeIngredient]? = nil,
+        instructions: [RecipeInstruction]? = nil,
+        prepTime: Int? = nil,
+        cookingTime: Int? = nil,
+        servings: Int? = nil,
+        difficulty: String? = nil,
+        cuisine: String? = nil,
+        tags: [String]? = nil,
+        personalNotes: String? = nil,
+        personalRating: Double? = nil,
+        cookingNotes: String? = nil,
+        categories: [String]? = nil,
+        isFavorite: Bool? = nil,
+        personalYield: Int? = nil,
+        hasUserModifications: Bool? = nil,
+        updatedAt: Date? = nil
+    ) -> Recipe {
+        return Recipe(
+            id: self.id,
+            title: title ?? self.title,
+            description: description ?? self.description,
+            ingredients: ingredients ?? self.ingredients,
+            instructions: instructions ?? self.instructions,
+            prepTime: prepTime ?? self.prepTime,
+            cookingTime: cookingTime ?? self.cookingTime,
+            servings: servings ?? self.servings,
+            difficulty: difficulty ?? self.difficulty,
+            cuisine: cuisine ?? self.cuisine,
+            tags: tags ?? self.tags,
+            imageUrl: self.imageUrl,
+            sourceUrl: self.sourceUrl,
+            sourceName: self.sourceName,
+            personalNotes: personalNotes ?? self.personalNotes,
+            personalRating: personalRating ?? self.personalRating,
+            cookingNotes: cookingNotes ?? self.cookingNotes,
+            categories: categories ?? self.categories,
+            isFavorite: isFavorite ?? self.isFavorite,
+            personalYield: personalYield ?? self.personalYield,
+            hasUserModifications: hasUserModifications ?? true,
+            originalData: self.originalData,
+            createdAt: self.createdAt,
+            updatedAt: updatedAt ?? Date()
+        )
     }
 }
 
@@ -66,6 +145,16 @@ extension Recipe {
         tags: ["dessert", "cookies", "chocolate"],
         imageUrl: nil,
         sourceUrl: "https://example.com/chocolate-chip-cookies",
-        sourceName: "Classic Recipes"
+        sourceName: "Classic Recipes",
+        personalNotes: nil,
+        personalRating: nil,
+        cookingNotes: nil,
+        categories: [],
+        isFavorite: false,
+        personalYield: nil,
+        hasUserModifications: false,
+        originalData: nil,
+        createdAt: Date(),
+        updatedAt: nil
     )
 }
