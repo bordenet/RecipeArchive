@@ -21,14 +21,30 @@ class AuthUser {
   });
 
   factory AuthUser.fromCognitoUser(CognitoUser cognitoUser, CognitoUserSession session) {
-    final payload = session.getIdToken().decodePayload();
-    return AuthUser(
-      id: payload['sub'] ?? '',
-      email: payload['email'] ?? '',
-      username: payload['cognito:username'],
-      accessToken: session.getAccessToken().getJwtToken() ?? '',
-      idToken: session.getIdToken().getJwtToken() ?? '',
-    );
+    try {
+      final idToken = session.getIdToken();
+      final accessToken = session.getAccessToken();
+      
+      if (idToken == null || accessToken == null) {
+        throw Exception('Missing tokens in session');
+      }
+      
+      final payload = idToken.decodePayload();
+      if (payload == null) {
+        throw Exception('Failed to decode ID token payload');
+      }
+      
+      return AuthUser(
+        id: payload['sub']?.toString() ?? '',
+        email: payload['email']?.toString() ?? '',
+        username: payload['cognito:username']?.toString(),
+        accessToken: accessToken.getJwtToken() ?? '',
+        idToken: idToken.getJwtToken() ?? '',
+      );
+    } catch (e) {
+      print('Error creating AuthUser from Cognito: $e');
+      throw Exception('Failed to create AuthUser: ${e.toString()}');
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -70,15 +86,23 @@ class AuthenticationService {
   }
 
   void _initializeCognito() {
-    // Use hardcoded values as fallback if .env not loaded
-    final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_qJ1i9RhxD';
-    final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '5grdn7qhf1el0ioqb6hkelr29s';
-    
-    if (userPoolId.isEmpty || clientId.isEmpty) {
-      throw Exception('Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId');
-    }
+    try {
+      // Use hardcoded values as fallback if .env not loaded
+      final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_qJ1i9RhxD';
+      final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '5grdn7qhf1el0ioqb6hkelr29s';
+      
+      print('Initializing Cognito with poolId: $userPoolId, clientId: $clientId');
+      
+      if (userPoolId.isEmpty || clientId.isEmpty) {
+        throw Exception('Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId');
+      }
 
-    _userPool = CognitoUserPool(userPoolId, clientId);
+      _userPool = CognitoUserPool(userPoolId, clientId);
+      print('Cognito UserPool initialized successfully');
+    } catch (e) {
+      print('Error initializing Cognito: $e');
+      throw Exception('Failed to initialize Cognito: ${e.toString()}');
+    }
   }
 
   AuthUser? get currentUser => _currentUser;
@@ -139,30 +163,44 @@ class AuthenticationService {
   // Sign in with email and password
   Future<AuthUser> signIn(String email, String password) async {
     try {
+      print('Starting sign in for email: $email');
+      
+      if (_userPool == null) {
+        throw Exception('Cognito UserPool not initialized');
+      }
+      
       _cognitoUser = CognitoUser(email, _userPool);
+      print('Created CognitoUser');
       
       final authDetails = AuthenticationDetails(
         username: email,
         password: password,
       );
+      print('Created AuthenticationDetails');
       
       final cognitoUser = _cognitoUser;
       if (cognitoUser == null) {
         throw Exception('Failed to create Cognito user');
       }
       
+      print('Calling authenticateUser...');
       final session = await cognitoUser.authenticateUser(authDetails);
+      print('Authentication completed, session valid: ${session?.isValid()}');
+      
       if (session == null || !session.isValid()) {
-        throw Exception('Failed to authenticate user');
+        throw Exception('Failed to authenticate user - invalid session');
       }
       
+      print('Creating AuthUser from session...');
       _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
       final currentUser = _currentUser;
       if (currentUser == null) {
         throw Exception('Failed to create user from Cognito response');
       }
       
+      print('Storing user...');
       await _storeUser(currentUser);
+      print('Sign in completed successfully');
       return currentUser;
     } catch (e) {
       if (e is CognitoUserException) {
