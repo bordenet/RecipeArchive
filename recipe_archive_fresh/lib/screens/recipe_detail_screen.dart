@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/recipe.dart';
 import '../services/recipe_service.dart';
+import '../utils/units_converter.dart';
 import 'recipe_edit_screen.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,7 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
 
 class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   late int currentServings;
+  bool useMetricUnits = false;
 
   @override
   void initState() {
@@ -132,15 +134,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Recipe Meta Info
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
                       // Cooking Time
                       _buildInfoChip(
                         Icons.access_time,
                         widget.recipe.displayTime,
                       ),
-                      
-                      const SizedBox(width: 12),
                       
                       // Servings (clickable)
                       GestureDetector(
@@ -152,7 +154,19 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                         ),
                       ),
                       
-                      const SizedBox(width: 12),
+                      // Units Toggle (clickable)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            useMetricUnits = !useMetricUnits;
+                          });
+                        },
+                        child: _buildInfoChip(
+                          useMetricUnits ? Icons.straighten : Icons.straighten,
+                          useMetricUnits ? 'Metric' : 'Imperial',
+                          color: Colors.blue,
+                        ),
+                      ),
                       
                       // Cuisine
                       if (widget.recipe.cuisine != null)
@@ -292,29 +306,32 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...widget.recipe.getScaledIngredients(currentServings).map((ingredient) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(top: 8, right: 12),
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
+                  ...widget.recipe.getScaledIngredients(currentServings).map((ingredient) {
+                    final displayText = UnitsConverter.convertIngredient(ingredient.text, useMetricUnits);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(top: 8, right: 12),
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            ingredient.text,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                          Expanded(
+                            child: Text(
+                              displayText,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
+                        ],
+                      ),
+                    );
+                  }),
                   
                   const SizedBox(height: 24),
                   
@@ -326,38 +343,41 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...widget.recipe.instructions.map((instruction) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Center(
-                            child: Text(
-                              instruction.stepNumber.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                  ...widget.recipe.instructions.map((instruction) {
+                    final displayText = UnitsConverter.convertInstructions(instruction.text, useMetricUnits);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(
+                              child: Text(
+                                instruction.stepNumber.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            instruction.text,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                          Expanded(
+                            child: Text(
+                              displayText,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
+                        ],
+                      ),
+                    );
+                  }),
                   
                   const SizedBox(height: 32),
                 ],

@@ -4,6 +4,16 @@
 
 The RecipeArchive website provides users with a comprehensive platform to view, organize, and manage their archived recipes. It offers a clean, responsive web experience optimized for meal planning and preparation, integrating seamlessly with the AWS backend for data sync and storage.
 
+### Web App UI Component Terminology
+
+This PRD uses standardized terminology consistent with Amazon.com retail patterns:
+
+- **Landing Page**: Initial entry point when opening the web application
+- **Gallery/Carousel Page**: Main authenticated browsing experience with Netflix-style scrollable recipe carousels  
+- **Action Bar**: Green navigation bar containing search, admin controls, and carousel organization
+- **Badges**: Interactive overlay controls (hyperlinks, delete buttons, status indicators)
+- **Details Page**: Single-recipe view with editing capabilities and units conversion
+
 ### Related Product Requirements
 
 This website is the management hub of the RecipeArchive ecosystem. See related PRDs:
@@ -46,6 +56,7 @@ The website serves as the **primary management interface** for recipes captured 
 
 - **Core Content**: Recipe title, structured ingredients list, numbered step-by-step instructions
 - **Metadata Display**: Prep time, cook time, total time, servings/yield with scaling options
+- **Units Conversion Toggle**: Smart metric ↔ imperial conversion for cooking measurements (fluid ounces ↔ milliliters, cups ↔ grams, Fahrenheit ↔ Celsius)
 - **Visual Elements**: Main recipe photo with zoom capability, image optimization for web
 - **Source Attribution**: Original recipe link with favicon, publication date if available
 - **Archive Access**: View original web page backup in modal or new tab

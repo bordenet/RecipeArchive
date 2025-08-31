@@ -159,4 +159,53 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
   - Authentication tokens handle all API requests successfully
   - No proxy server needed - direct communication with backend
 
+## 📱 Web App Terminology & UX Standards
+
+### Official UI Component Definitions
+These terms are consistent with Amazon.com retail website patterns and must be used across ALL project documentation:
+
+1. **Landing Page**: The initial page displayed when opening the web app, regardless of authentication state. This serves as the entry point to the application.
+
+2. **Gallery** or **Carousel Page**: The authenticated user's main recipe browsing experience. Displays a scrollable list of recipes organized by configurable criteria:
+   - **TYPE**: breakfast | brunch | lunch | dinner | drink | dessert
+   - **DATE**: sorted by acquisition date from web extensions  
+   - **Custom Pivots**: additional organizational schemes (TBD)
+   - **Design Pattern**: Netflix/Amazon Prime Video style scrollable carousels with drop-down controls
+
+3. **Action Bar**: The green horizontal navigation bar positioned at the top of the Gallery/Carousel page. Contains:
+   - Search functionality
+   - Administrative controls (when applicable)
+   - Tenant switching for admin users (e.g., mattbordenet@hotmail.com ↔ susan.cameron42@gmail.com)
+   - Carousel organization controls (TYPE/DATE dropdowns)
+
+4. **Badges**: Interactive overlay controls positioned atop recipe items, including:
+   - Hyperlink navigation icons
+   - Delete/remove buttons
+   - Edit mode indicators
+   - Status indicators
+
+5. **Details Page**: The single-recipe view displayed when clicking on a specific recipe from the Gallery/Carousel. Contains:
+   - Full recipe content (ingredients, instructions, images)
+   - Editing capabilities
+   - Units conversion toggle (metric ↔ imperial)
+   - Serving size adjustments
+   - Original source links
+
+### UX Implementation Standards
+- **Responsive Design**: All components must work across desktop, tablet, and mobile viewports
+- **Accessibility**: WCAG 2.1 AA compliance for all interactive elements
+- **Performance**: Lazy loading for recipe images and content
+- **Consistency**: Material Design 3 theming across all components
+
+## 🚀 DEPLOYMENT REQUIREMENTS
+
+### CloudFront Production Updates
+**MANDATORY**: ALWAYS push Flutter web app updates to CloudFront distribution when pushing changes to GitHub:
+1. Build Flutter web app: `flutter build web --release`
+2. Deploy to S3: `aws s3 sync build/web/ s3://recipearchive-web-app-prod-990537043943/ --delete`
+3. Invalidate cache: `aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"`
+
+**Production URL**: https://d1jcaphz4458q7.cloudfront.net
+**S3 Fallback**: http://recipearchive-web-app-prod-990537043943.s3-website-us-west-2.amazonaws.com/
+
 *See README.md and docs/ for detailed architecture and requirements.*

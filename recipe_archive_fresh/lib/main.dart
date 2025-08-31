@@ -9,9 +9,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: "../.env");
   } catch (e) {
     // Warning: Could not load .env file: $e
+    // Fallback: try loading from current directory
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e2) {
+      // No .env file available - will use default values
+      print("Warning: No .env file found, using default configuration");
+    }
   }
   
   runApp(

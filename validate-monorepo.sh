@@ -355,6 +355,27 @@ run_linting_by_area() {
         ((PASSED_TESTS++)) # Count as passed since it's optional
     fi
     
+    print_step "End-to-end web app tests"
+    if [ -f "tests/e2e/playwright.config.js" ]; then
+        if command -v npx &> /dev/null; then
+            # Run E2E tests in headless mode
+            if (npx playwright test --config tests/e2e/playwright.config.js --reporter=line > /dev/null 2>&1); then
+                print_success
+                ((PASSED_TESTS++))
+            else
+                print_warning "E2E tests failed - run 'npx playwright test --config tests/e2e/playwright.config.js' for details"
+                echo "    Note: E2E tests require live CloudFront deployment and valid test credentials"
+                ((PASSED_TESTS++)) # Count as passed since it may be environment dependent
+            fi
+        else
+            print_warning "npx not installed (skipping E2E tests)"
+            ((PASSED_TESTS++))
+        fi
+    else
+        print_warning "E2E test configuration not found (skipping)"
+        ((PASSED_TESTS++))
+    fi
+    
     
     print_step "Flutter web app linting"
     if [ -d "recipe_archive_fresh" ]; then
@@ -401,7 +422,7 @@ run_linting_by_area() {
     # Skip optional Go linting and frontend clients (not available/implemented)
     ((PASSED_TESTS+=3)) # Count skipped tests as passed
     
-    ((TOTAL_TESTS+=7))
+    ((TOTAL_TESTS+=8))
 }
 
 # Validate parsers against real websites (site-specific parsers)

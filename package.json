@@ -64,5 +64,19 @@
     "playwright-extra": "^4.3.6",
     "playwright-extra-plugin-stealth": "^0.0.1",
     "ts-node": "^10.9.2"
-  }
+  },
+  "main": ".eslintrc.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bordenet/RecipeArchive.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/bordenet/RecipeArchive/issues"
+  },
+  "homepage": "https://github.com/bordenet/RecipeArchive#readme"
 }

@@ -4,6 +4,15 @@
 
 The RecipeArchive iOS app enables users to access, manage, and interact with their recipe library on iPhone and iPad. It provides offline access, seamless sync with the AWS backend, and a native iOS experience optimized for meal planning and preparation.
 
+### Mobile App UI Component Terminology
+
+This PRD uses standardized terminology consistent with the web application:
+
+- **Gallery/Carousel Page**: Main recipe browsing interface with scrollable collections
+- **Action Bar**: Navigation bar containing search and organizational controls  
+- **Badges**: Interactive overlay elements (favorites, delete, edit indicators)
+- **Details Page**: Single-recipe view with full content and editing capabilities
+
 ### Related Product Requirements
 
 This iOS app is part of the integrated RecipeArchive platform. See related PRDs:
@@ -40,6 +49,7 @@ The iOS app provides **mobile-optimized access** to recipes captured via browser
 
 - **Core Content**: Title, ingredients list, step-by-step instructions
 - **Metadata**: Prep time, cook time, total time, servings/yield
+- **Units Conversion Toggle**: Smart metric ↔ imperial conversion for cooking measurements (fluid ounces ↔ milliliters, cups ↔ grams, Fahrenheit ↔ Celsius)
 - **Visual Elements**: Main recipe photo, source attribution with link
 - **Archive Access**: View original web page backup when available
 - **Clean Layout**: Optimized for cooking reference with large text and clear sections

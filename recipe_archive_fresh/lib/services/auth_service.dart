@@ -70,11 +70,12 @@ class AuthenticationService {
   }
 
   void _initializeCognito() {
-    final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? '';
-    final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '';
+    // Use hardcoded values as fallback if .env not loaded
+    final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_qJ1i9RhxD';
+    final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '5grdn7qhf1el0ioqb6hkelr29s';
     
     if (userPoolId.isEmpty || clientId.isEmpty) {
-      throw Exception('Missing Cognito configuration in .env file');
+      throw Exception('Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId');
     }
 
     _userPool = CognitoUserPool(userPoolId, clientId);
@@ -92,25 +93,38 @@ class AuthenticationService {
         _currentUser = AuthUser.fromJson(userData);
         
         // Verify the session is still valid
-        _cognitoUser = CognitoUser(_currentUser!.email, _userPool);
-        final session = await _cognitoUser!.getSession();
+        final currentUser = _currentUser;
+        if (currentUser != null && currentUser.email.isNotEmpty) {
+          _cognitoUser = CognitoUser(currentUser.email, _userPool);
+          final session = await _cognitoUser?.getSession();
         
-        if (session != null && session.isValid()) {
-          // Update stored user with fresh tokens if needed
-          _currentUser = AuthUser.fromCognitoUser(_cognitoUser!, session);
-          await _storeUser(_currentUser!);
-          return true;
+          if (session != null && session.isValid()) {
+            // Update stored user with fresh tokens if needed
+            final cognitoUser = _cognitoUser;
+            if (cognitoUser != null) {
+              _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
+              final updatedUser = _currentUser;
+              if (updatedUser != null) {
+                await _storeUser(updatedUser);
+                return true;
+              }
+            }
+          }
         }
       }
       
       // Try to get current authenticated user from Cognito
       _cognitoUser = await _userPool.getCurrentUser();
-      if (_cognitoUser != null) {
-        final session = await _cognitoUser!.getSession();
+      final cognitoUser = _cognitoUser;
+      if (cognitoUser != null) {
+        final session = await cognitoUser.getSession();
         if (session != null && session.isValid()) {
-          _currentUser = AuthUser.fromCognitoUser(_cognitoUser!, session);
-          await _storeUser(_currentUser!);
-          return true;
+          _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
+          final currentUser = _currentUser;
+          if (currentUser != null) {
+            await _storeUser(currentUser);
+            return true;
+          }
         }
       }
       
@@ -132,15 +146,24 @@ class AuthenticationService {
         password: password,
       );
       
-      final session = await _cognitoUser!.authenticateUser(authDetails);
+      final cognitoUser = _cognitoUser;
+      if (cognitoUser == null) {
+        throw Exception('Failed to create Cognito user');
+      }
+      
+      final session = await cognitoUser.authenticateUser(authDetails);
       if (session == null || !session.isValid()) {
         throw Exception('Failed to authenticate user');
       }
       
-      _currentUser = AuthUser.fromCognitoUser(_cognitoUser!, session);
-      await _storeUser(_currentUser!);
+      _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
+      final currentUser = _currentUser;
+      if (currentUser == null) {
+        throw Exception('Failed to create user from Cognito response');
+      }
       
-      return _currentUser!;
+      await _storeUser(currentUser);
+      return currentUser;
     } catch (e) {
       if (e is CognitoUserException) {
         final message = e.message ?? 'Authentication failed';
@@ -221,8 +244,9 @@ class AuthenticationService {
   // Sign out
   Future<void> signOut() async {
     try {
-      if (_cognitoUser != null) {
-        await _cognitoUser!.signOut();
+      final cognitoUser = _cognitoUser;
+      if (cognitoUser != null) {
+        await cognitoUser.signOut();
       }
       await _clearStoredUser();
       _cognitoUser = null;
