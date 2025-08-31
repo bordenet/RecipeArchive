@@ -288,13 +288,74 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 - **Lambda**: Memory optimization and timeout controls
 - **API Gateway**: Request throttling and quota management
 
+## New Feature Requirements
+
+### OpenAI Content Normalization at Ingestion
+
+**Integration Point**: Recipe processing pipeline between parsing and storage
+
+**Core Requirements:**
+- **Content Enhancement**: Standardize recipe titles, ingredient formats, instruction clarity
+- **Metadata Inference**: Auto-detect cuisine types, cooking methods, dietary information
+- **Quality Scoring**: Rate normalization quality with fallback to original content
+- **Cost Management**: Rate limiting, budget controls, and batch processing capabilities
+
+**API Extensions:**
+- **POST** `/v1/recipes/normalize` - On-demand recipe normalization
+- **GET** `/v1/recipes/{id}/normalization-history` - View normalization details
+- **PUT** `/v1/recipes/{id}/revert-normalization` - Restore original content
+
+**Lambda Functions:**
+- `ContentNormalizer`: OpenAI integration for recipe enhancement
+- `NormalizationValidator`: Quality validation and fallback logic
+- `CostTracker`: Monitor OpenAI API usage and costs
+
+### Failed Parse Workflow Enhancement
+
+**Mobile Integration Pipeline**: Route failed parsing attempts to mobile applications
+
+**Enhanced Diagnostic Collection:**
+- **Structured Failure Analysis**: Categorize failure types and provide actionable feedback
+- **Recovery Workflow**: Convert failed parses to manual recipe entry opportunities
+- **Parser Improvement Pipeline**: Track parsing success improvements over time
+
+**New API Endpoints:**
+- **GET** `/v1/diagnostics/failed-parses` - List user's failed parsing attempts
+- **POST** `/v1/diagnostics/{id}/convert-manual` - Convert failed parse to manual entry
+- **GET** `/v1/diagnostics/parsing-improvements` - Show site parsing success rates
+
+**Mobile App Integration:**
+- Failed parse notifications and management screens
+- One-click conversion to manual recipe entry
+- Progress tracking for parser improvements
+
+### Multi-Tenant Administration System
+
+**Admin Role Management**: System administrator capabilities across all tenant accounts
+
+**Core Admin Features:**
+- **Tenant Management**: Create, configure, and manage tenant accounts
+- **User Administration**: Cross-tenant user management and support tools
+- **System Monitoring**: Health dashboards and performance analytics across all tenants
+- **Content Management**: Bulk operations and data migration tools
+
+**Admin API Endpoints:**
+- **GET** `/admin/v1/tenants` - List all tenant accounts
+- **POST** `/admin/v1/tenants` - Create new tenant with full infrastructure provisioning
+- **GET** `/admin/v1/users/{userId}/cross-tenant` - Admin view of user across tenants
+- **POST** `/admin/v1/bulk-operations` - Execute bulk operations across tenants
+
+**Security Requirements:**
+- **Role-Based Access**: System admin (`mattbordenet@hotmail.com`) vs tenant-scoped access
+- **Audit Logging**: Comprehensive logging of all admin actions
+- **Data Isolation**: Strict tenant boundary enforcement with admin override capability
+
 ## Out of Scope (MVP)
 
-- Advanced analytics or reporting dashboards
-- Social/sharing features or multi-user recipe access
-- Admin dashboard or user management tools
+- Advanced analytics or reporting dashboards beyond admin monitoring
+- Social/sharing features or multi-user recipe access within tenants
 - Real-time collaborative editing
-- Advanced search (full-text indexing with OpenSearch)
+- Advanced search (full-text indexing with OpenSearch) - phase 2 feature
 
 ## Success Metrics
 

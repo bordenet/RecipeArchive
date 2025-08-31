@@ -105,8 +105,9 @@ class SecurityValidator {
       serving: /\d+\s*(servings?|cookies?)/i
     };
   }
+}
 
-// Add static methods for compatibility
+// Add static methods for compatibility  
 SecurityValidator.limits = {
   title: 200,
   description: 1000,
@@ -116,7 +117,7 @@ SecurityValidator.limits = {
 
 SecurityValidator.patterns = {
   email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
-  url: /^https?:\/\/.+/, 
+  url: /^https?:\/\/.+/,
   time: /\d+\s*(minutes?|hours?)/i,
   serving: /\d+\s*(servings?|cookies?)/i
 };

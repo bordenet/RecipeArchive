@@ -144,25 +144,19 @@ The website serves as the **primary management interface** for recipes captured 
 
 ### Frontend Framework Options
 
-**OPTION A: React/Next.js Stack (Original Plan)**
-- **React 18**: Component-based architecture with TypeScript
-- **Next.js**: Server-side rendering and static site generation
-- **Tailwind CSS**: Utility-first CSS framework for responsive design
-- **React Query**: Server state management and caching
+**Current Technology Stack: Flutter Web (Production Ready)**
+- **Flutter Web**: Cross-platform framework providing web, iOS, and Android support
+- **Dart Language**: Type-safe language with excellent development tooling
+- **Material Design 3**: Modern design system with adaptive theming
+- **Riverpod**: State management solution for recipe data and sync
+- **HTTP Client**: Native AWS API integration for backend connectivity
+- **Local Storage**: Browser-based storage for offline recipe access
 
-**OPTION B: Dart/Flutter Web (Cross-Platform Strategy) - UNDER EVALUATION**
-- **Flutter Web**: Single codebase for web, iOS, and Android platforms
-- **Dart Language**: Type-safe language with excellent tooling
-- **Material Design**: Built-in design system with platform adaptations
-- **Provider/Riverpod**: State management for recipe data and sync
-- **HTTP Client**: Built-in support for AWS API integration
-- **Hive/SQLite**: Local storage for offline recipe access
-
-**Technology Decision Status**: Evaluating Option B for significant cross-platform advantages:
-- **Single Codebase**: Web + iOS + Android from one Flutter project
-- **Development Velocity**: Hot reload, unified testing, shared business logic
-- **Platform Native Feel**: Material Design (Android) + Cupertino (iOS) automatically
-- **Timeline**: 1-2 weeks learning curve, potential for faster overall development
+**Implementation Benefits Realized**:
+- **Single Codebase**: Web, iOS, iPad, and Android apps from unified Flutter/native architecture
+- **Development Velocity**: Hot reload development, comprehensive testing, shared business logic
+- **Platform Optimization**: Material Design (Android) + Cupertino (iOS) + responsive web design
+- **Production Status**: All applications deployed and production-ready
 
 ### Performance & PWA
 
@@ -171,16 +165,62 @@ The website serves as the **primary management interface** for recipes captured 
 - **Bundle Analysis**: Webpack Bundle Analyzer for optimization
 - **Lighthouse**: Automated performance and accessibility auditing
 
+## New Feature Requirements
+
+### Enhanced Mobile Application Editing
+**Comprehensive Recipe Management**: Full CRUD operations across all mobile platforms
+
+**Implementation Status:**
+- **Flutter Web**: Complete recipe editing with 4-tab interface (Basic Info, Ingredients, Instructions, Personal)
+- **Native iOS**: SwiftUI-based editing with comprehensive personalization features
+- **Native iPad**: Split-view optimized editing interface with tablet-specific UX
+- **Native Android**: Jetpack Compose editing with Material 3 design patterns
+
+**Key Features:**
+- **Personal Categories**: User-defined recipe categorization and tagging
+- **Recipe Rating**: 5-star personal rating system with clear buttons
+- **Cooking Notes**: Personal modifications and cooking tips storage
+- **Yield Adjustment**: Personal preferred serving size management
+- **Favorite Recipes**: Toggle system for recipe favorites across all platforms
+
+### Failed Parse Recovery Workflow
+**User-Friendly Failed Parse Management**: Convert parsing failures into manual entry opportunities
+
+**Mobile Integration Features:**
+- **Failed Parse Dashboard**: Dedicated screen showing failed parsing attempts with actionable options
+- **Manual Entry Conversion**: One-click conversion from failed parse to manual recipe form with pre-populated data
+- **Parser Improvement Notifications**: User feedback when parsing improves for previously failed sites
+- **Progress Tracking**: Visual indicators showing parsing success rate improvements over time
+
+### OpenAI Content Normalization
+**Intelligent Recipe Enhancement**: AI-powered content improvement at ingestion time
+
+**User-Visible Features:**
+- **Quality Indicators**: Visual badges showing normalization quality scores (1-10 scale)
+- **Normalization Details**: Expandable sections showing specific improvements made to recipes
+- **Enhanced Search**: Improved searchability from normalized ingredient names and standardized formats
+- **Metadata Display**: Show inferred cuisine types, dietary information, difficulty levels, and cooking methods
+- **User Controls**: Option to view original vs. normalized content with toggle functionality
+
+### Multi-Tenant Administration (Admin Users Only)
+**System Administration Capabilities**: Admin interface for managing multiple tenant accounts
+
+**Admin-Only Features:**
+- **Tenant Management**: Create, configure, and monitor tenant accounts across the system
+- **User Administration**: Cross-tenant user management and support tools with proper access controls
+- **System Health Monitoring**: Real-time dashboards showing performance metrics across all tenants
+- **Content Management**: Bulk operations for recipe migration and data management tasks
+
 ## Out of Scope (MVP)
 
-- Social features, recipe sharing between users, or commenting system
+- Social features, recipe sharing between users, or commenting system beyond admin capabilities
 - Advanced meal planning, calendar integration, or scheduled cooking
-- Shopping list generation or grocery store integration
+- Shopping list generation or grocery store integration beyond manual entry
 - Recipe discovery from external sources or recommendation engine
-- Nutritional analysis, dietary tracking, or health integration
-- Recipe rating and review system
+- Nutritional analysis, dietary tracking, or health integration beyond basic dietary flags
+- Recipe rating and review system beyond personal ratings
 - Multi-language support (English only for MVP)
-- Advanced recipe collections or cookbook creation
+- Advanced recipe collections or cookbook creation beyond personal categories
 
 ## Success Metrics
 

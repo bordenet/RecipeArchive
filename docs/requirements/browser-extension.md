@@ -466,18 +466,30 @@ Once authenticated, the popup interface must display:
 - **Recipe library search within saved recipes**
 - AWS Cognito authentication from day 1
 
-### 6.2 Explicitly Excluded (The "Not Now" List)
+### 6.2 New Feature Requirements
 
-- Advanced post-save editing
+**Enhanced Failed Parse Workflow Integration:**
+- **Failed Parse Management**: Visual indicators in extension popup for failed parsing attempts
+- **Manual Entry Conversion**: One-click conversion from failed parse to manual recipe entry
+- **Parser Improvement Notifications**: In-extension alerts when parsing improves for previously failed sites
+
+**OpenAI Content Enhancement Integration:**
+- **Normalization Status**: Visual badges showing recipe normalization quality scores
+- **Content Improvement**: Automatic enhancement of parsed recipe titles, ingredients, and instructions
+- **Metadata Enhancement**: Display of inferred cuisine types, dietary information, and cooking methods
+
+### 6.3 Explicitly Excluded (The "Not Now" List)
+
+- Advanced post-save editing beyond normalization
 - Meal planning/calendar features
 - Shopping list generation
 - Social features (sharing, comments)
 - **External recipe discovery and recommendations**
 - **Recipe search from external sources or databases**
-- User-generated content (notes, ratings)
+- User-generated content (notes, ratings) beyond personal categories
 - Video recipe support
 - OCR for image-based recipes
-- Nutritional analysis
+- Nutritional analysis beyond basic dietary detection
 - Manual copy/paste fallback for failed extractions (include TODO comment in code)
 - Multi-page recipe support
 

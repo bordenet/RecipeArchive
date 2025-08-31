@@ -1,12 +1,23 @@
 # RecipeArchive Project Guide
 
-## 🚀 Status: FULLY OPERATIONAL SYSTEM ✅
+## 🚀 Status: FULLY OPERATIONAL + COMPREHENSIVE MOBILE APPS ✅
+
+### IMMEDIATE DEVELOPMENT PRIORITIES (August 30, 2025)
+#### CRITICAL ACTIONS REQUIRED:
+1. **Documentation Cleanup**: Take THOROUGH pass through README.md, remove redundancies, remove ALL React.js and Swift references from ALL docs
+2. **Failed Parse Workflow**: Create workflow plan for failed web extension parses through backend to Flutter/Dart apps  
+3. **OpenAI Content Normalization**: Create plan for OpenAI integration at ingestion to normalize/canonicalize content, casing, units, recipe titles via structured prompts before S3 storage
+4. **Admin Multi-Tenant Management**: Create plan for Flutter web app admin role with tenant dropdown and full tenant provisioning
+   - System Admin: mattbordenet@hotmail.com
+   - Test User: susan.cameron42@gmail.com / Bear901206!!
+5. **PRD Extensions**: Extend `/docs/requirements` PRD documents with these feature requirements (focus on WHAT/WHY)
 
 ### Deployed Components (August 2025)
 - **Browser Extensions**: Chrome/Safari with TypeScript parsers + AWS Cognito auth ✅ WORKING
 - **AWS Backend**: Lambda + S3 + Cognito (URL-based deduplication) ✅ OPERATIONAL
 - **Parser System**: 12+ sites via registry (`parsers/sites/site-registry.ts`) ✅ ACTIVE
-- **Flutter Web App**: Production API integration with persistent auth ✅ DEPLOYED  
+- **Flutter Web App**: Production API integration with persistent auth ✅ DEPLOYED
+- **Mobile Apps**: Native iOS, iPad, Android with comprehensive editing capabilities ✅ COMPLETE
 - **Recipe Report Tool**: CLI with .env defaults for easy reporting ✅ ENHANCED
 - **Security**: TruffleHog validated, environment variables only ✅ VERIFIED
 

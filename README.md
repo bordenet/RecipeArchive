@@ -21,7 +21,6 @@ cd RecipeArchive
 
 # 🔒 SECURITY FIRST: Set up environment variables
 cp .env.template .env
-cp web_app/.env.template web_app/.env
 cp extensions/.env.template extensions/.env
 # Edit ALL .env files with your actual credentials (NEVER commit .env files!)
 
@@ -47,16 +46,11 @@ See [Environment Setup Guide](docs/setup/ENVIRONMENT_SETUP.md) for detailed conf
 The Recipe Archive web application is built with Flutter and provides a modern, responsive interface for managing your recipe collection.
 
 ```bash
-# Navigate to the web app directory
-cd web_app
-
-# Ensure .env file is configured (see above)
+# Navigate to the Flutter web app directory
+cd recipe_archive_fresh
 
 # Install Flutter dependencies
 flutter pub get
-
-# Generate JSON serialization code
-dart run build_runner build
 
 # Start the development server
 flutter run -d chrome
@@ -74,7 +68,7 @@ flutter build web
 
 **Development URLs:**
 - Local Development: `http://localhost:PORT` (PORT shown in terminal)
-- Production Build: Served from `web_app/build/web/`
+- Production Build: Served from `recipe_archive_fresh/build/web/`
 
 **Prerequisites:**
 - Flutter SDK 3.10.0 or higher
@@ -170,9 +164,11 @@ A cross-platform recipe archiving system currently featuring:
 - Failed extractions automatically submit diagnostic payloads (HTML, metadata) for parser improvement.
 - Diagnostic coverage is enforced in both extension and backend workflows, ensuring continuous parser quality.
 
-**Planned Components:**
-- iOS App (Swift): Native mobile recipe browsing
-- Web App (React + TypeScript): Recipe management and meal planning interface
+**Current Mobile Applications:**
+- iOS App: Native mobile recipe browsing and editing with AWS integration
+- iPad App: Split-view interface optimized for tablet usage
+- Android App: Jetpack Compose with Material 3 design
+- Flutter Web App: Modern responsive web interface with full recipe management
 
 ## 🚀 The Big Picture
 
@@ -205,8 +201,10 @@ Transform your recipe management with a complete archiving solution:
 
 - **Go:** Backend services, CLI tools, web scraping, high-performance operations
 - **JavaScript:** Browser extensions (required for DOM APIs), DOM manipulation
-- **TypeScript:** AWS infrastructure, future web UI
-- **Swift:** iOS app development
+- **TypeScript:** AWS infrastructure, TypeScript parsers, type safety
+- **Flutter/Dart:** Cross-platform web and mobile applications
+- **Kotlin:** Android native development with Jetpack Compose
+- **Native iOS/iPadOS:** Platform-specific optimizations and features
 
 _Strategic hybrid approach: each language serves its optimal purpose._
 
@@ -235,7 +233,7 @@ Use the right tool for each job:
 - US-West deployment by default
 - Streamlined infrastructure without unnecessary complexity
 - Efficient dependency management
-- Unified CLI for development operations
+- Cross-platform mobile applications (Flutter, native iOS/iPad, Android)
 
 ## 🎯 Supported Recipe Websites
 
