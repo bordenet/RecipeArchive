@@ -258,6 +258,7 @@ export class RecipeArchiveStack extends cdk.Stack {
                 's3:PutObject',
                 's3:DeleteObject',
                 's3:GetObjectUrl',
+                's3:PutObjectAcl', // For public image uploads
               ],
               resources: [
                 `${this.storageBucket.bucketArn}/*`,

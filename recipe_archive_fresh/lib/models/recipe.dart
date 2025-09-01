@@ -18,53 +18,81 @@ class RecipeIngredient {
   RecipeIngredient scaleForServings(double ratio) {
     if (ratio == 1.0) return this;
     
-    String scaledText = text;
-    
-    // Common patterns to match and scale
-    final patterns = [
-      // Fractions: 1/2, 3/4, 1/3, etc.
-      RegExp(r'(\d+)\/(\d+)'),
-      // Decimals: 1.5, 0.25, etc.
-      RegExp(r'(\d+\.?\d*)'),
-      // Whole numbers at start: 2 cups, 3 tbsp
-      RegExp(r'^(\d+)\s'),
-    ];
-    
-    for (final pattern in patterns) {
-      scaledText = scaledText.replaceAllMapped(pattern, (match) {
-        try {
-          double amount;
-          if (pattern.pattern.contains('\\/')) {
-            // Handle fractions
-            final numerator = double.parse(match.group(1)!);
-            final denominator = double.parse(match.group(2)!);
-            amount = numerator / denominator;
-          } else {
-            // Handle decimals and whole numbers
-            amount = double.parse(match.group(1)!);
-          }
-          
-          final scaledAmount = amount * ratio;
-          
-          // Format the scaled amount nicely
-          if (scaledAmount == scaledAmount.round()) {
-            return '${scaledAmount.round()}';
-          } else if (scaledAmount < 1) {
-            // Convert to fraction for small amounts
-            return _formatAsFraction(scaledAmount);
-          } else {
-            return scaledAmount.toStringAsFixed(1).replaceAll('.0', '');
-          }
-        } catch (e) {
-          return match.group(0)!; // Return original if parsing fails
-        }
-      });
-      
-      // Only apply the first matching pattern
-      if (scaledText != text) break;
+    // Don't scale section headers (they start with ##)
+    if (text.startsWith('## ')) {
+      return this;
     }
     
+    String scaledText = text;
+    
+    // Enhanced regex to handle mixed fractions (1 3/4), simple fractions (3/4), and decimals
+    final regex = RegExp(r'(\d+(?:\s+\d+/\d+|\.\d+|/\d+)?)\s*([a-zA-Z][a-zA-Z\s]*(?:[a-zA-Z]|(?=\s*\()|(?=\s*,)|$))');
+    
+    scaledText = scaledText.replaceAllMapped(regex, (match) {
+      try {
+        final amountStr = match.group(1)?.trim();
+        final unit = match.group(2)?.trim();
+        
+        if (amountStr != null && unit != null) {
+          final amount = _parseScalingAmount(amountStr);
+          if (amount != null) {
+            final scaledAmount = amount * ratio;
+            final formattedAmount = _formatScaledAmount(scaledAmount);
+            return '$formattedAmount $unit';
+          }
+        }
+        return match.group(0)!;
+      } catch (e) {
+        return match.group(0)!;
+      }
+    });
+    
     return RecipeIngredient(text: scaledText);
+  }
+  
+  // Parse amount string handling mixed fractions, simple fractions, and decimals
+  double? _parseScalingAmount(String amountStr) {
+    // Handle mixed fractions like "1 3/4"
+    final mixedFractionMatch = RegExp(r'^(\d+)\s+(\d+)/(\d+)$').firstMatch(amountStr);
+    if (mixedFractionMatch != null) {
+      final whole = int.tryParse(mixedFractionMatch.group(1)!);
+      final numerator = int.tryParse(mixedFractionMatch.group(2)!);
+      final denominator = int.tryParse(mixedFractionMatch.group(3)!);
+      if (whole != null && numerator != null && denominator != null && denominator != 0) {
+        return whole + (numerator / denominator);
+      }
+    }
+    
+    // Handle simple fractions like "3/4"
+    final fractionMatch = RegExp(r'^(\d+)/(\d+)$').firstMatch(amountStr);
+    if (fractionMatch != null) {
+      final numerator = int.tryParse(fractionMatch.group(1)!);
+      final denominator = int.tryParse(fractionMatch.group(2)!);
+      if (numerator != null && denominator != null && denominator != 0) {
+        return numerator / denominator;
+      }
+    }
+    
+    // Handle decimal numbers and whole numbers
+    return double.tryParse(amountStr);
+  }
+  
+  // Format scaled amount nicely for cooking measurements
+  String _formatScaledAmount(double amount) {
+    if (amount == amount.roundToDouble()) {
+      return amount.round().toString();
+    } else if (amount < 1) {
+      // Convert to fraction for small amounts
+      return _formatAsFraction(amount);
+    } else {
+      // For amounts > 1, show reasonable precision
+      final rounded = (amount * 4).round() / 4; // Round to nearest quarter
+      if (rounded == rounded.roundToDouble()) {
+        return rounded.round().toString();
+      } else {
+        return rounded.toString().replaceAll(RegExp(r'\.?0*$'), '');
+      }
+    }
   }
   
   // Helper method to convert decimals to common fractions

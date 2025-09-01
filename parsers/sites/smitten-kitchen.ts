@@ -30,10 +30,36 @@ export class SmittenKitchenParser extends BaseParser {
 			let title = this.sanitizeText($('.jetpack-recipe-title, h1.entry-title, h1.post-title, h1').first().text() || $('h1').first().text() || "");
 			let author = this.sanitizeText($('.jetpack-recipe-source, p.recipe-meta + p, .author-meta, .author, .byline .author').first().text().replace(/Source:\s*|Author:\s*/gi, '').trim() || 'Deb Perelman');
 			let ingredients: Ingredient[] = [];
-			$('.jetpack-recipe-ingredient').each((_, el) => {
-				const text = $(el).text().trim();
-				if (text) ingredients.push({ text: this.sanitizeText(text) });
-			});
+			
+			// Enhanced parsing to preserve section headers like "For the crust" and "For the filling"
+			const jetpackIngredients = $('.jetpack-recipe-ingredients');
+			if (jetpackIngredients.length > 0) {
+				// Parse jetpack ingredients with section headers
+				jetpackIngredients.children().each((_, el) => {
+					const $el = $(el);
+					if ($el.is('h5')) {
+						// This is a section header like "For the crust (pâte brisée)" or "For the filling"
+						const headerText = this.sanitizeText($el.text()).trim();
+						if (headerText) {
+							ingredients.push({ text: `## ${headerText}` }); // Use markdown-style header
+						}
+					} else if ($el.is('ul')) {
+						// This is a list of ingredients under the section
+						$el.find('li.jetpack-recipe-ingredient').each((__, li) => {
+							const text = $(li).text().trim();
+							if (text) ingredients.push({ text: this.sanitizeText(text) });
+						});
+					}
+				});
+			}
+			
+			// Fallback to original parsing if no section headers found
+			if (ingredients.length === 0) {
+				$('.jetpack-recipe-ingredient').each((_, el) => {
+					const text = $(el).text().trim();
+					if (text) ingredients.push({ text: this.sanitizeText(text) });
+				});
+			}
 			if (ingredients.length === 0) {
 				ingredients = $('.recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient, ul li, .entry-content ul li').map((_, el) => ({ text: this.sanitizeText($(el).text()) })).get();
 			}

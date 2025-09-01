@@ -34,11 +34,11 @@ class Food52Parser extends BaseParser {
 		// Ingredients
 		let ingredients: string[] = [];
 		$('[class*="ingredient"], .recipe__ingredient, .ingredients li').each((_, el) => {
-			const text = $(el).text().trim();
+			const text = $(el).text().trim().replace(/\bundefined\s+/g, '').replace(/\s+undefined\b/g, '').trim();
 			if (text) ingredients.push(text);
 		});
 		if (ingredients.length === 0 && jsonLd && Array.isArray(jsonLd.recipeIngredient)) {
-			ingredients = jsonLd.recipeIngredient.map((i: string) => String(i).trim());
+			ingredients = jsonLd.recipeIngredient.map((i: string) => String(i).trim().replace(/\bundefined\s+/g, '').replace(/\s+undefined\b/g, '').trim());
 		}
 
 		// Instructions

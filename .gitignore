@@ -40,6 +40,10 @@ aws-backend/node_modules/
 aws-backend/infrastructure/node_modules/
 aws-backend/functions/*/node_modules/
 
+# Playwright
+playwright-report
+playwright-report/*
+
 # Go
 bin/
 dist/

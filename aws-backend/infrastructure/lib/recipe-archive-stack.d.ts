@@ -15,6 +15,7 @@ export declare class RecipeArchiveStack extends cdk.Stack {
     readonly recipesTable: dynamodb.Table;
     readonly storageBucket: s3.Bucket;
     readonly tempBucket: s3.Bucket;
+    readonly failedParsingBucket: s3.Bucket;
     readonly api: apigateway.RestApi;
     readonly billingAlertTopic: sns.Topic;
     constructor(scope: Construct, id: string, props: RecipeArchiveStackProps);

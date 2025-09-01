@@ -40,6 +40,13 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
             actions: [
+              if (widget.recipe.sourceUrl != null)
+                IconButton(
+                  icon: const Icon(Icons.open_in_new),
+                  onPressed: () => _launchUrl(widget.recipe.sourceUrl!),
+                  tooltip: 'View Original at Source',
+                  key: const Key('banner_source_button'),
+                ),
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => _navigateToEditScreen(context),
@@ -180,45 +187,6 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                   
                   const SizedBox(height: 16),
                   
-                  // Action Buttons
-                  Row(
-                    children: [
-                      // Original Recipe Link
-                      if (widget.recipe.sourceUrl != null)
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _launchUrl(widget.recipe.sourceUrl!),
-                            icon: const Icon(Icons.launch),
-                            label: Text('View Original at ${widget.recipe.sourceName ?? 'Source'}'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      
-                      if (widget.recipe.sourceUrl != null) const SizedBox(width: 12),
-                      
-                      // Delete Button
-                      ElevatedButton.icon(
-                        onPressed: () => _showDeleteConfirmation(context),
-                        icon: const Icon(Icons.delete),
-                        label: const Text('Delete'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 24),
                   
                   // Description
@@ -308,6 +276,35 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                   const SizedBox(height: 12),
                   ...widget.recipe.getScaledIngredients(currentServings).map((ingredient) {
                     final displayText = UnitsConverter.convertIngredient(ingredient.text, useMetricUnits);
+                    
+                    // Check if this is a section header (starts with ##)
+                    if (ingredient.text.startsWith('## ')) {
+                      final headerText = ingredient.text.substring(3); // Remove "## " prefix
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12, top: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              headerText.toUpperCase(),
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: 1,
+                              width: double.infinity,
+                              color: Colors.grey[300],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    
+                    // Regular ingredient with bullet point
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -624,9 +621,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     );
 
     if (result != null) {
-      // Recipe was updated, refresh the UI
+      // Recipe was updated, refresh the UI and update serving size
       setState(() {
-        // The parent widget will be rebuilt with updated recipe data
+        currentServings = result.servings ?? currentServings;
       });
       
       // Refresh the recipes provider

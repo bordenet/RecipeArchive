@@ -1,6 +1,6 @@
 {
   "name": "safari-extension-tests",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Jest setup for Safari extension unit tests",
   "type": "module",
   "main": "index.js",

@@ -57,7 +57,7 @@ class RecipeService {
         uri,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
       );
       
@@ -492,7 +492,7 @@ class RecipeService {
         Uri.parse('$apiUrl/v1/recipes/$id'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
       );
       
@@ -518,7 +518,7 @@ class RecipeService {
         Uri.parse('$apiUrl/v1/recipes'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
         body: json.encode(recipe.toJson()),
       );
@@ -545,7 +545,7 @@ class RecipeService {
         Uri.parse('$apiUrl/v1/recipes/${recipe.id}'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
         body: json.encode(recipe.toJson()),
       );
@@ -581,7 +581,7 @@ class RecipeService {
         uri,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
       );
 
@@ -613,7 +613,7 @@ class RecipeService {
         uri,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
       );
 
@@ -641,7 +641,7 @@ class RecipeService {
         Uri.parse('$apiUrl/v1/recipes/bulk'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
         body: json.encode({
           'recipes': recipes.map((r) => r.toJson()).toList(),
@@ -674,7 +674,7 @@ class RecipeService {
         Uri.parse('$apiUrl/v1/recipes/$id'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${user.accessToken}',
+          'Authorization': 'Bearer ${user.idToken}',
         },
       );
       

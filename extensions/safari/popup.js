@@ -5,6 +5,29 @@ let isSignedIn = false;
 let currentUser = null;
 let extensionAPI = null;
 
+// Get extension version from manifest
+function getExtensionVersion() {
+    // Safari Web Extensions need to use the extensionAPI
+    if (extensionAPI && extensionAPI.runtime && extensionAPI.runtime.getManifest) {
+        return extensionAPI.runtime.getManifest().version;
+    }
+    return "0.3.0"; // Fallback version
+}
+
+// Create version display element
+function createVersionDisplay() {
+    const version = getExtensionVersion();
+    const webAppUrl = CONFIG.WEB_APP_URL;
+    
+    return `
+        <div style="position: absolute; top: 8px; left: 20px; z-index: 1000;">
+            <a href="${webAppUrl}" target="_blank" 
+               style="font-size: 11px; color: #888; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif;"
+               title="Open RecipeArchive Web App">v${version}</a>
+        </div>
+    `;
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     const container = document.createElement("div");
     container.style.cssText = "padding: 20px; min-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;";
@@ -72,13 +95,15 @@ function checkAuthenticationStatus() {
 
 function renderUI() {
     const container = document.getElementById("main-container");
+    const versionDisplay = createVersionDisplay();
     
     if (isSignedIn) {
         // Signed in UI - show capture functionality
         container.innerHTML = `
-            <div style="position: relative;">
+            ${versionDisplay}
+            <div style="position: relative; padding-top: 20px;">
                 <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333;">🍽️ RecipeArchive</h1>
-                <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
+                <a href="#" id="signout-link" style="position: absolute; top: -12px; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
             </div>
             <div style="margin-bottom: 15px; padding: 10px; background: #e8f5e8; border-radius: 8px; font-size: 12px; display: none;">
                 ✅ Signed in as ${currentUser ? currentUser.email : "user"}
@@ -128,7 +153,10 @@ function renderUI() {
         
         // Not signed in UI - show sign in form
         container.innerHTML = `
-            <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">🍽️ RecipeArchive</h1>
+            ${versionDisplay}
+            <div style="padding-top: 20px;">
+                <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">🍽️ RecipeArchive</h1>
+            </div>
             <div style="margin-bottom: 20px; padding: 10px; background: #fff3e0; border-radius: 8px; font-size: 12px; text-align: center;">
                 Sign in to capture recipes
             </div>
@@ -160,7 +188,7 @@ function renderUI() {
             
             ${savedCreds.email ? `<div style="margin-top: 10px; text-align: center;">
                 <a href="#" id="clear-credentials" style="font-size: 12px; color: #666; text-decoration: none;">Clear saved credentials</a>
-            </div>` : ''}
+            </div>` : ""}
             
             <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 8px; font-size: 12px; display: none;"></div>
         `;
@@ -189,6 +217,39 @@ function renderUI() {
     }
 }
 
+// Ensure AWS configuration is set before authentication attempts
+async function ensureAWSConfiguration() {
+    console.log("🔧 Checking AWS configuration...");
+    
+    // Check if configuration is already set and valid
+    const currentUserPoolId = localStorage.getItem("COGNITO_USER_POOL_ID");
+    const currentClientId = localStorage.getItem("COGNITO_APP_CLIENT_ID");
+    
+    if (currentUserPoolId && currentClientId && 
+        currentUserPoolId !== "CONFIGURE_ME" && 
+        currentClientId !== "CONFIGURE_ME") {
+        console.log("✅ AWS configuration already set");
+        return;
+    }
+    
+    // Set correct AWS configuration
+    console.log("🔧 Setting correct AWS configuration...");
+    localStorage.setItem("AWS_REGION", "us-west-2");
+    localStorage.setItem("COGNITO_USER_POOL_ID", "us-west-2_qJ1i9RhxD");
+    localStorage.setItem("COGNITO_APP_CLIENT_ID", "5grdn7qhf1el0ioqb6hkelr29s");
+    localStorage.setItem("API_BASE_URL", "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod");
+    
+    // Enable production mode for the extension
+    localStorage.setItem("recipeArchive.dev", "false");
+    
+    // Force CONFIG to reload environment configuration
+    if (typeof CONFIG !== "undefined" && CONFIG.reloadConfiguration) {
+        CONFIG.reloadConfiguration();
+    }
+    
+    console.log("✅ AWS configuration set successfully");
+}
+
 async function handleSignIn() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -201,6 +262,9 @@ async function handleSignIn() {
     showStatus("Signing in to AWS Cognito...", "#e3f2fd");
     
     try {
+        // Ensure AWS configuration is set before authentication
+        await ensureAWSConfiguration();
+        
         // Initialize SafariCognitoAuth with configuration from CONFIG (Safari-specific implementation)
         const cognitoConfig = CONFIG.getCognitoConfig();
         const cognitoAuth = new SafariCognitoAuth({
@@ -258,6 +322,43 @@ async function handleSignIn() {
     }
 }
 
+async function refreshAuthToken() {
+    try {
+        const authData = localStorage.getItem("recipeArchive.auth");
+        if (!authData) {
+            return { success: false, error: "No auth data found" };
+        }
+        
+        const auth = JSON.parse(authData);
+        if (!auth.refreshToken) {
+            return { success: false, error: "No refresh token available" };
+        }
+        
+        // Initialize CognitoAuth with configuration
+        const cognitoConfig = CONFIG.getCognitoConfig();
+        const cognitoAuth = new SafariCognitoAuth({
+            region: cognitoConfig.region,
+            userPoolId: cognitoConfig.userPoolId,
+            clientId: cognitoConfig.clientId
+        });
+        
+        // Call the refresh token method
+        const result = await cognitoAuth.refreshToken(auth.refreshToken);
+        
+        if (result.success) {
+            console.log("✅ Token refresh successful");
+            return { success: true };
+        } else {
+            console.error("❌ Token refresh failed:", result.error);
+            return { success: false, error: result.error };
+        }
+        
+    } catch (error) {
+        console.error("❌ Token refresh error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 function signOut() {
     console.log("🔧 Signing out - clearing all auth data");
     isSignedIn = false;
@@ -280,6 +381,67 @@ function forceAuthRefresh() { // eslint-disable-line no-unused-vars
     renderUI();
 }
 
+async function downloadAndUploadImage(imageUrl, recipeTitle) {
+    try {
+        console.log("🖼️ Starting image download from:", imageUrl);
+        
+        // Generate a unique filename
+        const timestamp = Date.now();
+        const sanitizedTitle = (recipeTitle || "recipe")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "-")
+            .replace(/-+/g, "-")
+            .replace(/^-|-$/g, "")
+            .substring(0, 50);
+        const fileExtension = imageUrl.split(".").pop()?.toLowerCase().split("?")[0] || "jpg";
+        const filename = `recipes/${sanitizedTitle}-${timestamp}.${fileExtension}`;
+        
+        // Download the image
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+        }
+        
+        const contentType = response.headers.get("content-type") || "image/jpeg";
+        const imageBlob = await response.blob();
+        
+        console.log(`📦 Downloaded image (${imageBlob.size} bytes, ${contentType})`);
+        
+        // Convert blob to base64 for AWS upload
+        const arrayBuffer = await imageBlob.arrayBuffer();
+        const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
+        // Upload to S3 via API Gateway
+        const api = CONFIG.getCurrentAPI();
+        const uploadResponse = await fetch(`${api.base}/v1/images/upload`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("recipeArchive.idToken")}`
+            },
+            body: JSON.stringify({
+                filename: filename,
+                contentType: contentType,
+                imageData: base64String
+            })
+        });
+        
+        if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        console.log("✅ Image uploaded to S3:", uploadResult);
+        
+        return uploadResult.imageUrl || uploadResult.url;
+        
+    } catch (error) {
+        console.error("❌ Image download/upload failed:", error);
+        return null;
+    }
+}
+
 async function captureRecipe() {
     if (!extensionAPI) {
         showStatus("Extension API not available", "#ffebee");
@@ -296,9 +458,9 @@ async function captureRecipe() {
 
         // Check if the current site is supported
         const currentTab = tabs[0];
-        if (typeof window.RecipeArchiveSites !== 'undefined' && !window.RecipeArchiveSites.isSupportedSite(currentTab.url)) {
+        if (typeof window.RecipeArchiveSites !== "undefined" && !window.RecipeArchiveSites.isSupportedSite(currentTab.url)) {
             const supportedSites = window.RecipeArchiveSites.getSupportedSites();
-            showStatus(`❌ This site is not supported. Supported sites include: ${supportedSites.slice(0, 3).join(', ')}, and ${supportedSites.length - 3} more.`, "#ffebee");
+            showStatus(`❌ This site is not supported. Supported sites include: ${supportedSites.slice(0, 3).join(", ")}, and ${supportedSites.length - 3} more.`, "#ffebee");
             return;
         }
         
@@ -406,7 +568,7 @@ async function captureRecipeDirectly(tabId) {
                     }
                     
                     // Try Food Network specific extraction
-                    if (url.includes('foodnetwork.com')) {
+                    if (url.includes("foodnetwork.com")) {
                         const foodNetworkRecipe = extractFoodNetworkRecipe();
                         if (foodNetworkRecipe && foodNetworkRecipe.ingredients && foodNetworkRecipe.ingredients.length > 0) {
                             console.log("✅ Found Food Network recipe");
@@ -435,15 +597,15 @@ async function captureRecipeDirectly(tabId) {
                 function extractFoodNetworkRecipe() {
                     console.log("🍳 Food Network specific extraction...");
                     
-                    const title = document.querySelector('h1.o-AssetTitle__a-HeadlineText, h1')?.textContent?.trim() || document.title;
+                    const title = document.querySelector("h1.o-AssetTitle__a-HeadlineText, h1")?.textContent?.trim() || document.title;
                     
                     // Food Network ingredient selectors
                     const ingredientElements = document.querySelectorAll(
-                        '.o-RecipeIngredients__a-Ingredient, ' +
-                        '.o-Ingredients__a-Ingredient, ' +
-                        '[data-module="IngredientsList"] li, ' +
-                        '.recipe-ingredients li, ' +
-                        '.o-RecipeIngredients li'
+                        ".o-RecipeIngredients__a-Ingredient, " +
+                        ".o-Ingredients__a-Ingredient, " +
+                        "[data-module=\"IngredientsList\"] li, " +
+                        ".recipe-ingredients li, " +
+                        ".o-RecipeIngredients li"
                     );
                     
                     const ingredients = Array.from(ingredientElements)
@@ -452,11 +614,11 @@ async function captureRecipeDirectly(tabId) {
                     
                     // Food Network instruction selectors
                     const stepElements = document.querySelectorAll(
-                        '.o-Method__m-Step, ' +
-                        '.recipe-instructions .o-Method__m-Step, ' +
-                        '[data-module="InstructionsList"] li, ' +
-                        '.recipe-instructions ol li, ' +
-                        '.recipe-instructions li'
+                        ".o-Method__m-Step, " +
+                        ".recipe-instructions .o-Method__m-Step, " +
+                        "[data-module=\"InstructionsList\"] li, " +
+                        ".recipe-instructions ol li, " +
+                        ".recipe-instructions li"
                     );
                     
                     const steps = Array.from(stepElements)
@@ -478,18 +640,18 @@ async function captureRecipeDirectly(tabId) {
                 function extractGenericRecipe() {
                     console.log("🔍 Generic recipe extraction...");
                     
-                    const title = document.querySelector('h1[class*="recipe"], .recipe-title, .entry-title, h1')?.textContent?.trim() || document.title;
+                    const title = document.querySelector("h1[class*=\"recipe\"], .recipe-title, .entry-title, h1")?.textContent?.trim() || document.title;
                     
                     // Enhanced ingredient selectors
                     const ingredientSelectors = [
-                        '.recipe-ingredient',
-                        '.ingredients li',
-                        '[class*="ingredient"] li',
-                        '.recipe-ingredients li',
-                        '.o-RecipeIngredients__a-Ingredient',
-                        '.o-Ingredients__a-Ingredient',
-                        '[data-module="IngredientsList"] li',
-                        '.recipe-summary ul li'
+                        ".recipe-ingredient",
+                        ".ingredients li",
+                        "[class*=\"ingredient\"] li",
+                        ".recipe-ingredients li",
+                        ".o-RecipeIngredients__a-Ingredient",
+                        ".o-Ingredients__a-Ingredient",
+                        "[data-module=\"IngredientsList\"] li",
+                        ".recipe-summary ul li"
                     ];
                     
                     let ingredients = [];
@@ -505,15 +667,15 @@ async function captureRecipeDirectly(tabId) {
                     
                     // Enhanced instruction selectors
                     const instructionSelectors = [
-                        '.recipe-instruction',
-                        '.instructions li',
-                        '.directions li',
-                        '.recipe-instructions li',
-                        '.recipe-directions li',
-                        '.o-Method__m-Step',
-                        '.recipe-instructions .o-Method__m-Step',
-                        '[data-module="InstructionsList"] li',
-                        '.recipe-instructions ol li'
+                        ".recipe-instruction",
+                        ".instructions li",
+                        ".directions li",
+                        ".recipe-instructions li",
+                        ".recipe-directions li",
+                        ".o-Method__m-Step",
+                        ".recipe-instructions .o-Method__m-Step",
+                        "[data-module=\"InstructionsList\"] li",
+                        ".recipe-instructions ol li"
                     ];
                     
                     let steps = [];
@@ -800,7 +962,7 @@ function transformRecipeDataForAWS(recipeData) {
         recipeData.ingredients.forEach(group => {
             if (group.items && Array.isArray(group.items)) {
                 group.items.forEach(item => {
-                    if (item && typeof item === 'string' && item.trim()) {
+                    if (item && typeof item === "string" && item.trim()) {
                         ingredients.push({ text: item.trim() });
                     }
                 });
@@ -815,7 +977,7 @@ function transformRecipeDataForAWS(recipeData) {
         recipeData.steps.forEach(group => {
             if (group.items && Array.isArray(group.items)) {
                 group.items.forEach(item => {
-                    if (item && typeof item === 'string' && item.trim()) {
+                    if (item && typeof item === "string" && item.trim()) {
                         instructions.push({ 
                             stepNumber: stepNumber++, 
                             text: item.trim() 
@@ -845,7 +1007,7 @@ function transformRecipeDataForAWS(recipeData) {
     if (recipeData.time) {
         // Try to parse time strings to minutes
         const timeStr = recipeData.time.toString().toLowerCase();
-        if (timeStr.includes('min')) {
+        if (timeStr.includes("min")) {
             const minutes = parseInt(timeStr.match(/\d+/)?.[0]);
             if (minutes && minutes > 0) {
                 transformedData.totalTimeMinutes = minutes;
@@ -930,9 +1092,25 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
         let transformedData;
         try {
             transformedData = transformRecipeDataForAWS(recipeData);
+            
+            // Download and replace image URL with S3 URL if image exists
+            if (transformedData.mainPhotoUrl) {
+                try {
+                    const s3ImageUrl = await downloadAndUploadImage(transformedData.mainPhotoUrl, transformedData.title);
+                    if (s3ImageUrl) {
+                        transformedData.mainPhotoUrl = s3ImageUrl;
+                        console.log("✅ Image uploaded to S3:", s3ImageUrl);
+                    } else {
+                        console.warn("⚠️ Failed to upload image to S3, keeping original URL");
+                    }
+                } catch (imageError) {
+                    console.error("❌ Error processing image:", imageError);
+                    // Continue with original URL if image processing fails
+                }
+            }
         } catch (transformError) {
             // Submit diagnostic data for transformation failures
-            if (typeof submitDiagnosticData === 'function') {
+            if (typeof submitDiagnosticData === "function") {
                 await submitDiagnosticData({
                     error: transformError.message,
                     errorType: "recipe_transformation_failed",
@@ -942,7 +1120,7 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
                     stage: "data_transformation",
                     rawRecipeData: recipeData
                 });
-            } else if (typeof window !== 'undefined' && typeof window.submitDiagnosticData === 'function') {
+            } else if (typeof window !== "undefined" && typeof window.submitDiagnosticData === "function") {
                 await window.submitDiagnosticData({
                     error: transformError.message,
                     errorType: "recipe_transformation_failed",
@@ -985,6 +1163,60 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
             } catch {
                 // Keep original text if not JSON
             }
+            
+            // Handle token expiration (401) with automatic refresh
+            if (response.status === 401 && errorMessage.includes("expired")) {
+                console.log("🔄 Token expired, attempting to refresh...");
+                const refreshResult = await refreshAuthToken();
+                
+                if (refreshResult.success) {
+                    console.log("✅ Token refreshed successfully, retrying request...");
+                    // Retry the original request with new token
+                    const newAuthData = localStorage.getItem("recipeArchive.auth");
+                    if (newAuthData) {
+                        const newAuth = JSON.parse(newAuthData);
+                        const newToken = newAuth.token || newAuth.accessToken || newAuth.idToken;
+                        
+                        const retryResponse = await fetch(awsAPI.recipes, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${newToken}`
+                            },
+                            body: JSON.stringify(transformedData)
+                        });
+                        
+                        if (retryResponse.ok) {
+                            const retryResult = await retryResponse.json();
+                            console.log("✅ Retry successful after token refresh:", retryResult);
+                            return {
+                                success: true,
+                                id: retryResult.id || retryResult.recipeId || "aws-" + Date.now(),
+                                result: retryResult,
+                                message: "Successfully saved to AWS after token refresh"
+                            };
+                        } else {
+                            const retryErrorText = await retryResponse.text();
+                            console.error("❌ Retry failed even after token refresh:", retryErrorText);
+                            return {
+                                success: false,
+                                error: `AWS API ${retryResponse.status}: ${retryErrorText}`
+                            };
+                        }
+                    }
+                } else {
+                    console.error("❌ Token refresh failed:", refreshResult.error);
+                    // Clear invalid auth and force re-login
+                    isSignedIn = false;
+                    localStorage.removeItem("recipeArchive.auth");
+                    renderUI();
+                    return {
+                        success: false,
+                        error: "Session expired. Please sign in again."
+                    };
+                }
+            }
+            
             return {
                 success: false,
                 error: `AWS API ${response.status}: ${errorMessage}`

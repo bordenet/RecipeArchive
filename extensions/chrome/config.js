@@ -24,6 +24,9 @@ const CONFIG = {
     return isDevelopment ? "development" : "production";
   })(),
 
+  // Web App URL (authoritative source)
+  WEB_APP_URL: "https://d1jcaphz4458q7.cloudfront.net",
+
   // API Endpoints
   API: {
     development: {
@@ -61,6 +64,19 @@ const CONFIG = {
   // Get Cognito configuration
   getCognitoConfig: function() {
     return this.COGNITO;
+  },
+
+  // Reload environment configuration
+  reloadConfiguration: function() {
+    const envConfig = loadEnvironmentConfig();
+    this.COGNITO.region = envConfig.AWS_REGION;
+    this.COGNITO.userPoolId = envConfig.COGNITO_USER_POOL_ID;
+    this.COGNITO.clientId = envConfig.COGNITO_APP_CLIENT_ID;
+    this.API.production.base = envConfig.API_BASE_URL;
+    this.API.production.recipes = `${envConfig.API_BASE_URL}/v1/recipes`;
+    this.API.production.diagnostics = `${envConfig.API_BASE_URL}/v1/diagnostics`;
+    this.API.production.health = `${envConfig.API_BASE_URL}/health`;
+    console.log('🔄 Configuration reloaded with latest localStorage values');
   },
 
   // Toggle environment (for debugging)

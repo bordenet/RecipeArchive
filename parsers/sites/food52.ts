@@ -44,7 +44,9 @@ export class Food52Parser extends BaseParser {
             recipe = {
                 title: this.sanitizeText(jsonLd.name),
                 source: url,
-                ingredients: (jsonLd.recipeIngredient || []).map(i => ({ text: this.sanitizeText(i) })),
+                ingredients: (jsonLd.recipeIngredient || []).map(i => ({ 
+                    text: this.sanitizeText(i).replace(/\bundefined\s+/g, '').replace(/\s+undefined\b/g, '').trim() 
+                })),
                 instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({ stepNumber: idx + 1, text: typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text) })),
                 imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) : jsonLd.image?.url,
                 prepTime: jsonLd.prepTime,
@@ -61,7 +63,7 @@ export class Food52Parser extends BaseParser {
             const title = $('h1').first().text().trim();
             const ingredients: Ingredient[] = [];
             $('h2:contains("Ingredients")').nextAll('ul').first().find('li').each((_, el) => {
-                const text = $(el).text().trim();
+                const text = $(el).text().trim().replace(/\bundefined\s+/g, '').replace(/\s+undefined\b/g, '').trim();
                 if (text) ingredients.push({ text });
             });
             const instructions: Instruction[] = [];

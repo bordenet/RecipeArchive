@@ -50,24 +50,54 @@ class UnitsConverter {
 
 
   static String convertIngredient(String ingredient, bool toMetric) {
-    final regex = RegExp(r'(\d+\.?\d*)\s*([a-zA-Z\s]+)');
+    // Enhanced regex to handle mixed fractions (1 3/4), simple fractions (3/4), and decimals
+    final regex = RegExp(r'(\d+(?:\s+\d+/\d+|\.\d+|/\d+)?)\s*([a-zA-Z][a-zA-Z\s]*(?:[a-zA-Z]|(?=\s*\()|(?=\s*,)|$))');
     final matches = regex.allMatches(ingredient);
     
     String result = ingredient;
     
     for (final match in matches) {
-      final amount = double.tryParse(match.group(1) ?? '');
+      final amountStr = match.group(1)?.trim();
       final unit = match.group(2)?.trim().toLowerCase();
       
-      if (amount != null && unit != null) {
-        final convertedText = _convertMeasurement(amount, unit, toMetric);
-        if (convertedText != null) {
-          result = result.replaceAll(match.group(0)!, convertedText);
+      if (amountStr != null && unit != null) {
+        final amount = _parseAmount(amountStr);
+        if (amount != null) {
+          final convertedText = _convertMeasurement(amount, unit, toMetric);
+          if (convertedText != null) {
+            result = result.replaceAll(match.group(0)!, convertedText);
+          }
         }
       }
     }
     
     return result;
+  }
+
+  static double? _parseAmount(String amountStr) {
+    // Handle mixed fractions like "1 3/4"
+    final mixedFractionMatch = RegExp(r'^(\d+)\s+(\d+)/(\d+)$').firstMatch(amountStr);
+    if (mixedFractionMatch != null) {
+      final whole = int.tryParse(mixedFractionMatch.group(1)!);
+      final numerator = int.tryParse(mixedFractionMatch.group(2)!);
+      final denominator = int.tryParse(mixedFractionMatch.group(3)!);
+      if (whole != null && numerator != null && denominator != null && denominator != 0) {
+        return whole + (numerator / denominator);
+      }
+    }
+    
+    // Handle simple fractions like "3/4"
+    final fractionMatch = RegExp(r'^(\d+)/(\d+)$').firstMatch(amountStr);
+    if (fractionMatch != null) {
+      final numerator = int.tryParse(fractionMatch.group(1)!);
+      final denominator = int.tryParse(fractionMatch.group(2)!);
+      if (numerator != null && denominator != null && denominator != 0) {
+        return numerator / denominator;
+      }
+    }
+    
+    // Handle decimal numbers and whole numbers
+    return double.tryParse(amountStr);
   }
 
   static String? _convertMeasurement(double amount, String unit, bool toMetric) {

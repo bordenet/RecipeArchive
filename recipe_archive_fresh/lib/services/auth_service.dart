@@ -110,52 +110,38 @@ class AuthenticationService {
   // Check if user is currently authenticated
   Future<bool> isAuthenticated() async {
     try {
-      // Check if we have a stored user
-      final userJson = await _storage.read(key: _userKey);
-      if (userJson != null) {
-        final userData = jsonDecode(userJson);
-        _currentUser = AuthUser.fromJson(userData);
-        
-        // Verify the session is still valid
-        final currentUser = _currentUser;
-        if (currentUser != null && currentUser.email.isNotEmpty) {
-          _cognitoUser = CognitoUser(currentUser.email, _userPool);
-          final session = await _cognitoUser?.getSession();
-        
-          if (session != null && session.isValid()) {
-            // Update stored user with fresh tokens if needed
-            final cognitoUser = _cognitoUser;
-            if (cognitoUser != null) {
-              _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
-              final updatedUser = _currentUser;
-              if (updatedUser != null) {
-                await _storeUser(updatedUser);
-                return true;
-              }
-            }
-          }
-        }
-      }
-      
       // Try to get current authenticated user from Cognito
       _cognitoUser = await _userPool.getCurrentUser();
       final cognitoUser = _cognitoUser;
       if (cognitoUser != null) {
-        final session = await cognitoUser.getSession();
-        if (session != null && session.isValid()) {
-          _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
-          final currentUser = _currentUser;
-          if (currentUser != null) {
-            await _storeUser(currentUser);
-            return true;
+        try {
+          final session = await cognitoUser.getSession();
+          if (session != null && session.isValid()) {
+            _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
+            final currentUser = _currentUser;
+            if (currentUser != null) {
+              await _storeUser(currentUser);
+              return true;
+            }
           }
+        } catch (sessionError) {
+          // Session validation failed, clear invalid data
+          await _clearStoredUser();
+          _cognitoUser = null;
+          _currentUser = null;
         }
       }
       
+      // Clear any invalid stored data
       await _clearStoredUser();
+      _cognitoUser = null;
+      _currentUser = null;
       return false;
     } catch (e) {
+      // Clear any invalid stored data on error
       await _clearStoredUser();
+      _cognitoUser = null;
+      _currentUser = null;
       return false;
     }
   }

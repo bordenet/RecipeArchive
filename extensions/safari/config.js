@@ -20,6 +20,9 @@ const CONFIG = {
     }
   })(),
 
+  // Web App URL (authoritative source)
+  WEB_APP_URL: "https://d1jcaphz4458q7.cloudfront.net",
+
   // API Endpoints
   API: {
     development: {
@@ -101,6 +104,24 @@ const CONFIG = {
     localStorage.setItem("recipeArchive.dev", "false");
     this.ENVIRONMENT = "production";
     console.log("🚀 Production mode enabled");
+  },
+
+  // Reload environment configuration
+  reloadConfiguration: function() {
+    try {
+      if (typeof localStorage !== "undefined") {
+        this.COGNITO.region = localStorage.getItem('AWS_REGION') || 'us-west-2';
+        this.COGNITO.userPoolId = localStorage.getItem('COGNITO_USER_POOL_ID') || 'CONFIGURE_ME';
+        this.COGNITO.clientId = localStorage.getItem('COGNITO_APP_CLIENT_ID') || 'CONFIGURE_ME';
+        this.API.production.base = localStorage.getItem('API_BASE_URL') || 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod';
+        this.API.production.recipes = `${this.API.production.base}/v1/recipes`;
+        this.API.production.diagnostics = `${this.API.production.base}/v1/diagnostics`;
+        this.API.production.health = `${this.API.production.base}/health`;
+        console.log('🔄 Configuration reloaded with latest localStorage values');
+      }
+    } catch (error) {
+      console.warn('CONFIG: Could not reload configuration:', error.message);
+    }
   },
 
   // Get current status

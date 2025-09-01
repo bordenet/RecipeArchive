@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chrome Extension Auth Test</title>
+    <script src="config.js"></script>
+    <script src="cognito-auth.js"></script>
+</head>
+<body>
+    <h2>Chrome Extension Authentication Test</h2>
+    <div id="status">Loading...</div>
+    <button id="testConfig">Test Configuration</button>
+    <button id="testAuth">Test ChromeCognitoAuth</button>
+    <div id="results"></div>
+
+    <script>
+        function log(message) {
+            const results = document.getElementById('results');
+            results.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // Test configuration
+        document.getElementById('testConfig').addEventListener('click', function() {
+            try {
+                log('Testing CONFIG object...');
+                log('CONFIG exists: ' + (typeof CONFIG !== 'undefined'));
+                
+                if (typeof CONFIG !== 'undefined') {
+                    log('Environment: ' + CONFIG.ENVIRONMENT);
+                    log('Has reloadConfiguration: ' + (typeof CONFIG.reloadConfiguration === 'function'));
+                    
+                    const cognitoConfig = CONFIG.getCognitoConfig();
+                    log('Cognito UserPoolId: ' + cognitoConfig.userPoolId);
+                    log('Cognito ClientId: ' + cognitoConfig.clientId);
+                    log('Cognito Region: ' + cognitoConfig.region);
+                }
+                updateStatus('Configuration test completed');
+            } catch (error) {
+                log('Configuration test error: ' + error.message);
+                updateStatus('Configuration test failed');
+            }
+        });
+
+        // Test ChromeCognitoAuth
+        document.getElementById('testAuth').addEventListener('click', function() {
+            try {
+                log('Testing ChromeCognitoAuth class...');
+                log('ChromeCognitoAuth exists: ' + (typeof ChromeCognitoAuth !== 'undefined'));
+                
+                if (typeof ChromeCognitoAuth !== 'undefined') {
+                    const cognitoConfig = CONFIG.getCognitoConfig();
+                    const auth = new ChromeCognitoAuth({
+                        region: cognitoConfig.region,
+                        userPoolId: cognitoConfig.userPoolId,
+                        clientId: cognitoConfig.clientId
+                    });
+                    log('ChromeCognitoAuth instance created successfully');
+                    log('Auth instance type: ' + auth.constructor.name);
+                }
+                updateStatus('Authentication test completed');
+            } catch (error) {
+                log('Authentication test error: ' + error.message);
+                updateStatus('Authentication test failed');
+            }
+        });
+
+        // Auto-run tests on load
+        setTimeout(function() {
+            document.getElementById('testConfig').click();
+            setTimeout(function() {
+                document.getElementById('testAuth').click();
+                updateStatus('All tests completed');
+            }, 500);
+        }, 100);
+    </script>
+</body>
+</html>

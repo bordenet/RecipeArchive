@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Popup Simulation Test</title>
+    <style>
+        body { margin: 0; min-width: 300px; font-family: Arial, sans-serif; }
+        #test-results { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h3>Extension Popup Simulation Test</h3>
+    <div id="test-results"></div>
+    
+    <!-- Load scripts in same order as popup.html -->
+    <script src="supported-sites.js"></script>
+    <script src="config.js"></script>
+    <script src="jwt-validator.js"></script>
+    <script src="cognito-auth.js"></script>
+    
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        function runTests() {
+            log('=== Extension Popup Simulation Test Started ===');
+            
+            try {
+                // Test 1: Basic script loading
+                log('✓ supported-sites.js loaded: ' + (typeof SUPPORTED_SITES !== 'undefined'), 'success');
+                log('✓ config.js loaded: ' + (typeof CONFIG !== 'undefined'), 'success');  
+                log('✓ jwt-validator.js loaded: ' + (typeof validateJWT !== 'undefined'), 'success');
+                log('✓ cognito-auth.js loaded: ' + (typeof ChromeCognitoAuth !== 'undefined'), 'success');
+                
+                // Test 2: Configuration setup (simulate what popup.js does on initialization)
+                log('--- Simulating popup.js initialization ---');
+                
+                // Set localStorage values like popup.js would
+                localStorage.setItem('COGNITO_USER_POOL_ID', 'us-west-2_qJ1i9RhxD');
+                localStorage.setItem('COGNITO_APP_CLIENT_ID', '6nt4hv92d22gp9u2l1vhqks1o1');
+                localStorage.setItem('AWS_REGION', 'us-west-2');
+                localStorage.setItem('API_BASE_URL', 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com');
+                log('✓ localStorage values set', 'success');
+                
+                // Reload configuration
+                if (CONFIG.reloadConfiguration) {
+                    CONFIG.reloadConfiguration();
+                    log('✓ CONFIG.reloadConfiguration() called', 'success');
+                } else {
+                    log('✗ CONFIG.reloadConfiguration not available', 'error');
+                }
+                
+                // Test 3: Verify configuration after reload
+                const cognitoConfig = CONFIG.getCognitoConfig();
+                if (cognitoConfig.userPoolId !== 'CONFIGURE_ME') {
+                    log('✓ Cognito configuration loaded: ' + cognitoConfig.userPoolId, 'success');
+                } else {
+                    log('✗ Configuration still shows CONFIGURE_ME', 'error');
+                }
+                
+                // Test 4: ChromeCognitoAuth instantiation
+                log('--- Testing ChromeCognitoAuth instantiation ---');
+                const auth = new ChromeCognitoAuth({
+                    region: cognitoConfig.region,
+                    userPoolId: cognitoConfig.userPoolId,
+                    clientId: cognitoConfig.clientId
+                });
+                log('✓ ChromeCognitoAuth instance created', 'success');
+                
+                // Test 5: Abstract method implementation
+                try {
+                    auth._setStoredItem('test-auth-key', 'test-value');
+                    const retrieved = auth._getStoredItem('test-auth-key');
+                    if (retrieved === 'test-value') {
+                        log('✓ Abstract method _setStoredItem/_getStoredItem working', 'success');
+                    } else {
+                        log('✗ Storage methods not working properly: ' + retrieved, 'error');
+                    }
+                } catch (methodError) {
+                    log('✗ Abstract method error: ' + methodError.message, 'error');
+                }
+                
+                // Test 6: Check for any global errors
+                window.onerror = function(msg, url, line, col, error) {
+                    log('✗ Global error: ' + msg + ' at ' + url + ':' + line, 'error');
+                };
+                
+                log('=== All tests completed ===');
+                
+            } catch (error) {
+                log('✗ Test suite error: ' + error.message, 'error');
+                log('Stack: ' + error.stack, 'error');
+            }
+        }
+        
+        // Run tests after all scripts loaded
+        setTimeout(runTests, 100);
+    </script>
+</body>
+</html>

@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://recipearchive-web-app-prod-990537043943.s3-website-us-west-2.amazonaws.com',
+    baseURL: 'https://d1jcaphz4458q7.cloudfront.net',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

@@ -5,6 +5,25 @@
 let isSignedIn = false;
 // let currentUser = null; // Removed unused variable
 
+// Get extension version from manifest
+function getExtensionVersion() {
+    return chrome.runtime.getManifest().version;
+}
+
+// Create version display element
+function createVersionDisplay() {
+    const version = getExtensionVersion();
+    const webAppUrl = CONFIG.WEB_APP_URL;
+    
+    return `
+        <div style="position: absolute; top: 8px; left: 20px; z-index: 1000;">
+            <a href="${webAppUrl}" target="_blank" 
+               style="font-size: 11px; color: #888; text-decoration: none; font-family: Arial, sans-serif;"
+               title="Open RecipeArchive Web App">v${version}</a>
+        </div>
+    `;
+}
+
 // Credential management functions for convenience
 function saveCredentials(email, password) {
     const credentials = { email, password };
@@ -27,30 +46,35 @@ function clearCredentials() {
 
 // Ensure AWS configuration is set before authentication attempts
 async function ensureAWSConfiguration() {
-    console.log('🔧 Checking AWS configuration...');
+    console.log("🔧 Checking AWS configuration...");
     
     // Check if configuration is already set and valid
-    const currentUserPoolId = localStorage.getItem('COGNITO_USER_POOL_ID');
-    const currentClientId = localStorage.getItem('COGNITO_APP_CLIENT_ID');
+    const currentUserPoolId = localStorage.getItem("COGNITO_USER_POOL_ID");
+    const currentClientId = localStorage.getItem("COGNITO_APP_CLIENT_ID");
     
     if (currentUserPoolId && currentClientId && 
-        currentUserPoolId !== 'CONFIGURE_ME' && 
-        currentClientId !== 'CONFIGURE_ME') {
-        console.log('✅ AWS configuration already set');
+        currentUserPoolId !== "CONFIGURE_ME" && 
+        currentClientId !== "CONFIGURE_ME") {
+        console.log("✅ AWS configuration already set");
         return;
     }
     
     // Set correct AWS configuration
-    console.log('🔧 Setting correct AWS configuration...');
-    localStorage.setItem('AWS_REGION', 'us-west-2');
-    localStorage.setItem('COGNITO_USER_POOL_ID', 'us-west-2_qJ1i9RhxD');
-    localStorage.setItem('COGNITO_APP_CLIENT_ID', '5grdn7qhf1el0ioqb6hkelr29s');
-    localStorage.setItem('API_BASE_URL', 'https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod');
+    console.log("🔧 Setting correct AWS configuration...");
+    localStorage.setItem("AWS_REGION", "us-west-2");
+    localStorage.setItem("COGNITO_USER_POOL_ID", "us-west-2_qJ1i9RhxD");
+    localStorage.setItem("COGNITO_APP_CLIENT_ID", "5grdn7qhf1el0ioqb6hkelr29s");
+    localStorage.setItem("API_BASE_URL", "https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod");
     
     // Enable production mode for the extension
-    localStorage.setItem('recipeArchive.dev', 'false');
+    localStorage.setItem("recipeArchive.dev", "false");
     
-    console.log('✅ AWS configuration set successfully');
+    // Force CONFIG to reload environment configuration
+    if (typeof CONFIG !== "undefined" && CONFIG.reloadConfiguration) {
+        CONFIG.reloadConfiguration();
+    }
+    
+    console.log("✅ AWS configuration set successfully");
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -80,13 +104,15 @@ function checkAuthenticationStatus() {
 
 function renderUI() {
     const container = document.getElementById("main-container");
+    const versionDisplay = createVersionDisplay();
     
     if (isSignedIn) {
         // Signed in UI - show capture functionality
         container.innerHTML = `
-            <div style="position: relative;">
+            ${versionDisplay}
+            <div style="position: relative; padding-top: 20px;">
                 <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333;">RecipeArchive</h1>
-                <a href="#" id="signout-link" style="position: absolute; top: 0; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
+                <a href="#" id="signout-link" style="position: absolute; top: -12px; right: 0; font-size: 11px; color: #666; text-decoration: none;">sign out</a>
             </div>
             <button id="capture" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Capture Recipe</button>
             <div id="status" style="margin-top: 15px; padding: 10px; border-radius: 4px; font-size: 12px; display: none;"></div>
@@ -124,7 +150,10 @@ function renderUI() {
     } else {
         // Not signed in UI - show sign in form
         container.innerHTML = `
-            <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">RecipeArchive</h1>
+            ${versionDisplay}
+            <div style="padding-top: 20px;">
+                <h1 style="margin: 0 0 20px 0; font-size: 18px; color: #333; text-align: center;">RecipeArchive</h1>
+            </div>
             <div style="margin-bottom: 20px; padding: 10px; background: #fff3e0; border-radius: 4px; font-size: 12px; text-align: center;">
                 Sign in to capture recipes
             </div>
@@ -212,7 +241,7 @@ async function handleSignIn() {
         // Ensure AWS configuration is set before authentication
         await ensureAWSConfiguration();
         
-        // Initialize CognitoAuth with configuration from CONFIG
+        // Initialize ChromeCognitoAuth with configuration from CONFIG
         const cognitoConfig = CONFIG.getCognitoConfig();
         const cognitoAuth = new ChromeCognitoAuth({
             region: cognitoConfig.region,
@@ -268,12 +297,110 @@ async function handleSignIn() {
     }
 }
 
+async function refreshAuthToken() {
+    try {
+        const authData = localStorage.getItem("recipeArchive.auth");
+        if (!authData) {
+            return { success: false, error: "No auth data found" };
+        }
+        
+        const auth = JSON.parse(authData);
+        if (!auth.refreshToken) {
+            return { success: false, error: "No refresh token available" };
+        }
+        
+        // Initialize ChromeCognitoAuth with configuration
+        const cognitoConfig = CONFIG.getCognitoConfig();
+        const cognitoAuth = new ChromeCognitoAuth({
+            region: cognitoConfig.region,
+            userPoolId: cognitoConfig.userPoolId,
+            clientId: cognitoConfig.clientId
+        });
+        
+        // Call the refresh token method
+        const result = await cognitoAuth.refreshToken(auth.refreshToken);
+        
+        if (result.success) {
+            console.log("✅ Token refresh successful");
+            return { success: true };
+        } else {
+            console.error("❌ Token refresh failed:", result.error);
+            return { success: false, error: result.error };
+        }
+        
+    } catch (error) {
+        console.error("❌ Token refresh error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 function signOut() {
     isSignedIn = false;
     localStorage.removeItem("recipeArchive.auth");
     // Note: Keeping saved credentials for convenience
     // Users can clear them manually if desired
     renderUI();
+}
+
+async function downloadAndUploadImage(imageUrl, recipeTitle) {
+    try {
+        console.log("🖼️ Starting image download from:", imageUrl);
+        
+        // Generate a unique filename
+        const timestamp = Date.now();
+        const sanitizedTitle = (recipeTitle || "recipe")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "-")
+            .replace(/-+/g, "-")
+            .replace(/^-|-$/g, "")
+            .substring(0, 50);
+        const fileExtension = imageUrl.split(".").pop()?.toLowerCase().split("?")[0] || "jpg";
+        const filename = `recipes/${sanitizedTitle}-${timestamp}.${fileExtension}`;
+        
+        // Download the image
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+        }
+        
+        const contentType = response.headers.get("content-type") || "image/jpeg";
+        const imageBlob = await response.blob();
+        
+        console.log(`📦 Downloaded image (${imageBlob.size} bytes, ${contentType})`);
+        
+        // Convert blob to base64 for AWS upload
+        const arrayBuffer = await imageBlob.arrayBuffer();
+        const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
+        // Upload to S3 via API Gateway
+        const api = CONFIG.getCurrentAPI();
+        const uploadResponse = await fetch(`${api.base}/v1/images/upload`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${JSON.parse(localStorage.getItem("recipeArchive.auth") || "{}").token}`
+            },
+            body: JSON.stringify({
+                filename: filename,
+                contentType: contentType,
+                imageData: base64String
+            })
+        });
+        
+        if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text();
+            throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        console.log("✅ Image uploaded to S3:", uploadResult);
+        
+        return uploadResult.imageUrl || uploadResult.url;
+        
+    } catch (error) {
+        console.error("❌ Image download/upload failed:", error);
+        return null;
+    }
 }
 
 async function captureRecipe() {
@@ -367,6 +494,25 @@ async function captureRecipe() {
 
         const recipeData = results[0].result;
         console.log("📝 Extracted recipe data:", recipeData);
+
+        // Download and replace image URL with S3 URL
+        if (recipeData.image || recipeData.imageUrl) {
+            showStatus("🖼️ Downloading recipe image...", "#e7f3ff");
+            const originalImageUrl = recipeData.image || recipeData.imageUrl;
+            try {
+                const s3ImageUrl = await downloadAndUploadImage(originalImageUrl, recipeData.title);
+                if (s3ImageUrl) {
+                    recipeData.image = s3ImageUrl;
+                    recipeData.imageUrl = s3ImageUrl;
+                    console.log("✅ Image uploaded to S3:", s3ImageUrl);
+                } else {
+                    console.warn("⚠️ Failed to upload image to S3, keeping original URL");
+                }
+            } catch (imageError) {
+                console.error("❌ Error processing image:", imageError);
+                // Continue with original URL if image processing fails
+            }
+        }
 
         // Fallback logic: check for missing ingredients/instructions
         const missingIngredients = !recipeData.ingredients || recipeData.ingredients.length === 0;
@@ -701,6 +847,50 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
         if (!response.ok) {
             const errorText = await response.text();
             console.error("❌ AWS API Error:", errorText);
+            
+            // Handle token expiration (401) with automatic refresh
+            if (response.status === 401 && errorText.includes("expired")) {
+                console.log("🔄 Token expired, attempting to refresh...");
+                const refreshResult = await refreshAuthToken();
+                
+                if (refreshResult.success) {
+                    console.log("✅ Token refreshed successfully, retrying request...");
+                    // Retry the original request with new token
+                    const newAuth = JSON.parse(localStorage.getItem("recipeArchive.auth"));
+                    const retryResponse = await fetch(apiEndpoint, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${newAuth.token}`
+                        },
+                        body: JSON.stringify(transformedData)
+                    });
+                    
+                    if (retryResponse.ok) {
+                        const retryResult = await retryResponse.json();
+                        console.log("✅ Retry successful after token refresh:", retryResult);
+                        return { success: true, data: retryResult };
+                    } else {
+                        const retryErrorText = await retryResponse.text();
+                        console.error("❌ Retry failed even after token refresh:", retryErrorText);
+                        return { 
+                            success: false, 
+                            error: `HTTP ${retryResponse.status}: ${retryErrorText}` 
+                        };
+                    }
+                } else {
+                    console.error("❌ Token refresh failed:", refreshResult.error);
+                    // Clear invalid auth and force re-login
+                    isSignedIn = false;
+                    localStorage.removeItem("recipeArchive.auth");
+                    renderUI();
+                    return { 
+                        success: false, 
+                        error: "Session expired. Please sign in again." 
+                    };
+                }
+            }
+            
             return { 
                 success: false, 
                 error: `HTTP ${response.status}: ${errorText}` 
