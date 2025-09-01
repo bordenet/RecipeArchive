@@ -50,8 +50,8 @@ class UnitsConverter {
 
 
   static String convertIngredient(String ingredient, bool toMetric) {
-    // Enhanced regex to handle mixed fractions (1 3/4), simple fractions (3/4), and decimals
-    final regex = RegExp(r'(\d+(?:\s+\d+/\d+|\.\d+|/\d+)?)\s*([a-zA-Z][a-zA-Z\s]*(?:[a-zA-Z]|(?=\s*\()|(?=\s*,)|$))');
+    // Enhanced regex to handle all fraction patterns: mixed (1 3/4), simple (1/2), and decimals (1.5)
+    final regex = RegExp(r'((?:\d+\s+)?\d+(?:\.\d+)?(?:/\d+)?)\s*([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?=\s|$|,|\()');
     final matches = regex.allMatches(ingredient);
     
     String result = ingredient;
@@ -65,8 +65,11 @@ class UnitsConverter {
       final originalMatch = match.group(0);
       
       if (amountStr != null && unit != null && originalMatch != null) {
+        // Skip if unit doesn't look like a measurement unit (too long or contains numbers)
+        if (unit.length > 15 || RegExp(r'\d').hasMatch(unit)) continue;
+        
         final amount = _parseAmount(amountStr);
-        if (amount != null) {
+        if (amount != null && amount > 0) {
           final convertedText = _convertMeasurement(amount, unit, toMetric);
           if (convertedText != null && convertedText.isNotEmpty) {
             result = result.replaceRange(match.start, match.end, convertedText);

@@ -502,8 +502,9 @@ async function captureRecipe() {
             try {
                 const s3ImageUrl = await downloadAndUploadImage(originalImageUrl, recipeData.title);
                 if (s3ImageUrl) {
-                    recipeData.image = s3ImageUrl;
-                    recipeData.imageUrl = s3ImageUrl;
+                    recipeData.mainPhotoUrl = s3ImageUrl;
+                    recipeData.imageUrl = s3ImageUrl;  // Keep for compatibility
+                    recipeData.image = s3ImageUrl;     // Keep for compatibility
                     console.log("✅ Image uploaded to S3:", s3ImageUrl);
                 } else {
                     console.warn("⚠️ Failed to upload image to S3, keeping original URL");

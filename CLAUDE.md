@@ -290,12 +290,36 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **User Experience**: Extensions now handle expired tokens seamlessly after 60+ minutes
 - **Error Handling**: If refresh fails, users are automatically prompted to sign in again
 
-### IMAGE PIPELINE STATUS 🖼️ IN PROGRESS
+## 🚨 CURRENT STATUS (September 1, 2025)
 
-- **Extension Image Capture**: ✅ WORKING - Both Chrome/Safari download and upload images to S3
-- **S3 Storage**: ✅ WORKING - Images stored with unique filenames in recipes/ folder
-- **Flutter Display**: ✅ CONFIGURED - Web app has Image.network() widgets for gallery and detail views
-- **Current Investigation**: Verifying complete image flow from extension → S3 → Flutter display
+### ✅ MAJOR FIXES COMPLETED TODAY
+
+- **Original Recipe URL Icon**: ✅ WORKING - Fixed JSON field mapping from `source` to `sourceUrl`  
+- **Unit Conversion Bugs**: ✅ PARTIALLY FIXED - Enhanced null handling and regex patterns
+- **Repository Cleanup**: ✅ COMPLETED - Removed 9+ temporary debugging files and obsolete tools
+- **CloudFront Deployment**: ✅ UPDATED - Latest Flutter build deployed to production
+- **Technical Planning**: ✅ COMPLETED - Created comprehensive failed parse workflow and OpenAI normalization plans
+
+### 🚨 CRITICAL ISSUES REMAINING
+
+- **❌ SHOW-STOPPING: Recipe Images Missing** - Browser extension image pipeline not working, no `mainPhotoUrl` in stored recipes
+- **❌ Unit Conversion Incomplete**: Simple fractions like "1/2 teaspoon", "1 tablespoon" not converting  
+- **❌ Serving Size Scaling**: Ingredient scaling not updating when serving size changes
+
+### 🎯 CURRENT FOCUS AREAS
+
+1. **Image Pipeline Debug**: Extension captures images but not storing `mainPhotoUrl` in recipe JSON
+2. **Unit Conversion Fix**: Simple fraction regex patterns need enhancement  
+3. **DynamoDB Cleanup**: Remove all deprecated DynamoDB references from codebase
+4. **Production Validation**: End-to-end testing of complete recipe workflow
+
+### ✅ WORKING FEATURES
+
+- **Authentication**: Full Cognito integration working across extensions and Flutter app
+- **Recipe Parsing**: 14 recipes captured from 12+ supported sites  
+- **Source URL Navigation**: Original recipe links working in details pages
+- **Ingredient Section Headers**: "For the crust", "For the filling" parsing and display
+- **CloudFront Deployment**: Production web app at https://d1jcaphz4458q7.cloudfront.net
 
 ### AUTHENTICATION STATUS ✅ STABLE
 
@@ -303,15 +327,6 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Token Management**: ✅ ENHANCED - Refresh tokens prevent 60-minute session timeouts
 - **Service Worker**: ✅ FIXED - Disabled for HTTP deployment to prevent secure context errors
 - **CloudFront HTTPS**: ✅ DEPLOYED at https://d1jcaphz4458q7.cloudfront.net
-
-### RECENT COMPLETED FIXES
-
-- ✅ **Token Refresh**: Both Chrome and Safari extensions handle expired Cognito tokens automatically
-- ✅ **Error Recovery**: Seamless retry logic for API calls after token refresh
-- ✅ **User Experience**: No more "HTTP 401: The incoming token has expired" errors after 60 minutes
-- ✅ **Image Upload**: Extensions capture and upload recipe images to S3 storage
-- ✅ **Units Conversion Feature**: Smart metric/imperial toggle on recipe details
-- ✅ **UI Terminology**: Standardized Landing Page, Gallery/Carousel, Action Bar, Badges, Details Page
 
 ### COMPLETED IN THIS SESSION ✅
 

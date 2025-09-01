@@ -141,7 +141,7 @@ class Recipe {
   @JsonKey(name: 'mainPhotoUrl')
   final String? imageUrl;
   
-  @JsonKey(name: 'source')
+  @JsonKey(name: 'sourceUrl')
   final String? sourceUrl;
   final String? sourceName;
   final String? difficulty;
