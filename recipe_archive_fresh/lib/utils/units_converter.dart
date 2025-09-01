@@ -56,16 +56,20 @@ class UnitsConverter {
     
     String result = ingredient;
     
-    for (final match in matches) {
+    // Process matches in reverse order to avoid position shifting
+    final matchList = matches.toList().reversed;
+    
+    for (final match in matchList) {
       final amountStr = match.group(1)?.trim();
       final unit = match.group(2)?.trim().toLowerCase();
+      final originalMatch = match.group(0);
       
-      if (amountStr != null && unit != null) {
+      if (amountStr != null && unit != null && originalMatch != null) {
         final amount = _parseAmount(amountStr);
         if (amount != null) {
           final convertedText = _convertMeasurement(amount, unit, toMetric);
-          if (convertedText != null) {
-            result = result.replaceAll(match.group(0)!, convertedText);
+          if (convertedText != null && convertedText.isNotEmpty) {
+            result = result.replaceRange(match.start, match.end, convertedText);
           }
         }
       }
@@ -101,6 +105,8 @@ class UnitsConverter {
   }
 
   static String? _convertMeasurement(double amount, String unit, bool toMetric) {
+    if (amount <= 0 || unit.isEmpty) return null;
+    
     // Handle temperature conversions
     if (unit.contains('°f') || unit.contains('fahrenheit')) {
       if (toMetric) {
@@ -119,17 +125,18 @@ class UnitsConverter {
     }
     
     // Handle volume conversions
-    if (_volumeToMl.containsKey(unit)) {
+    final volumeConversion = _volumeToMl[unit];
+    if (volumeConversion != null) {
       final isCurrentlyMetric = ['ml', 'milliliter', 'milliliters', 'l', 'liter', 'liters'].contains(unit);
       
       if (toMetric && !isCurrentlyMetric) {
         // Convert to metric
-        final milliliters = amount * _volumeToMl[unit]!;
+        final milliliters = amount * volumeConversion;
         if (milliliters >= 1000) {
           final liters = milliliters / 1000;
           return '${_formatNumber(liters)} ${liters == 1 ? 'liter' : 'liters'}';
         } else {
-          return '${_formatNumber(milliliters)} ${milliliters == 1 ? 'ml' : 'ml'}';
+          return '${_formatNumber(milliliters)} ml';
         }
       } else if (!toMetric && isCurrentlyMetric) {
         // Convert to imperial
@@ -141,17 +148,18 @@ class UnitsConverter {
     }
     
     // Handle weight conversions
-    if (_weightToGrams.containsKey(unit)) {
+    final weightConversion = _weightToGrams[unit];
+    if (weightConversion != null) {
       final isCurrentlyMetric = ['g', 'gram', 'grams', 'kg', 'kilogram', 'kilograms'].contains(unit);
       
       if (toMetric && !isCurrentlyMetric) {
         // Convert to metric
-        final grams = amount * _weightToGrams[unit]!;
+        final grams = amount * weightConversion;
         if (grams >= 1000) {
           final kilograms = grams / 1000;
-          return '${_formatNumber(kilograms)} ${kilograms == 1 ? 'kg' : 'kg'}';
+          return '${_formatNumber(kilograms)} kg';
         } else {
-          return '${_formatNumber(grams)} ${grams == 1 ? 'g' : 'g'}';
+          return '${_formatNumber(grams)} g';
         }
       } else if (!toMetric && isCurrentlyMetric) {
         // Convert to imperial

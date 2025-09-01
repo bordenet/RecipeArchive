@@ -156,6 +156,22 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 
 ## 🚧 TODO: Future Enhancements
 
+### 🚨 CRITICAL BUGS - FIX IMMEDIATELY
+
+#### Unit Conversion Issues (September 1, 2025)
+- **"undefined" Values Bug**: Unit conversion displaying "undefined undefined" text in Flutter ingredients list
+  - **Example Recipe**: https://food52.com/recipes/kylie-sakaida-avocado-bean-toast  
+  - **Symptoms**: "undefined" appears where converted measurements should display
+  - **Root Cause**: Null handling in UnitsConverter.convertIngredient() method
+  - **Status**: IN PROGRESS - Enhanced null checking and replaceRange logic implemented
+
+- **Simple Fractions Skipped**: Imperial/metric toggle skips simple fractions like "1/2 teaspoon", "1 tablespoon"
+  - **Working**: Mixed fractions like "1 3/4 cups" convert correctly  
+  - **Not Working**: Simple fractions "1/2 tsp", "2/3 cups", "1 tablespoon"
+  - **Root Cause**: Regex pattern not capturing all fraction formats consistently
+  - **Files Affected**: `lib/utils/units_converter.dart`
+  - **Status**: IN PROGRESS - Improved parsing and conversion logic
+
 ### OpenAI Integration for Recipe Enhancement
 
 - **LLM Recipe Review**: Add OpenAI backend assistance when recipes are pushed from web extensions
