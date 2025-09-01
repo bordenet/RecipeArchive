@@ -6,13 +6,11 @@
 
 #### CRITICAL ACTIONS REQUIRED:
 
-1. **✅ Ingredient Section Headers**: FIXED - Parser now preserves "For the crust", "For the filling" section distinctions with proper Flutter UI display 
+1. **✅ Ingredient Section Headers**: FIXED - Parser now preserves "For the crust", "For the filling" section distinctions with proper Flutter UI display
 2. **Unit Conversion Bug**: Fix unit toggle not converting ingredients like "1/2 teaspoon granulated sugar" and "1 tablespoon water" - regex misses fraction + unit patterns
 3. **Failed Parse Workflow**: Create workflow plan for failed web extension parses through backend to Flutter/Dart apps
 4. **OpenAI Content Normalization**: Create plan for OpenAI integration at ingestion to normalize/canonicalize content, casing, units, recipe titles via structured prompts before S3 storage
-5. **Admin Multi-Tenant Management**: Create plan for Flutter web app admin role with tenant dropdown and full tenant provisioning
-   - System Admin: mattbordenet@hotmail.com
-   - Test User: susan.cameron42@gmail.com / Bear901206!!
+5. **Admin Multi-Tenant Management**: Create plan for Flutter web app admin role with tenant dropdown and full tenant provisioning. System Admin vs Test User roles.
 6. **PRD Extensions**: Extend `/docs/requirements` PRD documents with these feature requirements (focus on WHAT/WHY)
 
 ### Deployed Components (August 2025)
@@ -159,14 +157,15 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 ### 🚨 CRITICAL BUGS - FIX IMMEDIATELY
 
 #### Unit Conversion Issues (September 1, 2025)
+
 - **"undefined" Values Bug**: Unit conversion displaying "undefined undefined" text in Flutter ingredients list
-  - **Example Recipe**: https://food52.com/recipes/kylie-sakaida-avocado-bean-toast  
+  - **Example Recipe**: https://food52.com/recipes/kylie-sakaida-avocado-bean-toast
   - **Symptoms**: "undefined" appears where converted measurements should display
   - **Root Cause**: Null handling in UnitsConverter.convertIngredient() method
   - **Status**: IN PROGRESS - Enhanced null checking and replaceRange logic implemented
 
 - **Simple Fractions Skipped**: Imperial/metric toggle skips simple fractions like "1/2 teaspoon", "1 tablespoon"
-  - **Working**: Mixed fractions like "1 3/4 cups" convert correctly  
+  - **Working**: Mixed fractions like "1 3/4 cups" convert correctly
   - **Not Working**: Simple fractions "1/2 tsp", "2/3 cups", "1 tablespoon"
   - **Root Cause**: Regex pattern not capturing all fraction formats consistently
   - **Files Affected**: `lib/utils/units_converter.dart`
@@ -255,6 +254,7 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 ## ✅ MAJOR FIXES COMPLETED (September 1, 2025)
 
 ### ✅ Ingredient Section Headers Implementation
+
 - **Parser Enhancement**: Modified Smitten Kitchen parser to detect `<h5>` section headers within `.jetpack-recipe-ingredients`
 - **Section Preservation**: Headers like "For the crust (pâte brisée)" and "For the filling" now stored as `## HeaderText` in ingredients
 - **Flutter UI Display**: Section headers display with uppercase styling, bold text, and horizontal line separator
@@ -262,6 +262,7 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Files Modified**: `smitten-kitchen.ts`, `recipe_detail_screen.dart`, `recipe.dart`
 
 ### Unit Conversion & Scaling Fixes ✅
+
 - **Mixed Fraction Support**: Fixed regex to handle "1 3/4 cups" in both unit conversion AND serving size scaling
 - **Enhanced Parsing**: Added comprehensive `_parseAmount()` and `_parseScalingAmount()` methods for fractions, mixed fractions, and decimals
 - **Accurate Conversions**: "1 3/4 cups" now correctly converts to "414 ml" (1.75 × 236.588)
@@ -269,14 +270,16 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Production Deployment**: All fixes deployed to CloudFront (https://d1jcaphz4458q7.cloudfront.net)
 
 ### Browser Extension Authentication Fixes ✅
+
 - **Chrome Extension**: Fixed ResourceNotFoundException by adding `ensureAWSConfiguration()` and `CONFIG.reloadConfiguration()`
 - **Safari Extension**: Applied same authentication fixes with Safari-specific `SafariCognitoAuth` class
 - **Configuration Race Condition**: Resolved timing issue where CONFIG loaded before localStorage values were set
 - **Abstract Method Error**: Fixed "must be implemented by subclass" by using correct `ChromeCognitoAuth`/`SafariCognitoAuth` classes
 
 ### Files Modified:
+
 - `/utils/units_converter.dart`: Enhanced regex for mixed fractions + `_parseAmount()` method
-- `/models/recipe.dart`: New `_parseScalingAmount()` and `_formatScaledAmount()` methods  
+- `/models/recipe.dart`: New `_parseScalingAmount()` and `_formatScaledAmount()` methods
 - `/extensions/chrome/popup.js`: Added `ensureAWSConfiguration()` + ChromeCognitoAuth fixes
 - `/extensions/safari/popup.js`: Added `ensureAWSConfiguration()` + SafariCognitoAuth fixes
 - `/extensions/safari/config.js`: Added `reloadConfiguration()` method
@@ -294,7 +297,7 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 
 ### ✅ MAJOR FIXES COMPLETED TODAY
 
-- **Original Recipe URL Icon**: ✅ WORKING - Fixed JSON field mapping from `source` to `sourceUrl`  
+- **Original Recipe URL Icon**: ✅ WORKING - Fixed JSON field mapping from `source` to `sourceUrl`
 - **Unit Conversion Bugs**: ✅ PARTIALLY FIXED - Enhanced null handling and regex patterns
 - **Repository Cleanup**: ✅ COMPLETED - Removed 9+ temporary debugging files and obsolete tools
 - **CloudFront Deployment**: ✅ UPDATED - Latest Flutter build deployed to production
@@ -303,20 +306,20 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 ### 🚨 CRITICAL ISSUES REMAINING
 
 - **❌ SHOW-STOPPING: Recipe Images Missing** - Browser extension image pipeline not working, no `mainPhotoUrl` in stored recipes
-- **❌ Unit Conversion Incomplete**: Simple fractions like "1/2 teaspoon", "1 tablespoon" not converting  
+- **❌ Unit Conversion Incomplete**: Simple fractions like "1/2 teaspoon", "1 tablespoon" not converting
 - **❌ Serving Size Scaling**: Ingredient scaling not updating when serving size changes
 
 ### 🎯 CURRENT FOCUS AREAS
 
 1. **Image Pipeline Debug**: Extension captures images but not storing `mainPhotoUrl` in recipe JSON
-2. **Unit Conversion Fix**: Simple fraction regex patterns need enhancement  
+2. **Unit Conversion Fix**: Simple fraction regex patterns need enhancement
 3. **DynamoDB Cleanup**: Remove all deprecated DynamoDB references from codebase
 4. **Production Validation**: End-to-end testing of complete recipe workflow
 
 ### ✅ WORKING FEATURES
 
 - **Authentication**: Full Cognito integration working across extensions and Flutter app
-- **Recipe Parsing**: 14 recipes captured from 12+ supported sites  
+- **Recipe Parsing**: 14 recipes captured from 12+ supported sites
 - **Source URL Navigation**: Original recipe links working in details pages
 - **Ingredient Section Headers**: "For the crust", "For the filling" parsing and display
 - **CloudFront Deployment**: Production web app at https://d1jcaphz4458q7.cloudfront.net
@@ -338,8 +341,9 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Root Cause**: Chrome extension was using `localStorage.getItem('recipeArchive.idToken')` instead of extracting token from `JSON.parse(localStorage.getItem('recipeArchive.auth'))`
 
 ### LATEST COMPLETED FIXES (Current Session) ✅
+
 - **Chrome Extension Auth Fix**: Fixed ResourceNotFoundException by correcting class name from `ChromeCognitoAuth` to `CognitoAuth`
-- **Web App UX Improvements**: 
+- **Web App UX Improvements**:
   - Replaced ugly green "View Original at Source" button with clean icon in AppBar
   - Replaced ugly red "Delete" button with existing delete icon functionality
   - Added "view original at source" icon (square-with-arrow) to AppBar action bar
@@ -353,7 +357,7 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 3. ✅ **Flutter Ready**: Web app already configured to display images from `imageUrl` field
 4. ✅ **Authentication Solid**: No more 60-minute session timeouts
 
-### ✅ RESOLVED AUTHENTICATION ISSUE 
+### ✅ RESOLVED AUTHENTICATION ISSUE
 
 **Chrome Extension Sign-in Fixed**: ResourceNotFoundException was caused by configuration loading race condition
 
@@ -363,62 +367,32 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Solution**: Added `CONFIG.reloadConfiguration()` method to refresh config after setting localStorage
 - **RESOLVED**: Chrome extension authentication now working with proper AWS configuration
 
-### IMMEDIATE PRIORITY NEXT SESSION
+### IMMEDIATE PRIORITY
 
-0. **EXTENSION DISTRIBUTION**
+Address the following matters immediately. First, analyze them, second create a formal plan to address them, third, replace this section with a revised/corrected list. Ask me clarifying questions along the way to ensure we get this right.
 
-Recipe Archive
-Insert the following request into CLAUDE.md, ensure durable context, and then execute:
+1. **EXTENSION DISTRIBUTION**
 
-### new page in web app
+Add new page to dart/flutter app available once users have successfully signed in. Create a dedicated page for users to download our Chrome and Safari web extension .zip files.
 
-In the web app, upon successful signing in, please create a dedicated page for users to access web extension .zip files. Always build the web extensions as part of flutter/dart web deployments to CloudFront and push updates to the site.
+To support this:
 
-### web extension hosting mechanism
+- Always build the web extensions as part of flutter/dart web deployments to CloudFront to ensure the most recent web extensions are downloadable from the RecipeArchive app.
+- Create a dedicated S3 bucket for web extension distribution, partition the bucket by semantic version number. Make this s3 bucket available to signed in users — use standard AWS cogneto just like the rest of the project. Include an S3 data retention policy to only retain the last four versions of the web extension zip files.
+- Always release the Safari and Chrome web extensions together-- never let their versions drift. If you make a bug fix to either one, bump the version number up and re-package both and push them to the S3 distribution bucket and adjust the dart/flutter app to specify only the latest version.
+- Include a link to this new web extension distribution page in the green banner of the gallery home landing page. On the new web extension distribution page, provide detailed instructions for installing each of the two web extensions (safari, chrome) for Mac, Windows, and Linux. Include the ability to download each extension from the page.
 
-Create a dedicated S3 bucket for distribution partitioned by version number. Make this s3 bucket available to signed in users — use standard AWS cogneto like the rest of the project. Include retention policies to only retain the last four versions of the web extension zip files.
-
-### web extension discovery
-
-Include a link to this new web extension distribution page in the green banner of the gallery home landing page. On the new web extension distribution page, provide detailed instructions for installing each of the two web extensions (safari, chrome) for Mac, Windows, and Linux. Include the ability to download each extension from the page.
-
-### use semantic versioning for the web extensions
-
-Include semantic versioning for all breaking changes to the web extension builds. Include the version number in the top left corner of each web extension in small font face. Hyperlink this version string to the web app CloudFront distribution so it’s easy to navigate between the web extension and the web app. Include a back button on this new page to return to the gallery/carousel home landing page of the web app.
-
-## planning
-
-Before executing these steps, review and sort order an execution plan for optimal outcomes in CLAUDE.md and push the resulting plan to GitHub
-
-1. **FIX COGNITO AUTH**: Debug ResourceNotFoundException in Chrome extension authentication
-
-config.js:106 🔧 Recipe Archive Extension Config: Object
-popup.js:49 🔧 Checking AWS configuration...
-popup.js:63 🔧 Setting correct AWS configuration...
-popup.js:72 ✅ AWS configuration set successfully
-cognito-idp.us-west-2.amazonaws.com/:1 Failed to load resource: the server responded with a status of 400 ()
-cognito-auth.js:105 Direct authentication failed: Error: ResourceNotFoundException
-at ChromeCognitoAuth.\_makeRequest (cognito-auth.js:582:13)
-at async ChromeCognitoAuth.\_signInWithPassword (cognito-auth.js:77:24)
-at async ChromeCognitoAuth.signIn (cognito-auth.js:60:14)
-at async handleSignIn (popup.js:248:24)
-\_signInWithPassword @ cognito-auth.js:105
-popup.js:286 ❌ Cognito authentication failed: ResourceNotFoundException
-handleSignIn @ popup.js:286
-
-2. **VERIFY AWS CONFIG**: Check if Cognito User Pool ID, Client ID, or region settings are correct
-3. **TEST SAFARI**: Verify if Safari extension has same authentication issue
-4. **FALLBACK PLAN**: Implement alternative authentication flow if Cognito settings changed
-5. **Web App UX**: On the details page, ensure the units toggle works such that all ingredients are converted to the current units (imperial/metric). For example, if the ingredients includes "5 Cups", a click on the units button would toggle this text to "1250 mL".
-6. **Web App UX2**: On the details page, the green button is very ugly. And the red delete button on the same line is also very ugly. Having icons in the top-right corner of the page is sufficient. The Edit and Delete buttons are already present, so leave them alone. Add an additional button for "view original at source" functionality with the square-with-arrow emoji/icon (which is appropriate because the original source IS an external website). Place this icon to the left of the delete / trash icon. Remove the long green button ("View Original at Source") and remove the red "Delete" button.
-7. **Web App UX3**: On the details page, if I edit serving size and save the recipe, the original serving size is presented on the light green servings button. For example, if a recipe says "2 servings" and I edit the recipe to be 200 servings, when I save the recipe the page should reflect "200 servings".
-
-### SECONDARY TASKS (AFTER AUTH FIXED)
-
-1. **TEST IMAGE PIPELINE**: Capture new recipe with Chrome/Safari extension to verify S3 image upload works
-2. **VERIFY S3 URLS**: Check that new recipes have S3 URLs instead of original site URLs
-3. **FLUTTER IMAGE TEST**: Confirm images display correctly in web app gallery and detail views
-4. **CloudFront CORS**: If needed, fix any remaining CORS issues for S3 image serving
-5. **Test Pass**: Ensure all tests pass and that ./validate-monorepo.sh passes
+2. **FALLBACK PLAN**: Implement alternative authentication flow if Cognito settings changed
+3. **Web App UX 1**: Changing the servings size is intended to directly alter ingredients list item quantities. Please make two changes: (a) change the serving size adjustment control to only enable whole number halving/quartering/doubling/quadruping in the toggle. For example, if a recipe’s default is for “4” servings, the control should allow dropping down to “2” or “1” or up to “8” or “12” or “16”. (Otherwise, the ingredients list can become impractical… like weird fractions of eggs -- ‘1/5 egg’ is ridiculous.) (b) when the quantity is adjusted, adjust the quantities in the ingredients list. Example: if the recipe calls for 1 egg, and the serving size is adjusted from “4” servings to “8” servings, the ingredients list should update to specify 2 eggs.
+4. **WEB EXTENSION IMAGE UPLOAD**: The web extensions appear to be failing to push images to our back-end. Note console errors, debug, and fix both Chrome and Safari. We have GOT to get images showing up in the app again.
+5. **TEST IMAGE PIPELINE**: Capture new recipe with Chrome/Safari extension to verify S3 image upload works
+6. **VERIFY S3 URLS**: Check that new recipes have S3 URLs instead of original site URLs
+7. **CloudFront CORS**: If needed, fix any remaining CORS issues for S3 image serving
+8. **FLUTTER IMAGE TEST**: Confirm images display correctly in web app gallery and detail views
+9. **Test Pass**: Ensure all tests pass and that ./validate-monorepo.sh passes
+10. **WEB APP UX 2**: The current recipe widgets/tiles on the web app's gallery page are too big on tablet and desktop -- we need to improve information density. Reduce the vertical size by 20% and consider how we can scale to achieve six recipes per row.
+11. **WEB APP UX 3**: The web app FAILS to load on mobile Chrome browser. It only worked after I told Chrome to request the desktop site. Why? Please fix.
+12. **WEB APP UX 4**: On the details page, the uriginal URL icon in the top right interferes with the recipe title when the page is scrolled down. Move the icon just to the right of the left-hand-side's back button, intead. This should avoid overlapping content.
+13. **WEB PARSERS**: The Food52 parser again appears to be broken for "Kylie's Avocado Bean Toasts". See new test/fixtures/html-samples/food52-kylies-avocado-bean-toasts.html and note that the current parser generates many "undefined" entries in the Ingredients list AND the list is so broken that unit toggles (imperial/metric) fail to do anything.
 
 _See README.md and docs/ for detailed architecture and requirements._
