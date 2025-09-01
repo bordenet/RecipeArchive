@@ -27,7 +27,7 @@ Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(
   title: json['title'] as String,
   description: json['description'] as String?,
   imageUrl: json['mainPhotoUrl'] as String?,
-  sourceUrl: json['sourceUrl'] as String?,
+  sourceUrl: json['source'] as String?,
   sourceName: json['sourceName'] as String?,
   difficulty: json['difficulty'] as String?,
   prepTime: (json['prepTime'] as num?)?.toInt(),
@@ -47,6 +47,18 @@ Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(
   tags:
       (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const [],
+  personalNotes: json['personalNotes'] as String?,
+  personalRating: (json['personalRating'] as num?)?.toDouble(),
+  cookingNotes: json['cookingNotes'] as String?,
+  categories:
+      (json['categories'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  isFavorite: json['isFavorite'] as bool? ?? false,
+  personalYield: (json['personalYield'] as num?)?.toInt(),
+  hasUserModifications: json['hasUserModifications'] as bool? ?? false,
+  originalData: json['originalData'] as Map<String, dynamic>?,
   createdAt: json['dateCreated'] == null
       ? null
       : DateTime.parse(json['dateCreated'] as String),
@@ -61,7 +73,7 @@ Map<String, dynamic> _$RecipeToJson(Recipe instance) => <String, dynamic>{
   'title': instance.title,
   'description': instance.description,
   'mainPhotoUrl': instance.imageUrl,
-  'sourceUrl': instance.sourceUrl,
+  'source': instance.sourceUrl,
   'sourceName': instance.sourceName,
   'difficulty': instance.difficulty,
   'prepTime': instance.prepTime,
@@ -71,6 +83,14 @@ Map<String, dynamic> _$RecipeToJson(Recipe instance) => <String, dynamic>{
   'servings': instance.servings,
   'cuisine': instance.cuisine,
   'tags': instance.tags,
+  'personalNotes': instance.personalNotes,
+  'personalRating': instance.personalRating,
+  'cookingNotes': instance.cookingNotes,
+  'categories': instance.categories,
+  'isFavorite': instance.isFavorite,
+  'personalYield': instance.personalYield,
+  'hasUserModifications': instance.hasUserModifications,
+  'originalData': instance.originalData,
   'dateCreated': instance.createdAt?.toIso8601String(),
   'dateModified': instance.updatedAt?.toIso8601String(),
 };
