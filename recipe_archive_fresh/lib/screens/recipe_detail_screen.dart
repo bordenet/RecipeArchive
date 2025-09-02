@@ -518,89 +518,81 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   }
 
   void _showServingsDialog() {
+    // Define serving multipliers based on original recipe servings
+    final originalServings = widget.recipe.servings ?? 4;
+    final multipliers = [1, 2, 4, 8, 16];
+    final servingOptions = multipliers.map((mult) => originalServings * mult).toList();
+    
     showDialog<int>(
       context: context,
       builder: (BuildContext context) {
-        int tempServings = currentServings;
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Adjust Servings'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('How many servings would you like?'),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Decrease button
-                      IconButton(
-                        onPressed: tempServings > 1 
-                          ? () => setState(() => tempServings--)
-                          : null,
-                        icon: const Icon(Icons.remove_circle_outline),
-                        iconSize: 32,
-                        color: Colors.green,
-                      ),
-                      
-                      // Current servings display
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+        return AlertDialog(
+          title: const Text('Adjust Servings'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Choose serving size (original: $originalServings servings):'),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: servingOptions.map((servings) {
+                  final multiplier = servings ~/ originalServings;
+                  final isSelected = servings == currentServings;
+                  
+                  return GestureDetector(
+                    onTap: () => Navigator.of(context).pop(servings),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.green : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? Colors.green : Colors.grey[300]!,
+                          width: isSelected ? 2 : 1,
                         ),
-                        child: Text(
-                          '$tempServings',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$servings',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : Colors.green,
+                            ),
                           ),
-                        ),
+                          Text(
+                            'servings',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSelected ? Colors.white.withOpacity(0.9) : Colors.grey[600],
+                            ),
+                          ),
+                          if (multiplier != 1)
+                            Text(
+                              '${multiplier}x',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: isSelected ? Colors.white.withOpacity(0.8) : Colors.green,
+                              ),
+                            ),
+                        ],
                       ),
-                      
-                      // Increase button
-                      IconButton(
-                        onPressed: tempServings < 100 
-                          ? () => setState(() => tempServings++)
-                          : null,
-                        icon: const Icon(Icons.add_circle_outline),
-                        iconSize: 32,
-                        color: Colors.green,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'servings',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 16,
                     ),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(tempServings);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Update'),
-                ),
-              ],
-            );
-          },
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
         );
       },
     ).then((newServings) {
