@@ -15502,7 +15502,7 @@
   };
 
   // parser-registry.ts
-  var ParserRegistry = class {
+  var _ParserRegistry = class _ParserRegistry {
     constructor() {
       this.parsers = [];
       this.parsers.push(
@@ -15518,6 +15518,12 @@
         new DamnDeliciousParser(),
         new SeriousEatsParser()
       );
+    }
+    static getInstance() {
+      if (!_ParserRegistry.instance) {
+        _ParserRegistry.instance = new _ParserRegistry();
+      }
+      return _ParserRegistry.instance;
     }
     async parseRecipe(html3, url) {
       const parser = this.parsers.find((p) => p.canParse(url));
@@ -15537,6 +15543,8 @@
       return this.parsers.find((p) => p.canParse(url)) || null;
     }
   };
+  _ParserRegistry.instance = null;
+  var ParserRegistry = _ParserRegistry;
 
   // index.ts
   var registry = ParserRegistry.getInstance();

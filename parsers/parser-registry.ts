@@ -13,6 +13,7 @@ import { SeriousEatsParser } from "./sites/serious-eats";
 import { Recipe } from "./types";
 
 export class ParserRegistry {
+    private static instance: ParserRegistry | null = null;
     private parsers: BaseParser[] = [];
 
     constructor() {
@@ -30,6 +31,13 @@ export class ParserRegistry {
             new DamnDeliciousParser(),
             new SeriousEatsParser()
         );
+    }
+
+    static getInstance(): ParserRegistry {
+        if (!ParserRegistry.instance) {
+            ParserRegistry.instance = new ParserRegistry();
+        }
+        return ParserRegistry.instance;
     }
 
     async parseRecipe(html: string, url: string): Promise<Recipe | null> {

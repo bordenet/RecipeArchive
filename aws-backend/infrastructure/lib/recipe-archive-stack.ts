@@ -335,6 +335,7 @@ export class RecipeArchiveStack extends cdk.Stack {
       healthFunction
     );
     diagnosticsResource.addMethod('GET', diagnosticsIntegration);
+    diagnosticsResource.addMethod('POST', diagnosticsIntegration);
 
     // Future recipe endpoints
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
