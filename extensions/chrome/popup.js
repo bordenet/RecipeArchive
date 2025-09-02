@@ -624,16 +624,20 @@ function transformRecipeDataForAWS(recipeData) {
     console.log("🔧 recipeData.steps type:", typeof recipeData.steps, recipeData.steps);
     console.log("🔧 recipeData.instructions type:", typeof recipeData.instructions, recipeData.instructions);
     
-    // Transform ingredients - Handle both flat arrays and grouped format
-    // Flat format: ["text1", "text2"] -> AWS format: [{ text: "text1" }, { text: "text2" }]
-    // Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ text: "text1" }, ...]
+    // Transform ingredients - Handle multiple format variations
+    // 1. Flat strings: ["text1", "text2"] -> AWS format: [{ text: "text1" }, { text: "text2" }]
+    // 2. Object format: [{ text: "text1" }, { text: "text2" }] -> AWS format: [{ text: "text1" }, { text: "text2" }]
+    // 3. Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ text: "text1" }, ...]
     if (recipeData.ingredients && Array.isArray(recipeData.ingredients)) {
         recipeData.ingredients.forEach(item => {
             if (item && typeof item === "string" && item.trim()) {
-                // Flat format - direct string
+                // Format 1: Flat format - direct string
                 ingredients.push({ text: item.trim() });
+            } else if (item && item.text && typeof item.text === "string" && item.text.trim()) {
+                // Format 2: Already has text property - pass through
+                ingredients.push({ text: item.text.trim() });
             } else if (item && item.items && Array.isArray(item.items)) {
-                // Grouped format - extract from items array
+                // Format 3: Grouped format - extract from items array
                 item.items.forEach(subItem => {
                     if (subItem && subItem.text && subItem.text.trim()) {
                         ingredients.push({ text: subItem.text.trim() });
@@ -645,19 +649,26 @@ function transformRecipeDataForAWS(recipeData) {
         });
     }
     
-    // Transform instructions - Handle both flat arrays and grouped format
-    // Flat format: ["step1", "step2"] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
-    // Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
+    // Transform instructions - Handle multiple format variations
+    // 1. Flat strings: ["step1", "step2"] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
+    // 2. Object format: [{ stepNumber: 1, text: "step1" }] -> AWS format: [{ stepNumber: 1, text: "step1" }]
+    // 3. Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
     if (recipeData.instructions && Array.isArray(recipeData.instructions)) {
         recipeData.instructions.forEach((item, index) => {
             if (item && typeof item === "string" && item.trim()) {
-                // Flat format - direct string
+                // Format 1: Flat format - direct string
                 instructions.push({ 
                     stepNumber: index + 1, 
                     text: item.trim() 
                 });
+            } else if (item && item.text && typeof item.text === "string" && item.text.trim()) {
+                // Format 2: Already has text property - pass through (preserve or assign stepNumber)
+                instructions.push({ 
+                    stepNumber: item.stepNumber || (instructions.length + 1),
+                    text: item.text.trim() 
+                });
             } else if (item && item.items && Array.isArray(item.items)) {
-                // Grouped format - extract from items array
+                // Format 3: Grouped format - extract from items array
                 item.items.forEach((subItem, _subIndex) => {
                     if (subItem && subItem.text && subItem.text.trim()) {
                         instructions.push({ 

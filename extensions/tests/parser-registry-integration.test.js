@@ -117,6 +117,40 @@ describe('Parser Registry Integration Tests', () => {
       expect(typeof window.TypeScriptParser.extractRecipeFromPage).toBe('function');
     });
 
+    test('Should parse real Smitten Kitchen fixture correctly', async () => {
+      const fs = require('fs');
+      const path = require('path');
+      
+      const fixturePath = path.join(__dirname, '../../tests/fixtures/html-samples/smitten-kitchen-sample.html');
+      if (fs.existsSync(fixturePath)) {
+        const html = fs.readFileSync(fixturePath, 'utf8');
+        const testUrl = 'https://smittenkitchen.com/test-recipe';
+        
+        const result = await registry.parseRecipe(html, testUrl);
+        expect(result).toBeDefined();
+        expect(result).not.toBeNull();
+        expect(result.ingredients).toBeDefined();
+        expect(result.instructions || result.steps).toBeDefined();
+        
+        // Verify ingredients are in the expected format with .text property
+        if (result.ingredients && result.ingredients.length > 0) {
+          const firstIngredient = result.ingredients[0];
+          expect(firstIngredient).toHaveProperty('text');
+          expect(typeof firstIngredient.text).toBe('string');
+        }
+        
+        // Verify instructions are in the expected format with .text property  
+        const instructions = result.instructions || result.steps || [];
+        if (instructions.length > 0) {
+          const firstInstruction = instructions[0];
+          expect(firstInstruction).toHaveProperty('text');
+          expect(typeof firstInstruction.text).toBe('string');
+        }
+      } else {
+        console.warn('Smitten Kitchen fixture not found, skipping real parsing test');
+      }
+    });
+
     test('Should handle basic recipe parsing without errors', async () => {
       const mockHtml = `
         <html>

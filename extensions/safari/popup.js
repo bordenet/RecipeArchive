@@ -956,30 +956,78 @@ function transformRecipeDataForAWS(recipeData) {
     const ingredients = [];
     const instructions = [];
     
-    // Transform ingredients from Safari format: [{ title: null, items: ["text1", "text2"] }]
-    // To AWS format: [{ text: "text1" }, { text: "text2" }]
+    // Transform ingredients - Handle multiple format variations
+    // 1. Flat strings: ["text1", "text2"] -> AWS format: [{ text: "text1" }, { text: "text2" }]
+    // 2. Object format: [{ text: "text1" }, { text: "text2" }] -> AWS format: [{ text: "text1" }, { text: "text2" }]
+    // 3. Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ text: "text1" }, ...]
     if (recipeData.ingredients && Array.isArray(recipeData.ingredients)) {
-        recipeData.ingredients.forEach(group => {
-            if (group.items && Array.isArray(group.items)) {
-                group.items.forEach(item => {
-                    if (item && typeof item === "string" && item.trim()) {
-                        ingredients.push({ text: item.trim() });
+        recipeData.ingredients.forEach(item => {
+            if (item && typeof item === "string" && item.trim()) {
+                // Format 1: Flat format - direct string
+                ingredients.push({ text: item.trim() });
+            } else if (item && item.text && typeof item.text === "string" && item.text.trim()) {
+                // Format 2: Already has text property - pass through
+                ingredients.push({ text: item.text.trim() });
+            } else if (item && item.items && Array.isArray(item.items)) {
+                // Format 3: Grouped format - extract from items array
+                item.items.forEach(subItem => {
+                    if (subItem && subItem.text && subItem.text.trim()) {
+                        ingredients.push({ text: subItem.text.trim() });
+                    } else if (typeof subItem === "string" && subItem.trim()) {
+                        ingredients.push({ text: subItem.trim() });
                     }
                 });
             }
         });
     }
     
-    // Transform instructions/steps from Safari format: [{ title: null, items: ["step1", "step2"] }]
-    // To AWS format: [{ stepNumber: 1, text: "step1" }, { stepNumber: 2, text: "step2" }]
-    if (recipeData.steps && Array.isArray(recipeData.steps)) {
-        let stepNumber = 1;
+    // Transform instructions - Handle multiple format variations
+    // 1. Flat strings: ["step1", "step2"] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
+    // 2. Object format: [{ stepNumber: 1, text: "step1" }] -> AWS format: [{ stepNumber: 1, text: "step1" }]
+    // 3. Grouped format: [{ title: null, items: [...] }] -> AWS format: [{ stepNumber: 1, text: "step1" }, ...]
+    
+    // Handle recipeData.instructions first (TypeScript parser format)
+    if (recipeData.instructions && Array.isArray(recipeData.instructions)) {
+        recipeData.instructions.forEach((item, index) => {
+            if (item && typeof item === "string" && item.trim()) {
+                // Format 1: Flat format - direct string
+                instructions.push({ 
+                    stepNumber: index + 1, 
+                    text: item.trim() 
+                });
+            } else if (item && item.text && typeof item.text === "string" && item.text.trim()) {
+                // Format 2: Already has text property - pass through (preserve or assign stepNumber)
+                instructions.push({ 
+                    stepNumber: item.stepNumber || (instructions.length + 1),
+                    text: item.text.trim() 
+                });
+            } else if (item && item.items && Array.isArray(item.items)) {
+                // Format 3: Grouped format - extract from items array
+                item.items.forEach((subItem, _subIndex) => {
+                    if (subItem && subItem.text && subItem.text.trim()) {
+                        instructions.push({ 
+                            stepNumber: instructions.length + 1,
+                            text: subItem.text.trim() 
+                        });
+                    } else if (typeof subItem === "string" && subItem.trim()) {
+                        instructions.push({ 
+                            stepNumber: instructions.length + 1,
+                            text: subItem.trim() 
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
+    // Handle recipeData.steps (Safari fallback format)
+    if (recipeData.steps && Array.isArray(recipeData.steps) && instructions.length === 0) {
         recipeData.steps.forEach(group => {
             if (group.items && Array.isArray(group.items)) {
                 group.items.forEach(item => {
                     if (item && typeof item === "string" && item.trim()) {
                         instructions.push({ 
-                            stepNumber: stepNumber++, 
+                            stepNumber: instructions.length + 1, 
                             text: item.trim() 
                         });
                     }
