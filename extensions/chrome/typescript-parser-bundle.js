@@ -14747,7 +14747,7 @@
     }
     async parse(html3, url) {
       const isLocalFixture = url.endsWith(".html") || url.startsWith("tests/fixtures/html-samples/");
-      if (!isLocalFixture && (html3.includes("Apologies, that page cannot be found.") || html3.includes("404") && html3.includes("food52.com"))) {
+      if (!isLocalFixture && html3.includes("Apologies, that page cannot be found.")) {
         throw new Error(`[Food52] 404 page detected for URL: ${url}`);
       }
       const jsonLd = this.extractJsonLD(html3);

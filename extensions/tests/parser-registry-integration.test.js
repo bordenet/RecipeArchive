@@ -71,6 +71,12 @@ describe('Parser Registry Integration Tests', () => {
       expect(parser).toBeDefined();
       expect(parser).not.toBeNull();
     });
+    
+    test('Should detect Food52 URLs', () => {
+      const parser = registry.getParserForUrl('https://food52.com/recipes/kylie-sakaida-avocado-bean-toast');
+      expect(parser).toBeDefined();
+      expect(parser).not.toBeNull();
+    });
 
     test('Should return null for unsupported URLs', () => {
       const parser = registry.getParserForUrl('https://example.com/not-a-recipe');
