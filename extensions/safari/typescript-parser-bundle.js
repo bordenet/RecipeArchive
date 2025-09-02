@@ -14262,7 +14262,8 @@
       for (let i = 0; i < scripts.length; i++) {
         try {
           const script = scripts[i];
-          const jsonText = $2(script).html() || $2(script).text() || "";
+          let jsonText = $2(script).html() || $2(script).text() || "";
+          jsonText = jsonText.replace(/[\u0000-\u001F\u007F]/g, "").replace(/:[ ]*undefined\b/g, ": null").replace(/,[ ]*undefined\b/g, ", null").replace(/\[[ ]*undefined\b/g, "[null");
           const jsonData = JSON.parse(jsonText);
           const isRecipeType = (type) => {
             if (!type) return false;

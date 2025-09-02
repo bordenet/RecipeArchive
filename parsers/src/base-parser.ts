@@ -23,6 +23,8 @@ export abstract class BaseParser {
 				let jsonText = $(script).html() || $(script).text() || "";
 				// Remove control characters that break JSON.parse
 				jsonText = jsonText.replace(/[\u0000-\u001F\u007F]/g, "");
+				// Fix undefined values in JSON (common Food52 issue)
+				jsonText = jsonText.replace(/:\s*undefined\b/g, ': null').replace(/,\s*undefined\b/g, ', null').replace(/\[\s*undefined\b/g, '[null');
 				const jsonData = JSON.parse(jsonText);
 
 				// Helper to check if @type is Recipe (string or array)

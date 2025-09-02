@@ -50,8 +50,9 @@ class UnitsConverter {
 
 
   static String convertIngredient(String ingredient, bool toMetric) {
-    // Enhanced regex to handle all fraction patterns: mixed (1 3/4), simple (1/2), and decimals (1.5)
-    final regex = RegExp(r'((?:\d+\s+)?\d+(?:\.\d+)?(?:/\d+)?)\s*([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?=\s|$|,|\()');
+    // Enhanced regex to handle fraction patterns: mixed (1 3/4), simple (1/2), decimals (1.5), and unicode vulgar fractions (½, ⅓, ¼)
+    // Also handles can patterns like "1 (15-ounce) can"
+    final regex = RegExp(r'((?:\d+\s+)?[\d½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]+(?:\.\d+)?(?:/\d+)?)\s*(?:\([^)]+\))?\s*([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?=\s|$|,|\()', unicode: true);
     final matches = regex.allMatches(ingredient);
     
     String result = ingredient;
@@ -82,6 +83,42 @@ class UnitsConverter {
   }
 
   static double? _parseAmount(String amountStr) {
+    // Handle unicode vulgar fractions first
+    final unicodeFractions = {
+      '½': 0.5,
+      '⅓': 1/3,
+      '⅔': 2/3,
+      '¼': 0.25,
+      '¾': 0.75,
+      '⅕': 0.2,
+      '⅖': 0.4,
+      '⅗': 0.6,
+      '⅘': 0.8,
+      '⅙': 1/6,
+      '⅚': 5/6,
+      '⅛': 0.125,
+      '⅜': 0.375,
+      '⅝': 0.625,
+      '⅞': 0.875,
+    };
+    
+    // Check for mixed numbers with unicode fractions like "1½"
+    final mixedUnicodeMatch = RegExp(r'^(\d+)([½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞])$', unicode: true).firstMatch(amountStr);
+    if (mixedUnicodeMatch != null) {
+      final whole = int.tryParse(mixedUnicodeMatch.group(1)!);
+      final fractionChar = mixedUnicodeMatch.group(2)!;
+      final fractionValue = unicodeFractions[fractionChar];
+      if (whole != null && fractionValue != null) {
+        return whole + fractionValue;
+      }
+    }
+    
+    // Check for pure unicode fractions
+    final unicodeFraction = unicodeFractions[amountStr];
+    if (unicodeFraction != null) {
+      return unicodeFraction;
+    }
+    
     // Handle mixed fractions like "1 3/4"
     final mixedFractionMatch = RegExp(r'^(\d+)\s+(\d+)/(\d+)$').firstMatch(amountStr);
     if (mixedFractionMatch != null) {
@@ -109,6 +146,11 @@ class UnitsConverter {
 
   static String? _convertMeasurement(double amount, String unit, bool toMetric) {
     if (amount <= 0 || unit.isEmpty) return null;
+    
+    // Handle can units - just format with vulgar fractions, no conversion
+    if (unit.toLowerCase().contains('can') || unit.toLowerCase().contains('cans')) {
+      return '${_formatNumber(amount)} $unit';
+    }
     
     // Handle temperature conversions
     if (unit.contains('°f') || unit.contains('fahrenheit')) {
@@ -214,10 +256,50 @@ class UnitsConverter {
   }
 
   static String _formatNumber(double number) {
-    // Format numbers nicely for cooking measurements
+    // Format numbers nicely for cooking measurements, prefer vulgar fractions
     if (number == number.roundToDouble()) {
       return number.round().toString();
-    } else if (number < 1) {
+    }
+    
+    // Check for common fractions and use unicode vulgar fractions
+    const vulgarFractions = {
+      0.5: '½',
+      1/3: '⅓',  
+      2/3: '⅔',
+      0.25: '¼',
+      0.75: '¾',
+      0.2: '⅕',
+      0.4: '⅖',
+      0.6: '⅗',
+      0.8: '⅘',
+      1/6: '⅙',
+      5/6: '⅚',
+      0.125: '⅛',
+      0.375: '⅜',
+      0.625: '⅝',
+      0.875: '⅞',
+    };
+    
+    // Check for exact matches with common fractions
+    for (final entry in vulgarFractions.entries) {
+      if ((number - entry.key).abs() < 0.001) {
+        return entry.value;
+      }
+    }
+    
+    // Check for mixed numbers with vulgar fractions
+    if (number > 1) {
+      final wholePart = number.floor();
+      final fractionalPart = number - wholePart;
+      
+      for (final entry in vulgarFractions.entries) {
+        if ((fractionalPart - entry.key).abs() < 0.001) {
+          return '$wholePart${entry.value}';
+        }
+      }
+    }
+    
+    if (number < 1) {
       // For fractions, show more precision
       final precise = (number * 100).round() / 100;
       return precise.toString().replaceAll(RegExp(r'\.?0*$'), '');
