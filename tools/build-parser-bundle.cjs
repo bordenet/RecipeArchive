@@ -48,6 +48,42 @@ registry.registerParser('washingtonpost.com', WashingtonPostParser);
 // Export for browser use
 if (typeof window !== 'undefined') {
     window.RecipeArchiveParserRegistry = registry;
+    
+    // Compatibility interface for content scripts
+    window.TypeScriptParser = {
+        async extractRecipeFromPage() {
+            const url = window.location.href;
+            const html = document.documentElement.outerHTML;
+            
+            try {
+                const result = await registry.parseRecipe(html, url);
+                
+                if (!result) {
+                    return {
+                        title: document.title || "Unknown Recipe",
+                        url: url,
+                        timestamp: new Date().toISOString(),
+                        ingredients: [],
+                        steps: [],
+                        source: "no-parser-found"
+                    };
+                }
+                
+                return result;
+            } catch (error) {
+                console.error("TypeScriptParser extraction failed:", error);
+                return {
+                    title: document.title || "Unknown Recipe",
+                    url: url,
+                    timestamp: new Date().toISOString(),
+                    ingredients: [],
+                    steps: [],
+                    source: "extraction-error",
+                    error: error.message
+                };
+            }
+        }
+    };
 }
 
 console.log("🎯 TypeScript parser bundle loaded");

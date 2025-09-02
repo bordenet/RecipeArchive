@@ -112,6 +112,11 @@ describe('Parser Registry Integration Tests', () => {
   });
 
   describe('Mock Recipe Parsing', () => {
+    test('TypeScriptParser interface should be available', () => {
+      expect(window.TypeScriptParser).toBeDefined();
+      expect(typeof window.TypeScriptParser.extractRecipeFromPage).toBe('function');
+    });
+
     test('Should handle basic recipe parsing without errors', async () => {
       const mockHtml = `
         <html>

@@ -9943,7 +9943,7 @@
     get currentTmplContentOrNode() {
       return this._isInTemplate() ? this.treeAdapter.getTemplateContent(this.current) : this.current;
     }
-    constructor(document, treeAdapter, handler) {
+    constructor(document2, treeAdapter, handler) {
       this.treeAdapter = treeAdapter;
       this.handler = handler;
       this.items = [];
@@ -9951,7 +9951,7 @@
       this.stackTop = -1;
       this.tmplCount = 0;
       this.currentTagId = TAG_ID.UNKNOWN;
-      this.current = document;
+      this.current = document2;
     }
     //Index of element
     _indexOf(element) {
@@ -10385,8 +10385,8 @@
     getTemplateContent(templateElement) {
       return templateElement.content;
     },
-    setDocumentType(document, name, publicId, systemId) {
-      const doctypeNode = document.childNodes.find((node) => node.nodeName === "#documentType");
+    setDocumentType(document2, name, publicId, systemId) {
+      const doctypeNode = document2.childNodes.find((node) => node.nodeName === "#documentType");
       if (doctypeNode) {
         doctypeNode.name = name;
         doctypeNode.publicId = publicId;
@@ -10399,14 +10399,14 @@
           systemId,
           parentNode: null
         };
-        defaultTreeAdapter.appendChild(document, node);
+        defaultTreeAdapter.appendChild(document2, node);
       }
     },
-    setDocumentMode(document, mode) {
-      document.mode = mode;
+    setDocumentMode(document2, mode) {
+      document2.mode = mode;
     },
-    getDocumentMode(document) {
-      return document.mode;
+    getDocumentMode(document2) {
+      return document2.mode;
     },
     detachNode(node) {
       if (node.parentNode) {
@@ -10876,7 +10876,7 @@
     onParseError: null
   };
   var Parser2 = class {
-    constructor(options, document, fragmentContext = null, scriptHandler = null) {
+    constructor(options, document2, fragmentContext = null, scriptHandler = null) {
       this.fragmentContext = fragmentContext;
       this.scriptHandler = scriptHandler;
       this.currentToken = null;
@@ -10901,7 +10901,7 @@
       if (this.onParseError) {
         this.options.sourceCodeLocationInfo = true;
       }
-      this.document = document !== null && document !== void 0 ? document : this.treeAdapter.createDocument();
+      this.document = document2 !== null && document2 !== void 0 ? document2 : this.treeAdapter.createDocument();
       this.tokenizer = new Tokenizer2(this.options, this);
       this.activeFormattingElements = new FormattingElementList(this.treeAdapter);
       this.fragmentContextID = fragmentContext ? getTagID(this.treeAdapter.getTagName(fragmentContext)) : TAG_ID.UNKNOWN;
@@ -14094,24 +14094,24 @@
     getTemplateContent(templateElement) {
       return templateElement.children[0];
     },
-    setDocumentType(document, name, publicId, systemId) {
+    setDocumentType(document2, name, publicId, systemId) {
       const data2 = serializeDoctypeContent(name, publicId, systemId);
-      let doctypeNode = document.children.find((node) => isDirective(node) && node.name === "!doctype");
+      let doctypeNode = document2.children.find((node) => isDirective(node) && node.name === "!doctype");
       if (doctypeNode) {
         doctypeNode.data = data2 !== null && data2 !== void 0 ? data2 : null;
       } else {
         doctypeNode = new ProcessingInstruction("!doctype", data2);
-        adapter.appendChild(document, doctypeNode);
+        adapter.appendChild(document2, doctypeNode);
       }
       doctypeNode["x-name"] = name;
       doctypeNode["x-publicId"] = publicId;
       doctypeNode["x-systemId"] = systemId;
     },
-    setDocumentMode(document, mode) {
-      document["x-mode"] = mode;
+    setDocumentMode(document2, mode) {
+      document2["x-mode"] = mode;
     },
-    getDocumentMode(document) {
-      return document["x-mode"];
+    getDocumentMode(document2) {
+      return document2["x-mode"];
     },
     detachNode(node) {
       if (node.parent) {
@@ -15565,6 +15565,37 @@
   registry.registerParser("washingtonpost.com", WashingtonPostParser);
   if (typeof window !== "undefined") {
     window.RecipeArchiveParserRegistry = registry;
+    window.TypeScriptParser = {
+      async extractRecipeFromPage() {
+        const url = window.location.href;
+        const html3 = document.documentElement.outerHTML;
+        try {
+          const result = await registry.parseRecipe(html3, url);
+          if (!result) {
+            return {
+              title: document.title || "Unknown Recipe",
+              url,
+              timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+              ingredients: [],
+              steps: [],
+              source: "no-parser-found"
+            };
+          }
+          return result;
+        } catch (error) {
+          console.error("TypeScriptParser extraction failed:", error);
+          return {
+            title: document.title || "Unknown Recipe",
+            url,
+            timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+            ingredients: [],
+            steps: [],
+            source: "extraction-error",
+            error: error.message
+          };
+        }
+      }
+    };
   }
   console.log("\u{1F3AF} TypeScript parser bundle loaded");
 })();
