@@ -57,5 +57,5 @@ module.exports = {
     // Allow console.log in browser extensions for debugging
     'no-console': 'off', // Disable console warnings for now
   },
-  ignorePatterns: ['**/eslint.config.js', 'extensions/safari-backup/**'],
+  ignorePatterns: ['**/eslint.config.js', 'extensions/safari-backup/**', '**/typescript-parser-bundle.js'],
 };
