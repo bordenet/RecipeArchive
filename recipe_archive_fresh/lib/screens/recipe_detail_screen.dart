@@ -62,7 +62,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                widget.recipe.title,
+                widget.recipe.cleanTitle,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -175,6 +175,17 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                         ),
                       ),
                       
+                      // Source URL (clickable)
+                      if (widget.recipe.sourceUrl != null)
+                        GestureDetector(
+                          onTap: () => _launchUrl(widget.recipe.sourceUrl!),
+                          child: _buildInfoChip(
+                            Icons.link,
+                            widget.recipe.displaySourceName,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      
                       // Cuisine
                       if (widget.recipe.cuisine != null)
                         _buildInfoChip(
@@ -199,7 +210,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.recipe.description!,
+                      widget.recipe.cleanDescription,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     

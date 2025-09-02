@@ -15503,6 +15503,111 @@
     }
   };
 
+  // sites/alexandras-kitchen.ts
+  var AlexandrasKitchenParser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("alexandracooks.com");
+    }
+    async parse(html3, url) {
+      const $2 = load(html3);
+      try {
+        const jsonLD = this.extractJsonLD(html3);
+        if (jsonLD && jsonLD.name) {
+          console.log("\u2705 Alexandra's Kitchen: Extracted recipe via JSON-LD");
+          return {
+            title: this.sanitizeText(jsonLD.name),
+            source: url,
+            author: typeof jsonLD.author === "string" ? jsonLD.author : jsonLD.author?.name || "Alexandra Stafford",
+            ingredients: (jsonLD.recipeIngredient || []).map((i) => ({ text: this.sanitizeText(i) })),
+            instructions: (jsonLD.recipeInstructions || []).map((i, idx) => ({
+              stepNumber: idx + 1,
+              text: typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+            })),
+            imageUrl: typeof jsonLD.image === "string" ? jsonLD.image : Array.isArray(jsonLD.image) ? typeof jsonLD.image[0] === "string" ? jsonLD.image[0] : jsonLD.image[0]?.url : jsonLD.image?.url,
+            prepTime: jsonLD.prepTime || "",
+            cookTime: jsonLD.cookTime || "",
+            totalTime: jsonLD.totalTime || "",
+            servings: jsonLD.recipeYield?.toString() || "",
+            tags: Array.isArray(jsonLD.recipeCategory) ? jsonLD.recipeCategory.map((c) => this.sanitizeText(c)) : jsonLD.recipeCategory ? [this.sanitizeText(jsonLD.recipeCategory)] : []
+          };
+        }
+        console.log("\u26A0\uFE0F Alexandra's Kitchen: JSON-LD failed, trying CSS selectors");
+        return await this.parseWithSelectors($2, url);
+      } catch (error) {
+        console.error("\u274C Alexandra's Kitchen parsing error:", error);
+        throw error;
+      }
+    }
+    async parseWithSelectors($2, url) {
+      try {
+        const title = this.sanitizeText($2("h1.entry-title, h1.post-title, .recipe-title h1, h1").first().text() || "");
+        if (!title) {
+          throw new Error("No recipe title found");
+        }
+        const ingredients = [];
+        $2(".tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li").each((_, el) => {
+          const text3 = $2(el).text().trim();
+          if (text3) ingredients.push({ text: this.sanitizeText(text3) });
+        });
+        const instructions = [];
+        $2(".tasty-recipes-instructions li, .recipe-instructions li, .instructions li").each((idx, el) => {
+          const text3 = $2(el).text().trim();
+          if (text3) instructions.push({ stepNumber: idx + 1, text: this.sanitizeText(text3) });
+        });
+        const prepTime = this.sanitizeText($2(".tasty-recipes-prep-time, .recipe-prep-time").first().text() || "");
+        const cookTime = this.sanitizeText($2(".tasty-recipes-cook-time, .recipe-cook-time").first().text() || "");
+        const totalTime = this.sanitizeText($2(".tasty-recipes-total-time, .recipe-total-time").first().text() || "");
+        const servings = this.sanitizeText($2(".tasty-recipes-yield, .recipe-servings").first().text() || "");
+        let imageUrl = $2(".tasty-recipes-image img, .recipe-image img, .entry-content img").first().attr("src");
+        if (!imageUrl) {
+          imageUrl = $2('meta[property="og:image"]').attr("content");
+        }
+        return {
+          title,
+          source: url,
+          author: "Alexandra Stafford",
+          ingredients,
+          instructions,
+          imageUrl: imageUrl || void 0,
+          prepTime,
+          cookTime,
+          totalTime,
+          servings,
+          tags: []
+        };
+      } catch (error) {
+        console.error("\u274C Alexandra's Kitchen selector parsing failed:", error);
+        throw error;
+      }
+    }
+    parseTimeToMinutes(timeText) {
+      if (!timeText) return void 0;
+      const text3 = timeText.toLowerCase();
+      let totalMinutes = 0;
+      const hoursMatch = text3.match(/(\d+)\s*(?:hours?|hrs?|h)/);
+      if (hoursMatch) {
+        totalMinutes += parseInt(hoursMatch[1]) * 60;
+      }
+      const minutesMatch = text3.match(/(\d+)\s*(?:minutes?|mins?|m)/);
+      if (minutesMatch) {
+        totalMinutes += parseInt(minutesMatch[1]);
+      }
+      if (totalMinutes === 0) {
+        const numberMatch = text3.match(/(\d+)/);
+        if (numberMatch) {
+          totalMinutes = parseInt(numberMatch[1]);
+        }
+      }
+      return totalMinutes > 0 ? totalMinutes : void 0;
+    }
+    parseServings(servingsText) {
+      if (!servingsText) return void 0;
+      const match = servingsText.match(/(\d+)/);
+      return match ? parseInt(match[1]) : void 0;
+    }
+  };
+  var alexandrasKitchenParser = new AlexandrasKitchenParser();
+
   // parser-registry.ts
   var _ParserRegistry = class _ParserRegistry {
     constructor() {
@@ -15518,7 +15623,8 @@
         new WashingtonPostParser(),
         new FoodAndWineParser(),
         new DamnDeliciousParser(),
-        new SeriousEatsParser()
+        new SeriousEatsParser(),
+        new AlexandrasKitchenParser()
       );
     }
     static getInstance() {
@@ -15565,6 +15671,7 @@
   registry.registerParser("loveandlemons.com", LoveAndLemonsParser);
   registry.registerParser("foodandwine.com", FoodAndWineParser);
   registry.registerParser("washingtonpost.com", WashingtonPostParser);
+  registry.registerParser("alexandracooks.com", AlexandrasKitchenParser);
   if (typeof window !== "undefined") {
     window.RecipeArchiveParserRegistry = registry;
     window.TypeScriptParser = {

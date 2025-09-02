@@ -74,9 +74,9 @@ class RecipeCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
+                      // Title (with HTML entity decoding)
                       Text(
-                        recipe.title,
+                        recipe.cleanTitle,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -86,10 +86,10 @@ class RecipeCard extends StatelessWidget {
                       
                       const SizedBox(height: 6), // Reduced spacing
                       
-                      // Description (more compact)
+                      // Description (more compact, with HTML entity decoding)
                       if (recipe.description != null)
                         Text(
-                          recipe.description!,
+                          recipe.cleanDescription,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.grey[600],
                           ),

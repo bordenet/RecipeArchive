@@ -10,6 +10,7 @@ import { WashingtonPostParser } from "./sites/washington-post";
 import { FoodAndWineParser } from "./sites/food-and-wine";
 import { DamnDeliciousParser } from "./sites/damn-delicious";
 import { SeriousEatsParser } from "./sites/serious-eats";
+import { AlexandrasKitchenParser } from "./sites/alexandras-kitchen";
 import { Recipe } from "./types";
 
 export class ParserRegistry {
@@ -29,7 +30,8 @@ export class ParserRegistry {
             new WashingtonPostParser(),
             new FoodAndWineParser(),
             new DamnDeliciousParser(),
-            new SeriousEatsParser()
+            new SeriousEatsParser(),
+            new AlexandrasKitchenParser()
         );
     }
 

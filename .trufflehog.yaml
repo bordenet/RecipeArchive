@@ -5,7 +5,6 @@
 exclude:
   paths:
     - ".env.template"
-    - "aws-backend/.env.template"
     - "**/node_modules/**"
     - "**/.git/**"
     - "**/*.log"

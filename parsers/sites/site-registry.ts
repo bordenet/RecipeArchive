@@ -85,7 +85,7 @@ export const SITE_REGISTRY: RecipeSite[] = [
     name: "Alexandra's Kitchen",
     urlPattern: "alexandracooks.com",
     parserFile: "alexandras-kitchen.ts",
-    fixtureFile: "alexandras-kitchen-sample.html",
+    fixtureFile: "alexandras-kitchen-sample-2.html",
     paywall: false,
     status: "production"
   },

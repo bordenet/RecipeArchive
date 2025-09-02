@@ -62,11 +62,9 @@ TEST_USER_PASSWORD=your_test_password
 
 ## Setup Instructions
 
-1. **Copy from templates**:
+1. **Copy from template**:
    ```bash
-   cp web_app/.env.template web_app/.env
    cp .env.template .env
-   cp extensions/.env.template extensions/.env
    ```
 
 2. **Edit the .env files** with your actual values
@@ -79,14 +77,11 @@ TEST_USER_PASSWORD=your_test_password
 
 ```
 RecipeArchive/
-├── .env                 # Root project environment
+├── .env                 # Root project environment (all configuration)
 ├── .env.template        # Template with placeholder values
-├── web_app/
-│   ├── .env            # Flutter-specific environment
-│   └── .env.template   # Flutter template
-├── extensions/
-│   ├── .env            # Extensions environment
-│   └── .env.template   # Extensions template
+├── recipe_archive_fresh/ # Flutter web app (uses root .env)
+├── extensions/          # Browser extensions (use localStorage)
+├── aws-backend/         # AWS infrastructure (uses root .env)
 └── docs/
     └── setup/
         └── ENVIRONMENT_SETUP.md  # This file

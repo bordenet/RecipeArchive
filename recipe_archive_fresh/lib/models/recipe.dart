@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../utils/html_utils.dart';
 
 part 'recipe.g.dart';
 
@@ -215,7 +216,16 @@ class Recipe {
     return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
   }
 
-  String get displayServings => servings != null ? '$servings servings' : 'Unknown';
+  String get displayServings {
+    if (servings == null || servings == 0) {
+      return 'Unknown servings';
+    }
+    return servings == 1 ? '1 serving' : '$servings servings';
+  }
+  
+  // HTML-decoded versions of text fields
+  String get cleanTitle => cleanRecipeText(title);
+  String get cleanDescription => cleanRecipeText(description);
   
   // Get scaled ingredients for a different number of servings
   List<RecipeIngredient> getScaledIngredients(int newServings) {
