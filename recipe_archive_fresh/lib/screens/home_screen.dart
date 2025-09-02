@@ -4,6 +4,7 @@ import '../services/recipe_service.dart';
 import '../services/auth_service.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
+import 'extensions_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -45,6 +46,74 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.green,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.restaurant_menu,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Recipe Archive',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Capture & organize recipes',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Recipes'),
+              selected: true,
+              selectedTileColor: Colors.green.withValues(alpha: 0.1),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.extension),
+              title: const Text('Browser Extensions'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ExtensionsScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About'),
+              onTap: () {
+                Navigator.pop(context);
+                _showAboutDialog(context);
+              },
+            ),
+          ],
+        ),
       ),
       body: recipesAsync.when(
         data: (recipes) {
@@ -186,4 +255,29 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  void _showAboutDialog(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'Recipe Archive',
+      applicationVersion: '1.0.0',
+      applicationIcon: const Icon(
+        Icons.restaurant_menu,
+        size: 48,
+        color: Colors.green,
+      ),
+      children: [
+        const Text(
+          'Capture, organize, and manage your favorite recipes from across the web.',
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Supported sites include Smitten Kitchen, Food52, NYT Cooking, and many more.',
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Download our browser extensions to get started capturing recipes!',
+        ),
+      ],
+    );
+  }
 }
