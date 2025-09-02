@@ -1072,8 +1072,18 @@ function transformRecipeDataForAWS(recipeData) {
         }
     }
     
+    // Add image if available (from photos array, imageUrl, or mainPhotoUrl)
+    let imageUrl = null;
     if (recipeData.photos && Array.isArray(recipeData.photos) && recipeData.photos.length > 0) {
-        transformedData.mainPhotoUrl = recipeData.photos[0];
+        imageUrl = recipeData.photos[0];
+    } else if (recipeData.mainPhotoUrl) {
+        imageUrl = recipeData.mainPhotoUrl;
+    } else if (recipeData.imageUrl) {
+        imageUrl = recipeData.imageUrl;
+    }
+    
+    if (imageUrl && imageUrl.trim()) {
+        transformedData.mainPhotoUrl = imageUrl.trim();
     }
     
     // Ensure sourceUrl is a valid URL - AWS backend validates this

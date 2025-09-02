@@ -6,6 +6,8 @@
 
 #### CRITICAL ACTIONS REQUIRED:
 
+TODO: RECONCILE THIS SECTION WITH "IMMEDIATE PRIORITY" SECTION NEAR THE END OF THIS DOCUMENT! Consolidate CLAUDE.md so we don't have split-brain problems.
+
 1. **✅ Image Upload Pipeline Fixed**: RESOLVED - Fixed stack overflow error by processing large images in 8KB chunks instead of spreading entire Uint8Array as function arguments
 2. **Unit Conversion Bug**: Fix unit toggle not converting ingredients like "1/2 teaspoon granulated sugar" and "1 tablespoon water" - regex misses fraction + unit patterns
 3. **Failed Parse Workflow**: Create workflow plan for failed web extension parses through backend to Flutter/Dart apps
@@ -33,55 +35,6 @@ git clone https://github.com/bordenet/RecipeArchive
 cd recipe_archive_fresh && flutter run -d chrome     # Run Flutter app
 cd tools/recipe-report && go run main.go             # Generate recipe report (uses .env)
 ```
-
-## 🔄 Recent Updates (August 30, 2025)
-
-### Major Features Added ✅
-
-- **Browser Extension Authentication**: Fixed Cognito ResourceNotFoundException by adding host_permissions and auto-configuration
-- **Flutter App Authentication Persistence**: Removed localhost detection, now connects to production API for persistent login
-- **Recipe Display**: Flutter app now shows all 13+ recipes from AWS backend instead of mock data
-- **Recipe Report CLI**: Added .env file support for default credentials (`TEST_USER_EMAIL`, `TEST_USER_PASSWORD`)
-- **UI Improvements**: Added refresh button to Flutter app and original recipe URLs in description section
-- **Auto-Login Developer Experience**: Added environment variable support (`AUTO_LOGIN=true`) for seamless development
-- **Delete Functionality**: Added delete buttons to both recipe detail content and AppBar banner with confirmation dialogs
-- **Comprehensive Testing**: Created widget tests for home screen, recipe details, and login screen functionality
-- **Validation Integration**: Updated `validate-monorepo.sh` to run Flutter tests and analysis
-- **Code Quality**: Comprehensive linting fixes across Flutter and browser extensions
-- **CloudFront Deployment Plan**: Complete infrastructure plan for Flutter web app deployment via CDN
-
-### Developer Experience Enhancements 🛠️
-
-- **Environment Variables**: Set `AUTO_LOGIN=true` in `.env` for automatic login during development
-- **Test Coverage**: Full widget test suite for UI components including:
-  - Refresh button functionality
-  - Original URL display and clickability
-  - Delete button operations with confirmations
-  - Login screen validation and auto-population
-  - Error handling and loading states
-- **Linting Integration**: Continuous code quality checks in CI/CD pipeline
-
-### Code Quality & Linting 📊
-
-- **Flutter Analysis**: Reduced from 90 to 23 lint issues (75% improvement)
-  - Fixed deprecated `withOpacity` calls (replaced with `withValues`)
-  - Removed `avoid_print` warnings by commenting debug statements
-  - Fixed import conflicts between Recipe model classes
-  - Removed unused imports and variables
-- **ESLint Configuration**: Fixed browser extension parsing errors
-  - Updated configuration for mixed JS/TS files
-  - Reduced ESLint errors from 26 to 6 critical issues
-- **Validation Integration**: Added linting steps to `validate-monorepo.sh`
-  - Flutter analysis with `flutter analyze`
-  - Browser extension linting with `npm run lint`
-
-### CloudFront Deployment Strategy ☁️
-
-- **Cost-Effective Setup**: ~$1-3/month total AWS costs
-- **GitHub Actions CI/CD**: Automated deployment on code changes
-- **Custom Domain Support**: Route 53 integration for professional domains
-- **Global CDN**: CloudFront distribution for optimal performance
-- **Security**: Private S3 bucket with CloudFront-only access
 
 ### Current Recipe Count: 13 Recipes ✅
 
@@ -297,7 +250,8 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 
 ## 🚨 CRITICAL REGRESSION FIXES (September 2, 2025)
 
-### ✅ PARSER SYSTEM RESTORED 
+### ✅ PARSER SYSTEM RESTORED
+
 - **✅ FIXED**: TypeScript parser system completely broken - "TypeScript parser system not loaded" error
 - **✅ FIXED**: Recipe data transformation regression - ingredients/instructions filtered out during AWS upload
 - **Root Cause**: Image upload feature changes introduced both regressions
@@ -305,11 +259,13 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Testing**: Added fixture-based integration tests to prevent future parser regressions
 
 ### ✅ IMAGE UPLOAD PIPELINE RESTORED
+
 - **✅ FIXED**: Stack overflow error in downloadAndUploadImage function for large images (>200KB)
 - **Technical Fix**: Process Uint8Array in 8KB chunks using String.fromCharCode.apply() instead of spread operator
 - **Result**: Recipe images now successfully upload to S3 and display in Flutter web app
 
-### ❌ REMAINING PRIORITIES  
+### ❌ REMAINING PRIORITIES
+
 - **Extension Distribution**: Need to create web app page for users to download extension .zip files
 - **Unit Conversion**: Simple fractions like "1/2 teaspoon" not converting in Flutter app
 
@@ -333,8 +289,7 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 
 1. **Image Pipeline Debug**: Extension captures images but not storing `mainPhotoUrl` in recipe JSON
 2. **Unit Conversion Fix**: Simple fraction regex patterns need enhancement
-3. **DynamoDB Cleanup**: Remove all deprecated DynamoDB references from codebase
-4. **Production Validation**: End-to-end testing of complete recipe workflow
+3. **Production Validation**: End-to-end testing of complete recipe workflow
 
 ### ✅ WORKING FEATURES
 
@@ -363,12 +318,8 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 ### LATEST COMPLETED FIXES (Current Session) ✅
 
 - **Chrome Extension Auth Fix**: Fixed ResourceNotFoundException by correcting class name from `ChromeCognitoAuth` to `CognitoAuth`
-- **Web App UX Improvements**:
-  - Replaced ugly green "View Original at Source" button with clean icon in AppBar
-  - Replaced ugly red "Delete" button with existing delete icon functionality
-  - Added "view original at source" icon (square-with-arrow) to AppBar action bar
 - **Serving Size Fix**: Recipe detail page now correctly displays updated serving size after editing and saving
-- **Units Toggle**: Confirmed working - converts ingredients between imperial and metric (e.g., "5 cups" ↔ "1,183 ml")
+- **Units Toggle**: DE-Confirmed working - converts ingredients between imperial and metric (e.g., "5 cups" ↔ "1,183 ml") <-- NO, IT DOES NOT YET WORK!
 
 ### STATUS: MAJOR FIXES COMPLETED 🎯
 
@@ -391,7 +342,23 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 
 Address the following matters immediately. First, analyze them, second create a formal plan to address them, third, replace this section with a revised/corrected list. Ask me clarifying questions along the way to ensure we get this right.
 
-1. **EXTENSION DISTRIBUTION**
+2. **Web App UX 1**: Changing the servings size is intended to directly alter ingredients list item quantities. Please make two changes: (a) change the serving size adjustment control to only enable whole number halving/quartering/doubling/quadruping in the toggle. For example, if a recipe’s default is for “4” servings, the control should allow dropping down to “2” or “1” or up to “8” or “12” or “16”. (Otherwise, the ingredients list can become impractical… like weird fractions of eggs -- ‘1/5 egg’ is ridiculous.) (b) when the quantity is adjusted, adjust the quantities in the ingredients list. Example: if the recipe calls for 1 egg, and the serving size is adjusted from “4” servings to “8” servings, the ingredients list should update to specify 2 eggs.
+3. **RECIPE IMAGES**: The web extensions appear to be pushing images to our back-end-- please verify assets exist in S3; however, no images present in the web app.
+4. **UNITS OF MEASURE BROKEN -- AGAIN**: Units toggling (metric/imperial) appear to be broken again. These nonstop regressions are getting ridiculous.
+5. **VERIFY S3 URLS**: Check that new recipes have S3 URLs instead of original site URLs
+6. **CloudFront CORS**: If needed, fix any remaining CORS issues for S3 image serving
+7. **FLUTTER IMAGE TEST**: Confirm images display correctly in web app gallery and detail views
+8. **Test Pass**: Ensure all tests pass and that ./validate-monorepo.sh passes
+9. **WEB APP UX 2**: The current recipe widgets/tiles on the web app's gallery page are too big on tablet and desktop -- we need to improve information density. Reduce the vertical size by 20% and consider how we can scale to achieve six recipes per row.
+10. **WEB APP UX 3**: The web app FAILS to load on mobile Chrome browser. It only worked after I told Chrome to request the desktop site. Why? Please fix.
+11. **WEB APP UX 4**: On the details page, the uriginal URL icon in the top right interferes with the recipe title when the page is scrolled down. Move the icon just to the right of the left-hand-side's back button, intead. This should avoid overlapping content.
+12. **FALLBACK PLAN**: Implement alternative authentication flow if Cognito settings changed
+13. **WEB PARSERS**: The Food52 parser again appears to be broken for "Kylie's Avocado Bean Toasts". See new test/fixtures/html-samples/food52-kylies-avocado-bean-toasts.html and note that the current parser generates many "undefined" entries in the Ingredients list AND the list is so broken that unit toggles (imperial/metric) fail to do anything.
+14. **MISSING ORIGINAL URL**: Please ensure the website URL is always persisted. Some recipes like "Kylie's Avocado Bean Toasts" from Food52 do NOT have an original recipe link in their details page! https://food52.com/recipes/kylie-sakaida-avocado-bean-toast. Another Food52 recipe has the same problem (https://food52.com/recipes/confit-red-pepper-and-tomato-sauce-with-pasta), so this might be specific to Food52's parser.
+15. **GALLERY TILES**: On the gallery page, please include the website domain (e.g. Food52 or Food Network or Smitten Kitchen, etc) per each tile. For example, the tile for "Easy Peach Crumble Cake Recipe" (where "recipe" is redundant!!) shows the title, the second line "Unknown" (time) and "Unknown (servings)". We need those fixed likely via OpenAI refinement calls, but the line below should be the name of the website where the recipe came from. DO NOT put the full url, there-- just the name of the website, and you can link the name of the website to the original recipe URL.
+16. **CLEANUP**: This file has lots of redundancies, especially regarding TODOs and DONE items. Once you push all changes to GitHub successfully, make a thorough pass through this file (CLAUDE.md) and resolve any redundancies. Ensure all TODOs are consolidated into a single ordered list.
+17. **BROKEN QUALITY GATES**: Note there are numerous errors detected by ./validate-monorepo.sh, but we continue to commit and push code to GitHub. The entire point of that tool is to BLOCK CHECKINS so we fix stuff before pushing to GitHub. Go fix all the errors, including linting. Currently, Flutter analysis is failing as well as Go code formatting AND "Site-specific parsers" for Recipe Parsers. Totally unacceptable. Don't let this happen again.
+18. **EXTENSION DISTRIBUTION**
 
 Add new page to dart/flutter app available once users have successfully signed in. Create a dedicated page for users to download our Chrome and Safari web extension .zip files.
 
@@ -401,19 +368,5 @@ To support this:
 - Create a dedicated S3 bucket for web extension distribution, partition the bucket by semantic version number. Make this s3 bucket available to signed in users — use standard AWS cogneto just like the rest of the project. Include an S3 data retention policy to only retain the last four versions of the web extension zip files.
 - Always release the Safari and Chrome web extensions together-- never let their versions drift. If you make a bug fix to either one, bump the version number up and re-package both and push them to the S3 distribution bucket and adjust the dart/flutter app to specify only the latest version.
 - Include a link to this new web extension distribution page in the green banner of the gallery home landing page. On the new web extension distribution page, provide detailed instructions for installing each of the two web extensions (safari, chrome) for Mac, Windows, and Linux. Include the ability to download each extension from the page.
-
-2. **FALLBACK PLAN**: Implement alternative authentication flow if Cognito settings changed
-3. **Web App UX 1**: Changing the servings size is intended to directly alter ingredients list item quantities. Please make two changes: (a) change the serving size adjustment control to only enable whole number halving/quartering/doubling/quadruping in the toggle. For example, if a recipe’s default is for “4” servings, the control should allow dropping down to “2” or “1” or up to “8” or “12” or “16”. (Otherwise, the ingredients list can become impractical… like weird fractions of eggs -- ‘1/5 egg’ is ridiculous.) (b) when the quantity is adjusted, adjust the quantities in the ingredients list. Example: if the recipe calls for 1 egg, and the serving size is adjusted from “4” servings to “8” servings, the ingredients list should update to specify 2 eggs.
-4. **WEB EXTENSION IMAGE UPLOAD**: The web extensions appear to be failing to push images to our back-end. Note console errors, debug, and fix both Chrome and Safari. We have GOT to get images showing up in the app again.
-5. **TEST IMAGE PIPELINE**: Capture new recipe with Chrome/Safari extension to verify S3 image upload works
-6. **VERIFY S3 URLS**: Check that new recipes have S3 URLs instead of original site URLs
-7. **CloudFront CORS**: If needed, fix any remaining CORS issues for S3 image serving
-8. **FLUTTER IMAGE TEST**: Confirm images display correctly in web app gallery and detail views
-9. **Test Pass**: Ensure all tests pass and that ./validate-monorepo.sh passes
-10. **WEB APP UX 2**: The current recipe widgets/tiles on the web app's gallery page are too big on tablet and desktop -- we need to improve information density. Reduce the vertical size by 20% and consider how we can scale to achieve six recipes per row.
-11. **WEB APP UX 3**: The web app FAILS to load on mobile Chrome browser. It only worked after I told Chrome to request the desktop site. Why? Please fix.
-12. **WEB APP UX 4**: On the details page, the uriginal URL icon in the top right interferes with the recipe title when the page is scrolled down. Move the icon just to the right of the left-hand-side's back button, intead. This should avoid overlapping content.
-13. **WEB PARSERS**: The Food52 parser again appears to be broken for "Kylie's Avocado Bean Toasts". See new test/fixtures/html-samples/food52-kylies-avocado-bean-toasts.html and note that the current parser generates many "undefined" entries in the Ingredients list AND the list is so broken that unit toggles (imperial/metric) fail to do anything.
-14. **CLEANUP**: This file has lots of redundancies, especially regarding TODOs and DONE items. Once you push all changes to GitHub successfully, make a thorough pass through this file (CLAUDE.md) and resolve any redundancies. Ensure all TODOs are consolidated into a single ordered list.
 
 _See README.md and docs/ for detailed architecture and requirements._

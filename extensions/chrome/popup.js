@@ -731,6 +731,12 @@ function transformRecipeDataForAWS(recipeData) {
         sourceUrl: recipeData.url || recipeData.sourceUrl || window.location.href
     };
     
+    // Add image if available (from either imageUrl or mainPhotoUrl)
+    const imageUrl = recipeData.mainPhotoUrl || recipeData.imageUrl;
+    if (imageUrl && imageUrl.trim()) {
+        transformedData.mainPhotoUrl = imageUrl.trim();
+    }
+    
     // Only add optional fields if they have valid values
     if (recipeData.servingSize) {
         const servings = parseInt(recipeData.servingSize);
