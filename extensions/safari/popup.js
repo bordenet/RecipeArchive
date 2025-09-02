@@ -417,7 +417,7 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("recipeArchive.idToken")}`
+                "Authorization": `Bearer ${JSON.parse(localStorage.getItem("recipeArchive.auth") || "{}").token}`
             },
             body: JSON.stringify({
                 filename: filename,

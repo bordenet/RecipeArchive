@@ -24,7 +24,6 @@ import (
 
 // Environment variables
 var (
-	DynamoDBTableName = os.Getenv("DYNAMODB_TABLE_NAME")
 	S3BucketName      = os.Getenv("S3_STORAGE_BUCKET")
 	Region            = os.Getenv("AWS_REGION")
 	CognitoUserPoolID = os.Getenv("COGNITO_USER_POOL_ID")

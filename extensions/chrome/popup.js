@@ -496,9 +496,15 @@ async function captureRecipe() {
         console.log("📝 Extracted recipe data:", recipeData);
 
         // Download and replace image URL with S3 URL
-        if (recipeData.image || recipeData.imageUrl) {
+        let originalImageUrl = recipeData.image || recipeData.imageUrl;
+        
+        // Check for photos array (common in parser output)
+        if (!originalImageUrl && recipeData.photos && Array.isArray(recipeData.photos) && recipeData.photos.length > 0) {
+            originalImageUrl = recipeData.photos[0];  // Use first photo
+        }
+        
+        if (originalImageUrl) {
             showStatus("🖼️ Downloading recipe image...", "#e7f3ff");
-            const originalImageUrl = recipeData.image || recipeData.imageUrl;
             try {
                 const s3ImageUrl = await downloadAndUploadImage(originalImageUrl, recipeData.title);
                 if (s3ImageUrl) {

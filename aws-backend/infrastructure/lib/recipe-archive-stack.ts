@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
@@ -19,7 +18,6 @@ export interface RecipeArchiveStackProps extends cdk.StackProps {
 export class RecipeArchiveStack extends cdk.Stack {
   public readonly userPool: cognito.UserPool;
   public readonly userPoolClient: cognito.UserPoolClient;
-  public readonly recipesTable: dynamodb.Table;
   public readonly storageBucket: s3.Bucket;
   public readonly tempBucket: s3.Bucket;
   public readonly failedParsingBucket: s3.Bucket;
@@ -98,54 +96,6 @@ export class RecipeArchiveStack extends cdk.Stack {
       }
     );
 
-    // DynamoDB Table for Recipes (Optimized for AWS Free Tier)
-    this.recipesTable = new dynamodb.Table(this, 'RecipesTable', {
-      tableName: `recipeArchive-recipes-${props.environment}`,
-      partitionKey: {
-        name: 'userId',
-        type: dynamodb.AttributeType.STRING,
-      },
-      sortKey: {
-        name: 'id',
-        type: dynamodb.AttributeType.STRING,
-      },
-      // Pay-per-request is better for Free Tier with low usage
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      encryption: dynamodb.TableEncryption.AWS_MANAGED,
-      // Disable Point-in-Time Recovery for dev to save costs
-      pointInTimeRecovery: false,
-      // Enable DynamoDB Streams only if needed
-      stream: dynamodb.StreamViewType.KEYS_ONLY,
-      removalPolicy:
-        props.environment === 'prod'
-          ? cdk.RemovalPolicy.RETAIN
-          : cdk.RemovalPolicy.DESTROY,
-    });
-
-    // Global Secondary Indexes
-    this.recipesTable.addGlobalSecondaryIndex({
-      indexName: 'recipes-by-created',
-      partitionKey: {
-        name: 'userId',
-        type: dynamodb.AttributeType.STRING,
-      },
-      sortKey: {
-        name: 'createdAt',
-        type: dynamodb.AttributeType.STRING,
-      },
-    });
-
-    this.recipesTable.addGlobalSecondaryIndex({
-      indexName: 'recipes-by-title',
-      partitionKey: {
-        name: 'userId',
-        type: dynamodb.AttributeType.STRING,
-      },
-      sortKey: {
-        name: 'title',
-        type: dynamodb.AttributeType.STRING,
-      },
-    });
 
     // S3 Buckets with Environment-Specific Retention Policies
 
@@ -230,25 +180,6 @@ export class RecipeArchiveStack extends cdk.Stack {
         ),
       ],
       inlinePolicies: {
-        DynamoDBAccess: new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              actions: [
-                'dynamodb:GetItem',
-                'dynamodb:PutItem',
-                'dynamodb:UpdateItem',
-                'dynamodb:DeleteItem',
-                'dynamodb:Query',
-                'dynamodb:Scan',
-              ],
-              resources: [
-                this.recipesTable.tableArn,
-                `${this.recipesTable.tableArn}/index/*`,
-              ],
-            }),
-          ],
-        }),
         S3Access: new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -347,7 +278,6 @@ export class RecipeArchiveStack extends cdk.Stack {
       environment: {
         ENVIRONMENT: props.environment,
         REGION: this.region,
-        DYNAMODB_TABLE_NAME: this.recipesTable.tableName,
         S3_STORAGE_BUCKET: this.storageBucket.bucketName,
         S3_TEMP_BUCKET: this.tempBucket.bucketName,
         S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
@@ -365,10 +295,24 @@ export class RecipeArchiveStack extends cdk.Stack {
       environment: {
         ENVIRONMENT: props.environment,
         REGION: this.region,
-        DYNAMODB_TABLE_NAME: this.recipesTable.tableName,
         S3_STORAGE_BUCKET: this.storageBucket.bucketName,
         S3_TEMP_BUCKET: this.tempBucket.bucketName,
         S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
+        COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+      },
+      role: lambdaRole,
+    });
+
+    const imageUploadFunction = new lambda.Function(this, 'ImageUploadFunction', {
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      handler: 'bootstrap',
+      code: lambda.Code.fromAsset('../functions/dist/image-upload-package'),
+      timeout: cdk.Duration.seconds(30), // More time for image processing
+      memorySize: 512, // More memory for image processing
+      environment: {
+        ENVIRONMENT: props.environment,
+        REGION: this.region,
+        S3_STORAGE_BUCKET: this.storageBucket.bucketName,
         COGNITO_USER_POOL_ID: this.userPool.userPoolId,
       },
       role: lambdaRole,
@@ -422,6 +366,15 @@ export class RecipeArchiveStack extends cdk.Stack {
     });
     recipeResource.addMethod('DELETE', recipesIntegration, {
       authorizer: cognitoAuthorizer,
+    });
+
+    // Image upload endpoint: POST /v1/images/upload (requires authentication)
+    const imagesResource = v1.addResource('images');
+    const uploadResource = imagesResource.addResource('upload');
+    const imageUploadIntegration = new apigateway.LambdaIntegration(imageUploadFunction);
+    uploadResource.addMethod('POST', imageUploadIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
     });
 
     // Add Gateway Responses to include CORS headers on API Gateway error responses
@@ -618,10 +571,6 @@ export class RecipeArchiveStack extends cdk.Stack {
       description: 'Cognito User Pool Client ID',
     });
 
-    new cdk.CfnOutput(this, 'RecipesTableName', {
-      value: this.recipesTable.tableName,
-      description: 'DynamoDB Recipes Table Name',
-    });
 
     new cdk.CfnOutput(this, 'StorageBucketName', {
       value: this.storageBucket.bucketName,

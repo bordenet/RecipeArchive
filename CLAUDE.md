@@ -394,5 +394,6 @@ To support this:
 11. **WEB APP UX 3**: The web app FAILS to load on mobile Chrome browser. It only worked after I told Chrome to request the desktop site. Why? Please fix.
 12. **WEB APP UX 4**: On the details page, the uriginal URL icon in the top right interferes with the recipe title when the page is scrolled down. Move the icon just to the right of the left-hand-side's back button, intead. This should avoid overlapping content.
 13. **WEB PARSERS**: The Food52 parser again appears to be broken for "Kylie's Avocado Bean Toasts". See new test/fixtures/html-samples/food52-kylies-avocado-bean-toasts.html and note that the current parser generates many "undefined" entries in the Ingredients list AND the list is so broken that unit toggles (imperial/metric) fail to do anything.
+14. **CLEANUP**: This file has lots of redundancies, especially regarding TODOs and DONE items. Once you push all changes to GitHub successfully, make a thorough pass through this file (CLAUDE.md) and resolve any redundancies. Ensure all TODOs are consolidated into a single ordered list.
 
 _See README.md and docs/ for detailed architecture and requirements._

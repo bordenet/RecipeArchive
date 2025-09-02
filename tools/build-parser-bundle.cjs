@@ -16,18 +16,18 @@ const safariBundle = path.join(projectRoot, 'extensions/safari/typescript-parser
 // Create a simple entry point that exports all parsers
 const entryContent = `
 // TypeScript Parser Bundle Entry Point
-import { ParserRegistry } from './src/parser-registry';
-import { SmittenKitchenParser } from './src/sites/smitten-kitchen';
-import { FoodNetworkParser } from './src/sites/food-network';
-import { NYTCookingParser } from './src/sites/nyt-cooking';
-import { Food52Parser } from './src/sites/food52';
-import { SeriousEatsParser } from './src/sites/serious-eats';
-import { AllRecipesParser } from './src/sites/allrecipes';
-import { EpicuriousParser } from './src/sites/epicurious';
-import { DamnDeliciousParser } from './src/sites/damn-delicious';
-import { LoveAndLemonsParser } from './src/sites/loveandlemons';
-import { FoodAndWineParser } from './src/sites/food-and-wine';
-import { WashingtonPostParser } from './src/sites/washington-post';
+import { ParserRegistry } from './parser-registry';
+import { SmittenKitchenParser } from './sites/smitten-kitchen';
+import { FoodNetworkParser } from './sites/food-network';
+import { NYTCookingParser } from './sites/nyt-cooking';
+import { Food52Parser } from './sites/food52';
+import { SeriousEatsParser } from './sites/serious-eats';
+import { AllRecipesParser } from './sites/allrecipes';
+import { EpicuriousParser } from './sites/epicurious';
+import { DamnDeliciousParser } from './sites/damn-delicious';
+import { LoveAndLemonsParser } from './sites/loveandlemons';
+import { FoodAndWineParser } from './sites/food-and-wine';
+import { WashingtonPostParser } from './sites/washington-post';
 
 // Initialize registry
 const registry = ParserRegistry.getInstance();
