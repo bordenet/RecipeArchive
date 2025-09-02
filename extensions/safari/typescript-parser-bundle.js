@@ -15525,6 +15525,10 @@
       }
       return _ParserRegistry.instance;
     }
+    registerParser(urlPattern, parserClass) {
+      const parser = new parserClass();
+      this.parsers.push(parser);
+    }
     async parseRecipe(html3, url) {
       const parser = this.parsers.find((p) => p.canParse(url));
       if (!parser) {

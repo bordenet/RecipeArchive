@@ -40,6 +40,11 @@ export class ParserRegistry {
         return ParserRegistry.instance;
     }
 
+    registerParser(urlPattern: string, parserClass: new () => BaseParser): void {
+        const parser = new parserClass();
+        this.parsers.push(parser);
+    }
+
     async parseRecipe(html: string, url: string): Promise<Recipe | null> {
         // Find the first parser that can handle this URL
         const parser = this.parsers.find(p => p.canParse(url));
