@@ -115,6 +115,7 @@ The current extensions include:
 - Washington Post
 - Food & Wine
 - Damn Delicious
+- Alexandra's Kitchen
 
 ## 🛠️ Maintenance
 

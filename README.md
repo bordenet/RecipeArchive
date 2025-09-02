@@ -2,7 +2,7 @@
 
 **A comprehensive recipe archiving platform for home cooks**
 
-Capture, organize, and access your favorite recipes from 12+ supported websites with intelligent parsing, cross-device synchronization, and a modern web interface.
+Capture, organize, and access your favorite recipes from 13+ supported websites with intelligent parsing, cross-device synchronization, and a modern web interface.
 
 ## 🚀 Quick Start
 
@@ -85,7 +85,7 @@ Chrome and Safari extensions for recipe capture
 - **Safari:** Load `extensions/safari/` (requires Xcode for iOS/macOS)
 
 ### **Recipe Parsers**
-TypeScript-based parsing system supporting 12+ recipe websites
+TypeScript-based parsing system supporting 13+ recipe websites
 ```bash
 npm run build:parser-bundle  # Build parsers
 npm run test:parsers         # Run parser tests
@@ -100,7 +100,7 @@ cdk deploy  # Deploy infrastructure
 
 ## 🎯 Supported Recipe Sites
 
-✅ **Currently Supported (12 sites):**
+✅ **Currently Supported (13 sites):**
 - Smitten Kitchen, Food Network, NYT Cooking, Food52
 - AllRecipes, Epicurious, Serious Eats, Love & Lemons  
 - Washington Post, Food & Wine, Damn Delicious, Alexandra's Kitchen
@@ -126,7 +126,7 @@ cd aws-backend && cdk deploy # Deploy infrastructure
 ## 🏗️ Architecture
 
 - **Extensions:** Chrome/Safari with TypeScript parsers + AWS Cognito auth
-- **Parsers:** Registry system for 12+ recipe sites with JSON-LD + HTML extraction
+- **Parsers:** Registry system for 13+ recipe sites with JSON-LD + HTML extraction
 - **Backend:** Go serverless functions (AWS Lambda) + S3 storage + Cognito auth  
 - **Frontend:** Flutter web app with responsive design + CloudFront deployment
 
@@ -151,7 +151,7 @@ cd aws-backend && cdk deploy # Deploy infrastructure
 ## 🚀 Current Status
 
 **✅ Production Ready:**
-- Chrome & Safari extensions with 12-site parser support
+- Chrome & Safari extensions with 13-site parser support
 - AWS serverless backend with S3 storage  
 - Flutter web app with responsive design
 - Comprehensive test coverage and validation

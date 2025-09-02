@@ -35,7 +35,7 @@ For development/testing, use environment variables:
 ## Extension Features
 
 - BASIC auth setup screen with Chrome storage
-- Recipe extraction from Smitten Kitchen
+- Recipe extraction from 12+ supported sites including Smitten Kitchen, Food52, Alexandra's Kitchen, and more
 - Local credential storage with Chrome extension APIs
 - Setup validation and error handling
 - Future API sync capabilities

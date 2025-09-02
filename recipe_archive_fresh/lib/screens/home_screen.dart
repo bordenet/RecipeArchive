@@ -271,7 +271,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Supported sites include Smitten Kitchen, Food52, NYT Cooking, and many more.',
+          'Supported sites include Smitten Kitchen, Food52, NYT Cooking, Alexandra\'s Kitchen, and many more.',
         ),
         const SizedBox(height: 16),
         const Text(

@@ -186,7 +186,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
             
             Text(
               platform == 'Chrome' 
-                ? 'Capture recipes from supported websites directly in Chrome. Works with 12+ recipe sites including Smitten Kitchen, Food52, and more.'
+                ? 'Capture recipes from supported websites directly in Chrome. Works with 13+ recipe sites including Smitten Kitchen, Food52, Alexandra\'s Kitchen, and more.'
                 : 'Native Safari extension for seamless recipe capturing. Optimized for Safari\'s privacy features and performance.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

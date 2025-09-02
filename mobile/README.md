@@ -127,6 +127,7 @@ Same sites as desktop extensions:
 - Food & Wine
 - Washington Post
 - Damn Delicious
+- Alexandra's Kitchen
 
 ## 🚀 Deployment Options
 

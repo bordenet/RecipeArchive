@@ -12,7 +12,8 @@ const SUPPORTED_SITES = [
     "seriouseats.com",
     "washingtonpost.com",
     "foodandwine.com",
-    "damndelicious.net"
+    "damndelicious.net",
+    "alexandracooks.com"
 ];
 
 /**

@@ -3,7 +3,7 @@
 ## 🚀 Status: FULLY OPERATIONAL ✅
 
 **Production System**: Chrome/Safari extensions + AWS backend + Flutter web app  
-**Recipe Count**: 14 recipes across 12+ supported sites  
+**Recipe Count**: 14 recipes across 13+ supported sites  
 **CloudFront Deployment**: https://d1jcaphz4458q7.cloudfront.net
 
 ### Quick Start
@@ -33,7 +33,7 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 
 ### Components
 - **Extensions** (`extensions/`): Chrome/Safari with TypeScript parsers + AWS Cognito auth
-- **Parsers** (`parsers/`): Registry system for 12+ recipe sites  
+- **Parsers** (`parsers/`): Registry system for 13+ recipe sites  
 - **AWS Backend** (`aws-backend/`): Lambda + S3 + Cognito serverless infrastructure
 - **Flutter App** (`recipe_archive_fresh/`): Web interface with CloudFront deployment
 
