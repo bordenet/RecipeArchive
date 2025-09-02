@@ -25,9 +25,6 @@ class AuthUser {
       final idToken = session.getIdToken();
       final accessToken = session.getAccessToken();
       
-      if (idToken == null || accessToken == null) {
-        throw Exception('Missing tokens in session');
-      }
       
       final payload = idToken.decodePayload();
       if (payload == null) {
@@ -150,10 +147,6 @@ class AuthenticationService {
   Future<AuthUser> signIn(String email, String password) async {
     try {
       print('Starting sign in for email: $email');
-      
-      if (_userPool == null) {
-        throw Exception('Cognito UserPool not initialized');
-      }
       
       _cognitoUser = CognitoUser(email, _userPool);
       print('Created CognitoUser');

@@ -262,7 +262,7 @@ class UnitsConverter {
     }
     
     // Check for common fractions and use unicode vulgar fractions
-    const vulgarFractions = {
+    final vulgarFractions = {
       0.5: '½',
       1/3: '⅓',  
       2/3: '⅔',

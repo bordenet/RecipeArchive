@@ -16,31 +16,26 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 
 ## 🎯 IMMEDIATE PRIORITIES (September 2, 2025)
 
-### 🔥 ACTIVE FIXES IN PROGRESS
-1. **Unit Conversion Bug**: Regex needs unicode vulgar fractions (½, ⅓, ¼) + can units support
-2. **Food52 Parser Failure**: JSON-LD parsing error at position 1245 - new test fixture added
-3. **Mobile Web App**: Fixed by previous image fixes - remove from TODO list
+### 🔥 NEXT TASKS - Ready to Tackle  
+1. **Gallery UI Improvements**: Recipe tiles too large on desktop/tablet - reduce height 20%, fit 6 per row
+2. **Gallery Website Names**: Display "Food52" or "Smitten Kitchen" instead of "Unknown", link to original URLs
+3. **Serving Size Logic**: Change to whole number multipliers (1,2,4,8,16) with auto-ingredient updates
 
 ### ✅ MAJOR FIXES COMPLETED TODAY
-1. **✅ Recipe Images**: CORS configuration added to S3 - **IMAGES NOW DISPLAY IN WEB APP**
-2. **✅ DELETE Operations**: Updated Lambda to perform hard S3 deletion instead of soft delete 
-3. **✅ Lambda Deployment**: Fixed packaging and deployed updated functions
-4. **✅ Diagnostics Endpoint**: Created `/v1/diagnostics` Lambda to handle extension error reporting
-5. **✅ Source URL Regression**: Extensions now correctly send recipe URLs instead of popup.html
+1. **✅ Unit Conversion System**: Full unicode vulgar fractions support (½, ⅓, ¼, ¾) + mixed fractions (1½, 2¾) + can units
+2. **✅ Food52 Parser Fix**: JSON-LD parsing error resolved with undefined sanitization in base parser
+3. **✅ Node.js Build System**: Proper linking + pre-commit hooks working + parser bundle rebuild system  
+4. **✅ Flutter Analysis**: Fixed const map errors and null comparison warnings - now 0 errors/warnings
+5. **✅ Recipe Images**: CORS configuration added to S3 - **IMAGES NOW DISPLAY IN WEB APP**
+6. **✅ DELETE Operations**: Updated Lambda to perform hard S3 deletion instead of soft delete 
+7. **✅ Diagnostics Endpoint**: Created `/v1/diagnostics` Lambda to handle extension error reporting
+8. **✅ Source URL Regression**: Extensions now correctly send recipe URLs instead of popup.html
 
-### UX Improvements - Lower Priority
-1. **Gallery Density**: Recipe tiles too large on tablet/desktop - reduce height 20%, fit 6 per row
-2. **Serving Size Logic**: Change to whole number multipliers only (1,2,4,8,16) and auto-update ingredient quantities
-3. **Gallery Website Names**: Show "Food52" or "Smitten Kitchen" on tiles instead of "Unknown", link to original URL
+### Lower Priority Enhancements
+1. **Extension Distribution**: S3-hosted .zip downloads with semantic versioning
+2. **Failed Parse Workflow**: Backend diagnostic data processing
+3. **OpenAI Content Enhancement**: Recipe normalization at ingestion time
 
-### Parser Issues  
-1. **Food52 JSON-LD Error**: Bad control character in string at position 1245 (test fixture: food52-easy-peach-crumble-cake.html)
-2. **Missing Original URLs**: Some Food52 recipes missing sourceUrl field in details pages
-
-### Features
-10. **Extension Distribution**: S3-hosted .zip downloads with semantic versioning, accessible from web app
-11. **Failed Parse Workflow**: Backend handling for extension parsing failures
-12. **OpenAI Content Normalization**: Recipe enhancement at ingestion (titles, times, descriptions)
 
 ## ⚠️ CRITICAL REMINDERS
 
