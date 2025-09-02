@@ -6,7 +6,7 @@
 
 #### CRITICAL ACTIONS REQUIRED:
 
-1. **❌ SHOW-STOPPING: Image Upload Pipeline Broken**: Extension captures images but S3 upload fails with "Maximum call stack size exceeded" error - recipes save WITHOUT images
+1. **✅ Image Upload Pipeline Fixed**: RESOLVED - Fixed stack overflow error by processing large images in 8KB chunks instead of spreading entire Uint8Array as function arguments
 2. **Unit Conversion Bug**: Fix unit toggle not converting ingredients like "1/2 teaspoon granulated sugar" and "1 tablespoon water" - regex misses fraction + unit patterns
 3. **Failed Parse Workflow**: Create workflow plan for failed web extension parses through backend to Flutter/Dart apps
 4. **OpenAI Content Normalization**: Create plan for OpenAI integration at ingestion to normalize/canonicalize content, casing, units, recipe titles via structured prompts before S3 storage
@@ -304,9 +304,14 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Solution**: Added `window.TypeScriptParser` compatibility interface + fixed `transformRecipeDataForAWS` object format handling
 - **Testing**: Added fixture-based integration tests to prevent future parser regressions
 
-### ❌ REMAINING ISSUES
-- **Image Upload Pipeline**: Still fails with "Maximum call stack size exceeded" - needs recursion fix
+### ✅ IMAGE UPLOAD PIPELINE RESTORED
+- **✅ FIXED**: Stack overflow error in downloadAndUploadImage function for large images (>200KB)
+- **Technical Fix**: Process Uint8Array in 8KB chunks using String.fromCharCode.apply() instead of spread operator
+- **Result**: Recipe images now successfully upload to S3 and display in Flutter web app
+
+### ❌ REMAINING PRIORITIES  
 - **Extension Distribution**: Need to create web app page for users to download extension .zip files
+- **Unit Conversion**: Simple fractions like "1/2 teaspoon" not converting in Flutter app
 
 ## 🚨 CURRENT STATUS (September 1, 2025)
 
