@@ -6,11 +6,13 @@
 
 #### CRITICAL ACTIONS REQUIRED:
 
-1. **✅ Ingredient Section Headers**: FIXED - Parser now preserves "For the crust", "For the filling" section distinctions with proper Flutter UI display
+1. **❌ SHOW-STOPPING: Image Upload Pipeline Broken**: Extension captures images but S3 upload fails with "Maximum call stack size exceeded" error - recipes save WITHOUT images
 2. **Unit Conversion Bug**: Fix unit toggle not converting ingredients like "1/2 teaspoon granulated sugar" and "1 tablespoon water" - regex misses fraction + unit patterns
 3. **Failed Parse Workflow**: Create workflow plan for failed web extension parses through backend to Flutter/Dart apps
 4. **OpenAI Content Normalization**: Create plan for OpenAI integration at ingestion to normalize/canonicalize content, casing, units, recipe titles via structured prompts before S3 storage
-5. **Admin Multi-Tenant Management**: Create plan for Flutter web app admin role with tenant dropdown and full tenant provisioning. System Admin vs Test User roles.
+5. **Admin Multi-Tenant Management**: Create plan for Flutter web app admin role with tenant dropdown and full tenant provisioning
+   - System Admin: mattbordenet@hotmail.com
+   - Test User: susan.cameron42@gmail.com / Bear901206!!
 6. **PRD Extensions**: Extend `/docs/requirements` PRD documents with these feature requirements (focus on WHAT/WHY)
 
 ### Deployed Components (August 2025)
@@ -292,6 +294,19 @@ These terms are consistent with Amazon.com retail website patterns and must be u
 - **Safari Extension**: ✅ FIXED - Automatic token refresh on 401 errors with fallback to re-login
 - **User Experience**: Extensions now handle expired tokens seamlessly after 60+ minutes
 - **Error Handling**: If refresh fails, users are automatically prompted to sign in again
+
+## 🚨 CRITICAL REGRESSION FIXES (September 2, 2025)
+
+### ✅ PARSER SYSTEM RESTORED 
+- **✅ FIXED**: TypeScript parser system completely broken - "TypeScript parser system not loaded" error
+- **✅ FIXED**: Recipe data transformation regression - ingredients/instructions filtered out during AWS upload
+- **Root Cause**: Image upload feature changes introduced both regressions
+- **Solution**: Added `window.TypeScriptParser` compatibility interface + fixed `transformRecipeDataForAWS` object format handling
+- **Testing**: Added fixture-based integration tests to prevent future parser regressions
+
+### ❌ REMAINING ISSUES
+- **Image Upload Pipeline**: Still fails with "Maximum call stack size exceeded" - needs recursion fix
+- **Extension Distribution**: Need to create web app page for users to download extension .zip files
 
 ## 🚨 CURRENT STATUS (September 1, 2025)
 
