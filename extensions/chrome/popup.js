@@ -370,7 +370,16 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         
         // Convert blob to base64 for AWS upload
         const arrayBuffer = await imageBlob.arrayBuffer();
-        const base64String = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        // Process in chunks to avoid stack overflow with large images
+        let binaryString = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.subarray(i, i + chunkSize);
+            binaryString += String.fromCharCode.apply(null, chunk);
+        }
+        const base64String = btoa(binaryString);
         
         // Upload to S3 via API Gateway
         const api = CONFIG.getCurrentAPI();
