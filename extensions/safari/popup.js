@@ -396,11 +396,20 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         const fileExtension = imageUrl.split(".").pop()?.toLowerCase().split("?")[0] || "jpg";
         const filename = `recipes/${sanitizedTitle}-${timestamp}.${fileExtension}`;
         
-        // Download the image
-        const response = await fetch(imageUrl);
+        // Download the image with better error handling
+        console.log(`📥 Fetching image: ${imageUrl}`);
+        const response = await fetch(imageUrl, {
+            mode: 'cors',
+            credentials: 'omit',
+            headers: {
+                'Accept': 'image/*,*/*;q=0.9'
+            }
+        });
         if (!response.ok) {
+            console.error(`❌ Image fetch failed: ${response.status} ${response.statusText} for URL: ${imageUrl}`);
             throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
         }
+        console.log(`✅ Image fetch successful: ${response.status} ${response.headers.get('content-type')}`);
         
         const contentType = response.headers.get("content-type") || "image/jpeg";
         const imageBlob = await response.blob();
@@ -426,7 +435,7 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${JSON.parse(localStorage.getItem("recipeArchive.auth") || "{}").token}`
+                "Authorization": `Bearer ${JSON.parse(localStorage.getItem("recipeArchive.auth") || "{}").idToken}`
             },
             body: JSON.stringify({
                 filename: filename,
@@ -437,6 +446,7 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         
         if (!uploadResponse.ok) {
             const errorText = await uploadResponse.text();
+            console.error(`❌ S3 upload failed: ${uploadResponse.status} ${errorText}`);
             throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
         }
         
@@ -447,6 +457,12 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         
     } catch (error) {
         console.error("❌ Image download/upload failed:", error);
+        console.error("❌ Error details:", {
+            message: error.message,
+            name: error.name,
+            imageUrl: imageUrl,
+            recipeTitle: recipeTitle
+        });
         return null;
     }
 }
@@ -489,7 +505,7 @@ async function captureRecipe() {
             pingTimeout = setTimeout(() => {
                 if (!pingResponded) {
                     console.log("⏰ Ping timeout - injecting content script");
-                    injectContentScript(tab.id);
+                    injectContentScript(tab.id, tab.url);
                 }
             }, 1000);
             
@@ -514,17 +530,17 @@ async function captureRecipe() {
                 
                 if (pingResponse && pingResponse.status === "pong") {
                     console.log("✅ Content script already loaded, sending capture message");
-                    await sendCaptureMessage(tab.id);
+                    await sendCaptureMessage(tab.id, tab.url);
                 } else {
                     console.log("🔧 Safari Web Extensions: Trying direct recipe capture");
-                    await captureRecipeDirectly(tab.id);
+                    await captureRecipeDirectly(tab.id, tab.url);
                 }
             } catch (error) {
                 console.log("📥 Ping error:", error);
                 pingResponded = true;
                 clearTimeout(pingTimeout);
                 console.log("🔧 Safari Web Extensions: Trying direct recipe capture as fallback");
-                await captureRecipeDirectly(tab.id);
+                await captureRecipeDirectly(tab.id, tab.url);
             }
             
         } catch (error) {
@@ -534,7 +550,7 @@ async function captureRecipe() {
     });
 }
 
-function injectContentScript(tabId) {
+function injectContentScript(tabId, tabUrl = "unknown") {
     if (extensionAPI.scripting && extensionAPI.scripting.executeScript) {
         extensionAPI.scripting.executeScript({
             target: { tabId: tabId },
@@ -542,7 +558,7 @@ function injectContentScript(tabId) {
         }).then(async () => {
             // Wait longer for Safari script to initialize
             await new Promise(resolve => setTimeout(resolve, 1500));
-            await sendCaptureMessage(tabId);
+            await sendCaptureMessage(tabId, tabUrl);
         }).catch(error => {
             console.error("❌ Script injection failed:", error);
             showStatus("❌ Failed to inject content script: " + error.message, "#ffebee");
@@ -552,7 +568,7 @@ function injectContentScript(tabId) {
     }
 }
 
-async function captureRecipeDirectly(tabId) {
+async function captureRecipeDirectly(tabId, tabUrl = "unknown") {
     console.log("🔧 Safari Web Extensions: Direct recipe capture starting");
     
     try {
@@ -804,10 +820,10 @@ async function captureRecipeDirectly(tabId) {
             
             if (recipeData && (recipeData.ingredients?.length > 0 || recipeData.title)) {
                 showStatus("✅ Recipe captured: " + recipeData.title, "#e8f5e8");
-                await sendToBackends(recipeData);
+                await sendToBackends(recipeData, tabUrl);
             } else {
                 showStatus("⚠️ Limited recipe data found", "#fff3cd");
-                await sendToBackends(recipeData);
+                await sendToBackends(recipeData, tabUrl);
             }
         } else {
             showStatus("❌ Direct capture failed", "#ffebee");
@@ -819,7 +835,7 @@ async function captureRecipeDirectly(tabId) {
     }
 }
 
-async function sendCaptureMessage(tabId) {
+async function sendCaptureMessage(tabId, tabUrl = "unknown") {
     // Send message to content script using async/await pattern
     let messageResponded = false;
     
@@ -854,7 +870,7 @@ async function sendCaptureMessage(tabId) {
             showStatus("✅ Recipe captured: " + response.data.title, "#e8f5e8");
             
             // Send to both development and AWS backends
-            sendToBackends(response.data);
+            sendToBackends(response.data, tabUrl);
         } else {
             showStatus("❌ Capture failed: " + (response ? (response.message || "Invalid response") : "No response"), "#ffebee");
         }
@@ -875,7 +891,7 @@ function showStatus(message, backgroundColor) {
     }
 }
 
-async function sendToBackends(recipeData) {
+async function sendToBackends(recipeData, tabUrl = "unknown") {
     // Check if user is authenticated - if so, save directly to AWS
     const authData = localStorage.getItem("recipeArchive.auth");
     const isAuthenticated = authData && isSignedIn;
@@ -886,7 +902,7 @@ async function sendToBackends(recipeData) {
         console.log("🚀 Authenticated user - saving directly to AWS");
         
         try {
-            const awsResult = await sendToAWSBackend(recipeData);
+            const awsResult = await sendToAWSBackend(recipeData, tabUrl);
             
             if (awsResult.success) {
                 showStatus("✅ Saved to AWS! Recipe ID: " + awsResult.id, "#d4edda");
@@ -960,7 +976,7 @@ async function sendToDevBackend(recipeData) {
     }
 }
 
-function transformRecipeDataForAWS(recipeData) {
+function transformRecipeDataForAWS(recipeData, currentUrl = null) {
     // Transform Safari extension format to AWS backend expected format
     const ingredients = [];
     const instructions = [];
@@ -1050,7 +1066,7 @@ function transformRecipeDataForAWS(recipeData) {
         title: recipeData.title || "Unknown Recipe",
         ingredients: ingredients,
         instructions: instructions,
-        sourceUrl: recipeData.url || recipeData.sourceUrl || window.location.href
+        sourceUrl: recipeData.source || recipeData.url || recipeData.sourceUrl
     };
     
     // Add optional fields if they exist
@@ -1091,7 +1107,7 @@ function transformRecipeDataForAWS(recipeData) {
         new URL(transformedData.sourceUrl);
     } catch (e) {
         // If the sourceUrl is invalid, use current page URL as fallback
-        transformedData.sourceUrl = window.location.href;
+        transformedData.sourceUrl = currentUrl || "unknown";
     }
     
     console.log("🔧 Transformed ingredients:", ingredients.length, "items");
@@ -1158,7 +1174,7 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
         // Transform data to match AWS backend expected format
         let transformedData;
         try {
-            transformedData = transformRecipeDataForAWS(recipeData);
+            transformedData = transformRecipeDataForAWS(recipeData, currentUrl);
             
             // Download and replace image URL with S3 URL if image exists
             if (transformedData.mainPhotoUrl) {

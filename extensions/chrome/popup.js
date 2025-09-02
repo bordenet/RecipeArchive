@@ -357,20 +357,36 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         const fileExtension = imageUrl.split(".").pop()?.toLowerCase().split("?")[0] || "jpg";
         const filename = `recipes/${sanitizedTitle}-${timestamp}.${fileExtension}`;
         
-        // Download the image
-        const response = await fetch(imageUrl);
+        // Download the image with CORS mode for better error handling
+        console.log(`📥 Fetching image: ${imageUrl}`);
+        const response = await fetch(imageUrl, {
+            mode: 'cors',
+            credentials: 'omit',
+            headers: {
+                'Accept': 'image/*,*/*;q=0.9'
+            }
+        });
         if (!response.ok) {
+            console.error(`❌ Image fetch failed: ${response.status} ${response.statusText} for URL: ${imageUrl}`);
             throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
         }
+        console.log(`✅ Image fetch successful: ${response.status} ${response.headers.get('content-type')}`);
         
         const contentType = response.headers.get("content-type") || "image/jpeg";
         const imageBlob = await response.blob();
         
         console.log(`📦 Downloaded image (${imageBlob.size} bytes, ${contentType})`);
         
+        // Check if image is too large (max 10MB for Lambda)
+        if (imageBlob.size > 10 * 1024 * 1024) {
+            throw new Error(`Image too large: ${imageBlob.size} bytes (max 10MB)`);
+        }
+        
         // Convert blob to base64 for AWS upload
         const arrayBuffer = await imageBlob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
+        
+        console.log(`🔄 Converting ${uint8Array.length} bytes to base64...`);
         
         // Process in chunks to avoid stack overflow with large images
         let binaryString = '';
@@ -381,13 +397,28 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         }
         const base64String = btoa(binaryString);
         
+        console.log(`✅ Base64 conversion complete: ${base64String.length} characters`);
+        
+        // Check if base64 data is too large for Lambda (6MB payload limit)
+        const payloadSize = JSON.stringify({
+            filename: filename,
+            contentType: contentType,
+            imageData: base64String
+        }).length;
+        
+        if (payloadSize > 5.5 * 1024 * 1024) { // 5.5MB to leave room for headers
+            throw new Error(`Payload too large for Lambda: ${payloadSize} bytes (max ~5.5MB)`);
+        }
+        
+        console.log(`📤 Uploading ${payloadSize} byte payload to S3...`);
+        
         // Upload to S3 via API Gateway
         const api = CONFIG.getCurrentAPI();
         const uploadResponse = await fetch(`${api.base}/v1/images/upload`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${JSON.parse(localStorage.getItem("recipeArchive.auth") || "{}").token}`
+                "Authorization": `Bearer ${JSON.parse(localStorage.getItem("recipeArchive.auth") || "{}").idToken}`
             },
             body: JSON.stringify({
                 filename: filename,
@@ -398,6 +429,16 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         
         if (!uploadResponse.ok) {
             const errorText = await uploadResponse.text();
+            console.error(`❌ S3 upload failed: ${uploadResponse.status} ${errorText}`);
+            console.error(`❌ S3 upload details:`, {
+                status: uploadResponse.status,
+                statusText: uploadResponse.statusText,
+                headers: Object.fromEntries(uploadResponse.headers.entries()),
+                errorBody: errorText,
+                requestSize: base64String.length,
+                contentType: contentType,
+                filename: filename
+            });
             throw new Error(`Upload failed: ${uploadResponse.status} ${errorText}`);
         }
         
@@ -408,6 +449,12 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         
     } catch (error) {
         console.error("❌ Image download/upload failed:", error);
+        console.error("❌ Error details:", {
+            message: error.message,
+            name: error.name,
+            imageUrl: imageUrl,
+            recipeTitle: recipeTitle
+        });
         return null;
     }
 }
@@ -622,7 +669,7 @@ async function submitFallbackParse(tab, recipeData = {}) {
     }
 }
 
-function transformRecipeDataForAWS(recipeData) {
+function transformRecipeDataForAWS(recipeData, currentUrl = null) {
     // Transform Chrome extension format to AWS backend expected format
     const ingredients = [];
     const instructions = [];
@@ -728,7 +775,7 @@ function transformRecipeDataForAWS(recipeData) {
         title: recipeData.title || "Unknown Recipe",
         ingredients: ingredients,
         instructions: instructions,
-        sourceUrl: recipeData.url || recipeData.sourceUrl || window.location.href
+        sourceUrl: recipeData.source || recipeData.url || recipeData.sourceUrl
     };
     
     // Add image if available (from either imageUrl or mainPhotoUrl)
@@ -761,7 +808,7 @@ function transformRecipeDataForAWS(recipeData) {
         new URL(transformedData.sourceUrl);
     } catch {
         // If the sourceUrl is invalid, use current page URL as fallback
-        transformedData.sourceUrl = window.location.href;
+        transformedData.sourceUrl = currentUrl || "unknown";
     }
     
     console.log("🔧 Transformed ingredients:", ingredients.length, "items");
@@ -838,7 +885,7 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
         // Transform data to match AWS backend expected format
         let transformedData;
         try {
-            transformedData = transformRecipeDataForAWS(recipeData);
+            transformedData = transformRecipeDataForAWS(recipeData, currentUrl);
             console.log("🔧 Transformed recipe data for AWS:", transformedData);
             console.log("🔧 JSON payload being sent:", JSON.stringify(transformedData, null, 2));
         } catch (transformError) {

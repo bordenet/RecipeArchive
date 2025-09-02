@@ -657,17 +657,13 @@ func handleDeleteRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// Soft delete by setting isDeleted=true and updating timestamp
-	now := time.Now().UTC()
-	existingRecipe.IsDeleted = true
-	existingRecipe.UpdatedAt = now
-
-	err = recipeDB.UpdateRecipe(existingRecipe)
+	// Hard delete by removing from S3 storage entirely
+	err = recipeDB.DeleteRecipe(userID, recipeID)
 	if err != nil {
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "INTERNAL_ERROR",
-				"message":   "Failed to delete recipe",
+				"message":   "Failed to permanently delete recipe",
 				"timestamp": time.Now().UTC(),
 			},
 		})
@@ -678,7 +674,7 @@ func handleDeleteRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	}
 
 	response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
-		"message": "Recipe deleted successfully",
+		"message": "Recipe permanently deleted from storage",
 	})
 	if responseErr != nil {
 		return events.APIGatewayProxyResponse{}, responseErr

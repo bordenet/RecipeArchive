@@ -146,7 +146,8 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		Key:         aws.String(s3Key),
 		Body:        strings.NewReader(string(imageBytes)),
 		ContentType: aws.String(contentType),
-		ACL:         "public-read", // Make images publicly accessible
+		// Note: Removed ACL due to bucket's Block Public Access settings
+		// Images will be accessible via CloudFront or bucket policy if needed
 	})
 
 	if err != nil {
@@ -158,7 +159,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		}, nil
 	}
 
-	// Generate public URL
+	// Generate direct S3 URL for publicly accessible recipe images
 	imageURL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucketName, s3Key)
 
 	log.Printf("Image uploaded successfully: %s", imageURL)
