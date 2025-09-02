@@ -278,6 +278,63 @@ class Recipe {
     );
   }
   
+  // Get display-friendly website name from URL
+  String get displaySourceName {
+    // Use sourceName if available
+    if (sourceName != null && sourceName!.isNotEmpty) {
+      return sourceName!;
+    }
+    
+    // Extract from sourceUrl if available
+    if (sourceUrl != null && sourceUrl!.isNotEmpty) {
+      try {
+        final uri = Uri.parse(sourceUrl!);
+        final host = uri.host.toLowerCase();
+        
+        // Map common domains to display names
+        const domainMap = {
+          'smittenkitchen.com': 'Smitten Kitchen',
+          'food52.com': 'Food52',
+          'foodnetwork.com': 'Food Network',
+          'cooking.nytimes.com': 'NYT Cooking',
+          'washingtonpost.com': 'Washington Post',
+          'loveandlemons.com': 'Love and Lemons',
+          'allrecipes.com': 'AllRecipes',
+          'epicurious.com': 'Epicurious',
+          'seriouseats.com': 'Serious Eats',
+          'damndelicious.net': 'Damn Delicious',
+          'foodandwine.com': 'Food & Wine',
+          'alexandracooks.com': "Alexandra's Kitchen",
+        };
+        
+        // Check for exact match
+        if (domainMap.containsKey(host)) {
+          return domainMap[host]!;
+        }
+        
+        // Check for subdomain matches (e.g., www.example.com)
+        for (final entry in domainMap.entries) {
+          if (host.endsWith(entry.key)) {
+            return entry.value;
+          }
+        }
+        
+        // Fallback: Clean up domain name
+        String cleaned = host.replaceAll('www.', '');
+        final parts = cleaned.split('.');
+        if (parts.isNotEmpty) {
+          final name = parts.first;
+          // Capitalize first letter
+          return name[0].toUpperCase() + name.substring(1);
+        }
+      } catch (e) {
+        // URL parsing failed, continue to fallback
+      }
+    }
+    
+    return 'Unknown';
+  }
+  
   // Check if recipe has any user modifications
   bool get hasPersonalizations {
     return personalNotes != null || 

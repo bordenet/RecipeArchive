@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:url_launcher/url_launcher.dart'; // Removed unused import
+import 'package:url_launcher/url_launcher.dart';
 import '../models/recipe.dart';
 
 class RecipeCard extends StatelessWidget {
@@ -15,8 +15,8 @@ class RecipeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      margin: const EdgeInsets.all(8),
+      elevation: 2, // Reduced elevation for cleaner look
+      margin: const EdgeInsets.all(4), // Reduced margin
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -25,9 +25,9 @@ class RecipeCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Recipe Image
+                // Recipe Image (reduced height by 20%)
                 SizedBox(
-                  height: 200,
+                  height: 160,
                   width: double.infinity,
                   child: recipe.imageUrl != null
                       ? Image.network(
@@ -68,36 +68,36 @@ class RecipeCard extends StatelessWidget {
                         ),
                 ),
                 
-                // Recipe Info
+                // Recipe Info (compacted)
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12), // Reduced padding
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Title
                       Text(
                         recipe.title,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6), // Reduced spacing
                       
-                      // Description
+                      // Description (more compact)
                       if (recipe.description != null)
                         Text(
                           recipe.description!,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.grey[600],
                           ),
-                          maxLines: 2,
+                          maxLines: 1, // Reduced to 1 line
                           overflow: TextOverflow.ellipsis,
                         ),
                       
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8), // Reduced spacing
                       
                       // Recipe Meta Info
                       Row(
@@ -130,46 +130,64 @@ class RecipeCard extends StatelessWidget {
                           
                           const Spacer(),
                           
-                          // Cuisine
-                          if (recipe.cuisine != null)
-                            Container(
+                          // Source website (clickable)
+                          GestureDetector(
+                            onTap: () => _launchSourceUrl(recipe.sourceUrl),
+                            child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                                horizontal: 6,
+                                vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.green[100],
-                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: recipe.sourceUrl != null 
+                                  ? Border.all(color: Colors.blue[200]!, width: 0.5)
+                                  : null,
                               ),
-                              child: Text(
-                                recipe.cuisine!,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.green[800],
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    recipe.displaySourceName,
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: Colors.blue[700],
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (recipe.sourceUrl != null) ...[
+                                    const SizedBox(width: 2),
+                                    Icon(
+                                      Icons.launch,
+                                      size: 10,
+                                      color: Colors.blue[600],
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
+                          ),
                         ],
                       ),
                       
-                      // Tags
+                      // Tags (more compact)
                       if (recipe.tags.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6), // Reduced spacing
                         Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
-                          children: recipe.tags.take(3).map((tag) => Container(
+                          spacing: 3, // Reduced spacing
+                          runSpacing: 3, // Reduced spacing
+                          children: recipe.tags.take(2).map((tag) => Container( // Only show 2 tags
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
+                              horizontal: 4, // Reduced padding
+                              vertical: 1, // Reduced padding
                             ),
                             decoration: BoxDecoration(
                               color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6), // Smaller radius
                             ),
                             child: Text(
                               '#$tag',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith( // Smaller text
                                 color: Colors.grey[700],
                               ),
                             ),
@@ -188,7 +206,17 @@ class RecipeCard extends StatelessWidget {
     );
   }
 
-  // Launch URL in browser
-  // Removed unused _launchUrl method to reduce lint warnings
-
+  // Launch source URL in browser
+  Future<void> _launchSourceUrl(String? url) async {
+    if (url == null || url.isEmpty) return;
+    
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      // Silently fail if URL can't be launched
+    }
+  }
 }

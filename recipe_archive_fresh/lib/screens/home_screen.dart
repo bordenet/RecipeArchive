@@ -84,23 +84,27 @@ class HomeScreen extends ConsumerWidget {
             },
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Responsive grid
+                // Responsive grid with improved density
                 int crossAxisCount = 1;
-                if (constraints.maxWidth > 1200) {
-                  crossAxisCount = 4;
-                } else if (constraints.maxWidth > 800) {
-                  crossAxisCount = 3;
+                if (constraints.maxWidth > 1400) {
+                  crossAxisCount = 6; // 6 columns on large desktops
+                } else if (constraints.maxWidth > 1200) {
+                  crossAxisCount = 5; // 5 columns on desktops
+                } else if (constraints.maxWidth > 900) {
+                  crossAxisCount = 4; // 4 columns on medium screens
                 } else if (constraints.maxWidth > 600) {
-                  crossAxisCount = 2;
+                  crossAxisCount = 3; // 3 columns on tablets
+                } else if (constraints.maxWidth > 400) {
+                  crossAxisCount = 2; // 2 columns on large phones
                 }
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6), // Reduced padding
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    childAspectRatio: 0.8,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
+                    childAspectRatio: 0.9, // Slightly taller to accommodate reduced card height
+                    crossAxisSpacing: 6, // Reduced spacing
+                    mainAxisSpacing: 6, // Reduced spacing
                   ),
                   itemCount: recipes.length,
                   itemBuilder: (context, index) {
