@@ -318,6 +318,21 @@ export class RecipeArchiveStack extends cdk.Stack {
       role: lambdaRole,
     });
 
+    const diagnosticsFunction = new lambda.Function(this, 'DiagnosticsFunction', {
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      handler: 'bootstrap',
+      code: lambda.Code.fromAsset('../functions/dist/diagnostics-package'),
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 256,
+      environment: {
+        ENVIRONMENT: props.environment,
+        REGION: this.region,
+        S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
+        COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+      },
+      role: lambdaRole,
+    });
+
     // API Gateway Integration
     const healthIntegration = new apigateway.LambdaIntegration(healthFunction, {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
@@ -331,11 +346,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
     // Diagnostics endpoint (authenticated)
     const diagnosticsResource = v1.addResource('diagnostics');
-    const diagnosticsIntegration = new apigateway.LambdaIntegration(
-      healthFunction
-    );
-    diagnosticsResource.addMethod('GET', diagnosticsIntegration);
-    diagnosticsResource.addMethod('POST', diagnosticsIntegration);
+    const diagnosticsIntegration = new apigateway.LambdaIntegration(diagnosticsFunction);
+    diagnosticsResource.addMethod('POST', diagnosticsIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
+    });
 
     // Future recipe endpoints
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
