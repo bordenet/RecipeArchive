@@ -18,6 +18,9 @@ config/secrets.yml
 # Other sites
 external-references/
 
+# Temporary files
+test-results/*
+
 # AWS
 .aws/
 cdk.out/

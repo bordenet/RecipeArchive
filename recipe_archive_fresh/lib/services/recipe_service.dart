@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -53,7 +54,7 @@ class RecipeService {
     final uri = Uri.parse('$apiUrl/v1/recipes').replace(queryParameters: queryParams);
     
     try {
-      print('🔄 Fetching recipes from: $uri');
+      developer.log('Fetching recipes from: $uri', name: 'RecipeService');
       final response = await http.get(
         uri,
         headers: {
@@ -62,19 +63,19 @@ class RecipeService {
         },
       );
       
-      print('📥 Recipe API response: ${response.statusCode}');
+      developer.log('Recipe API response: ${response.statusCode}', name: 'RecipeService');
       
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> recipesJson = data['recipes'] ?? [];
-        print('✅ Loaded ${recipesJson.length} recipes from API');
+        developer.log('Loaded ${recipesJson.length} recipes from API', name: 'RecipeService');
         return recipesJson.map((json) => Recipe.fromJson(json)).toList();
       } else {
-        print('❌ API error: ${response.statusCode} - ${response.body}');
+        developer.log('API error: ${response.statusCode} - ${response.body}', name: 'RecipeService', level: 1000);
         throw Exception('Failed to load recipes: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Network error: $e');
+      developer.log('Network error: $e', name: 'RecipeService', error: e, level: 1000);
       throw Exception('Network error: $e');
     }
   }
