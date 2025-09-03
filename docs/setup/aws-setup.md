@@ -339,9 +339,9 @@ Each Lambda function will receive:
 
 ### 8.2 Rate Limiting
 
-- API Gateway throttling: 20 requests/second
-- User-level throttling: 100 requests/hour per user
-- Burst limits: 50 requests
+- API Gateway throttling: 200 requests/second
+- User-level throttling: 200 requests/hour per user
+- Burst limits: 100 requests
 
 ## Deployment Steps
 

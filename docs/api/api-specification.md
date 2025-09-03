@@ -405,7 +405,7 @@ To stay within AWS Free Tier limits:
 Rate limit headers included in responses:
 
 ```http
-X-RateLimit-Limit: 100
+X-RateLimit-Limit: 200
 X-RateLimit-Remaining: 87
 X-RateLimit-Reset: 1692889200
 ```

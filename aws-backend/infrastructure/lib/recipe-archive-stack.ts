@@ -248,8 +248,8 @@ export class RecipeArchiveStack extends cdk.Stack {
       name: `recipearchive-usage-plan-${props.environment}`,
       description: 'Usage plan for DDoS protection',
       throttle: {
-        rateLimit: 100,    // requests per second per API key
-        burstLimit: 200,   // concurrent requests
+        rateLimit: 200,    // requests per second per API key
+        burstLimit: 400,   // concurrent requests
       },
       quota: {
         limit: 10000,      // requests per month per API key

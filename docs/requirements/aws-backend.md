@@ -88,20 +88,22 @@ interface Instruction {
 **POST** `/v1/diagnostics/parser-failure` - Parser failure with HTML dump submission
 
 **Critical Security Requirements:**
+
 - **Cognito Authentication**: Bearer token validation required
-- **User Rate Limiting**: Maximum 50 submissions per user per hour
+- **User Rate Limiting**: Maximum 200 submissions per user per hour
 - **Data Validation**: Strict payload validation to prevent abuse
 - **Content Filtering**: HTML sanitization and size limits (max 2MB per submission)
 
 **Request Payload Structure:**
+
 ```typescript
 interface ParserFailurePayload {
-  url: string;                    // Source recipe URL
-  timestamp: string;              // ISO 8601 timestamp
-  userAgent: string;              // Browser/extension info
+  url: string; // Source recipe URL
+  timestamp: string; // ISO 8601 timestamp
+  userAgent: string; // Browser/extension info
   extractionAttempt: {
     method: 'json-ld' | 'html-parsing' | 'mixed';
-    timeElapsed: number;          // Milliseconds
+    timeElapsed: number; // Milliseconds
     elementsFound: {
       jsonLdScripts: number;
       recipeContainers: number;
@@ -116,26 +118,27 @@ interface ParserFailurePayload {
       servings?: string;
     };
   };
-  htmlDump: string;               // Complete page HTML
+  htmlDump: string; // Complete page HTML
   domMetrics: {
     totalElements: number;
     imageCount: number;
     linkCount: number;
     listCount: number;
   };
-  failureReason: string;          // Human-readable failure description
+  failureReason: string; // Human-readable failure description
 }
 ```
 
 **Response Structure:**
+
 ```typescript
 interface ParserFailureResponse {
-  submissionId: string;           // Unique identifier for tracking
+  submissionId: string; // Unique identifier for tracking
   status: 'received' | 'queued' | 'processing';
-  timestamp: string;              // Server processing time
+  timestamp: string; // Server processing time
   retryRecommendation?: {
-    waitMinutes: number;          // Suggested retry delay
-    alternativeMethod?: string;   // Alternative extraction approach
+    waitMinutes: number; // Suggested retry delay
+    alternativeMethod?: string; // Alternative extraction approach
   };
 }
 ```
@@ -149,6 +152,7 @@ interface ParserFailureResponse {
    - **Security**: Block all public access, encrypted with S3-managed keys
 
 2. **S3 Storage Structure:**
+
    ```
    recipearchive-failed-parsing-{environment}-{accountId}/
    └── failed-parsing/
@@ -275,9 +279,9 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 
 ### Per-User Rate Limits
 
-- **Recipe Operations**: 100 requests/hour per user
-- **Search Operations**: 50 requests/hour per user  
-- **File Uploads**: 20 uploads/hour per user
+- **Recipe Operations**: 200 requests/hour per user
+- **Search Operations**: 100 requests/hour per user
+- **File Uploads**: 200 uploads/hour per user
 - **Diagnostic Submissions**: 200 requests/hour per user
 - **Parser Failure Submissions**: 50 requests/hour per user (security critical)
 
@@ -295,17 +299,20 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 **Integration Point**: Recipe processing pipeline between parsing and storage
 
 **Core Requirements:**
+
 - **Content Enhancement**: Standardize recipe titles, ingredient formats, instruction clarity
 - **Metadata Inference**: Auto-detect cuisine types, cooking methods, dietary information
 - **Quality Scoring**: Rate normalization quality with fallback to original content
 - **Cost Management**: Rate limiting, budget controls, and batch processing capabilities
 
 **API Extensions:**
+
 - **POST** `/v1/recipes/normalize` - On-demand recipe normalization
 - **GET** `/v1/recipes/{id}/normalization-history` - View normalization details
 - **PUT** `/v1/recipes/{id}/revert-normalization` - Restore original content
 
 **Lambda Functions:**
+
 - `ContentNormalizer`: OpenAI integration for recipe enhancement
 - `NormalizationValidator`: Quality validation and fallback logic
 - `CostTracker`: Monitor OpenAI API usage and costs
@@ -315,16 +322,19 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 **Mobile Integration Pipeline**: Route failed parsing attempts to mobile applications
 
 **Enhanced Diagnostic Collection:**
+
 - **Structured Failure Analysis**: Categorize failure types and provide actionable feedback
 - **Recovery Workflow**: Convert failed parses to manual recipe entry opportunities
 - **Parser Improvement Pipeline**: Track parsing success improvements over time
 
 **New API Endpoints:**
+
 - **GET** `/v1/diagnostics/failed-parses` - List user's failed parsing attempts
 - **POST** `/v1/diagnostics/{id}/convert-manual` - Convert failed parse to manual entry
 - **GET** `/v1/diagnostics/parsing-improvements` - Show site parsing success rates
 
 **Mobile App Integration:**
+
 - Failed parse notifications and management screens
 - One-click conversion to manual recipe entry
 - Progress tracking for parser improvements
@@ -334,18 +344,21 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 **Admin Role Management**: System administrator capabilities across all tenant accounts
 
 **Core Admin Features:**
+
 - **Tenant Management**: Create, configure, and manage tenant accounts
 - **User Administration**: Cross-tenant user management and support tools
 - **System Monitoring**: Health dashboards and performance analytics across all tenants
 - **Content Management**: Bulk operations and data migration tools
 
 **Admin API Endpoints:**
+
 - **GET** `/admin/v1/tenants` - List all tenant accounts
 - **POST** `/admin/v1/tenants` - Create new tenant with full infrastructure provisioning
 - **GET** `/admin/v1/users/{userId}/cross-tenant` - Admin view of user across tenants
 - **POST** `/admin/v1/bulk-operations` - Execute bulk operations across tenants
 
 **Security Requirements:**
+
 - **Role-Based Access**: System admin (`mattbordenet@hotmail.com`) vs tenant-scoped access
 - **Audit Logging**: Comprehensive logging of all admin actions
 - **Data Isolation**: Strict tenant boundary enforcement with admin override capability

@@ -229,7 +229,7 @@ func handleGetRecipeByID(ctx context.Context, userID, recipeID string) (events.A
 // handleListRecipes handles GET requests to list recipes with pagination
 func handleListRecipes(ctx context.Context, userID string, queryParams map[string]string) (events.APIGatewayProxyResponse, error) {
 	// Parse pagination parameters
-	limit := 20 // default limit
+	limit := 50 // default limit per API specification (was 20, causing Flutter app to show only 20 recipes)
 	if limitStr, exists := queryParams["limit"]; exists {
 		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
 			limit = parsedLimit

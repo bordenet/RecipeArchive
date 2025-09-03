@@ -232,7 +232,7 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: "You are a professional recipe editor. Return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., 'Kylie's' not 'Kylie'S'). Remove redundant word RECIPE in titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL: Always infer missing servings count and time estimates (prep/cook/total in minutes) based on ingredients and instructions. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add timing details inline within instructions when multiple timing phases exist.",
+				Content: "You are a professional recipe editor for Food & Wine Magazine. Review and return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., 'Kylie\'s' not 'Kylie\'S' and 'General Tso\'s' not 'General Tso\'S'). Remove redundant word Recipe in recipe titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL: Always infer missing servings count and time estimates (prep/cook/total in minutes) based on ingredients and instructions. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add recipe timing details inline within instructions when multiple timing phases exist.",
 			},
 			{
 				Role:    "user",
@@ -342,7 +342,7 @@ func buildNormalizationPrompt(recipe *Recipe) string {
 		timeInfo = fmt.Sprintf("prep: %s, cook: %s, total: %s", recipe.PrepTime, recipe.CookTime, recipe.TotalTime)
 	}
 
-	return fmt.Sprintf(`You are a professional recipe editor tasked with normalizing recipe data for consistent storage and presentation.
+	return fmt.Sprintf(`You are a professional recipe editor  for Food & Wine Magazine tasked with normalizing recipe data for consistent storage and presentation.
 
 Input Recipe Data:
 - Title: "%s"
@@ -355,9 +355,27 @@ Please normalize this recipe following these strict guidelines:
 
 TITLE NORMALIZATION:
 - Use Title Case (capitalize major words, lowercase articles/prepositions)
-- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., "Kylie's" not "Kylie'S")
+- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie\'s' not 'Kylie\'S' and 'General Tso\'s' not 'General Tso\'S')
 - Examples: "Bob's Burgers", "Mom's Apple Pie", "Baker's Dozen"
 - Remove excessive punctuation or emoji
+- Remove the trailing word "Recipe" from recipe titles if present
+- Fix common misspellings
+- Correct grammar issues
+- Remove redundant words (e.g., "Delicious Recipe" → "Delicious")
+- Standardize capitalization of brand names (e.g., "Kylie\'s" not "Kylie\'S")
+- Normalize special characters (e.g., replace curly quotes with straight quotes)
+- Ensure no escape sequences are present (e.g., replace \u2019 with apostrophe)
+- Remove any leading or trailing whitespace
+- Remove duplicate spaces
+- Correct punctuation spacing (e.g., "Hello , world !" → "Hello, world!")
+- Standardize capitalization of cooking terms (e.g., "Sauté" not "saute")
+- Remove any HTML tags or markdown formatting
+- Ensure proper use of hyphens and dashes (e.g., "well-known" not "well known")
+- Remove any non-recipe related text (e.g., promotional phrases)
+- Standardize recipe categories if mentioned (e.g., "dessert" not "sweet treat")
+- Standardize formatting of compound words (e.g., "stir-fry" not "stir fry")
+- Use consistent terminology for cooking vessels (e.g., "skillet" not "frying pan")
+- Standardize descriptive adjectives (e.g., "crispy" not "crunchy")
 - Standardize descriptive terms (e.g., "Easy" → "Simple", "Super Yummy" → "Delicious")
 - Keep titles concise (max 60 characters)
 
@@ -367,13 +385,38 @@ INGREDIENT NORMALIZATION:
 - Standardize ingredient names (e.g., "all-purpose flour" not "AP flour")
 - Include preparation methods when relevant ("diced", "chopped", "minced")
 - Use specific salt types when mentioned ("kosher salt", "sea salt")
+- Normalize special characters (e.g., replace curly quotes with straight quotes)
+- Ensure no escape sequences are present (e.g., replace \u2019 with apostrophe)
+- Remove any leading or trailing whitespace
+- Remove duplicate spaces
+- Correct punctuation spacing (e.g., "Hello , world !" → "Hello, world!")
+- Standardize measurement terms (e.g., "Tbsp" → "tablespoon", "tsp" → "teaspoon")
+- Use consistent terminology (e.g., "bake" not "oven cook")
+- Standardize formatting of numbers (e.g., "1 1/2" not "1 and 1/2")
+- Use numerals for quantities (e.g., "2" not "two")
+- Standardize capitalization of cooking terms (e.g., "Sauté" not "saute")
+- Remove any HTML tags or markdown formatting
+- Ensure proper use of hyphens and dashes (e.g., "well-known" not "well known")
+- Standardize spice names (e.g., "cumin" not "ground cumin" unless specified)
+- Use consistent naming for common ingredients (e.g., "bell pepper" not "capsicum")
+- Ensure proper use of singular/plural forms (e.g., "1 egg" not "1 eggs")
+- Remove any non-recipe related text (e.g., promotional phrases)
+- Standardize recipe categories if mentioned (e.g., "dessert" not "sweet treat")
+- Ensure no personal names or anecdotes are included
+- Standardize formatting of compound words (e.g., "stir-fry" not "stir fry")
+- Use consistent terminology for cooking vessels (e.g., "skillet" not "frying pan")
+- Standardize descriptive adjectives (e.g., "crispy" not "crunchy")
+- Standardize descriptive terms (e.g., "Easy" → "Simple", "Super Yummy" → "Delicious")
+
 
 INSTRUCTION NORMALIZATION:
 - Use imperative voice ("Mix flour" not "You should mix flour")
 - Start each step with action verb when possible
 - Keep steps concise but complete
 - Use consistent temperature formats (375°F, 190°C)
+- Standardize temperature formats (e.g., "375°F" not "375 degrees F")
 - Standardize timing formats ("10 minutes", "1 hour")
+- Use consistent time formats (e.g., "10 minutes" not "ten mins")
 
 SERVINGS AND TIME INFERENCE (CRITICAL):
 - ALWAYS estimate servings if not provided: analyze ingredient quantities to determine realistic serving count
