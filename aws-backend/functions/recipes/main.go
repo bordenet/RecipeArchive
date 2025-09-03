@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -352,26 +353,35 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		// Recipe with same URL exists - overwrite it with new data
 		fmt.Printf("Recipe with URL %s already exists, overwriting with new data", sourceURL)
 
-		// Preserve original creation time and ID, but update everything else
+		// Apply OpenAI content normalization for updates too
+		normalizedData, err := normalizeRecipeContent(ctx, recipeData)
+		if err != nil {
+			fmt.Printf("⚠️ OpenAI normalization failed for update, using original data: %v\n", err)
+			// Continue with original data if normalization fails
+			normalizedData = &recipeData
+		}
+
+		// Preserve original creation time and ID, but update everything else with normalized data
 		now := time.Now().UTC()
 		updatedRecipe := models.Recipe{
-			ID:               existingRecipe.ID,           // Keep same ID
-			UserID:           userID,                      // Current user
-			Title:            recipeData.Title,            // New title
-			Ingredients:      recipeData.Ingredients,      // New ingredients
-			Instructions:     recipeData.Instructions,     // New instructions
-			SourceURL:        sourceURL,                   // Same URL
-			PrepTimeMinutes:  recipeData.PrepTimeMinutes,  // New prep time
-			CookTimeMinutes:  recipeData.CookTimeMinutes,  // New cook time
-			TotalTimeMinutes: recipeData.TotalTimeMinutes, // New total time
-			Servings:         recipeData.Servings,         // New servings
-			Yield:            recipeData.Yield,            // New yield
-			Categories:       []string{},                  // Reset categories (no Categories in request)
-			MainPhotoURL:     recipeData.MainPhotoURL,     // New photo
-			CreatedAt:        existingRecipe.CreatedAt,    // Preserve original creation
-			UpdatedAt:        now,                         // Current timestamp
-			IsDeleted:        false,                       // Ensure not deleted
-			Version:          existingRecipe.Version + 1,  // Increment version
+			ID:               existingRecipe.ID,              // Keep same ID
+			UserID:           userID,                         // Current user
+			Title:            strings.TrimSpace(normalizedData.Title),     // Normalized title
+			Ingredients:      normalizedData.Ingredients,     // Normalized ingredients
+			Instructions:     normalizedData.Instructions,    // Normalized instructions
+			SourceURL:        sourceURL,                      // Same URL
+			PrepTimeMinutes:  normalizedData.PrepTimeMinutes, // Normalized prep time
+			CookTimeMinutes:  normalizedData.CookTimeMinutes, // Normalized cook time
+			TotalTimeMinutes: normalizedData.TotalTimeMinutes,// Normalized total time
+			Servings:         normalizedData.Servings,        // Normalized servings
+			Yield:            normalizedData.Yield,           // Normalized yield
+			Categories:       normalizedData.Categories,      // Normalized categories
+			MainPhotoURL:     recipeData.MainPhotoURL,        // Keep original photo URL
+			Description:      normalizedData.Description,     // Normalized description
+			CreatedAt:        existingRecipe.CreatedAt,       // Preserve original creation
+			UpdatedAt:        now,                            // Current timestamp
+			IsDeleted:        false,                          // Ensure not deleted
+			Version:          existingRecipe.Version + 1,     // Increment version
 		}
 
 		// Update the recipe in storage
@@ -401,25 +411,33 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// Create the recipe object
+	// Apply OpenAI content normalization before saving
+	normalizedData, err := normalizeRecipeContent(ctx, recipeData)
+	if err != nil {
+		fmt.Printf("⚠️ OpenAI normalization failed, using original data: %v\n", err)
+		// Continue with original data if normalization fails
+		normalizedData = &recipeData
+	}
+
+	// Create the recipe object with normalized data
 	now := time.Now().UTC()
 	recipe := models.Recipe{
 		ID:               uuid.New().String(),
 		UserID:           userID,
-		Title:            strings.TrimSpace(recipeData.Title),
-		Ingredients:      recipeData.Ingredients,
-		Instructions:     recipeData.Instructions,
-		SourceURL:        strings.TrimSpace(recipeData.SourceURL),
-		MainPhotoURL:     recipeData.MainPhotoURL,
-		PrepTimeMinutes:  recipeData.PrepTimeMinutes,
-		CookTimeMinutes:  recipeData.CookTimeMinutes,
-		TotalTimeMinutes: recipeData.TotalTimeMinutes,
-		Servings:         recipeData.Servings,
-		Yield:            recipeData.Yield,
-		Categories:       recipeData.Categories,
-		Description:      recipeData.Description,
-		Reviews:          recipeData.Reviews,
-		Nutrition:        recipeData.Nutrition,
+		Title:            strings.TrimSpace(normalizedData.Title),
+		Ingredients:      normalizedData.Ingredients,
+		Instructions:     normalizedData.Instructions,
+		SourceURL:        strings.TrimSpace(recipeData.SourceURL), // Keep original source URL
+		MainPhotoURL:     recipeData.MainPhotoURL, // Keep original photo URL
+		PrepTimeMinutes:  normalizedData.PrepTimeMinutes,
+		CookTimeMinutes:  normalizedData.CookTimeMinutes,
+		TotalTimeMinutes: normalizedData.TotalTimeMinutes,
+		Servings:         normalizedData.Servings,
+		Yield:            normalizedData.Yield,
+		Categories:       normalizedData.Categories,
+		Description:      normalizedData.Description,
+		Reviews:          normalizedData.Reviews,
+		Nutrition:        normalizedData.Nutrition,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 		IsDeleted:        false,
@@ -680,4 +698,257 @@ func handleDeleteRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return events.APIGatewayProxyResponse{}, responseErr
 	}
 	return response, nil
+}
+
+// normalizeRecipeContent calls the OpenAI content normalizer Lambda function
+func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeRequest) (*models.CreateRecipeRequest, error) {
+	// Get API Gateway base URL from environment
+	baseURL := os.Getenv("API_GATEWAY_URL")
+	if baseURL == "" {
+		return nil, fmt.Errorf("API_GATEWAY_URL environment variable not set")
+	}
+
+	// Prepare normalization request
+	normalizeRequest := map[string]interface{}{
+		"originalRecipe": map[string]interface{}{
+			"title":        recipeData.Title,
+			"ingredients":  convertIngredientsToNormalizerFormat(recipeData.Ingredients),
+			"instructions": convertInstructionsToNormalizerFormat(recipeData.Instructions),
+			"author":       "", // Not available in CreateRecipeRequest
+			"prepTime":     formatTimeForNormalizer(recipeData.PrepTimeMinutes),
+			"cookTime":     formatTimeForNormalizer(recipeData.CookTimeMinutes),
+			"totalTime":    formatTimeForNormalizer(recipeData.TotalTimeMinutes),
+			"servings":     formatServingsForNormalizer(recipeData.Servings),
+			"description":  recipeData.Description,
+			"imageUrl":     recipeData.MainPhotoURL,
+			"sourceUrl":    recipeData.SourceURL,
+			"tags":         recipeData.Categories,
+		},
+		"userId":    "system", // Mark as system-initiated normalization
+		"sourceUrl": recipeData.SourceURL,
+	}
+
+	// Marshal request body
+	requestBody, err := json.Marshal(normalizeRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal normalization request: %w", err)
+	}
+
+	// Create HTTP request to content normalizer endpoint
+	normalizeURL := fmt.Sprintf("%s/v1/normalize", strings.TrimSuffix(baseURL, "/"))
+	req, err := http.NewRequestWithContext(ctx, "POST", normalizeURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create normalization request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	// Make HTTP request with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second, // Allow enough time for OpenAI processing
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("content normalizer request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("content normalizer returned status %d", resp.StatusCode)
+	}
+
+	// Parse response
+	var normalizeResponse struct {
+		NormalizedRecipe struct {
+			Title        string `json:"title"`
+			Ingredients  []struct {
+				Text string `json:"text"`
+			} `json:"ingredients"`
+			Instructions []struct {
+				StepNumber int    `json:"stepNumber"`
+				Text       string `json:"text"`
+			} `json:"instructions"`
+			Author       string   `json:"author,omitempty"`
+			PrepTime     string   `json:"prepTime,omitempty"`
+			CookTime     string   `json:"cookTime,omitempty"`
+			TotalTime    string   `json:"totalTime,omitempty"`
+			Servings     string   `json:"servings,omitempty"`
+			Description  string   `json:"description,omitempty"`
+			ImageUrl     string   `json:"imageUrl,omitempty"`
+			SourceUrl    string   `json:"sourceUrl,omitempty"`
+			Tags         []string `json:"tags,omitempty"`
+		} `json:"normalizedRecipe"`
+		QualityScore       float64 `json:"qualityScore"`
+		NormalizationNotes string  `json:"normalizationNotes"`
+		FallbackUsed       bool    `json:"fallbackUsed"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&normalizeResponse); err != nil {
+		return nil, fmt.Errorf("failed to decode normalization response: %w", err)
+	}
+
+	fmt.Printf("✅ OpenAI normalization completed with quality score: %.1f (fallback: %v)\n", 
+		normalizeResponse.QualityScore, normalizeResponse.FallbackUsed)
+	if normalizeResponse.NormalizationNotes != "" {
+		fmt.Printf("📝 Normalization notes: %s\n", normalizeResponse.NormalizationNotes)
+	}
+
+	// Convert normalized response back to CreateRecipeRequest format
+	var description *string
+	if normalizeResponse.NormalizedRecipe.Description != "" {
+		description = &normalizeResponse.NormalizedRecipe.Description
+	} else {
+		description = recipeData.Description
+	}
+
+	normalized := &models.CreateRecipeRequest{
+		Title:            normalizeResponse.NormalizedRecipe.Title,
+		Ingredients:      convertNormalizerIngredientsToModel(normalizeResponse.NormalizedRecipe.Ingredients),
+		Instructions:     convertNormalizerInstructionsToModel(normalizeResponse.NormalizedRecipe.Instructions),
+		SourceURL:        recipeData.SourceURL, // Keep original source URL
+		MainPhotoURL:     recipeData.MainPhotoURL, // Keep original photo URL
+		Description:      description,
+		PrepTimeMinutes:  parseTimeFromNormalizer(normalizeResponse.NormalizedRecipe.PrepTime, recipeData.PrepTimeMinutes),
+		CookTimeMinutes:  parseTimeFromNormalizer(normalizeResponse.NormalizedRecipe.CookTime, recipeData.CookTimeMinutes),
+		TotalTimeMinutes: parseTimeFromNormalizer(normalizeResponse.NormalizedRecipe.TotalTime, recipeData.TotalTimeMinutes),
+		Servings:         parseServingsFromNormalizer(normalizeResponse.NormalizedRecipe.Servings, recipeData.Servings),
+		Yield:            recipeData.Yield, // Keep original yield
+		Categories:       normalizeResponse.NormalizedRecipe.Tags,
+		Reviews:          recipeData.Reviews, // Keep original reviews
+		Nutrition:        recipeData.Nutrition, // Keep original nutrition
+	}
+
+	return normalized, nil
+}
+
+// Helper functions for format conversion
+
+func convertIngredientsToNormalizerFormat(ingredients []models.Ingredient) []map[string]string {
+	var result []map[string]string
+	for _, ing := range ingredients {
+		result = append(result, map[string]string{"text": ing.Text})
+	}
+	return result
+}
+
+func convertInstructionsToNormalizerFormat(instructions []models.Instruction) []map[string]interface{} {
+	var result []map[string]interface{}
+	for _, inst := range instructions {
+		result = append(result, map[string]interface{}{
+			"stepNumber": inst.StepNumber,
+			"text":       inst.Text,
+		})
+	}
+	return result
+}
+
+func convertNormalizerIngredientsToModel(ingredients []struct {
+	Text string `json:"text"`
+}) []models.Ingredient {
+	var result []models.Ingredient
+	for _, ing := range ingredients {
+		result = append(result, models.Ingredient{Text: ing.Text})
+	}
+	return result
+}
+
+func convertNormalizerInstructionsToModel(instructions []struct {
+	StepNumber int    `json:"stepNumber"`
+	Text       string `json:"text"`
+}) []models.Instruction {
+	var result []models.Instruction
+	for _, inst := range instructions {
+		result = append(result, models.Instruction{
+			StepNumber: inst.StepNumber,
+			Text:       inst.Text,
+		})
+	}
+	return result
+}
+
+func formatTimeForNormalizer(minutes *int) string {
+	if minutes == nil || *minutes == 0 {
+		return ""
+	}
+	if *minutes < 60 {
+		return fmt.Sprintf("%d minutes", *minutes)
+	}
+	hours := *minutes / 60
+	remainingMinutes := *minutes % 60
+	if remainingMinutes == 0 {
+		return fmt.Sprintf("%d hours", hours)
+	}
+	return fmt.Sprintf("%d hours %d minutes", hours, remainingMinutes)
+}
+
+func formatServingsForNormalizer(servings *int) string {
+	if servings == nil || *servings == 0 {
+		return ""
+	}
+	if *servings == 1 {
+		return "1 serving"
+	}
+	return fmt.Sprintf("%d servings", *servings)
+}
+
+func parseTimeFromNormalizer(timeStr string, fallback *int) *int {
+	if timeStr == "" {
+		return fallback
+	}
+	
+	// Simple parsing for common formats like "30 minutes", "1 hour", "1 hour 30 minutes"
+	timeStr = strings.ToLower(strings.TrimSpace(timeStr))
+	
+	var totalMinutes int
+	
+	// Extract hours
+	if strings.Contains(timeStr, "hour") {
+		parts := strings.Fields(timeStr)
+		for i, part := range parts {
+			if strings.Contains(part, "hour") && i > 0 {
+				if hours, err := strconv.Atoi(parts[i-1]); err == nil {
+					totalMinutes += hours * 60
+				}
+				break
+			}
+		}
+	}
+	
+	// Extract minutes
+	if strings.Contains(timeStr, "minute") {
+		parts := strings.Fields(timeStr)
+		for i, part := range parts {
+			if strings.Contains(part, "minute") && i > 0 {
+				if minutes, err := strconv.Atoi(parts[i-1]); err == nil {
+					totalMinutes += minutes
+				}
+				break
+			}
+		}
+	}
+	
+	if totalMinutes > 0 {
+		return &totalMinutes
+	}
+	
+	return fallback
+}
+
+func parseServingsFromNormalizer(servingsStr string, fallback *int) *int {
+	if servingsStr == "" {
+		return fallback
+	}
+	
+	// Extract number from strings like "4 servings", "1 serving"
+	servingsStr = strings.ToLower(strings.TrimSpace(servingsStr))
+	parts := strings.Fields(servingsStr)
+	
+	if len(parts) > 0 {
+		if servings, err := strconv.Atoi(parts[0]); err == nil {
+			return &servings
+		}
+	}
+	
+	return fallback
 }

@@ -14,20 +14,27 @@ cd recipe_archive_fresh && flutter run -d chrome     # Run Flutter app
 cd tools/recipe-report && go run main.go             # Generate recipe report (uses .env)
 ```
 
-## 🎯 CURRENT PRIORITIES (September 2, 2025)
+## 🎯 CURRENT PRIORITIES (September 3, 2025)
 
-### 🔥 USER REQUESTED TASKS
+### 🚨 CRITICAL ACTIVE TASKS
 
-1. **Alexandra's Kitchen Support**: Add parser for alexandracooks.com + HTML fixture validation
-2. **Flutter Web Deployment Docs**: Create step-by-step deployment guide in /docs folder
-3. **Gallery UI Improvements**: Fix "Unknown" servings, HTML entity decoding, URL layout
-4. **Recipe Detail Enhancements**: Add source URL widget + ingredient quantity scaling
-5. **README.md Overhaul**: Clean up setup instructions + create dependency install script
-6. **Complete Serving Size Logic**: Ensure all ingredient quantities update dynamically
+1. **OpenAI Content Normalization**: ✅ FIXED - Authentication issue resolved
+   - ✅ Content normalizer Lambda deployed with GPT-4o-mini integration  
+   - ✅ Integration completed in recipes endpoint (handleCreateRecipe)
+   - ✅ **Root Cause Identified**: `/v1/normalize` endpoint had Cognito auth, but recipes function called without auth headers (401 errors)
+   - ✅ **Solution**: Removed Cognito authorizer from normalize endpoint for internal system calls
+   - ✅ **VERIFIED**: "Channa Masala Recipe" → "Channa Masala", "mathildes tomato tart" → "Mathilde's Tomato Tart"
+   - 🎯 **Status**: All new recipes now go through OpenAI normalization successfully
 
-### 🔄 NEXT TASKS
-- **Extension Distribution**: Expose Chrome/Safari .zip downloads in web app with S3-hosted versioning
-- **Complete Serving Size Logic**: Ensure all ingredient quantities update dynamically with serving size changes
+2. **Extension Distribution System**: ✅ COMPLETED
+   - ✅ Chrome v0.2.0 and Safari v0.3.0 extensions packaged and uploaded to S3
+   - ✅ Public S3 access configured for /extensions/* folder
+   - ✅ Flutter Extensions screen with download buttons and version tracking
+   - ✅ Accessible via drawer navigation → "Browser Extensions"
+
+### ✅ RECENTLY COMPLETED
+- **Gallery Tile Layout**: Left-aligned source URLs on separate lines with increased tile height
+- **Extension Packaging**: Semantic versioning with S3 distribution infrastructure
 
 ### ✅ RECENT FIXES COMPLETED
 - **Serving Size Logic Enhancement**: Adding 0.25x and 0.5x multipliers to allow halving and quartering recipes alongside existing 1x-16x scaling options

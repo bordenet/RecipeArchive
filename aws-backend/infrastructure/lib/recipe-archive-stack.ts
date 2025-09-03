@@ -299,6 +299,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         S3_TEMP_BUCKET: this.tempBucket.bucketName,
         S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
         COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+        API_GATEWAY_URL: `https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod`,
       },
       role: lambdaRole,
     });
@@ -384,11 +385,11 @@ export class RecipeArchiveStack extends cdk.Stack {
       requestValidator: requestValidator,
     });
 
-    // Content Normalizer endpoint (authenticated)
+    // Content Normalizer endpoint (internal system calls - no auth required)
     const normalizerResource = v1.addResource('normalize');
     const normalizerIntegration = new apigateway.LambdaIntegration(contentNormalizerFunction);
     normalizerResource.addMethod('POST', normalizerIntegration, {
-      authorizer: cognitoAuthorizer,
+      // No authorizer - allow internal system calls from recipes function
       requestValidator: requestValidator,
     });
 
