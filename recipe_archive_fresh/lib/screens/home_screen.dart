@@ -171,7 +171,7 @@ class HomeScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(6), // Reduced padding
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    childAspectRatio: 0.9, // Slightly taller to accommodate reduced card height
+                    childAspectRatio: 0.85, // Taller to accommodate source URL on new line
                     crossAxisSpacing: 6, // Reduced spacing
                     mainAxisSpacing: 6, // Reduced spacing
                   ),

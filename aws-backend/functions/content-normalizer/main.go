@@ -193,7 +193,7 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData) (*Normalization
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: "You are a professional recipe editor. Return only valid JSON with no additional text. Normalize recipe name capitalization and remove use of the redundant word RECIPE in the title. Strip all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences",
+				Content: "You are a professional recipe editor. Return only valid JSON with no additional text. Normalize recipe name capitalization and remove use of the redundant word RECIPE in the title. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. Infer preparation time if not explicitly provided and validate provided perparation time based on instruction.",
 			},
 			{
 				Role:    "user",

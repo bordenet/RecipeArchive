@@ -127,11 +127,15 @@ class RecipeCard extends StatelessWidget {
                             recipe.displayServings,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
-                          
-                          const Spacer(),
-                          
-                          // Source website (clickable)
-                          GestureDetector(
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Source website (clickable) - moved to new line and left-aligned
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: GestureDetector(
                             onTap: () => _launchSourceUrl(recipe.sourceUrl),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -166,8 +170,7 @@ class RecipeCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ),
-                        ],
+                        ),
                       ),
                       
                       // Tags (more compact)
