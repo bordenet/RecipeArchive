@@ -29,6 +29,9 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 - **Failed Parse Workflow**: Backend diagnostic data processing and improvement  
 - **OpenAI Content Enhancement**: Recipe normalization at ingestion time
 
+### ✅ RECENT FIXES COMPLETED
+- **HTML Entity Decoding Fix**: Enhanced BaseParser with comprehensive HTML entity decoding in `sanitizeText()` method. Fixes em dash (&#8211; → –), quotes (&#39; → '), and other entities across all parsers. Alexandra's Kitchen ingredient ranges like "50 – 100 g" now parse correctly.
+
 ## 🏗️ Architecture
 
 ### Components

@@ -64,10 +64,91 @@ export abstract class BaseParser {
     }
 
     protected sanitizeText(text?: string): string {
-        return text?.trim()
+        if (!text) return "";
+        
+        // First decode HTML entities
+        let cleaned = this.decodeHtmlEntities(text);
+        
+        // Then normalize whitespace and remove zero-width characters
+        return cleaned.trim()
             .replace(/\s+/g, " ")
             .replace(/[\u200B-\u200D\uFEFF]/g, "")  // Remove zero-width spaces
-            .trim() || "";
+            .trim();
+    }
+
+    /**
+     * Decode HTML entities in text strings
+     * Handles common entities like &#8211; -> –, &#39; -> ', &quot; -> ", etc.
+     */
+    private decodeHtmlEntities(text: string): string {
+        if (!text) return text;
+        
+        // Common HTML entities mapping
+        const entityMap: { [key: string]: string } = {
+            // Numeric entities (including the problematic em dash)
+            '&#8211;': '–',  // En dash - this fixes the reported issue
+            '&#8212;': '—',  // Em dash
+            '&#39;': "'",    // Apostrophe
+            '&#x27;': "'",   // Apostrophe (hex)
+            '&#34;': '"',    // Double quote
+            '&#x22;': '"',   // Double quote (hex)
+            '&#38;': '&',    // Ampersand
+            '&#x26;': '&',   // Ampersand (hex)
+            '&#60;': '<',    // Less than
+            '&#x3C;': '<',   // Less than (hex)
+            '&#62;': '>',    // Greater than
+            '&#x3E;': '>',   // Greater than (hex)
+            '&#32;': ' ',    // Space
+            '&#x20;': ' ',   // Space (hex)
+            '&#160;': ' ',   // Non-breaking space
+            '&#xa0;': ' ',   // Non-breaking space (hex)
+            
+            // Named entities
+            '&quot;': '"',
+            '&apos;': "'",
+            '&amp;': '&',
+            '&lt;': '<',
+            '&gt;': '>',
+            '&nbsp;': ' ',   // Non-breaking space
+            '&ndash;': '–',  // En dash
+            '&mdash;': '—',  // Em dash
+            '&hellip;': '…', // Horizontal ellipsis
+            '&rsquo;': "'",  // Right single quotation mark
+            '&lsquo;': "'",  // Left single quotation mark  
+            '&rdquo;': '"',  // Right double quotation mark
+            '&ldquo;': '"',  // Left double quotation mark
+            '&deg;': '°',    // Degree symbol
+            '&frac12;': '½', // Fraction 1/2
+            '&frac14;': '¼', // Fraction 1/4
+            '&frac34;': '¾', // Fraction 3/4
+        };
+        
+        let decoded = text;
+        
+        // Replace all known entities
+        for (const [entity, replacement] of Object.entries(entityMap)) {
+            decoded = decoded.replace(new RegExp(entity, 'g'), replacement);
+        }
+        
+        // Handle generic numeric entities (&#123; format)
+        decoded = decoded.replace(/&#(\d+);/g, (match, code) => {
+            try {
+                return String.fromCharCode(parseInt(code, 10));
+            } catch (e) {
+                return match; // Return original if parsing fails
+            }
+        });
+        
+        // Handle generic hex entities (&#x1A; format)
+        decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (match, code) => {
+            try {
+                return String.fromCharCode(parseInt(code, 16));
+            } catch (e) {
+                return match; // Return original if parsing fails
+            }
+        });
+        
+        return decoded;
     }
 
     protected extractElements(doc: Document, selectors: string | string[]): string[] {
