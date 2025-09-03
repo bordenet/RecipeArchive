@@ -765,6 +765,12 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 		"sourceUrl": recipeData.SourceURL,
 	}
 
+	// Add full page HTML context for enhanced OpenAI analysis
+	if recipeData.WebArchiveHTML != nil && len(*recipeData.WebArchiveHTML) > 0 {
+		normalizeRequest["pageHtml"] = *recipeData.WebArchiveHTML
+		fmt.Printf("📄 Adding HTML context for OpenAI analysis: %d characters\n", len(*recipeData.WebArchiveHTML))
+	}
+
 	// Marshal request body
 	requestBody, err := json.Marshal(normalizeRequest)
 	if err != nil {

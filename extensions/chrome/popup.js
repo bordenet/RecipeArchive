@@ -593,10 +593,22 @@ async function captureRecipe() {
             return;
         }
 
-        // Send to AWS backend
+        // Capture full page HTML for OpenAI analysis
+        showStatus("📄 Capturing page content...", "#e3f2fd");
+        const html = await new Promise((resolve) => {
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => document.documentElement.outerHTML
+            }, (results) => {
+                resolve(results && results[0] && results[0].result ? results[0].result : "");
+            });
+        });
+        console.log("🔧 Captured HTML length:", html.length);
+
+        // Send to AWS backend with full HTML context
         showStatus("☁️ Saving to AWS...", "#e7f3ff");
         console.log("🔧 About to call sendToAWSBackend with data:", recipeData);
-        const result = await sendToAWSBackend(recipeData, tab && tab.url ? tab.url : "unknown");
+        const result = await sendToAWSBackend(recipeData, tab && tab.url ? tab.url : "unknown", html);
         console.log("🔧 sendToAWSBackend result:", result);
 
         if (result.success) {
@@ -835,8 +847,9 @@ function transformRecipeDataForAWS(recipeData, currentUrl = null) {
     return transformedData;
 }
 
-async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
+async function sendToAWSBackend(recipeData, currentUrl = "unknown", pageHtml = "") {
     console.log("🔧 sendToAWSBackend called with:", recipeData);
+    console.log("🔧 HTML context length:", pageHtml.length);
     
     try {
         const authData = localStorage.getItem("recipeArchive.auth");
@@ -886,8 +899,15 @@ async function sendToAWSBackend(recipeData, currentUrl = "unknown") {
         let transformedData;
         try {
             transformedData = transformRecipeDataForAWS(recipeData, currentUrl);
+            
+            // Add full page HTML for OpenAI context analysis
+            if (pageHtml && pageHtml.length > 0) {
+                transformedData.webArchiveHtml = pageHtml;
+                console.log("🔧 Added page HTML context:", pageHtml.length, "characters");
+            }
+            
             console.log("🔧 Transformed recipe data for AWS:", transformedData);
-            console.log("🔧 JSON payload being sent:", JSON.stringify(transformedData, null, 2));
+            console.log("🔧 JSON payload being sent (without HTML):", JSON.stringify({...transformedData, pageHtml: pageHtml ? `[${pageHtml.length} chars]` : undefined}, null, 2));
         } catch (transformError) {
             console.error("❌ Recipe transformation failed:", transformError);
             

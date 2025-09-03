@@ -61,14 +61,14 @@ Please normalize this recipe following these strict guidelines:
 
 TITLE NORMALIZATION:
 - Use Title Case (capitalize major words, lowercase articles/prepositions)
-- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie\'s' not 'Kylie\'S' and 'General Tso\'s' not 'General Tso\'S')
+- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie's' not 'Kylie'S' and 'General Tso's' not 'General Tso'S')
 - Examples: "Bob's Burgers", "Mom's Apple Pie", "Baker's Dozen"
 - Remove excessive punctuation or emoji
 - Remove the trailing word "Recipe" from recipe titles if present
 - Fix common misspellings
 - Correct grammar issues
 - Remove redundant words (e.g., "Delicious Recipe" → "Delicious")
-- Standardize capitalization of brand names (e.g., "Kylie\'s" not "Kylie\'S")
+- Standardize capitalization of brand names (e.g., "Kylie's" not "Kylie'S")
 - Normalize special characters (e.g., replace curly quotes with straight quotes)
 - Ensure no escape sequences are present (e.g., replace \u2019 with apostrophe)
 - Remove any leading or trailing whitespace

@@ -44,6 +44,7 @@ type NormalizationRequest struct {
 	OriginalRecipe RecipeData `json:"originalRecipe"`
 	UserId         string     `json:"userId"`
 	SourceUrl      string     `json:"sourceUrl"`
+	PageHtml       string     `json:"pageHtml,omitempty"` // Full page HTML for enhanced analysis
 }
 
 // NormalizationResponse represents the output from OpenAI
@@ -138,7 +139,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	fmt.Printf("🧠 Normalizing recipe: %s from %s\n", normRequest.OriginalRecipe.Title, normRequest.SourceUrl)
 
 	// Call OpenAI API for normalization
-	normalizedResponse, err := normalizeWithOpenAI(ctx, normRequest.OriginalRecipe)
+	normalizedResponse, err := normalizeWithOpenAI(ctx, normRequest.OriginalRecipe, normRequest.PageHtml)
 	if err != nil {
 		fmt.Printf("❌ OpenAI normalization failed: %v\n", err)
 		// Fallback: return original recipe with basic cleanup
@@ -182,14 +183,14 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}, nil
 }
 
-func normalizeWithOpenAI(ctx context.Context, recipe RecipeData) (*NormalizationResponse, error) {
+func normalizeWithOpenAI(ctx context.Context, recipe RecipeData, pageHtml string) (*NormalizationResponse, error) {
 	openaiApiKey := os.Getenv("OPENAI_API_KEY")
 	if openaiApiKey == "" {
 		return nil, fmt.Errorf("OPENAI_API_KEY environment variable not set")
 	}
 
-	// Build normalization prompt
-	prompt := buildNormalizationPrompt(recipe)
+	// Build normalization prompt with HTML context
+	prompt := buildNormalizationPrompt(recipe, pageHtml)
 
 	// Prepare OpenAI API request
 	openaiRequest := OpenAIRequest{
@@ -255,7 +256,7 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData) (*Normalization
 	return &normResponse, nil
 }
 
-func buildNormalizationPrompt(recipe RecipeData) string {
+func buildNormalizationPrompt(recipe RecipeData, pageHtml string) string {
 	ingredientsJson, _ := json.Marshal(recipe.Ingredients)
 	instructionsJson, _ := json.Marshal(recipe.Instructions)
 
@@ -271,6 +272,29 @@ func buildNormalizationPrompt(recipe RecipeData) string {
 		timeInfo = fmt.Sprintf("prep: %s, cook: %s, total: %s", recipe.PrepTime, recipe.CookTime, recipe.TotalTime)
 	}
 
+	htmlContext := ""
+	if pageHtml != "" && len(pageHtml) > 100 {
+		// Truncate HTML to avoid token limits but provide context
+		truncatedHtml := pageHtml
+		if len(pageHtml) > 8000 { // Leave room for the rest of the prompt
+			truncatedHtml = pageHtml[:8000] + "... [HTML truncated]"
+		}
+		htmlContext = fmt.Sprintf(`
+
+ADDITIONAL CONTEXT - Full Page HTML:
+%s
+
+Note: Use this HTML context to extract additional recipe details that might be missing from the structured data above, such as:
+- More detailed ingredient descriptions
+- Additional cooking notes or tips
+- Missing time or serving information from JSON-LD or microdata
+- Recipe variations or substitution suggestions
+- Equipment requirements
+- Storage or serving suggestions
+
+`, truncatedHtml)
+	}
+
 	return fmt.Sprintf(`You are a professional recipe editor tasked with normalizing recipe data for consistent storage and presentation.
 
 Input Recipe Data:
@@ -278,20 +302,20 @@ Input Recipe Data:
 - Ingredients: %s
 - Instructions: %s
 - Current Servings: %s
-- Current Times: %s
+- Current Times: %s%s
 
 Please normalize this recipe following these strict guidelines:
 
 TITLE NORMALIZATION:
 - Use Title Case (capitalize major words, lowercase articles/prepositions)
-- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie\'s' not 'Kylie\'S' and 'General Tso\'s' not 'General Tso\'S')
+- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie's' not 'Kylie'S' and 'General Tso's' not 'General Tso'S')
 - Examples: "Bob's Burgers", "Mom's Apple Pie", "Baker's Dozen"
 - Remove excessive punctuation or emoji
 - Remove the trailing word "Recipe" from recipe titles if present
 - Fix common misspellings
 - Correct grammar issues
 - Remove redundant words (e.g., "Delicious Recipe" → "Delicious")
-- Standardize capitalization of brand names (e.g., "Kylie\'s" not "Kylie\'S")
+- Standardize capitalization of brand names (e.g., "Kylie's" not "Kylie'S")
 - Normalize special characters (e.g., replace curly quotes with straight quotes)
 - Ensure no escape sequences are present (e.g., replace \u2019 with apostrophe)
 - Remove any leading or trailing whitespace
@@ -387,7 +411,7 @@ Return ONLY valid JSON in this exact format:
   },
   "qualityScore": 8.5,
   "normalizationNotes": "Standardized units, inferred 6 servings based on ingredient quantities, estimated 45 minutes total time"
-}`, recipe.Title, string(ingredientsJson), string(instructionsJson), servingsInfo, timeInfo)
+}`, recipe.Title, string(ingredientsJson), string(instructionsJson), servingsInfo, timeInfo, htmlContext)
 }
 
 func applyNormalization(original RecipeData, normalized *NormalizationResponse) RecipeData {

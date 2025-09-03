@@ -232,7 +232,7 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: "You are a professional recipe editor for Food & Wine Magazine. Review and return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., 'Kylie\'s' not 'Kylie\'S' and 'General Tso\'s' not 'General Tso\'S'). Remove redundant word Recipe in recipe titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL: Always infer missing servings count and time estimates (prep/cook/total in minutes) based on ingredients and instructions. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add recipe timing details inline within instructions when multiple timing phases exist.",
+				Content: "You are a professional recipe editor for Food & Wine Magazine. Review and return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., 'Kylie's' not 'Kylie'S' and 'General Tso's' not 'General Tso'S'). Remove redundant word Recipe in recipe titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL: Always infer missing servings count and time estimates (prep/cook/total in minutes) based on ingredients and instructions. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add recipe timing details inline within instructions when multiple timing phases exist.",
 			},
 			{
 				Role:    "user",
@@ -355,14 +355,14 @@ Please normalize this recipe following these strict guidelines:
 
 TITLE NORMALIZATION:
 - Use Title Case (capitalize major words, lowercase articles/prepositions)
-- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie\'s' not 'Kylie\'S' and 'General Tso\'s' not 'General Tso\'S')
+- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., 'Kylie's' not 'Kylie'S' and 'General Tso's' not 'General Tso'S')
 - Examples: "Bob's Burgers", "Mom's Apple Pie", "Baker's Dozen"
 - Remove excessive punctuation or emoji
 - Remove the trailing word "Recipe" from recipe titles if present
 - Fix common misspellings
 - Correct grammar issues
 - Remove redundant words (e.g., "Delicious Recipe" → "Delicious")
-- Standardize capitalization of brand names (e.g., "Kylie\'s" not "Kylie\'S")
+- Standardize capitalization of brand names (e.g., "Kylie's" not "Kylie'S")
 - Normalize special characters (e.g., replace curly quotes with straight quotes)
 - Ensure no escape sequences are present (e.g., replace \u2019 with apostrophe)
 - Remove any leading or trailing whitespace

@@ -16,6 +16,23 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 
 ## 🎯 CURRENT PRIORITIES (September 3, 2025)
 
+### ✅ MAJOR BREAKTHROUGH: FULL HTML CONTEXT ANALYSIS IMPLEMENTED
+
+**NEW CAPABILITY**: Extension now captures full page HTML and forwards to OpenAI for enhanced JSON-LD and microdata analysis.
+
+**PRODUCTION DEPLOYMENT COMPLETED (12:30 PM Sept 3, 2025)**:
+- ✅ **Chrome Extension**: Captures `document.documentElement.outerHTML` and sends as `webArchiveHtml`
+- ✅ **Backend Integration**: Recipes Lambda forwards HTML context to OpenAI normalizer
+- ✅ **OpenAI Enhancement**: Prompts enhanced to extract JSON-LD, microdata, structured recipe data
+- ✅ **Token Optimization**: HTML truncated to 8000 chars to balance context vs. cost
+- ✅ **Lambda Functions**: All normalizer functions deployed with HTML context support
+
+**RESOLVED SYSTEM ISSUES**:
+1. **20-Recipe Limit**: ✅ FIXED - Backend default changed from 20 to 50 recipes
+2. **Servings Scaling**: ✅ WORKING - Functions correctly when servings data exists
+3. **"Unknown" Display**: ✅ WORKING - Correctly shows when legacy data missing
+4. **String Escaping**: ✅ FIXED - OpenAI prompt escaping issues resolved in both normalizers
+
 ### ✅ CRITICAL RESOLUTION: BACKGROUND NORMALIZER COMPLETELY FIXED
 
 **ROOT CAUSE RESOLVED**: Background normalizer was completely bypassing OpenAI enhancement for recipes with "good" titles - now **ALWAYS** calls OpenAI for full enhancement.
@@ -25,11 +42,12 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 - ✅ **Frontend**: Enhanced Flutter Recipe model with robust servings/time parsing 
 - ✅ **OpenAI Enhancement**: Added servings inference, time estimation, and comprehensive normalization
 - ✅ **Security**: Added `.claude/` to .gitignore to prevent sensitive infrastructure data leaks
-- ✅ **Verification**: All 38 recipes now get full OpenAI enhancement including time/servings data
+- ✅ **HTML Context**: Full page HTML forwarding for enhanced recipe analysis
 
 **RESOLVED ISSUES**:
 1. **Serving Size Scaling**: ✅ FIXED - OpenAI infers servings, Flutter parses robustly 
 2. **Missing Time Estimates**: ✅ FIXED - OpenAI estimates prep/cook times, no more "Unknown"
+3. **JSON-LD Extraction**: ✅ NEW - OpenAI can now see and extract from JSON-LD data in page HTML
 
 ### ✅ CRITICAL SUCCESS: MAJOR INFRASTRUCTURE RESOLVED
 
