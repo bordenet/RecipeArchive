@@ -12,6 +12,9 @@ config/secrets.yml
 *.pem
 *.key
 
+# Claude Code settings contain sensitive infrastructure data
+.claude/
+
 # Other sites
 external-references/
 
