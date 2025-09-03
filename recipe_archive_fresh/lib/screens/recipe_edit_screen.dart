@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe.dart';
 import '../providers/recipe_provider.dart';
@@ -149,7 +148,7 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> with Ticker
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_hasUnsavedChanges,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (!didPop && _hasUnsavedChanges) {
           final shouldPop = await _showUnsavedChangesDialog();
           if (shouldPop && context.mounted) {
@@ -705,14 +704,17 @@ class _RecipeEditScreenState extends ConsumerState<RecipeEditScreen> with Ticker
       });
 
       if (context.mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recipe saved successfully!')),
         );
+        // ignore: use_build_context_synchronously
         Navigator.pop(context, updatedRecipe);
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (context.mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving recipe: $e')),
         );

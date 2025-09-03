@@ -17,6 +17,7 @@ void main() async {
       await dotenv.load(fileName: ".env");
     } catch (e2) {
       // No .env file available - will use default values
+      // ignore: avoid_print
       print("Warning: No .env file found, using default configuration");
     }
   }

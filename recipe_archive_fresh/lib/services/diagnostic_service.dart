@@ -139,10 +139,12 @@ class DiagnosticService {
         final data = jsonDecode(response.body);
         return DiagnosticSummary.fromJson(data);
       } else {
+        // ignore: avoid_print
         print('Failed to load diagnostic data: ${response.statusCode}');
         return null;
       }
     } catch (e) {
+      // ignore: avoid_print
       print('Error fetching diagnostic data: $e');
       return null;
     }

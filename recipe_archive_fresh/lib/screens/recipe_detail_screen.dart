@@ -496,12 +496,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
       if (context.mounted) {
         // Close loading dialog
+        // ignore: use_build_context_synchronously
         Navigator.of(context).pop();
         
         // Close detail screen and return to home
+        // ignore: use_build_context_synchronously
         Navigator.of(context).pop();
         
         // Show success message
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Recipe deleted successfully'),
@@ -515,9 +518,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     } catch (e) {
       if (context.mounted) {
         // Close loading dialog
+        // ignore: use_build_context_synchronously
         Navigator.of(context).pop();
         
         // Show error message
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete recipe: ${e.toString()}'),
@@ -578,7 +583,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                             'servings',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isSelected ? Colors.white.withOpacity(0.9) : Colors.grey[600],
+                              color: isSelected ? Colors.white.withValues(alpha: 0.9) : Colors.grey[600],
                             ),
                           ),
                           if (multiplier != 1)
@@ -587,7 +592,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
-                                color: isSelected ? Colors.white.withOpacity(0.8) : Colors.green,
+                                color: isSelected ? Colors.white.withValues(alpha: 0.8) : Colors.green,
                               ),
                             ),
                         ],

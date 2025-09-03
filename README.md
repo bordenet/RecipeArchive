@@ -127,6 +127,10 @@ cd aws-backend && cdk deploy # Deploy infrastructure
 
 - **Extensions:** Chrome/Safari with TypeScript parsers + AWS Cognito auth
 - **Parsers:** Registry system for 13+ recipe sites with JSON-LD + HTML extraction
+- **Content Normalization:** OpenAI GPT-4o-mini integration for recipe enhancement at ingestion
+  - Title standardization, ingredient normalization, instruction clarity
+  - Metadata inference (cuisine type, cooking methods, dietary info, difficulty)
+  - Graceful fallback when OpenAI unavailable
 - **Backend:** Go serverless functions (AWS Lambda) + S3 storage + Cognito auth  
 - **Frontend:** Flutter web app with responsive design + CloudFront deployment
 

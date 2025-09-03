@@ -333,6 +333,22 @@ export class RecipeArchiveStack extends cdk.Stack {
       role: lambdaRole,
     });
 
+    // Content Normalizer Function (OpenAI integration)
+    const contentNormalizerFunction = new lambda.Function(this, 'ContentNormalizerFunction', {
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      handler: 'bootstrap',
+      code: lambda.Code.fromAsset('../functions/dist/content-normalizer-package'),
+      timeout: cdk.Duration.seconds(30), // Longer timeout for OpenAI API calls
+      memorySize: 512, // More memory for JSON processing
+      environment: {
+        ENVIRONMENT: props.environment,
+        REGION: this.region,
+        COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+        OPENAI_API_KEY: '', // Will be set via AWS Parameter Store or environment
+      },
+      role: lambdaRole,
+    });
+
     // API Gateway Integration
     const healthIntegration = new apigateway.LambdaIntegration(healthFunction, {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
@@ -348,6 +364,14 @@ export class RecipeArchiveStack extends cdk.Stack {
     const diagnosticsResource = v1.addResource('diagnostics');
     const diagnosticsIntegration = new apigateway.LambdaIntegration(diagnosticsFunction);
     diagnosticsResource.addMethod('POST', diagnosticsIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
+    });
+
+    // Content Normalizer endpoint (authenticated)
+    const normalizerResource = v1.addResource('normalize');
+    const normalizerIntegration = new apigateway.LambdaIntegration(contentNormalizerFunction);
+    normalizerResource.addMethod('POST', normalizerIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
     });

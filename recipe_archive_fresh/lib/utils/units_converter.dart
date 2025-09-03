@@ -325,7 +325,7 @@ class UnitsConverter {
         final fahrenheit = double.tryParse(match.group(1)!);
         if (fahrenheit != null) {
           final celsius = ((fahrenheit - 32) * 5 / 9).round();
-          return '${celsius}°C';
+          return '$celsius°C';
         }
         return match.group(0)!;
       });
@@ -336,7 +336,7 @@ class UnitsConverter {
         final celsius = double.tryParse(match.group(1)!);
         if (celsius != null) {
           final fahrenheit = ((celsius * 9 / 5) + 32).round();
-          return '${fahrenheit}°F';
+          return '$fahrenheit°F';
         }
         return match.group(0)!;
       });

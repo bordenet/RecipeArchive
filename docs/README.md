@@ -9,6 +9,7 @@ Stop screenshotting recipes like a caveperson! RecipeArchive is your handy littl
 ## 🚀 Quick Start
 
 ### One-Command Setup
+
 ```bash
 # Clone and setup everything automatically
 git clone https://github.com/yourusername/RecipeArchive
@@ -17,13 +18,16 @@ cd RecipeArchive
 ```
 
 ### Local Development (Zero AWS Costs)
+
 # Start local development server
 
 cd aws-backend/functions/local-server
 go run main.go
 
 # Run comprehensive test suite
+
 npm test
+
 ```
 
 **Local Development Features:**
@@ -55,9 +59,10 @@ Turn recipe chaos into culinary zen with:
 - **Full page archives** - Because food blogs love to disappear recipes
 - **Registry-driven architecture** - All supported sites managed in `/parsers/sites/site-registry.ts` and reflected in documentation and PRD
 
-## 💪 Tech Stack (Current Implementation)
+## Tech Stack (Current Implementation)
 
-**✅ Production Ready:**
+**Ready for Field Testing:**
 - **Browser Extensions:** TypeScript + Manifest V3 (Chrome & Safari)
 - **Backend API:** Go with local development server + comprehensive tests
 - **Authentication:** AWS Cognito with JWT token management
+```

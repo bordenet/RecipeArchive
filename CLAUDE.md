@@ -27,10 +27,12 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 
 ### 🔄 NEXT TASKS
 - **Failed Parse Workflow**: Backend diagnostic data processing and improvement  
-- **OpenAI Content Enhancement**: Recipe normalization at ingestion time
+- **OpenAI API Key Configuration**: Add OPENAI_API_KEY to Lambda environment for production use
 
 ### ✅ RECENT FIXES COMPLETED
-- **HTML Entity Decoding Fix**: Enhanced BaseParser with comprehensive HTML entity decoding in `sanitizeText()` method. Fixes em dash (&#8211; → –), quotes (&#39; → '), and other entities across all parsers. Alexandra's Kitchen ingredient ranges like "50 – 100 g" now parse correctly.
+- **Flutter Analysis Warnings**: Fixed all Flutter web app analysis and test warnings including deprecated API usage, async context issues, and print statements
+- **OpenAI Content Normalizer**: Deployed `/v1/normalize` endpoint with GPT-4o-mini integration. Features title normalization, ingredient standardization, instruction clarity, metadata inference, and graceful fallback when OpenAI unavailable
+- **HTML Entity Decoding Fix**: Enhanced BaseParser with comprehensive HTML entity decoding in `sanitizeText()` method. Fixes em dash (&#8211; → –), quotes (&#39; → '), and other entities across all parsers. Alexandra's Kitchen ingredient ranges like "50 – 100 g" now parse correctly
 
 ## 🏗️ Architecture
 

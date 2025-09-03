@@ -39,6 +39,7 @@ class AuthUser {
         idToken: idToken.getJwtToken() ?? '',
       );
     } catch (e) {
+      // ignore: avoid_print
       print('Error creating AuthUser from Cognito: $e');
       throw Exception('Failed to create AuthUser: ${e.toString()}');
     }
@@ -88,6 +89,7 @@ class AuthenticationService {
       final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_qJ1i9RhxD';
       final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '5grdn7qhf1el0ioqb6hkelr29s';
       
+      // ignore: avoid_print
       print('Initializing Cognito with poolId: $userPoolId, clientId: $clientId');
       
       if (userPoolId.isEmpty || clientId.isEmpty) {
@@ -95,8 +97,10 @@ class AuthenticationService {
       }
 
       _userPool = CognitoUserPool(userPoolId, clientId);
+      // ignore: avoid_print
       print('Cognito UserPool initialized successfully');
     } catch (e) {
+      // ignore: avoid_print
       print('Error initializing Cognito: $e');
       throw Exception('Failed to initialize Cognito: ${e.toString()}');
     }
@@ -146,15 +150,18 @@ class AuthenticationService {
   // Sign in with email and password
   Future<AuthUser> signIn(String email, String password) async {
     try {
+      // ignore: avoid_print
       print('Starting sign in for email: $email');
       
       _cognitoUser = CognitoUser(email, _userPool);
+      // ignore: avoid_print
       print('Created CognitoUser');
       
       final authDetails = AuthenticationDetails(
         username: email,
         password: password,
       );
+      // ignore: avoid_print
       print('Created AuthenticationDetails');
       
       final cognitoUser = _cognitoUser;
@@ -162,14 +169,17 @@ class AuthenticationService {
         throw Exception('Failed to create Cognito user');
       }
       
+      // ignore: avoid_print
       print('Calling authenticateUser...');
       final session = await cognitoUser.authenticateUser(authDetails);
+      // ignore: avoid_print
       print('Authentication completed, session valid: ${session?.isValid()}');
       
       if (session == null || !session.isValid()) {
         throw Exception('Failed to authenticate user - invalid session');
       }
       
+      // ignore: avoid_print
       print('Creating AuthUser from session...');
       _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
       final currentUser = _currentUser;
@@ -177,8 +187,10 @@ class AuthenticationService {
         throw Exception('Failed to create user from Cognito response');
       }
       
+      // ignore: avoid_print
       print('Storing user...');
       await _storeUser(currentUser);
+      // ignore: avoid_print
       print('Sign in completed successfully');
       return currentUser;
     } catch (e) {

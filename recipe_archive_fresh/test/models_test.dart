@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:recipe_archive_fresh/models/recipe.dart';
 
@@ -33,8 +34,12 @@ void main() {
       expect(json['title'], 'Test Recipe');
       expect(json['servings'], 4);
 
+      // Convert JSON through string to simulate real serialization/deserialization
+      final jsonString = jsonEncode(json);
+      final parsedJson = jsonDecode(jsonString) as Map<String, dynamic>;
+      
       // Test JSON deserialization
-      final recreatedRecipe = Recipe.fromJson(json);
+      final recreatedRecipe = Recipe.fromJson(parsedJson);
       expect(recreatedRecipe.id, recipe.id);
       expect(recreatedRecipe.title, recipe.title);
       expect(recreatedRecipe.servings, recipe.servings);
@@ -61,7 +66,9 @@ void main() {
       );
 
       final json = recipe.toJson();
-      final recreatedRecipe = Recipe.fromJson(json);
+      final jsonString = jsonEncode(json);
+      final parsedJson = jsonDecode(jsonString) as Map<String, dynamic>;
+      final recreatedRecipe = Recipe.fromJson(parsedJson);
       
       expect(recreatedRecipe.id, 'test-2');
       expect(recreatedRecipe.title, 'Minimal Recipe');

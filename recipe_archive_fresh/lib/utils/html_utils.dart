@@ -1,3 +1,4 @@
+// ignore_for_file: dangling_library_doc_comments
 /// Utility functions for handling HTML content in recipes
 
 /// Decodes HTML entities in text strings
