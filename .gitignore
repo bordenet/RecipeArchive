@@ -19,6 +19,7 @@ config/secrets.yml
 external-references/
 
 # Temporary files
+test-results/
 test-results/*
 
 # AWS
