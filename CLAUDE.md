@@ -26,10 +26,13 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 6. **Complete Serving Size Logic**: Ensure all ingredient quantities update dynamically
 
 ### 🔄 NEXT TASKS
-- **Failed Parse Workflow**: Backend diagnostic data processing and improvement  
-- **OpenAI API Key Configuration**: Add OPENAI_API_KEY to Lambda environment for production use
+- **Extension Distribution**: Expose Chrome/Safari .zip downloads in web app with S3-hosted versioning
+- **Complete Serving Size Logic**: Ensure all ingredient quantities update dynamically with serving size changes
 
 ### ✅ RECENT FIXES COMPLETED
+- **Serving Size Logic Enhancement**: Adding 0.25x and 0.5x multipliers to allow halving and quartering recipes alongside existing 1x-16x scaling options
+- **Diagnostic Processor Integration**: Deployed `/v1/diagnostic-summary` endpoint with comprehensive failed parse analysis, S3 integration, and pattern recognition for parser improvement
+- **OpenAI Content Normalizer Production**: Configured OPENAI_API_KEY environment for production use with GPT-4o-mini integration for recipe enhancement
 - **Flutter Analysis Warnings**: Fixed all Flutter web app analysis and test warnings including deprecated API usage, async context issues, and print statements
 - **OpenAI Content Normalizer**: Deployed `/v1/normalize` endpoint with GPT-4o-mini integration. Features title normalization, ingredient standardization, instruction clarity, metadata inference, and graceful fallback when OpenAI unavailable
 - **HTML Entity Decoding Fix**: Enhanced BaseParser with comprehensive HTML entity decoding in `sanitizeText()` method. Fixes em dash (&#8211; → –), quotes (&#39; → '), and other entities across all parsers. Alexandra's Kitchen ingredient ranges like "50 – 100 g" now parse correctly

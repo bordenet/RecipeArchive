@@ -344,7 +344,23 @@ export class RecipeArchiveStack extends cdk.Stack {
         ENVIRONMENT: props.environment,
         REGION: this.region,
         COGNITO_USER_POOL_ID: this.userPool.userPoolId,
-        OPENAI_API_KEY: '', // Will be set via AWS Parameter Store or environment
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY || '', // Read from environment
+      },
+      role: lambdaRole,
+    });
+
+    // Diagnostic Processor Function (Failed parse workflow)
+    const diagnosticProcessorFunction = new lambda.Function(this, 'DiagnosticProcessorFunction', {
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      handler: 'bootstrap',
+      code: lambda.Code.fromAsset('../functions/dist/diagnostic-processor-package'),
+      timeout: cdk.Duration.seconds(60), // Longer timeout for S3 analysis
+      memorySize: 1024, // More memory for processing diagnostic data
+      environment: {
+        ENVIRONMENT: props.environment,
+        REGION: this.region,
+        S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
+        COGNITO_USER_POOL_ID: this.userPool.userPoolId,
       },
       role: lambdaRole,
     });
@@ -372,6 +388,14 @@ export class RecipeArchiveStack extends cdk.Stack {
     const normalizerResource = v1.addResource('normalize');
     const normalizerIntegration = new apigateway.LambdaIntegration(contentNormalizerFunction);
     normalizerResource.addMethod('POST', normalizerIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
+    });
+
+    // Diagnostic Processor endpoint (authenticated)
+    const diagnosticProcessorResource = v1.addResource('diagnostic-summary');
+    const diagnosticProcessorIntegration = new apigateway.LambdaIntegration(diagnosticProcessorFunction);
+    diagnosticProcessorResource.addMethod('GET', diagnosticProcessorIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
     });

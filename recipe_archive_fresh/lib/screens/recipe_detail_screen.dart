@@ -536,8 +536,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   void _showServingsDialog() {
     // Define serving multipliers based on original recipe servings
     final originalServings = widget.recipe.servings ?? 4;
-    final multipliers = [1, 2, 4, 8, 16];
-    final servingOptions = multipliers.map((mult) => originalServings * mult).toList();
+    final multipliers = [0.25, 0.5, 1, 2, 4, 8, 16];
+    final servingOptions = multipliers.map((mult) => (originalServings * mult).round()).toList();
     
     showDialog<int>(
       context: context,
@@ -553,7 +553,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: servingOptions.map((servings) {
-                  final multiplier = servings ~/ originalServings;
+                  final multiplier = servings / originalServings;
                   final isSelected = servings == currentServings;
                   
                   return GestureDetector(
@@ -588,7 +588,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                           ),
                           if (multiplier != 1)
                             Text(
-                              '${multiplier}x',
+                              '${_formatMultiplier(multiplier)}x',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
@@ -618,6 +618,14 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
         });
       }
     });
+  }
+
+  // Format multiplier display (e.g., 0.5 -> "1/2", 0.25 -> "1/4")
+  String _formatMultiplier(double multiplier) {
+    if (multiplier == 0.25) return '1/4';
+    if (multiplier == 0.5) return '1/2';
+    if (multiplier == multiplier.toInt()) return multiplier.toInt().toString();
+    return multiplier.toString();
   }
 
   // Navigate to edit screen

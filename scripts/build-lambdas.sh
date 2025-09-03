@@ -32,6 +32,7 @@ build_lambda "health"
 build_lambda "recipes" 
 build_lambda "image-upload"
 build_lambda "diagnostics"
+build_lambda "diagnostic-processor"
 build_lambda "content-normalizer"
 
 echo "🎉 All Lambda functions built successfully!"

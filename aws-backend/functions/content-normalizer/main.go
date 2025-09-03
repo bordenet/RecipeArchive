@@ -16,18 +16,18 @@ import (
 
 // RecipeData represents the input recipe structure
 type RecipeData struct {
-	Title        string             `json:"title"`
-	Ingredients  []IngredientData   `json:"ingredients"`
-	Instructions []InstructionData  `json:"instructions"`
-	Author       string             `json:"author,omitempty"`
-	PrepTime     string             `json:"prepTime,omitempty"`
-	CookTime     string             `json:"cookTime,omitempty"`
-	TotalTime    string             `json:"totalTime,omitempty"`
-	Servings     string             `json:"servings,omitempty"`
-	Description  string             `json:"description,omitempty"`
-	ImageUrl     string             `json:"imageUrl,omitempty"`
-	SourceUrl    string             `json:"sourceUrl,omitempty"`
-	Tags         []string           `json:"tags,omitempty"`
+	Title        string            `json:"title"`
+	Ingredients  []IngredientData  `json:"ingredients"`
+	Instructions []InstructionData `json:"instructions"`
+	Author       string            `json:"author,omitempty"`
+	PrepTime     string            `json:"prepTime,omitempty"`
+	CookTime     string            `json:"cookTime,omitempty"`
+	TotalTime    string            `json:"totalTime,omitempty"`
+	Servings     string            `json:"servings,omitempty"`
+	Description  string            `json:"description,omitempty"`
+	ImageUrl     string            `json:"imageUrl,omitempty"`
+	SourceUrl    string            `json:"sourceUrl,omitempty"`
+	Tags         []string          `json:"tags,omitempty"`
 }
 
 type IngredientData struct {
@@ -48,12 +48,12 @@ type NormalizationRequest struct {
 
 // NormalizationResponse represents the output from OpenAI
 type NormalizationResponse struct {
-	NormalizedTitle        string             `json:"normalizedTitle"`
-	NormalizedIngredients  []IngredientData   `json:"normalizedIngredients"`
-	NormalizedInstructions []InstructionData  `json:"normalizedInstructions"`
-	InferredMetadata       InferredMetadata   `json:"inferredMetadata"`
-	QualityScore          float64            `json:"qualityScore"`
-	NormalizationNotes    string             `json:"normalizationNotes"`
+	NormalizedTitle        string            `json:"normalizedTitle"`
+	NormalizedIngredients  []IngredientData  `json:"normalizedIngredients"`
+	NormalizedInstructions []InstructionData `json:"normalizedInstructions"`
+	InferredMetadata       InferredMetadata  `json:"inferredMetadata"`
+	QualityScore           float64           `json:"qualityScore"`
+	NormalizationNotes     string            `json:"normalizationNotes"`
 }
 
 type InferredMetadata struct {
@@ -142,7 +142,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		responseBody, _ := json.Marshal(map[string]interface{}{
 			"normalizedRecipe": fallbackRecipe,
 			"fallbackUsed":     true,
-			"error":           err.Error(),
+			"error":            err.Error(),
 		})
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusOK,
@@ -155,11 +155,11 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	enhancedRecipe := applyNormalization(normRequest.OriginalRecipe, normalizedResponse)
 
 	responseBody, err := json.Marshal(map[string]interface{}{
-		"normalizedRecipe":    enhancedRecipe,
-		"qualityScore":        normalizedResponse.QualityScore,
-		"normalizationNotes":  normalizedResponse.NormalizationNotes,
-		"inferredMetadata":    normalizedResponse.InferredMetadata,
-		"fallbackUsed":        false,
+		"normalizedRecipe":   enhancedRecipe,
+		"qualityScore":       normalizedResponse.QualityScore,
+		"normalizationNotes": normalizedResponse.NormalizationNotes,
+		"inferredMetadata":   normalizedResponse.InferredMetadata,
+		"fallbackUsed":       false,
 	})
 	if err != nil {
 		return events.APIGatewayProxyResponse{
@@ -193,7 +193,7 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData) (*Normalization
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: "You are a professional recipe editor. Return only valid JSON with no additional text.",
+				Content: "You are a professional recipe editor. Return only valid JSON with no additional text. Normalize recipe name capitalization and remove use of the redundant word RECIPE in the title. Strip all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences",
 			},
 			{
 				Role:    "user",
@@ -340,7 +340,7 @@ func applyNormalization(original RecipeData, normalized *NormalizationResponse) 
 func basicNormalization(recipe RecipeData) RecipeData {
 	// Fallback normalization without AI
 	result := recipe
-	
+
 	// Basic title cleanup
 	result.Title = strings.TrimSpace(recipe.Title)
 	result.Title = strings.Title(strings.ToLower(result.Title))
