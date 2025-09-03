@@ -53,6 +53,7 @@ class RecipeService {
     final uri = Uri.parse('$apiUrl/v1/recipes').replace(queryParameters: queryParams);
     
     try {
+      print('🔄 Fetching recipes from: $uri');
       final response = await http.get(
         uri,
         headers: {
@@ -61,14 +62,19 @@ class RecipeService {
         },
       );
       
+      print('📥 Recipe API response: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> recipesJson = data['recipes'] ?? [];
+        print('✅ Loaded ${recipesJson.length} recipes from API');
         return recipesJson.map((json) => Recipe.fromJson(json)).toList();
       } else {
+        print('❌ API error: ${response.statusCode} - ${response.body}');
         throw Exception('Failed to load recipes: ${response.statusCode}');
       }
     } catch (e) {
+      print('❌ Network error: $e');
       throw Exception('Network error: $e');
     }
   }

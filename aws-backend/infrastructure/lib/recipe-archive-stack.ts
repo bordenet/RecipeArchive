@@ -9,6 +9,8 @@ import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as snsSubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as budgets from 'aws-cdk-lib/aws-budgets';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 
 export interface RecipeArchiveStackProps extends cdk.StackProps {
   environment: string;
@@ -206,6 +208,16 @@ export class RecipeArchiveStack extends cdk.Stack {
                 this.failedParsingBucket.bucketArn,
               ],
             }),
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'sqs:SendMessage',
+                'sqs:ReceiveMessage',
+                'sqs:DeleteMessage',
+                'sqs:GetQueueAttributes',
+              ],
+              resources: ['*'], // Will be restricted to specific queue in production
+            }),
           ],
         }),
       },
@@ -268,6 +280,20 @@ export class RecipeArchiveStack extends cdk.Stack {
       validateRequestParameters: true,
     });
 
+    // SQS Queue for async recipe normalization (must be defined before Lambda functions that reference it)
+    const recipeNormalizationQueue = new sqs.Queue(this, 'RecipeNormalizationQueue', {
+      queueName: `recipe-normalization-${props.environment}`,
+      visibilityTimeout: cdk.Duration.seconds(60), // Allow 60 seconds for processing
+      retentionPeriod: cdk.Duration.days(14), // Keep messages for 2 weeks
+      deadLetterQueue: {
+        queue: new sqs.Queue(this, 'RecipeNormalizationDLQ', {
+          queueName: `recipe-normalization-dlq-${props.environment}`,
+          retentionPeriod: cdk.Duration.days(14),
+        }),
+        maxReceiveCount: 3, // Try 3 times before moving to DLQ
+      },
+    });
+
     // Lambda Functions
     const healthFunction = new lambda.Function(this, 'HealthFunction', {
       runtime: lambda.Runtime.PROVIDED_AL2,
@@ -300,6 +326,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
         COGNITO_USER_POOL_ID: this.userPool.userPoolId,
         API_GATEWAY_URL: `https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod`,
+        NORMALIZATION_QUEUE_URL: recipeNormalizationQueue.queueUrl,
       },
       role: lambdaRole,
     });
@@ -349,6 +376,30 @@ export class RecipeArchiveStack extends cdk.Stack {
       },
       role: lambdaRole,
     });
+
+    // Background Recipe Normalizer Function (processes SQS queue)
+    const backgroundNormalizerFunction = new lambda.Function(this, 'BackgroundNormalizerFunction', {
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      handler: 'bootstrap',
+      code: lambda.Code.fromAsset('../functions/dist/background-normalizer-package'),
+      timeout: cdk.Duration.seconds(45), // Longer timeout for OpenAI processing
+      memorySize: 512,
+      environment: {
+        ENVIRONMENT: props.environment,
+        REGION: this.region,
+        S3_STORAGE_BUCKET: this.storageBucket.bucketName,
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+      },
+      role: lambdaRole,
+    });
+
+    // Connect SQS queue to background normalizer Lambda
+    backgroundNormalizerFunction.addEventSource(
+      new lambdaEventSources.SqsEventSource(recipeNormalizationQueue, {
+        batchSize: 1, // Process one recipe at a time
+        maxBatchingWindow: cdk.Duration.seconds(5),
+      })
+    );
 
     // Diagnostic Processor Function (Failed parse workflow)
     const diagnosticProcessorFunction = new lambda.Function(this, 'DiagnosticProcessorFunction', {

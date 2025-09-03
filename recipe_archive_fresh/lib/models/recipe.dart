@@ -154,6 +154,7 @@ class Recipe {
   @JsonKey(name: 'totalTimeMinutes')
   final int? cookingTime;
   
+  @JsonKey(fromJson: _parseServings)
   final int? servings;
   final String? cuisine;
   final List<String> tags;
@@ -205,6 +206,20 @@ class Recipe {
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) => _$RecipeFromJson(json);
+
+  // Helper function to parse servings from various formats
+  static int? _parseServings(dynamic servingsValue) {
+    if (servingsValue is int) {
+      return servingsValue;
+    } else if (servingsValue is String && servingsValue.isNotEmpty) {
+      // Extract number from strings like "4 servings", "Serves 6", etc.
+      final match = RegExp(r'(\d+)').firstMatch(servingsValue);
+      if (match != null) {
+        return int.tryParse(match.group(1)!);
+      }
+    }
+    return null;
+  }
   Map<String, dynamic> toJson() => _$RecipeToJson(this);
 
   // Helper methods

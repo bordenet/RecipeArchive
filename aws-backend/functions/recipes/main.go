@@ -15,6 +15,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/google/uuid"
 
 	"recipe-archive/db"
@@ -23,6 +25,14 @@ import (
 )
 
 var recipeDB db.RecipeDB
+var sqsClient *sqs.Client
+
+// NormalizationMessage represents an SQS message for async recipe normalization
+type NormalizationMessage struct {
+	RecipeID string `json:"recipeId"`
+	UserID   string `json:"userId"`
+	Action   string `json:"action"`
+}
 var bucketName string
 
 func init() {
@@ -39,7 +49,40 @@ func init() {
 
 	// Initialize S3-based storage (following architecture decision)
 	s3Client := s3.NewFromConfig(cfg)
+	sqsClient = sqs.NewFromConfig(cfg)
 	recipeDB = db.NewS3RecipeDB(s3Client, bucketName)
+}
+
+// queueRecipeNormalization sends a message to SQS to normalize a recipe in the background
+func queueRecipeNormalization(ctx context.Context, userID, recipeID string) error {
+	queueURL := os.Getenv("NORMALIZATION_QUEUE_URL")
+	if queueURL == "" {
+		fmt.Printf("⚠️ NORMALIZATION_QUEUE_URL not set, skipping background normalization\n")
+		return nil // Don't fail recipe creation if queue isn't configured
+	}
+
+	message := NormalizationMessage{
+		RecipeID: recipeID,
+		UserID:   userID,
+		Action:   "normalize",
+	}
+
+	messageBody, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal normalization message: %w", err)
+	}
+
+	_, err = sqsClient.SendMessage(ctx, &sqs.SendMessageInput{
+		QueueUrl:    aws.String(queueURL),
+		MessageBody: aws.String(string(messageBody)),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to send normalization message: %w", err)
+	}
+
+	fmt.Printf("📤 Queued normalization job for recipe %s\n", recipeID)
+	return nil
 }
 
 func main() {
@@ -353,35 +396,27 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		// Recipe with same URL exists - overwrite it with new data
 		fmt.Printf("Recipe with URL %s already exists, overwriting with new data", sourceURL)
 
-		// Apply OpenAI content normalization for updates too
-		normalizedData, err := normalizeRecipeContent(ctx, recipeData)
-		if err != nil {
-			fmt.Printf("⚠️ OpenAI normalization failed for update, using original data: %v\n", err)
-			// Continue with original data if normalization fails
-			normalizedData = &recipeData
-		}
-
-		// Preserve original creation time and ID, but update everything else with normalized data
+		// Store recipe immediately with raw data - normalization will happen asynchronously
 		now := time.Now().UTC()
 		updatedRecipe := models.Recipe{
-			ID:               existingRecipe.ID,              // Keep same ID
-			UserID:           userID,                         // Current user
-			Title:            strings.TrimSpace(normalizedData.Title),     // Normalized title
-			Ingredients:      normalizedData.Ingredients,     // Normalized ingredients
-			Instructions:     normalizedData.Instructions,    // Normalized instructions
-			SourceURL:        sourceURL,                      // Same URL
-			PrepTimeMinutes:  normalizedData.PrepTimeMinutes, // Normalized prep time
-			CookTimeMinutes:  normalizedData.CookTimeMinutes, // Normalized cook time
-			TotalTimeMinutes: normalizedData.TotalTimeMinutes,// Normalized total time
-			Servings:         normalizedData.Servings,        // Normalized servings
-			Yield:            normalizedData.Yield,           // Normalized yield
-			Categories:       normalizedData.Categories,      // Normalized categories
-			MainPhotoURL:     recipeData.MainPhotoURL,        // Keep original photo URL
-			Description:      normalizedData.Description,     // Normalized description
-			CreatedAt:        existingRecipe.CreatedAt,       // Preserve original creation
-			UpdatedAt:        now,                            // Current timestamp
-			IsDeleted:        false,                          // Ensure not deleted
-			Version:          existingRecipe.Version + 1,     // Increment version
+			ID:               existingRecipe.ID,        // Keep same ID
+			UserID:           userID,                   // Current user
+			Title:            strings.TrimSpace(recipeData.Title), // Raw title (will be normalized async)
+			Ingredients:      recipeData.Ingredients,   // Raw ingredients
+			Instructions:     recipeData.Instructions,  // Raw instructions
+			SourceURL:        sourceURL,               // Same URL
+			PrepTimeMinutes:  recipeData.PrepTimeMinutes,
+			CookTimeMinutes:  recipeData.CookTimeMinutes,
+			TotalTimeMinutes: recipeData.TotalTimeMinutes,
+			Servings:         recipeData.Servings,
+			Yield:            recipeData.Yield,
+			Categories:       recipeData.Categories,
+			MainPhotoURL:     recipeData.MainPhotoURL,
+			Description:      recipeData.Description,
+			CreatedAt:        existingRecipe.CreatedAt, // Preserve original creation
+			UpdatedAt:        now,                      // Current timestamp
+			IsDeleted:        false,                    // Ensure not deleted
+			Version:          existingRecipe.Version + 1, // Increment version
 		}
 
 		// Update the recipe in storage
@@ -400,6 +435,11 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			return response, nil
 		}
 
+		// Queue async normalization job for updated recipe (don't fail if queueing fails)
+		if err := queueRecipeNormalization(ctx, userID, updatedRecipe.ID); err != nil {
+			fmt.Printf("⚠️ Failed to queue normalization for updated recipe %s: %v\n", updatedRecipe.ID, err)
+		}
+
 		// Return the updated recipe
 		response, responseErr := utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
 			"recipe":  updatedRecipe,
@@ -411,33 +451,25 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	// Apply OpenAI content normalization before saving
-	normalizedData, err := normalizeRecipeContent(ctx, recipeData)
-	if err != nil {
-		fmt.Printf("⚠️ OpenAI normalization failed, using original data: %v\n", err)
-		// Continue with original data if normalization fails
-		normalizedData = &recipeData
-	}
-
-	// Create the recipe object with normalized data
+	// Create the recipe object with raw data - normalization will happen asynchronously
 	now := time.Now().UTC()
 	recipe := models.Recipe{
 		ID:               uuid.New().String(),
 		UserID:           userID,
-		Title:            strings.TrimSpace(normalizedData.Title),
-		Ingredients:      normalizedData.Ingredients,
-		Instructions:     normalizedData.Instructions,
-		SourceURL:        strings.TrimSpace(recipeData.SourceURL), // Keep original source URL
-		MainPhotoURL:     recipeData.MainPhotoURL, // Keep original photo URL
-		PrepTimeMinutes:  normalizedData.PrepTimeMinutes,
-		CookTimeMinutes:  normalizedData.CookTimeMinutes,
-		TotalTimeMinutes: normalizedData.TotalTimeMinutes,
-		Servings:         normalizedData.Servings,
-		Yield:            normalizedData.Yield,
-		Categories:       normalizedData.Categories,
-		Description:      normalizedData.Description,
-		Reviews:          normalizedData.Reviews,
-		Nutrition:        normalizedData.Nutrition,
+		Title:            strings.TrimSpace(recipeData.Title), // Raw title (will be normalized async)
+		Ingredients:      recipeData.Ingredients,             // Raw ingredients
+		Instructions:     recipeData.Instructions,            // Raw instructions
+		SourceURL:        strings.TrimSpace(recipeData.SourceURL),
+		MainPhotoURL:     recipeData.MainPhotoURL,
+		PrepTimeMinutes:  recipeData.PrepTimeMinutes,
+		CookTimeMinutes:  recipeData.CookTimeMinutes,
+		TotalTimeMinutes: recipeData.TotalTimeMinutes,
+		Servings:         recipeData.Servings,
+		Yield:            recipeData.Yield,
+		Categories:       recipeData.Categories,
+		Description:      recipeData.Description,
+		Reviews:          recipeData.Reviews,
+		Nutrition:        recipeData.Nutrition,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 		IsDeleted:        false,
@@ -458,6 +490,11 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			return events.APIGatewayProxyResponse{}, responseErr
 		}
 		return response, nil
+	}
+
+	// Queue async normalization job (don't fail if queueing fails)
+	if err := queueRecipeNormalization(ctx, userID, recipe.ID); err != nil {
+		fmt.Printf("⚠️ Failed to queue normalization for recipe %s: %v\n", recipe.ID, err)
 	}
 
 	response, responseErr := utils.NewAPIResponse(http.StatusCreated, map[string]interface{}{

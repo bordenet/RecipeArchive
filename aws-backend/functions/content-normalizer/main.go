@@ -52,6 +52,10 @@ type NormalizationResponse struct {
 	NormalizedIngredients  []IngredientData  `json:"normalizedIngredients"`
 	NormalizedInstructions []InstructionData `json:"normalizedInstructions"`
 	InferredMetadata       InferredMetadata  `json:"inferredMetadata"`
+	InferredServings       *int              `json:"inferredServings,omitempty"`
+	InferredTotalTime      *int              `json:"inferredTotalTime,omitempty"`
+	InferredPrepTime       *int              `json:"inferredPrepTime,omitempty"`
+	InferredCookTime       *int              `json:"inferredCookTime,omitempty"`
 	QualityScore           float64           `json:"qualityScore"`
 	NormalizationNotes     string            `json:"normalizationNotes"`
 }
@@ -193,7 +197,7 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData) (*Normalization
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: "You are a professional recipe editor. Return only valid JSON with no additional text. Normalize recipe name capitalization and remove use of the redundant word RECIPE in the title. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. Infer preparation time if not explicitly provided and validate provided perparation time based on instruction.",
+				Content: "You are a professional recipe editor. Return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., 'Kylie's' not 'Kylie'S'). Remove redundant word RECIPE in titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL: Always infer missing servings count and time estimates (prep/cook/total in minutes) based on ingredients and instructions. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add timing details inline within instructions when multiple timing phases exist.",
 			},
 			{
 				Role:    "user",
@@ -204,8 +208,8 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData) (*Normalization
 		MaxTokens:   2000,
 	}
 
-	// Make API call with timeout
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	// Make API call with timeout - shorter timeout to allow fallback processing
+	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
 
 	reqBody, err := json.Marshal(openaiRequest)
@@ -255,17 +259,33 @@ func buildNormalizationPrompt(recipe RecipeData) string {
 	ingredientsJson, _ := json.Marshal(recipe.Ingredients)
 	instructionsJson, _ := json.Marshal(recipe.Instructions)
 
+	// Extract current servings info for context
+	servingsInfo := "not specified"
+	if recipe.Servings != "" {
+		servingsInfo = recipe.Servings
+	}
+
+	// Extract current time info for context
+	timeInfo := "not specified"
+	if recipe.PrepTime != "" || recipe.CookTime != "" || recipe.TotalTime != "" {
+		timeInfo = fmt.Sprintf("prep: %s, cook: %s, total: %s", recipe.PrepTime, recipe.CookTime, recipe.TotalTime)
+	}
+
 	return fmt.Sprintf(`You are a professional recipe editor tasked with normalizing recipe data for consistent storage and presentation.
 
 Input Recipe Data:
 - Title: "%s"
 - Ingredients: %s
 - Instructions: %s
+- Current Servings: %s
+- Current Times: %s
 
 Please normalize this recipe following these strict guidelines:
 
 TITLE NORMALIZATION:
 - Use Title Case (capitalize major words, lowercase articles/prepositions)
+- IMPORTANT: Apostrophes should NOT capitalize the letter after them (e.g., "Kylie's" not "Kylie'S")
+- Examples: "Bob's Burgers", "Mom's Apple Pie", "Baker's Dozen"
 - Remove excessive punctuation or emoji
 - Standardize descriptive terms (e.g., "Easy" → "Simple", "Super Yummy" → "Delicious")
 - Keep titles concise (max 60 characters)
@@ -284,6 +304,17 @@ INSTRUCTION NORMALIZATION:
 - Use consistent temperature formats (375°F, 190°C)
 - Standardize timing formats ("10 minutes", "1 hour")
 
+SERVINGS AND TIME INFERENCE (CRITICAL):
+- ALWAYS estimate servings if not provided: analyze ingredient quantities to determine realistic serving count
+- For cocktails/drinks: typically 1-2 servings unless ingredients suggest more
+- For main dishes: analyze protein amounts, starch portions to estimate 2-8 servings
+- For baked goods: count individual items or estimate portions from pan size
+- ALWAYS estimate times in minutes if missing: analyze instructions for realistic timing
+- Prep time: time for chopping, mixing, assembling before cooking
+- Cook time: actual cooking/baking/active heat time
+- Total time: prep + cook + any waiting/resting time
+- Add timing details inline in instructions when multiple phases exist (e.g., "Mix ingredients (5 minutes)", "Bake for 25 minutes", "Cool for 10 minutes")
+
 METADATA ENHANCEMENT:
 - Infer cuisine type when possible
 - Identify cooking methods (baked, sautéed, grilled, etc.)
@@ -292,15 +323,19 @@ METADATA ENHANCEMENT:
 
 Return ONLY valid JSON in this exact format:
 {
-  "normalizedTitle": "Normalized Recipe Title",
+  "normalizedTitle": "Normalized Recipe Title (e.g., 'Mom's Apple Pie' not 'Mom'S Apple Pie')",
   "normalizedIngredients": [
     {"text": "1 cup all-purpose flour"},
     {"text": "1/2 teaspoon kosher salt"}
   ],
   "normalizedInstructions": [
     {"stepNumber": 1, "text": "Preheat oven to 375°F (190°C)."},
-    {"stepNumber": 2, "text": "Mix flour and salt in large bowl."}
+    {"stepNumber": 2, "text": "Mix flour and salt in large bowl (5 minutes)."}
   ],
+  "inferredServings": 6,
+  "inferredTotalTime": 45,
+  "inferredPrepTime": 15,
+  "inferredCookTime": 30,
   "inferredMetadata": {
     "cuisineType": "American",
     "cookingMethods": ["baked"],
@@ -308,8 +343,8 @@ Return ONLY valid JSON in this exact format:
     "difficultyLevel": "Simple"
   },
   "qualityScore": 8.5,
-  "normalizationNotes": "Standardized units and temperature format"
-}`, recipe.Title, string(ingredientsJson), string(instructionsJson))
+  "normalizationNotes": "Standardized units, inferred 6 servings based on ingredient quantities, estimated 45 minutes total time"
+}`, recipe.Title, string(ingredientsJson), string(instructionsJson), servingsInfo, timeInfo)
 }
 
 func applyNormalization(original RecipeData, normalized *NormalizationResponse) RecipeData {
@@ -319,6 +354,22 @@ func applyNormalization(original RecipeData, normalized *NormalizationResponse) 
 	result.Title = normalized.NormalizedTitle
 	result.Ingredients = normalized.NormalizedIngredients
 	result.Instructions = normalized.NormalizedInstructions
+
+	// Apply inferred servings if not already present
+	if result.Servings == "" && normalized.InferredServings != nil {
+		result.Servings = fmt.Sprintf("%d", *normalized.InferredServings)
+	}
+
+	// Apply inferred times if not already present
+	if result.TotalTime == "" && normalized.InferredTotalTime != nil {
+		result.TotalTime = fmt.Sprintf("%d minutes", *normalized.InferredTotalTime)
+	}
+	if result.PrepTime == "" && normalized.InferredPrepTime != nil {
+		result.PrepTime = fmt.Sprintf("%d minutes", *normalized.InferredPrepTime)
+	}
+	if result.CookTime == "" && normalized.InferredCookTime != nil {
+		result.CookTime = fmt.Sprintf("%d minutes", *normalized.InferredCookTime)
+	}
 
 	// Add inferred metadata as tags if not already present
 	if normalized.InferredMetadata.CuisineType != "" {

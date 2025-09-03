@@ -411,12 +411,12 @@ func PrintReport(entries []ReportEntry) {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintf(w, "Recipe Name\tDomain\tDate Submitted\tStatus\n")
-	fmt.Fprintf(w, "━━━━━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━\n")
+	fmt.Fprintf(w, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━\n")
 
 	for _, entry := range entries {
 		name := entry.Name
-		if len(name) > 25 {
-			name = name[:22] + "..."
+		if len(name) > 48 {
+			name = name[:45] + "..."
 		}
 
 		domain := entry.Domain

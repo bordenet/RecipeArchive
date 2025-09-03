@@ -34,6 +34,7 @@ build_lambda "image-upload"
 build_lambda "diagnostics"
 build_lambda "diagnostic-processor"
 build_lambda "content-normalizer"
+build_lambda "background-normalizer"
 
 echo "🎉 All Lambda functions built successfully!"
 echo ""

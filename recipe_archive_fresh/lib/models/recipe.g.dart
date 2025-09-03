@@ -42,7 +42,7 @@ Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(
           .toList() ??
       const [],
   cookingTime: (json['totalTimeMinutes'] as num?)?.toInt(),
-  servings: (json['servings'] as num?)?.toInt(),
+  servings: Recipe._parseServings(json['servings']),
   cuisine: json['cuisine'] as String?,
   tags:
       (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
