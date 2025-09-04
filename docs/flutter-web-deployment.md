@@ -22,7 +22,7 @@ Before deploying, ensure you have:
 
 ```bash
 # Navigate to Flutter project directory
-cd recipe_archive_fresh
+cd recipe_archive
 
 # Install dependencies
 flutter pub get
@@ -102,7 +102,7 @@ The Flutter web app uses the following configuration:
 
 Key build settings in `pubspec.yaml`:
 ```yaml
-name: recipe_archive_fresh
+name: recipe_archive
 description: RecipeArchive Flutter Web Application
 
 dependencies:
@@ -158,7 +158,7 @@ If you need to rollback a deployment:
 2. **Redeploy previous version**:
    ```bash
    git checkout PREVIOUS_COMMIT
-   cd recipe_archive_fresh
+   cd recipe_archive
    flutter build web --release
    cd ../aws-backend
    cdk deploy

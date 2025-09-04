@@ -7,7 +7,7 @@ This document outlines a comprehensive plan for hosting the RecipeArchive Flutte
 ## Current Architecture Context
 
 Our RecipeArchive Flutter web application currently operates with:
-- **Flutter Web App**: Built with `flutter build web` from `recipe_archive_fresh/` directory
+- **Flutter Web App**: Built with `flutter build web` from `recipe_archive/` directory
 - **Local Development**: `flutter run -d chrome` for development server
 - **Static Assets**: Generated in `build/web/` directory after build process
 - **AWS Backend**: Existing Lambda + S3 + Cognito infrastructure in US-West-2
@@ -224,7 +224,7 @@ name: Deploy Flutter Web to CloudFront
 on:
   push:
     branches: [main]
-    paths: ['recipe_archive_fresh/**']
+    paths: ['recipe_archive/**']
 
 jobs:
   deploy:
@@ -238,17 +238,17 @@ jobs:
           
       - name: Install dependencies
         run: |
-          cd recipe_archive_fresh
+          cd recipe_archive
           flutter pub get
           
       - name: Build web app
         run: |
-          cd recipe_archive_fresh
+          cd recipe_archive
           flutter build web --release --web-renderer canvaskit
           
       - name: Deploy to S3
         run: |
-          aws s3 sync recipe_archive_fresh/build/web/ s3://recipearchive-web-app-prod-${AWS_ACCOUNT_ID}/ --delete
+          aws s3 sync recipe_archive/build/web/ s3://recipearchive-web-app-prod-${AWS_ACCOUNT_ID}/ --delete
           
       - name: Invalidate CloudFront
         run: |
@@ -265,7 +265,7 @@ set -e
 echo "🚀 Deploying RecipeArchive Flutter Web App to CloudFront"
 
 # Build Flutter web app
-cd recipe_archive_fresh
+cd recipe_archive
 echo "📦 Building Flutter web app..."
 flutter build web --release --web-renderer canvaskit
 

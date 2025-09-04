@@ -79,7 +79,7 @@ TEST_USER_PASSWORD=your_test_password
 RecipeArchive/
 ├── .env                 # Root project environment (all configuration)
 ├── .env.template        # Template with placeholder values
-├── recipe_archive_fresh/ # Flutter web app (uses root .env)
+├── recipe_archive/ # Flutter web app (uses root .env)
 ├── extensions/          # Browser extensions (use localStorage)
 ├── aws-backend/         # AWS infrastructure (uses root .env)
 └── docs/

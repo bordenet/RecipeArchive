@@ -10,7 +10,7 @@
 ```bash
 git clone https://github.com/bordenet/RecipeArchive
 ./validate-monorepo.sh                               # Validates all components  
-cd recipe_archive_fresh && flutter run -d chrome     # Run Flutter app
+cd recipe_archive && flutter run -d chrome     # Run Flutter app
 cd tools/recipe-report && go run main.go             # Generate recipe report (uses .env)
 ```
 
@@ -20,7 +20,7 @@ cd tools/recipe-report && go run main.go             # Generate recipe report (u
 
 ### Automated Deployment Scripts
 ```bash
-cd recipe_archive_fresh
+cd recipe_archive
 
 # Full deployment (build + deploy + invalidate)
 ./deploy.sh
@@ -154,7 +154,7 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 - **Extensions** (`extensions/`): Chrome/Safari with TypeScript parsers + AWS Cognito auth
 - **Parsers** (`parsers/`): Registry system for 13+ recipe sites  
 - **AWS Backend** (`aws-backend/`): Lambda + S3 + Cognito serverless infrastructure
-- **Flutter App** (`recipe_archive_fresh/`): Web interface with CloudFront deployment
+- **Flutter App** (`recipe_archive/`): Web interface with CloudFront deployment
 
 ### Production Infrastructure  
 - **Cognito**: User Pool `us-west-2_qJ1i9RhxD`

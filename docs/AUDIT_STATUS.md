@@ -6,7 +6,7 @@
 ## Summary
 - ✅ All major documentation updated and synchronized
 - ✅ Registry-driven parser architecture complete (10+ sites)
-- ✅ Flutter web app (`recipe_archive_fresh/`) - zero lint issues, tests passing
+- ✅ Flutter web app (`recipe_archive/`) - zero lint issues, tests passing
 - ✅ Extensions, AWS backend, and parsers production ready
 - ✅ Security validated (TruffleHog clean)
 - ✅ Comprehensive validation via `./validate-monorepo.sh`
@@ -40,7 +40,7 @@ All legacy parsers successfully migrated to registry-driven architecture:
 
 ## Development Guidelines
 - Use `./validate-monorepo.sh` to verify all components
-- Run Flutter app: `cd recipe_archive_fresh && flutter run -d chrome`
+- Run Flutter app: `cd recipe_archive && flutter run -d chrome`
 - All parsers in `/parsers/sites/site-registry.ts`
 - Contract validation enforces required fields (title, ingredients, instructions)
 
