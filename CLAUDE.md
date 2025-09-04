@@ -41,6 +41,27 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 ## 🎯 CURRENT PRIORITIES (September 4, 2025)
 
+### ✅ JUST COMPLETED: APP RENAME & PARSER ENHANCEMENTS (September 4, 2025)
+
+**FLUTTER APP RENAME COMPLETED**:
+- ✅ **Directory Renamed**: `recipe_archive_fresh` → `recipe_archive` 
+- ✅ **App Configuration**: Updated pubspec.yaml name and description to remove 'fresh'
+- ✅ **Documentation Updated**: Mass-updated all markdown files across the project
+- ✅ **Deployment Scripts**: Updated automated deployment paths for new directory structure
+- ✅ **Committed & Pushed**: All 121 file changes committed to GitHub main branch
+
+**ENHANCED PARSER IMPROVEMENTS DEPLOYED**:
+- ✅ **Comprehensive Selector Fallbacks**: AllRecipes, Food Network, Smitten Kitchen parsers enhanced
+- ✅ **Multiple Selector Chains**: Up to 5 fallback selectors per data field (servings, prep time, cook time)
+- ✅ **ISO 8601 Duration Support**: PT25M format now correctly parsed to "25 minutes"
+- ✅ **OpenAI Temperature**: Set to 0.0 for deterministic recipe normalization
+- ✅ **Debug Logging**: Enhanced Flutter service logging for troubleshooting data flow
+
+**EXPECTED IMPROVEMENTS**:
+- Gallery tiles should now display serving sizes and times for more recipes
+- Consistent recipe data extraction across supported sites
+- Reduced "Unknown" values in recipe display
+
 ### 🚨 CRITICAL BUG: INGREDIENT SCALING NOT WORKING
 
 **PRIORITY 1 ISSUE**: Serving size changes on recipe detail pages do NOT trigger immediate ingredient quantity updates. This is a fundamental recipe app requirement.

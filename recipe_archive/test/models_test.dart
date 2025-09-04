@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:recipe_archive_fresh/models/recipe.dart';
+import 'package:recipe_archive/models/recipe.dart';
 
 void main() {
   group('Recipe Model Tests', () {

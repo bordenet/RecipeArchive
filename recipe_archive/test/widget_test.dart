@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:recipe_archive_fresh/main.dart';
+import 'package:recipe_archive/main.dart';
 
 void main() {
   testWidgets('Recipe Archive smoke test', (WidgetTester tester) async {
