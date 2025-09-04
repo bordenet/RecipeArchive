@@ -455,13 +455,39 @@ func applyNormalization(original RecipeData, normalized *NormalizationResponse) 
 	return result
 }
 
+// normalizeTitle applies proper title capitalization without capitalizing after apostrophes
+func normalizeTitle(title string) string {
+	if len(title) == 0 {
+		return title
+	}
+
+	// Convert to lowercase first, then runes for proper Unicode handling
+	title = strings.ToLower(title)
+	runes := []rune(title)
+
+	// Capitalize first letter
+	if runes[0] >= 'a' && runes[0] <= 'z' {
+		runes[0] = runes[0] - 'a' + 'A'
+	}
+
+	// Capitalize letters after spaces and hyphens, but NOT after apostrophes
+	for i := 1; i < len(runes); i++ {
+		if (runes[i-1] == ' ' || runes[i-1] == '-') &&
+			runes[i] >= 'a' && runes[i] <= 'z' {
+			runes[i] = runes[i] - 'a' + 'A'
+		}
+	}
+
+	return string(runes)
+}
+
 func basicNormalization(recipe RecipeData) RecipeData {
 	// Fallback normalization without AI
 	result := recipe
 
 	// Basic title cleanup
 	result.Title = strings.TrimSpace(recipe.Title)
-	result.Title = strings.Title(strings.ToLower(result.Title))
+	result.Title = normalizeTitle(result.Title)
 
 	// Basic ingredient cleanup
 	for i, ingredient := range result.Ingredients {

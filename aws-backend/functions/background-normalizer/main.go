@@ -475,9 +475,9 @@ func normalizeTitle(title string) string {
 		runes[0] = runes[0] - 'a' + 'A'
 	}
 
-	// Capitalize letters after spaces, apostrophes, and hyphens
+	// Capitalize letters after spaces and hyphens, but NOT after apostrophes
 	for i := 1; i < len(runes); i++ {
-		if (runes[i-1] == ' ' || runes[i-1] == '\'' || runes[i-1] == '-') &&
+		if (runes[i-1] == ' ' || runes[i-1] == '-') &&
 			runes[i] >= 'a' && runes[i] <= 'z' {
 			runes[i] = runes[i] - 'a' + 'A'
 		}

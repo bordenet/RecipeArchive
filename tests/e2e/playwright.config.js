@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'https://d1jcaphz4458q7.cloudfront.net',
+    baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -42,8 +42,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: process.env.CI ? undefined : {
-    command: 'echo "Using CloudFront deployment at https://d1jcaphz4458q7.cloudfront.net"',
-    url: 'https://d1jcaphz4458q7.cloudfront.net',
+    command: 'echo "Using local Flutter development server at http://localhost:3000"',
+    url: 'http://localhost:3000',
     reuseExistingServer: true,
   },
 });

@@ -44,6 +44,32 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 ## 🎯 CURRENT PRIORITIES (September 4, 2025)
 
+### ✅ CRITICAL TITLE CAPITALIZATION FIXED
+
+**ROOT CAUSE RESOLVED**: Fixed title capitalization issues ("mathilde's tomato tart" → "Mathilde's Tomato Tart", "General Tso'S Chicken" → "General Tso's Chicken")
+
+**COMPLETED FIXES**:
+- ✅ **Background Normalizer**: Fixed fallback function incorrectly capitalizing letters after apostrophes
+- ✅ **Content Normalizer**: Replaced `strings.Title()` with custom function that excludes apostrophes
+- ✅ **Deployment**: Both Lambda functions successfully deployed to AWS production
+- ✅ **OpenAI Prompts**: Already correct - issue was only in fallback functions
+
+### ⚠️ PLAYWRIGHT E2E TESTS ASSESSMENT
+
+**CURRENT STATUS**: Playwright tests are **NOT ADDING VALUE** in their current state
+
+**ROOT ISSUE**: Tests were designed for standard HTML elements but Flutter web renders custom canvas-based UI
+- Tests look for `input[type="email"]` but Flutter uses custom rendered input widgets
+- Previous tests targeted production CloudFront deployment, now fixed to target `localhost:3000`
+- Basic loading tests pass, but authentication flow tests fail due to element selector incompatibility
+
+**RECOMMENDATION**: 
+- **OPTION 1**: Redesign tests using Flutter integration test framework instead of Playwright
+- **OPTION 2**: Use Flutter web semantic labels and accessibility selectors for Playwright  
+- **OPTION 3**: Remove Playwright tests and rely on Flutter widget tests + manual testing
+
+**CURRENT DECISION**: Playwright tests disabled pending architecture review
+
 ### ✅ VALIDATION SCRIPT WARNINGS FIXED
 
 **COMPLETED**: Fixed all Flutter directory reference warnings in `./validate-monorepo.sh`
