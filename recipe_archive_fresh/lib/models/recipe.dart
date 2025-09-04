@@ -228,6 +228,18 @@ class Recipe {
     if (timeValue is int) {
       return timeValue;
     } else if (timeValue is String && timeValue.isNotEmpty) {
+      // Handle ISO 8601 duration format like "PT25M"
+      final iso8601Match = RegExp(r'^PT(\d+)M$').firstMatch(timeValue);
+      if (iso8601Match != null) {
+        return int.tryParse(iso8601Match.group(1)!);
+      }
+      // Handle ISO 8601 format with hours like "PT1H30M"
+      final iso8601WithHours = RegExp(r'^PT(?:(\d+)H)?(?:(\d+)M)?$').firstMatch(timeValue);
+      if (iso8601WithHours != null) {
+        final hours = int.tryParse(iso8601WithHours.group(1) ?? '0') ?? 0;
+        final minutes = int.tryParse(iso8601WithHours.group(2) ?? '0') ?? 0;
+        return hours * 60 + minutes;
+      }
       // Parse string numbers like "45" or "30"
       return int.tryParse(timeValue);
     }

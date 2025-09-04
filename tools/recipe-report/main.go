@@ -48,7 +48,7 @@ type JWTPayload struct {
 func loadEnvFile() {
 	// Look for .env file in current directory and parent directories
 	paths := []string{".env", "../.env", "../../.env"}
-	
+
 	for _, path := range paths {
 		if file, err := os.Open(path); err == nil {
 			defer file.Close()
@@ -58,7 +58,7 @@ func loadEnvFile() {
 				if line == "" || strings.HasPrefix(line, "#") {
 					continue
 				}
-				
+
 				parts := strings.SplitN(line, "=", 2)
 				if len(parts) == 2 {
 					key := strings.TrimSpace(parts[0])
@@ -474,11 +474,11 @@ func PrintReport(entries []ReportEntry) {
 func main() {
 	// Load environment variables from .env file
 	loadEnvFile()
-	
+
 	// Get defaults from environment variables
 	defaultEmail := os.Getenv("TEST_USER_EMAIL")
 	defaultPassword := os.Getenv("TEST_USER_PASSWORD")
-	
+
 	// Command line flags with environment variable defaults
 	var (
 		userEmail  = flag.String("user", defaultEmail, "Email address for authentication")

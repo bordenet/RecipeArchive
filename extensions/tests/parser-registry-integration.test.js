@@ -6,7 +6,7 @@
  */
 
 describe('Parser Registry Integration Tests', () => {
-  let parserBundle;
+  let _parserBundle;
   let registry;
 
   beforeAll(async () => {
@@ -16,6 +16,7 @@ describe('Parser Registry Integration Tests', () => {
     
     const bundlePath = path.join(__dirname, '../chrome/typescript-parser-bundle.js');
     const bundleCode = fs.readFileSync(bundlePath, 'utf8');
+    _parserBundle = bundleCode;
     
     // Create a mock browser environment
     global.window = {};
@@ -180,7 +181,7 @@ describe('Parser Registry Integration Tests', () => {
       
       // This should not throw errors even if parsing fails
       expect(async () => {
-        const result = await registry.parseRecipe(mockHtml, testUrl);
+        const _result = await registry.parseRecipe(mockHtml, testUrl);
         // Result can be null if parsing fails, but shouldn't throw
       }).not.toThrow();
     });

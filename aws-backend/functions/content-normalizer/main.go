@@ -205,7 +205,7 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData, pageHtml string
 				Content: prompt,
 			},
 		},
-		Temperature: 0.1, // Low creativity for consistency
+		Temperature: 0.0, // Zero temperature for deterministic responses
 		MaxTokens:   2000,
 	}
 

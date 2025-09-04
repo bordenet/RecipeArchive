@@ -31,13 +31,13 @@ func init() {
 
 // DiagnosticSummary represents processed diagnostic data
 type DiagnosticSummary struct {
-	TotalFailures     int                    `json:"totalFailures"`
-	FailuresByDomain  map[string]int         `json:"failuresByDomain"`
-	FailuresByType    map[string]int         `json:"failuresByType"`
-	CommonPatterns    []PatternAnalysis      `json:"commonPatterns"`
-	RecentFailures    []FailureDetails       `json:"recentFailures"`
-	ParserSuggestions []ParserSuggestion     `json:"parserSuggestions"`
-	LastAnalyzed      string                 `json:"lastAnalyzed"`
+	TotalFailures     int                `json:"totalFailures"`
+	FailuresByDomain  map[string]int     `json:"failuresByDomain"`
+	FailuresByType    map[string]int     `json:"failuresByType"`
+	CommonPatterns    []PatternAnalysis  `json:"commonPatterns"`
+	RecentFailures    []FailureDetails   `json:"recentFailures"`
+	ParserSuggestions []ParserSuggestion `json:"parserSuggestions"`
+	LastAnalyzed      string             `json:"lastAnalyzed"`
 }
 
 // PatternAnalysis represents common failure patterns
@@ -50,36 +50,36 @@ type PatternAnalysis struct {
 
 // FailureDetails represents individual failure information
 type FailureDetails struct {
-	URL           string    `json:"url"`
-	Domain        string    `json:"domain"`
-	ErrorType     string    `json:"errorType"`
-	ErrorMessage  string    `json:"errorMessage"`
-	Timestamp     time.Time `json:"timestamp"`
-	UserAgent     string    `json:"userAgent"`
-	S3Path        string    `json:"s3Path,omitempty"`
+	URL          string    `json:"url"`
+	Domain       string    `json:"domain"`
+	ErrorType    string    `json:"errorType"`
+	ErrorMessage string    `json:"errorMessage"`
+	Timestamp    time.Time `json:"timestamp"`
+	UserAgent    string    `json:"userAgent"`
+	S3Path       string    `json:"s3Path,omitempty"`
 }
 
 // ParserSuggestion represents improvements for parsers
 type ParserSuggestion struct {
-	Domain      string   `json:"domain"`
-	Priority    string   `json:"priority"`
-	Issue       string   `json:"issue"`
-	Suggestion  string   `json:"suggestion"`
-	Examples    []string `json:"examples"`
-	Confidence  float64  `json:"confidence"`
+	Domain     string   `json:"domain"`
+	Priority   string   `json:"priority"`
+	Issue      string   `json:"issue"`
+	Suggestion string   `json:"suggestion"`
+	Examples   []string `json:"examples"`
+	Confidence float64  `json:"confidence"`
 }
 
 // DiagnosticData represents raw diagnostic data structure
 type DiagnosticData struct {
-	URL              string                 `json:"url"`
-	UserAgent        string                 `json:"userAgent"`
-	ErrorType        string                 `json:"errorType"`
-	Error            string                 `json:"error"`
-	HTML             string                 `json:"html,omitempty"`
-	RecipeData       map[string]interface{} `json:"recipeData,omitempty"`
-	DiagnosticData   map[string]interface{} `json:"diagnosticData,omitempty"`
-	Timestamp        string                 `json:"timestamp"`
-	FailureReason    string                 `json:"failureReason,omitempty"`
+	URL            string                 `json:"url"`
+	UserAgent      string                 `json:"userAgent"`
+	ErrorType      string                 `json:"errorType"`
+	Error          string                 `json:"error"`
+	HTML           string                 `json:"html,omitempty"`
+	RecipeData     map[string]interface{} `json:"recipeData,omitempty"`
+	DiagnosticData map[string]interface{} `json:"diagnosticData,omitempty"`
+	Timestamp      string                 `json:"timestamp"`
+	FailureReason  string                 `json:"failureReason,omitempty"`
 }
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -135,7 +135,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 
 func analyzeDiagnosticData(ctx context.Context) (*DiagnosticSummary, error) {
 	bucketName := "recipearchive-failed-parsing-dev-990537043943"
-	
+
 	// List all diagnostic files
 	result, err := s3Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
@@ -158,7 +158,7 @@ func analyzeDiagnosticData(ctx context.Context) (*DiagnosticSummary, error) {
 
 		// Extract metadata from object metadata and key
 		failure := parseFailureFromS3Key(*obj.Key, obj.LastModified)
-		
+
 		// Get additional metadata if available
 		headResult, err := s3Client.HeadObject(ctx, &s3.HeadObjectInput{
 			Bucket: aws.String(bucketName),
@@ -209,7 +209,7 @@ func analyzeDiagnosticData(ctx context.Context) (*DiagnosticSummary, error) {
 
 	// Analyze patterns
 	patterns := analyzePatterns(errorPatterns, domainMap, typeMap)
-	
+
 	// Generate parser suggestions
 	suggestions := generateParserSuggestions(domainMap, typeMap, failures)
 
@@ -233,7 +233,7 @@ func parseFailureFromS3Key(key string, lastModified *time.Time) FailureDetails {
 
 	filename := parts[len(parts)-1]
 	fileParts := strings.Split(filename, "_")
-	
+
 	failure := FailureDetails{
 		Timestamp: *lastModified,
 	}
@@ -282,7 +282,7 @@ func extractErrorPattern(errorMsg string) string {
 		"Network timeout":        regexp.MustCompile(`timeout|network|connection`),
 		"Missing selector":       regexp.MustCompile(`selector|element not found|querySelector`),
 		"Invalid data structure": regexp.MustCompile(`undefined|null|invalid|structure`),
-		"CORS error":            regexp.MustCompile(`CORS|cross-origin|blocked`),
+		"CORS error":             regexp.MustCompile(`CORS|cross-origin|blocked`),
 		"Authentication error":   regexp.MustCompile(`auth|unauthorized|forbidden|401|403`),
 	}
 
@@ -330,7 +330,7 @@ func getPatternDescription(pattern string) string {
 		"Network timeout":        "Requests are timing out, possibly due to slow site response",
 		"Missing selector":       "Parser selectors not finding expected HTML elements",
 		"Invalid data structure": "Recipe data structure doesn't match expected format",
-		"CORS error":            "Cross-origin request blocked by browser security policy",
+		"CORS error":             "Cross-origin request blocked by browser security policy",
 		"Authentication error":   "Site requires authentication or blocks automated access",
 	}
 
@@ -372,7 +372,7 @@ func generateParserSuggestions(domainMap, typeMap map[string]int, failures []Fai
 		}
 
 		issue, suggestion := analyzeDomainFailures(domain, domainFailures)
-		
+
 		examples := make([]string, 0)
 		for _, failure := range domainFailures {
 			if len(examples) < 3 {

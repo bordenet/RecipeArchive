@@ -13,10 +13,10 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/google/uuid"
 
 	"recipe-archive/db"
@@ -33,6 +33,7 @@ type NormalizationMessage struct {
 	UserID   string `json:"userId"`
 	Action   string `json:"action"`
 }
+
 var bucketName string
 
 func init() {
@@ -399,12 +400,12 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		// Store recipe immediately with raw data - normalization will happen asynchronously
 		now := time.Now().UTC()
 		updatedRecipe := models.Recipe{
-			ID:               existingRecipe.ID,        // Keep same ID
-			UserID:           userID,                   // Current user
+			ID:               existingRecipe.ID,                   // Keep same ID
+			UserID:           userID,                              // Current user
 			Title:            strings.TrimSpace(recipeData.Title), // Raw title (will be normalized async)
-			Ingredients:      recipeData.Ingredients,   // Raw ingredients
-			Instructions:     recipeData.Instructions,  // Raw instructions
-			SourceURL:        sourceURL,               // Same URL
+			Ingredients:      recipeData.Ingredients,              // Raw ingredients
+			Instructions:     recipeData.Instructions,             // Raw instructions
+			SourceURL:        sourceURL,                           // Same URL
 			PrepTimeMinutes:  recipeData.PrepTimeMinutes,
 			CookTimeMinutes:  recipeData.CookTimeMinutes,
 			TotalTimeMinutes: recipeData.TotalTimeMinutes,
@@ -413,9 +414,9 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			Categories:       recipeData.Categories,
 			MainPhotoURL:     recipeData.MainPhotoURL,
 			Description:      recipeData.Description,
-			CreatedAt:        existingRecipe.CreatedAt, // Preserve original creation
-			UpdatedAt:        now,                      // Current timestamp
-			IsDeleted:        false,                    // Ensure not deleted
+			CreatedAt:        existingRecipe.CreatedAt,   // Preserve original creation
+			UpdatedAt:        now,                        // Current timestamp
+			IsDeleted:        false,                      // Ensure not deleted
 			Version:          existingRecipe.Version + 1, // Increment version
 		}
 
@@ -457,8 +458,8 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		ID:               uuid.New().String(),
 		UserID:           userID,
 		Title:            strings.TrimSpace(recipeData.Title), // Raw title (will be normalized async)
-		Ingredients:      recipeData.Ingredients,             // Raw ingredients
-		Instructions:     recipeData.Instructions,            // Raw instructions
+		Ingredients:      recipeData.Ingredients,              // Raw ingredients
+		Instructions:     recipeData.Instructions,             // Raw instructions
 		SourceURL:        strings.TrimSpace(recipeData.SourceURL),
 		MainPhotoURL:     recipeData.MainPhotoURL,
 		PrepTimeMinutes:  recipeData.PrepTimeMinutes,
@@ -804,23 +805,23 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 	// Parse response
 	var normalizeResponse struct {
 		NormalizedRecipe struct {
-			Title        string `json:"title"`
-			Ingredients  []struct {
+			Title       string `json:"title"`
+			Ingredients []struct {
 				Text string `json:"text"`
 			} `json:"ingredients"`
 			Instructions []struct {
 				StepNumber int    `json:"stepNumber"`
 				Text       string `json:"text"`
 			} `json:"instructions"`
-			Author       string   `json:"author,omitempty"`
-			PrepTime     string   `json:"prepTime,omitempty"`
-			CookTime     string   `json:"cookTime,omitempty"`
-			TotalTime    string   `json:"totalTime,omitempty"`
-			Servings     string   `json:"servings,omitempty"`
-			Description  string   `json:"description,omitempty"`
-			ImageUrl     string   `json:"imageUrl,omitempty"`
-			SourceUrl    string   `json:"sourceUrl,omitempty"`
-			Tags         []string `json:"tags,omitempty"`
+			Author      string   `json:"author,omitempty"`
+			PrepTime    string   `json:"prepTime,omitempty"`
+			CookTime    string   `json:"cookTime,omitempty"`
+			TotalTime   string   `json:"totalTime,omitempty"`
+			Servings    string   `json:"servings,omitempty"`
+			Description string   `json:"description,omitempty"`
+			ImageUrl    string   `json:"imageUrl,omitempty"`
+			SourceUrl   string   `json:"sourceUrl,omitempty"`
+			Tags        []string `json:"tags,omitempty"`
 		} `json:"normalizedRecipe"`
 		QualityScore       float64 `json:"qualityScore"`
 		NormalizationNotes string  `json:"normalizationNotes"`
@@ -831,7 +832,7 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 		return nil, fmt.Errorf("failed to decode normalization response: %w", err)
 	}
 
-	fmt.Printf("✅ OpenAI normalization completed with quality score: %.1f (fallback: %v)\n", 
+	fmt.Printf("✅ OpenAI normalization completed with quality score: %.1f (fallback: %v)\n",
 		normalizeResponse.QualityScore, normalizeResponse.FallbackUsed)
 	if normalizeResponse.NormalizationNotes != "" {
 		fmt.Printf("📝 Normalization notes: %s\n", normalizeResponse.NormalizationNotes)
@@ -849,7 +850,7 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 		Title:            normalizeResponse.NormalizedRecipe.Title,
 		Ingredients:      convertNormalizerIngredientsToModel(normalizeResponse.NormalizedRecipe.Ingredients),
 		Instructions:     convertNormalizerInstructionsToModel(normalizeResponse.NormalizedRecipe.Instructions),
-		SourceURL:        recipeData.SourceURL, // Keep original source URL
+		SourceURL:        recipeData.SourceURL,    // Keep original source URL
 		MainPhotoURL:     recipeData.MainPhotoURL, // Keep original photo URL
 		Description:      description,
 		PrepTimeMinutes:  parseTimeFromNormalizer(normalizeResponse.NormalizedRecipe.PrepTime, recipeData.PrepTimeMinutes),
@@ -858,7 +859,7 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 		Servings:         parseServingsFromNormalizer(normalizeResponse.NormalizedRecipe.Servings, recipeData.Servings),
 		Yield:            recipeData.Yield, // Keep original yield
 		Categories:       normalizeResponse.NormalizedRecipe.Tags,
-		Reviews:          recipeData.Reviews, // Keep original reviews
+		Reviews:          recipeData.Reviews,   // Keep original reviews
 		Nutrition:        recipeData.Nutrition, // Keep original nutrition
 	}
 
@@ -939,12 +940,12 @@ func parseTimeFromNormalizer(timeStr string, fallback *int) *int {
 	if timeStr == "" {
 		return fallback
 	}
-	
+
 	// Simple parsing for common formats like "30 minutes", "1 hour", "1 hour 30 minutes"
 	timeStr = strings.ToLower(strings.TrimSpace(timeStr))
-	
+
 	var totalMinutes int
-	
+
 	// Extract hours
 	if strings.Contains(timeStr, "hour") {
 		parts := strings.Fields(timeStr)
@@ -957,7 +958,7 @@ func parseTimeFromNormalizer(timeStr string, fallback *int) *int {
 			}
 		}
 	}
-	
+
 	// Extract minutes
 	if strings.Contains(timeStr, "minute") {
 		parts := strings.Fields(timeStr)
@@ -970,11 +971,11 @@ func parseTimeFromNormalizer(timeStr string, fallback *int) *int {
 			}
 		}
 	}
-	
+
 	if totalMinutes > 0 {
 		return &totalMinutes
 	}
-	
+
 	return fallback
 }
 
@@ -982,16 +983,16 @@ func parseServingsFromNormalizer(servingsStr string, fallback *int) *int {
 	if servingsStr == "" {
 		return fallback
 	}
-	
+
 	// Extract number from strings like "4 servings", "1 serving"
 	servingsStr = strings.ToLower(strings.TrimSpace(servingsStr))
 	parts := strings.Fields(servingsStr)
-	
+
 	if len(parts) > 0 {
 		if servings, err := strconv.Atoi(parts[0]); err == nil {
 			return &servings
 		}
 	}
-	
+
 	return fallback
 }

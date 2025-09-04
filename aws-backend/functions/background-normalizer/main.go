@@ -13,9 +13,9 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 // SQS Message format for recipe normalization
@@ -27,22 +27,22 @@ type NormalizationMessage struct {
 
 // Simplified recipe structure for normalization
 type Recipe struct {
-	ID           string         `json:"id"`
-	UserID       string         `json:"userId"`
-	Title        string         `json:"title"`
-	Ingredients  []Ingredient   `json:"ingredients"`
-	Instructions []Instruction  `json:"instructions"`
-	SourceURL    string         `json:"sourceUrl"`
-	MainPhotoURL string         `json:"mainPhotoUrl,omitempty"`
-	Servings     string         `json:"servings,omitempty"`
-	TotalTime    string         `json:"totalTimeMinutes,omitempty"`
-	PrepTime     string         `json:"prepTime,omitempty"`
-	CookTime     string         `json:"cookTime,omitempty"`
-	Tags         []string       `json:"tags,omitempty"`
-	CreatedAt    string         `json:"createdAt"`
-	UpdatedAt    string         `json:"updatedAt"`
-	IsDeleted    bool           `json:"isDeleted"`
-	Version      int            `json:"version"`
+	ID           string        `json:"id"`
+	UserID       string        `json:"userId"`
+	Title        string        `json:"title"`
+	Ingredients  []Ingredient  `json:"ingredients"`
+	Instructions []Instruction `json:"instructions"`
+	SourceURL    string        `json:"sourceUrl"`
+	MainPhotoURL string        `json:"mainPhotoUrl,omitempty"`
+	Servings     string        `json:"servings,omitempty"`
+	TotalTime    string        `json:"totalTimeMinutes,omitempty"`
+	PrepTime     string        `json:"prepTime,omitempty"`
+	CookTime     string        `json:"cookTime,omitempty"`
+	Tags         []string      `json:"tags,omitempty"`
+	CreatedAt    string        `json:"createdAt"`
+	UpdatedAt    string        `json:"updatedAt"`
+	IsDeleted    bool          `json:"isDeleted"`
+	Version      int           `json:"version"`
 }
 
 type Ingredient struct {
@@ -81,16 +81,16 @@ type OpenAIResponse struct {
 
 // NormalizationResponse represents the output from OpenAI
 type NormalizationResponse struct {
-	NormalizedTitle        string            `json:"normalizedTitle"`
-	NormalizedIngredients  []Ingredient      `json:"normalizedIngredients"`
-	NormalizedInstructions []Instruction     `json:"normalizedInstructions"`
-	InferredMetadata       InferredMetadata  `json:"inferredMetadata"`
-	InferredServings       *int              `json:"inferredServings,omitempty"`
-	InferredTotalTime      *int              `json:"inferredTotalTime,omitempty"`
-	InferredPrepTime       *int              `json:"inferredPrepTime,omitempty"`
-	InferredCookTime       *int              `json:"inferredCookTime,omitempty"`
-	QualityScore           float64           `json:"qualityScore"`
-	NormalizationNotes     string            `json:"normalizationNotes"`
+	NormalizedTitle        string           `json:"normalizedTitle"`
+	NormalizedIngredients  []Ingredient     `json:"normalizedIngredients"`
+	NormalizedInstructions []Instruction    `json:"normalizedInstructions"`
+	InferredMetadata       InferredMetadata `json:"inferredMetadata"`
+	InferredServings       *int             `json:"inferredServings,omitempty"`
+	InferredTotalTime      *int             `json:"inferredTotalTime,omitempty"`
+	InferredPrepTime       *int             `json:"inferredPrepTime,omitempty"`
+	InferredCookTime       *int             `json:"inferredCookTime,omitempty"`
+	QualityScore           float64          `json:"qualityScore"`
+	NormalizationNotes     string           `json:"normalizationNotes"`
 }
 
 type InferredMetadata struct {
@@ -109,7 +109,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 	if err != nil {
 		return fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	
+
 	s3Client := s3.NewFromConfig(cfg)
 	bucketName := os.Getenv("S3_STORAGE_BUCKET")
 
@@ -159,7 +159,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 
 		// Update with normalized data
 		*recipe = *normalizedRecipe
-		
+
 		// Always save the recipe (even if only metadata was added)
 		if err := saveRecipeToS3(ctx, s3Client, bucketName, recipe); err != nil {
 			log.Printf("❌ Failed to update normalized recipe %s: %v", message.RecipeID, err)
@@ -175,7 +175,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 // getRecipeFromS3 retrieves a recipe from S3
 func getRecipeFromS3(ctx context.Context, s3Client *s3.Client, bucketName, userID, recipeID string) (*Recipe, error) {
 	key := fmt.Sprintf("recipes/%s/%s.json", userID, recipeID)
-	
+
 	result, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(key),
@@ -196,7 +196,7 @@ func getRecipeFromS3(ctx context.Context, s3Client *s3.Client, bucketName, userI
 // saveRecipeToS3 saves a recipe to S3
 func saveRecipeToS3(ctx context.Context, s3Client *s3.Client, bucketName string, recipe *Recipe) error {
 	key := fmt.Sprintf("recipes/%s/%s.json", recipe.UserID, recipe.ID)
-	
+
 	recipeJSON, err := json.Marshal(recipe)
 	if err != nil {
 		return fmt.Errorf("failed to marshal recipe: %w", err)
@@ -208,7 +208,7 @@ func saveRecipeToS3(ctx context.Context, s3Client *s3.Client, bucketName string,
 		Body:        strings.NewReader(string(recipeJSON)),
 		ContentType: aws.String("application/json"),
 	})
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to save recipe to S3: %w", err)
 	}
@@ -239,7 +239,7 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 				Content: prompt,
 			},
 		},
-		Temperature: 0.1,
+		Temperature: 0.0,
 		MaxTokens:   2000,
 	}
 
@@ -469,20 +469,20 @@ func normalizeTitle(title string) string {
 
 	// Convert to runes for proper Unicode handling
 	runes := []rune(title)
-	
+
 	// Capitalize first letter
 	if runes[0] >= 'a' && runes[0] <= 'z' {
 		runes[0] = runes[0] - 'a' + 'A'
 	}
-	
+
 	// Capitalize letters after spaces, apostrophes, and hyphens
 	for i := 1; i < len(runes); i++ {
-		if (runes[i-1] == ' ' || runes[i-1] == '\'' || runes[i-1] == '-') && 
-		   runes[i] >= 'a' && runes[i] <= 'z' {
+		if (runes[i-1] == ' ' || runes[i-1] == '\'' || runes[i-1] == '-') &&
+			runes[i] >= 'a' && runes[i] <= 'z' {
 			runes[i] = runes[i] - 'a' + 'A'
 		}
 	}
-	
+
 	return string(runes)
 }
 

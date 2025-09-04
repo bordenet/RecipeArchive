@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
-
 )
 
 var s3Client *s3.Client
@@ -31,15 +30,15 @@ func init() {
 
 // DiagnosticData represents the structure of diagnostic data from extensions
 type DiagnosticData struct {
-	URL              string                 `json:"url"`
-	UserAgent        string                 `json:"userAgent"`
-	ErrorType        string                 `json:"errorType"`
-	Error            string                 `json:"error"`
-	HTML             string                 `json:"html,omitempty"`
-	RecipeData       map[string]interface{} `json:"recipeData,omitempty"`
-	DiagnosticData   map[string]interface{} `json:"diagnosticData,omitempty"`
-	Timestamp        string                 `json:"timestamp"`
-	FailureReason    string                 `json:"failureReason,omitempty"`
+	URL            string                 `json:"url"`
+	UserAgent      string                 `json:"userAgent"`
+	ErrorType      string                 `json:"errorType"`
+	Error          string                 `json:"error"`
+	HTML           string                 `json:"html,omitempty"`
+	RecipeData     map[string]interface{} `json:"recipeData,omitempty"`
+	DiagnosticData map[string]interface{} `json:"diagnosticData,omitempty"`
+	Timestamp      string                 `json:"timestamp"`
+	FailureReason  string                 `json:"failureReason,omitempty"`
 }
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -121,10 +120,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 				Body:        strings.NewReader(diagnosticData.HTML),
 				ContentType: aws.String("text/html"),
 				Metadata: map[string]string{
-					"url":         diagnosticData.URL,
-					"error-type":  diagnosticData.ErrorType,
-					"user-agent":  diagnosticData.UserAgent,
-					"timestamp":   diagnosticData.Timestamp,
+					"url":        diagnosticData.URL,
+					"error-type": diagnosticData.ErrorType,
+					"user-agent": diagnosticData.UserAgent,
+					"timestamp":  diagnosticData.Timestamp,
 				},
 			})
 
