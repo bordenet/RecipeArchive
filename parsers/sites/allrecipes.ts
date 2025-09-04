@@ -113,11 +113,32 @@ export class AllRecipesParser extends BaseParser {
             imageUrl = $('meta[property="og:image"]').attr('content');
         }
 
-        // Extract timing and serving info
-        const prepTime = this.sanitizeText($('.prep-time, .recipe-prep-time, [data-prep-time]').first().text());
-        const cookTime = this.sanitizeText($('.cook-time, .recipe-cook-time, [data-cook-time]').first().text());
-        const totalTime = this.sanitizeText($('.total-time, .recipe-total-time, [data-total-time]').first().text());
-        const servings = this.sanitizeText($('.servings, .recipe-yield, .recipe-servings, [data-servings]').first().text());
+        // Extract timing and serving info with comprehensive fallback selectors
+        const prepTime = this.sanitizeText(
+            $('.prep-time, .recipe-prep-time, [data-prep-time]').first().text() ||
+            $('.recipe-timing .prep-time, [data-testid="prep-time"], .preparation-time').first().text() ||
+            $('[aria-label*="prep"], [title*="prep"], .recipe-meta-prep').first().text()
+        );
+        
+        const cookTime = this.sanitizeText(
+            $('.cook-time, .recipe-cook-time, [data-cook-time]').first().text() ||
+            $('.recipe-timing .cook-time, [data-testid="cook-time"], .cooking-time').first().text() ||
+            $('[aria-label*="cook"], [title*="cook"], .recipe-meta-cook').first().text()
+        );
+        
+        const totalTime = this.sanitizeText(
+            $('.total-time, .recipe-total-time, [data-total-time]').first().text() ||
+            $('.recipe-timing .total-time, [data-testid="total-time"], .recipe-duration').first().text() ||
+            $('[aria-label*="total"], [title*="total"], .recipe-meta-total').first().text()
+        );
+        
+        const servings = this.sanitizeText(
+            $('.servings, .recipe-yield, .recipe-servings, [data-servings]').first().text() ||
+            $('.recipe-nutrition-section .recipe-nutrition__table td:contains("servings")').next().text() ||
+            $('[data-testid="recipe-servings"], [data-testid="servings"], .nutrition-servings').first().text() ||
+            $('.recipe-meta-servings, .recipe-summary-servings, [aria-label*="servings"]').first().text() ||
+            $('.recipe-facts .servings, .nutrition-info .servings').first().text()
+        );
 
         const recipe: Recipe = {
             title,

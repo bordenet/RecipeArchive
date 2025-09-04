@@ -111,6 +111,36 @@ export class FoodNetworkParser extends BaseParser {
     const ogImage = $('meta[property="og:image"]').attr('content');
     if (ogImage) imageUrl = ogImage;
 
+        // Extract timing and serving info with comprehensive selectors
+        const prepTime = this.sanitizeText(
+            $('.recipe-timing .prep-time, [data-testid="prep-time"], .preparation-time').first().text() ||
+            $('.recipe-meta-prep, .prep-time-value, [data-prep-time]').first().text() ||
+            $('[aria-label*="prep"], [title*="prep"], .recipe-times .prep').first().text() ||
+            $('.recipe-time:contains("prep") ~ .time-value, .time-prep').first().text()
+        );
+        
+        const cookTime = this.sanitizeText(
+            $('.recipe-timing .cook-time, [data-testid="cook-time"], .cooking-time').first().text() ||
+            $('.recipe-meta-cook, .cook-time-value, [data-cook-time]').first().text() ||
+            $('[aria-label*="cook"], [title*="cook"], .recipe-times .cook').first().text() ||
+            $('.recipe-time:contains("cook") ~ .time-value, .time-cook').first().text()
+        );
+        
+        const totalTime = this.sanitizeText(
+            $('.recipe-timing .total-time, [data-testid="total-time"], .recipe-duration').first().text() ||
+            $('.recipe-meta-total, .total-time-value, [data-total-time]').first().text() ||
+            $('[aria-label*="total"], [title*="total"], .recipe-times .total').first().text() ||
+            $('.recipe-time:contains("total") ~ .time-value, .time-total').first().text()
+        );
+        
+        const servings = this.sanitizeText(
+            $('.recipe-servings, [data-testid="servings"], [data-servings]').first().text() ||
+            $('.recipe-yield, .servings-value, .recipe-meta-servings').first().text() ||
+            $('[aria-label*="servings"], [title*="servings"], .recipe-serving-size').first().text() ||
+            $('.nutrition-info .servings, .recipe-facts .servings').first().text() ||
+            $('.recipe-info:contains("serves") .value, .serves-value').first().text()
+        );
+
         // Create and validate recipe object
         const recipe: Recipe = {
             title,
@@ -118,7 +148,11 @@ export class FoodNetworkParser extends BaseParser {
             author,
             ingredients,
             instructions,
-            imageUrl
+            imageUrl,
+            prepTime: prepTime || undefined,
+            cookTime: cookTime || undefined,
+            totalTime: totalTime || undefined,
+            servings: servings || undefined
         };
 
         const validation = this.validateRecipe(recipe);

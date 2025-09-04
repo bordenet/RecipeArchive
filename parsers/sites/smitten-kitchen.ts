@@ -108,8 +108,30 @@ export class SmittenKitchenParser extends BaseParser {
 			let imageUrl = $('.recipe-photo img, img, .post-thumbnail-container img').first().attr('src') || undefined;
 			const ogImage = $('meta[property="og:image"]').attr('content');
 			if (ogImage) imageUrl = ogImage;
-			let totalTime = this.sanitizeText($('.jetpack-recipe-time time, .jetpack-recipe-time').first().text().replace(/Time:\s*/gi, '').trim()) || '';
-			let servings = this.sanitizeText($('.jetpack-recipe-servings').first().text().replace(/Servings:\s*/gi, '').trim()) || '';
+			// Enhanced time extraction with individual time components
+			const prepTime = this.sanitizeText(
+				$('.jetpack-recipe-prep-time, .recipe-prep-time').first().text().replace(/Prep.*?:\s*/gi, '').trim() ||
+				$('.recipe-meta-prep, .prep-time').first().text().replace(/Prep.*?:\s*/gi, '').trim() ||
+				$('[data-prep-time], .preparation-time').first().text()
+			) || undefined;
+			
+			const cookTime = this.sanitizeText(
+				$('.jetpack-recipe-cook-time, .recipe-cook-time').first().text().replace(/Cook.*?:\s*/gi, '').trim() ||
+				$('.recipe-meta-cook, .cook-time').first().text().replace(/Cook.*?:\s*/gi, '').trim() ||
+				$('[data-cook-time], .cooking-time').first().text()
+			) || undefined;
+			
+			let totalTime = this.sanitizeText(
+				$('.jetpack-recipe-time time, .jetpack-recipe-time').first().text().replace(/Time:\s*/gi, '').trim() ||
+				$('.recipe-total-time, .total-time').first().text().replace(/Total.*?:\s*/gi, '').trim() ||
+				$('[data-total-time], .recipe-duration').first().text()
+			) || undefined;
+			
+			let servings = this.sanitizeText(
+				$('.jetpack-recipe-servings').first().text().replace(/Servings:\s*/gi, '').trim() ||
+				$('.recipe-servings, .recipe-yield').first().text().replace(/Serves?:?\s*/gi, '').trim() ||
+				$('[data-servings], .servings-value').first().text()
+			) || undefined;
 			let tags: string[] = ['Cocktail', 'Drinks']; // Default categories for this recipe type
 			recipe = {
 				title: typeof title === 'string' && title.trim().length > 0 ? title.trim() : 'Untitled Recipe',
@@ -118,6 +140,8 @@ export class SmittenKitchenParser extends BaseParser {
 				ingredients: Array.isArray(ingredients) && ingredients.length > 0 ? ingredients : [{ text: 'See original recipe for details.' }],
 				instructions: Array.isArray(instructions) && instructions.length > 0 ? instructions : [{ stepNumber: 1, text: 'See original recipe for details.' }],
 				imageUrl: typeof imageUrl === 'string' && imageUrl.trim().length > 0 ? imageUrl.trim() : '',
+				prepTime,
+				cookTime,
 				totalTime,
 				servings,
 				tags

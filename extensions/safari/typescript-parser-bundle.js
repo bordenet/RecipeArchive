@@ -14513,8 +14513,18 @@
         let imageUrl = $2(".recipe-photo img, img, .post-thumbnail-container img").first().attr("src") || void 0;
         const ogImage = $2('meta[property="og:image"]').attr("content");
         if (ogImage) imageUrl = ogImage;
-        let totalTime = this.sanitizeText($2(".jetpack-recipe-time time, .jetpack-recipe-time").first().text().replace(/Time:\s*/gi, "").trim()) || "";
-        let servings = this.sanitizeText($2(".jetpack-recipe-servings").first().text().replace(/Servings:\s*/gi, "").trim()) || "";
+        const prepTime = this.sanitizeText(
+          $2(".jetpack-recipe-prep-time, .recipe-prep-time").first().text().replace(/Prep.*?:\s*/gi, "").trim() || $2(".recipe-meta-prep, .prep-time").first().text().replace(/Prep.*?:\s*/gi, "").trim() || $2("[data-prep-time], .preparation-time").first().text()
+        ) || void 0;
+        const cookTime = this.sanitizeText(
+          $2(".jetpack-recipe-cook-time, .recipe-cook-time").first().text().replace(/Cook.*?:\s*/gi, "").trim() || $2(".recipe-meta-cook, .cook-time").first().text().replace(/Cook.*?:\s*/gi, "").trim() || $2("[data-cook-time], .cooking-time").first().text()
+        ) || void 0;
+        let totalTime = this.sanitizeText(
+          $2(".jetpack-recipe-time time, .jetpack-recipe-time").first().text().replace(/Time:\s*/gi, "").trim() || $2(".recipe-total-time, .total-time").first().text().replace(/Total.*?:\s*/gi, "").trim() || $2("[data-total-time], .recipe-duration").first().text()
+        ) || void 0;
+        let servings = this.sanitizeText(
+          $2(".jetpack-recipe-servings").first().text().replace(/Servings:\s*/gi, "").trim() || $2(".recipe-servings, .recipe-yield").first().text().replace(/Serves?:?\s*/gi, "").trim() || $2("[data-servings], .servings-value").first().text()
+        ) || void 0;
         let tags = ["Cocktail", "Drinks"];
         recipe = {
           title: typeof title === "string" && title.trim().length > 0 ? title.trim() : "Untitled Recipe",
@@ -14523,6 +14533,8 @@
           ingredients: Array.isArray(ingredients) && ingredients.length > 0 ? ingredients : [{ text: "See original recipe for details." }],
           instructions: Array.isArray(instructions) && instructions.length > 0 ? instructions : [{ stepNumber: 1, text: "See original recipe for details." }],
           imageUrl: typeof imageUrl === "string" && imageUrl.trim().length > 0 ? imageUrl.trim() : "",
+          prepTime,
+          cookTime,
           totalTime,
           servings,
           tags
@@ -14624,13 +14636,29 @@
       let imageUrl = $2(".recipe-hero img, .o-AssetPhoto img, img").first().attr("src") || void 0;
       const ogImage = $2('meta[property="og:image"]').attr("content");
       if (ogImage) imageUrl = ogImage;
+      const prepTime = this.sanitizeText(
+        $2('.recipe-timing .prep-time, [data-testid="prep-time"], .preparation-time').first().text() || $2(".recipe-meta-prep, .prep-time-value, [data-prep-time]").first().text() || $2('[aria-label*="prep"], [title*="prep"], .recipe-times .prep').first().text() || $2('.recipe-time:contains("prep") ~ .time-value, .time-prep').first().text()
+      );
+      const cookTime = this.sanitizeText(
+        $2('.recipe-timing .cook-time, [data-testid="cook-time"], .cooking-time').first().text() || $2(".recipe-meta-cook, .cook-time-value, [data-cook-time]").first().text() || $2('[aria-label*="cook"], [title*="cook"], .recipe-times .cook').first().text() || $2('.recipe-time:contains("cook") ~ .time-value, .time-cook').first().text()
+      );
+      const totalTime = this.sanitizeText(
+        $2('.recipe-timing .total-time, [data-testid="total-time"], .recipe-duration').first().text() || $2(".recipe-meta-total, .total-time-value, [data-total-time]").first().text() || $2('[aria-label*="total"], [title*="total"], .recipe-times .total').first().text() || $2('.recipe-time:contains("total") ~ .time-value, .time-total').first().text()
+      );
+      const servings = this.sanitizeText(
+        $2('.recipe-servings, [data-testid="servings"], [data-servings]').first().text() || $2(".recipe-yield, .servings-value, .recipe-meta-servings").first().text() || $2('[aria-label*="servings"], [title*="servings"], .recipe-serving-size').first().text() || $2(".nutrition-info .servings, .recipe-facts .servings").first().text() || $2('.recipe-info:contains("serves") .value, .serves-value').first().text()
+      );
       const recipe = {
         title,
         source: url,
         author,
         ingredients,
         instructions,
-        imageUrl
+        imageUrl,
+        prepTime: prepTime || void 0,
+        cookTime: cookTime || void 0,
+        totalTime: totalTime || void 0,
+        servings: servings || void 0
       };
       const validation = this.validateRecipe(recipe);
       if (!validation.isValid) {
@@ -14773,10 +14801,18 @@
       if (!imageUrl) {
         imageUrl = $2('meta[property="og:image"]').attr("content");
       }
-      const prepTime = this.sanitizeText($2(".prep-time, .recipe-prep-time, [data-prep-time]").first().text());
-      const cookTime = this.sanitizeText($2(".cook-time, .recipe-cook-time, [data-cook-time]").first().text());
-      const totalTime = this.sanitizeText($2(".total-time, .recipe-total-time, [data-total-time]").first().text());
-      const servings = this.sanitizeText($2(".servings, .recipe-yield, .recipe-servings, [data-servings]").first().text());
+      const prepTime = this.sanitizeText(
+        $2(".prep-time, .recipe-prep-time, [data-prep-time]").first().text() || $2('.recipe-timing .prep-time, [data-testid="prep-time"], .preparation-time').first().text() || $2('[aria-label*="prep"], [title*="prep"], .recipe-meta-prep').first().text()
+      );
+      const cookTime = this.sanitizeText(
+        $2(".cook-time, .recipe-cook-time, [data-cook-time]").first().text() || $2('.recipe-timing .cook-time, [data-testid="cook-time"], .cooking-time').first().text() || $2('[aria-label*="cook"], [title*="cook"], .recipe-meta-cook').first().text()
+      );
+      const totalTime = this.sanitizeText(
+        $2(".total-time, .recipe-total-time, [data-total-time]").first().text() || $2('.recipe-timing .total-time, [data-testid="total-time"], .recipe-duration').first().text() || $2('[aria-label*="total"], [title*="total"], .recipe-meta-total').first().text()
+      );
+      const servings = this.sanitizeText(
+        $2(".servings, .recipe-yield, .recipe-servings, [data-servings]").first().text() || $2('.recipe-nutrition-section .recipe-nutrition__table td:contains("servings")').next().text() || $2('[data-testid="recipe-servings"], [data-testid="servings"], .nutrition-servings').first().text() || $2('.recipe-meta-servings, .recipe-summary-servings, [aria-label*="servings"]').first().text() || $2(".recipe-facts .servings, .nutrition-info .servings").first().text()
+      );
       const recipe = {
         title,
         source: url,
