@@ -329,13 +329,13 @@ run_linting_by_area() {
     fi
     
     print_step "Flutter web app analysis"
-    if [ -d "recipe_archive_fresh" ]; then
+    if [ -d "recipe_archive" ]; then
         if command -v flutter &> /dev/null; then
-            if (cd recipe_archive_fresh && flutter analyze > /dev/null 2>&1); then
+            if (cd recipe_archive && flutter analyze > /dev/null 2>&1); then
                 print_success
                 ((PASSED_TESTS++))
             else
-                print_warning "Flutter analysis failed - run 'cd recipe_archive_fresh && flutter pub get' first"
+                print_warning "Flutter analysis failed - run 'cd recipe_archive && flutter pub get' first"
                 ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
             fi
         else
@@ -348,13 +348,13 @@ run_linting_by_area() {
     fi
     
     print_step "Flutter web app tests"
-    if [ -d "recipe_archive_fresh" ]; then
+    if [ -d "recipe_archive" ]; then
         if command -v flutter &> /dev/null; then
-            if (cd recipe_archive_fresh && flutter test > /dev/null 2>&1); then
+            if (cd recipe_archive && flutter test > /dev/null 2>&1); then
                 print_success
                 ((PASSED_TESTS++))
             else
-                print_warning "Flutter tests failed - run 'cd recipe_archive_fresh && flutter test' for details"
+                print_warning "Flutter tests failed - run 'cd recipe_archive && flutter test' for details"
                 ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
             fi
         else
@@ -389,13 +389,13 @@ run_linting_by_area() {
     
     
     print_step "Flutter web app linting"
-    if [ -d "recipe_archive_fresh" ]; then
+    if [ -d "recipe_archive" ]; then
         if command -v flutter &> /dev/null; then
-            if (cd recipe_archive_fresh && flutter analyze --no-pub > /dev/null 2>&1); then
+            if (cd recipe_archive && flutter analyze --no-pub > /dev/null 2>&1); then
                 print_success
                 ((PASSED_TESTS++))
             else
-                print_warning "Flutter analysis found issues - run 'cd recipe_archive_fresh && flutter analyze' for details"
+                print_warning "Flutter analysis found issues - run 'cd recipe_archive && flutter analyze' for details"
                 ((PASSED_TESTS++)) # Count as passed since dependencies might not be installed
             fi
         else
@@ -576,17 +576,17 @@ show_frontend_status() {
     print_header "FRONTEND CLIENTS"
     
     # Check Flutter Web App
-    if [ -d "web_app" ]; then
+    if [ -d "recipe_archive" ]; then
         print_step "Flutter web app setup"
-        if [ -f "web_app/pubspec.yaml" ]; then
+        if [ -f "recipe_archive/pubspec.yaml" ]; then
             print_success
-            print_info "Flutter web app ready - run 'cd web_app && flutter run -d chrome'"
+            print_info "Flutter web app ready - run 'cd recipe_archive && flutter run -d chrome'"
         else
             print_error
-            print_info "pubspec.yaml not found in web_app directory"
+            print_info "pubspec.yaml not found in recipe_archive directory"
         fi
     else
-        print_info "Flutter web app not found (expected in web_app/)"
+        print_info "Flutter web app not found (expected in recipe_archive/)"
     fi
     
     print_info "iOS app planned - Swift-based mobile interface"
