@@ -21,8 +21,6 @@ external-references/
 # Temporary files
 test-results/
 test-results/*
-playwright-report/
-playwright-report/*
 wget-log
 
 # AWS
