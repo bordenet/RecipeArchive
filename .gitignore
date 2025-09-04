@@ -23,6 +23,7 @@ test-results/
 test-results/*
 playwright-report/
 playwright-report/*
+wget-log
 
 # AWS
 .aws/
