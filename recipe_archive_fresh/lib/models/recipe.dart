@@ -26,20 +26,20 @@ class RecipeIngredient {
     
     String scaledText = text;
     
-    // Enhanced regex to handle mixed fractions (1 3/4), simple fractions (3/4), and decimals
-    final regex = RegExp(r'(\d+(?:\s+\d+/\d+|\.\d+|/\d+)?)\s*([a-zA-Z][a-zA-Z\s]*(?:[a-zA-Z]|(?=\s*\()|(?=\s*,)|$))');
+    // Simple and robust regex that matches number + optional unit at start of ingredient
+    final regex = RegExp(r'^(\d+(?:\.\d+)?(?:\s*\d+/\d+)?)\s+(.+)', multiLine: false);
     
     scaledText = scaledText.replaceAllMapped(regex, (match) {
       try {
         final amountStr = match.group(1)?.trim();
-        final unit = match.group(2)?.trim();
+        final restOfIngredient = match.group(2)?.trim();
         
-        if (amountStr != null && unit != null) {
+        if (amountStr != null && restOfIngredient != null) {
           final amount = _parseScalingAmount(amountStr);
           if (amount != null) {
             final scaledAmount = amount * ratio;
             final formattedAmount = _formatScaledAmount(scaledAmount);
-            return '$formattedAmount $unit';
+            return '$formattedAmount $restOfIngredient';
           }
         }
         return match.group(0)!;
@@ -257,11 +257,13 @@ class Recipe {
   
   // Get scaled ingredients for a different number of servings
   List<RecipeIngredient> getScaledIngredients(int newServings) {
-    if (servings == null || newServings == servings) {
+    // If original servings is null or 0, assume 4 servings as default
+    final originalServings = servings ?? 4;
+    if (newServings == originalServings) {
       return ingredients;
     }
     
-    final ratio = newServings / servings!;
+    final ratio = newServings / originalServings;
     return ingredients.map((ingredient) => ingredient.scaleForServings(ratio)).toList();
   }
   

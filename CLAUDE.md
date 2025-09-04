@@ -39,7 +39,44 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 **⚠️ VERIFICATION CONCERN**: CloudFront cache MUST be invalidated after every Flutter deployment or changes won't be visible. The automated scripts handle this automatically.
 
-## 🎯 CURRENT PRIORITIES (September 3, 2025)
+## 🎯 CURRENT PRIORITIES (September 4, 2025)
+
+### 🚨 CRITICAL BUG: INGREDIENT SCALING NOT WORKING
+
+**PRIORITY 1 ISSUE**: Serving size changes on recipe detail pages do NOT trigger immediate ingredient quantity updates. This is a fundamental recipe app requirement.
+
+**BUG DESCRIPTION**:
+- User changes serving size from 4 to 8 servings
+- Ingredient quantities should double (6 eggs → 12 eggs) 
+- BUT: Quantities remain unchanged, defeating the core purpose of recipe scaling
+- **Root Issue**: Either scaling logic not executing or not updating UI properly
+
+**CRITICAL REQUIREMENTS (PRD)**:
+1. **Immediate Ingredient Scaling**: When serving size changes, ALL ingredient quantities must update instantly
+2. **Visual Feedback**: UI must reflect scaling changes without page refresh
+3. **Proportional Scaling**: All numeric values in ingredients must scale proportionally (2x servings = 2x ingredients)
+4. **Core User Experience**: This is NOT optional - recipe scaling is fundamental to recipe utility
+
+### ✅ CRITICAL BREAKTHROUGH: FLUTTER JSON PARSING FIXES DEPLOYED
+
+**PARTIALLY RESOLVED**: Backend data format issues fixed, but ingredient scaling functionality still broken.
+
+**PRODUCTION DEPLOYMENT COMPLETED (September 4, 2025)**:
+- ✅ **Custom JSON Parsing**: Added `_parseTime()` and `_parseServings()` functions to handle string→int conversion
+- ✅ **Recipe Model Updates**: Enhanced Recipe class with robust parsing for prepTime, cookingTime, and servings
+- ✅ **Debug Logging**: Added comprehensive API data vs parsed data logging in RecipeService
+- ✅ **Automated Deployment**: Created deploy.sh and quick-deploy.sh scripts with CloudFront invalidation
+- ✅ **Type Safety**: Updated json_annotation to use custom fromJson functions for flexible parsing
+- ✅ **Mobile Parity**: Added iOS/Android platform support for consistent behavior
+
+**RESOLVED DISPLAY ISSUES**:
+1. **"Unknown" Serving Sizes**: ✅ FIXED - Now correctly parses string servings from OpenAI normalization
+2. **"Unknown" Prep/Cook Times**: ✅ FIXED - Custom parsing handles both string and numeric time values  
+3. **CloudFront Caching**: ✅ AUTOMATED - Deployment scripts handle cache invalidation automatically
+
+**OUTSTANDING CRITICAL ISSUES**:
+1. **🚨 Ingredient Scaling**: BROKEN - Serving size changes don't update ingredient quantities
+2. **Backend Data Population**: Many recipes have null servings/times from broken OpenAI normalization
 
 ### ✅ MAJOR BREAKTHROUGH: FULL HTML CONTEXT ANALYSIS IMPLEMENTED
 
@@ -54,9 +91,7 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 **RESOLVED SYSTEM ISSUES**:
 1. **20-Recipe Limit**: ✅ FIXED - Backend default changed from 20 to 50 recipes
-2. **Servings Scaling**: ✅ WORKING - Functions correctly when servings data exists
-3. **"Unknown" Display**: ✅ WORKING - Correctly shows when legacy data missing
-4. **String Escaping**: ✅ FIXED - OpenAI prompt escaping issues resolved in both normalizers
+2. **String Escaping**: ✅ FIXED - OpenAI prompt escaping issues resolved in both normalizers
 
 ### ✅ CRITICAL RESOLUTION: BACKGROUND NORMALIZER COMPLETELY FIXED
 
