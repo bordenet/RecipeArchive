@@ -44,6 +44,25 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 ## 🎯 CURRENT PRIORITIES (September 4, 2025)
 
+### ✅ VALIDATION SCRIPT WARNINGS FIXED
+
+**COMPLETED**: Fixed all Flutter directory reference warnings in `./validate-monorepo.sh`
+
+**ROOT CAUSE**: Script was looking for `recipe_archive_fresh` directory after Flutter app rename to `recipe_archive`
+
+**RESOLUTION**: 
+- ✅ **Flutter Analysis**: Updated directory check from `recipe_archive_fresh` to `recipe_archive`
+- ✅ **Flutter Tests**: Updated directory paths and error messages  
+- ✅ **Flutter Linting**: Updated directory paths and error messages
+- ✅ **Frontend Status**: Updated directory check from `web_app` to `recipe_archive`
+
+**RESULT**: No more validation warnings:
+- ~~⚠ Flutter web app directory not found (skipping)~~
+- ~~⚠ Flutter web app directory not found (skipping tests)~~
+- ~~⚠ Flutter web app directory not found (skipping linting)~~
+
+### 🔧 REMAINING ISSUES
+
 **ISSUE**: Loads of dart test failures. FIX! Repro: `cd recipe_archive && flutter test`
 **ISSUE**: Fix failing tests. Repro: `npx playwright test --config tests/e2e/playwright.config.js`
 **ISSUE**: Fix failing tests. `  Site-specific parsers... ✗` Repro: `./validate-monorepo.sh` and WAIT LONG ENOUGH FOR THE TESTS TO FAIL.
