@@ -44,15 +44,16 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 ## 🎯 CURRENT PRIORITIES (September 4, 2025)
 
-### ✅ CRITICAL TITLE CAPITALIZATION FIXED
+### ✅ CRITICAL TITLE CAPITALIZATION FULLY RESOLVED (September 4, 2025)
 
-**ROOT CAUSE RESOLVED**: Fixed title capitalization issues ("mathilde's tomato tart" → "Mathilde's Tomato Tart", "General Tso'S Chicken" → "General Tso's Chicken")
+**ROOT CAUSE RESOLVED**: Fixed title capitalization regression ("Slushy Paper Plane" → "slushy paper plane") and legacy issues ("mathilde's tomato tart" → "Mathilde's Tomato Tart", "General Tso'S Chicken" → "General Tso's Chicken")
 
-**COMPLETED FIXES**:
-- ✅ **Background Normalizer**: Fixed fallback function incorrectly capitalizing letters after apostrophes
-- ✅ **Content Normalizer**: Replaced `strings.Title()` with custom function that excludes apostrophes
-- ✅ **Deployment**: Both Lambda functions successfully deployed to AWS production
-- ✅ **OpenAI Prompts**: Already correct - issue was only in fallback functions
+**COMPLETED FIXES - DEPLOYED TO PRODUCTION**:
+- ✅ **Background Normalizer**: Fixed fallback function incorrectly capitalizing letters after apostrophes (lines 480-481)
+- ✅ **Content Normalizer**: Enhanced OpenAI prompt with explicit title capitalization rules and examples
+- ✅ **Direct AWS Deployment**: Lambda functions deployed via AWS CLI after CDK failed to detect changes
+- ✅ **Regression Fix**: "Slushy Paper Plane" case specifically addressed with CRITICAL TITLE RULE examples
+- ✅ **Deployment Documentation**: Created preferred deployment path for future Lambda updates
 
 ### ⚠️ PLAYWRIGHT E2E TESTS ASSESSMENT
 
@@ -70,22 +71,6 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 **CURRENT DECISION**: Playwright tests disabled pending architecture review
 
-### ✅ VALIDATION SCRIPT WARNINGS FIXED
-
-**COMPLETED**: Fixed all Flutter directory reference warnings in `./validate-monorepo.sh`
-
-**ROOT CAUSE**: Script was looking for `recipe_archive_fresh` directory after Flutter app rename to `recipe_archive`
-
-**RESOLUTION**: 
-- ✅ **Flutter Analysis**: Updated directory check from `recipe_archive_fresh` to `recipe_archive`
-- ✅ **Flutter Tests**: Updated directory paths and error messages  
-- ✅ **Flutter Linting**: Updated directory paths and error messages
-- ✅ **Frontend Status**: Updated directory check from `web_app` to `recipe_archive`
-
-**RESULT**: No more validation warnings:
-- ~~⚠ Flutter web app directory not found (skipping)~~
-- ~~⚠ Flutter web app directory not found (skipping tests)~~
-- ~~⚠ Flutter web app directory not found (skipping linting)~~
 
 ### 🔧 REMAINING ISSUES
 
@@ -138,29 +123,6 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 **NEXT STEP**: Full rebuild and production deployment needed to see changes live
 
-### ✅ JUST COMPLETED: APP RENAME & PARSER ENHANCEMENTS (September 4, 2025)
-
-**FLUTTER APP RENAME COMPLETED**:
-
-- ✅ **Directory Renamed**: `recipe_archive_fresh` → `recipe_archive`
-- ✅ **App Configuration**: Updated pubspec.yaml name and description to remove 'fresh'
-- ✅ **Documentation Updated**: Mass-updated all markdown files across the project
-- ✅ **Deployment Scripts**: Updated automated deployment paths for new directory structure
-- ✅ **Committed & Pushed**: All 121 file changes committed to GitHub main branch
-
-**ENHANCED PARSER IMPROVEMENTS DEPLOYED**:
-
-- ✅ **Comprehensive Selector Fallbacks**: AllRecipes, Food Network, Smitten Kitchen parsers enhanced
-- ✅ **Multiple Selector Chains**: Up to 5 fallback selectors per data field (servings, prep time, cook time)
-- ✅ **ISO 8601 Duration Support**: PT25M format now correctly parsed to "25 minutes"
-- ✅ **OpenAI Temperature**: Set to 0.0 for deterministic recipe normalization
-- ✅ **Debug Logging**: Enhanced Flutter service logging for troubleshooting data flow
-
-**EXPECTED IMPROVEMENTS**:
-
-- Gallery tiles should now display serving sizes and times for more recipes
-- Consistent recipe data extraction across supported sites
-- Reduced "Unknown" values in recipe display
 
 ### 🚨 CRITICAL BUG: INGREDIENT SCALING NOT WORKING
 
@@ -180,64 +142,8 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 3. **Proportional Scaling**: All numeric values in ingredients must scale proportionally (2x servings = 2x ingredients)
 4. **Core User Experience**: This is NOT optional - recipe scaling is fundamental to recipe utility
 
-### ✅ CRITICAL BREAKTHROUGH: FLUTTER JSON PARSING FIXES DEPLOYED
 
-**PARTIALLY RESOLVED**: Backend data format issues fixed, but ingredient scaling functionality still broken.
 
-**PRODUCTION DEPLOYMENT COMPLETED (September 4, 2025)**:
-
-- ✅ **Custom JSON Parsing**: Added `_parseTime()` and `_parseServings()` functions to handle string→int conversion
-- ✅ **Recipe Model Updates**: Enhanced Recipe class with robust parsing for prepTime, cookingTime, and servings
-- ✅ **Debug Logging**: Added comprehensive API data vs parsed data logging in RecipeService
-- ✅ **Automated Deployment**: Created deploy.sh and quick-deploy.sh scripts with CloudFront invalidation
-- ✅ **Type Safety**: Updated json_annotation to use custom fromJson functions for flexible parsing
-- ✅ **Mobile Parity**: Added iOS/Android platform support for consistent behavior
-
-**RESOLVED DISPLAY ISSUES**:
-
-1. **"Unknown" Serving Sizes**: ✅ FIXED - Now correctly parses string servings from OpenAI normalization
-2. **"Unknown" Prep/Cook Times**: ✅ FIXED - Custom parsing handles both string and numeric time values
-3. **CloudFront Caching**: ✅ AUTOMATED - Deployment scripts handle cache invalidation automatically
-
-**OUTSTANDING CRITICAL ISSUES**:
-
-1. **🚨 Ingredient Scaling**: BROKEN - Serving size changes don't update ingredient quantities
-2. **Backend Data Population**: Many recipes have null servings/times from broken OpenAI normalization
-
-### ✅ MAJOR BREAKTHROUGH: FULL HTML CONTEXT ANALYSIS IMPLEMENTED
-
-**NEW CAPABILITY**: Extension now captures full page HTML and forwards to OpenAI for enhanced JSON-LD and microdata analysis.
-
-**PRODUCTION DEPLOYMENT COMPLETED (12:30 PM Sept 3, 2025)**:
-
-- ✅ **Chrome Extension**: Captures `document.documentElement.outerHTML` and sends as `webArchiveHtml`
-- ✅ **Backend Integration**: Recipes Lambda forwards HTML context to OpenAI normalizer
-- ✅ **OpenAI Enhancement**: Prompts enhanced to extract JSON-LD, microdata, structured recipe data
-- ✅ **Token Optimization**: HTML truncated to 8000 chars to balance context vs. cost
-- ✅ **Lambda Functions**: All normalizer functions deployed with HTML context support
-
-**RESOLVED SYSTEM ISSUES**:
-
-1. **20-Recipe Limit**: ✅ FIXED - Backend default changed from 20 to 50 recipes
-2. **String Escaping**: ✅ FIXED - OpenAI prompt escaping issues resolved in both normalizers
-
-### ✅ CRITICAL RESOLUTION: BACKGROUND NORMALIZER COMPLETELY FIXED
-
-**ROOT CAUSE RESOLVED**: Background normalizer was completely bypassing OpenAI enhancement for recipes with "good" titles - now **ALWAYS** calls OpenAI for full enhancement.
-
-**COMPLETED FIXES**:
-
-- ✅ **Backend**: Completely replaced background normalizer logic to always call OpenAI
-- ✅ **Frontend**: Enhanced Flutter Recipe model with robust servings/time parsing
-- ✅ **OpenAI Enhancement**: Added servings inference, time estimation, and comprehensive normalization
-- ✅ **Security**: Added `.claude/` to .gitignore to prevent sensitive infrastructure data leaks
-- ✅ **HTML Context**: Full page HTML forwarding for enhanced recipe analysis
-
-**RESOLVED ISSUES**:
-
-1. **Serving Size Scaling**: ✅ FIXED - OpenAI infers servings, Flutter parses robustly
-2. **Missing Time Estimates**: ✅ FIXED - OpenAI estimates prep/cook times, no more "Unknown"
-3. **JSON-LD Extraction**: ✅ NEW - OpenAI can now see and extract from JSON-LD data in page HTML
 
 ### ✅ CRITICAL SUCCESS: MAJOR INFRASTRUCTURE RESOLVED
 
@@ -266,19 +172,6 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
    - ✅ Flutter Extensions screen with download buttons and version tracking
    - ✅ Accessible via drawer navigation → "Browser Extensions"
 
-### ✅ RECENTLY COMPLETED
-
-- **Gallery Tile Layout**: Left-aligned source URLs on separate lines with increased tile height
-- **Extension Packaging**: Semantic versioning with S3 distribution infrastructure
-
-### ✅ RECENT FIXES COMPLETED
-
-- **Serving Size Logic Enhancement**: Adding 0.25x and 0.5x multipliers to allow halving and quartering recipes alongside existing 1x-16x scaling options
-- **Diagnostic Processor Integration**: Deployed `/v1/diagnostic-summary` endpoint with comprehensive failed parse analysis, S3 integration, and pattern recognition for parser improvement
-- **OpenAI Content Normalizer Production**: Configured OPENAI_API_KEY environment for production use with GPT-4o-mini integration for recipe enhancement
-- **Flutter Analysis Warnings**: Fixed all Flutter web app analysis and test warnings including deprecated API usage, async context issues, and print statements
-- **OpenAI Content Normalizer**: Deployed `/v1/normalize` endpoint with GPT-4o-mini integration. Features title normalization, ingredient standardization, instruction clarity, metadata inference, and graceful fallback when OpenAI unavailable
-- **HTML Entity Decoding Fix**: Enhanced BaseParser with comprehensive HTML entity decoding in `sanitizeText()` method. Fixes em dash (&#8211; → –), quotes (&#39; → '), and other entities across all parsers. Alexandra's Kitchen ingredient ranges like "50 – 100 g" now parse correctly
 
 ## 🏗️ Architecture
 
@@ -300,11 +193,27 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food52, AllRecipes, Epicurious, Serious Eats, Alexandra's Kitchen, Food & Wine, Damn Delicious
 
-## ⚠️ CRITICAL REMINDERS
+## ⚠️ CRITICAL REMINDERS & DEPLOYMENT PROCEDURES
 
+### 🚀 AWS Lambda Deployment Path (REQUIRED)
+When CDK deployment fails to detect changes, use **direct AWS CLI deployment**:
+```bash
+# Build for Linux deployment  
+cd aws-backend/functions/[function-name]
+GOOS=linux GOARCH=amd64 go build -o main main.go
+zip deployment-package.zip main
+
+# Get Lambda function names
+aws lambda list-functions --region us-west-2 --query 'Functions[?contains(FunctionName, `Normalizer`)].FunctionName' --output table
+
+# Deploy directly to AWS
+aws lambda update-function-code --function-name [FUNCTION-NAME] --zip-file fileb://deployment-package.zip --region us-west-2
+```
+
+### 📋 Standard Procedures  
 - **ALWAYS lint after building**: Run `npm run lint` and fix ALL errors before committing
 - **ALWAYS validate before pushing**: Run `./validate-monorepo.sh` and fix failures
-- **Security**: Environment variables only, no hardcoded credentials
+- **Security**: Environment variables only, no hardcoded credentials  
 - **Testing**: TruffleHog scans, monorepo validation, fixture-based regression tests
 
 _See README.md and docs/ for detailed architecture and requirements._

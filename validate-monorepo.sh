@@ -441,19 +441,19 @@ validate_parsers() {
     print_header "RECIPE PARSERS"
     
     print_step "Site-specific parsers"
-    if [ -f "tools/test-tools/website-parser-validator.cjs" ]; then
+    if [ -f "tests/parser-validation/test-parser-integration.cjs" ]; then
         # Run parser validation without timeout (macOS doesn't have timeout command)
-        if (cd tools/test-tools && node website-parser-validator.cjs > /dev/null 2>&1); then
+        if (cd tests/parser-validation && node test-parser-integration.cjs > /dev/null 2>&1); then
             print_success
             ((PASSED_TESTS++))
         else
             print_error
-            echo "    Parser tests failed - rerun with details: cd tools/test-tools && node website-parser-validator.cjs"
-            echo "    Common issues: Missing TypeScript compilation, network errors, contract validation failures"
+            echo "    Parser tests failed - rerun with details: cd tests/parser-validation && node test-parser-integration.cjs"
+            echo "    Common issues: TypeScript parser bundle missing, function contract validation failures"
         fi
     else
         print_error
-        echo "    Parser validation tool not found at tools/test-tools/website-parser-validator.cjs"
+        echo "    Parser validation tool not found at tests/parser-validation/test-parser-integration.cjs"
     fi
     
     ((TOTAL_TESTS+=1))

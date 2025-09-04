@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 
 class ExtensionVersion {
   final String version;
@@ -73,13 +73,13 @@ class ExtensionService {
 
   void downloadExtension(ExtensionVersion extension, String platform) {
     // Create a temporary anchor element to trigger download
-    final anchor = html.AnchorElement()
+    final anchor = web.HTMLAnchorElement()
       ..href = extension.downloadUrl
       ..download = extension.filename
       ..target = '_blank';
     
     // Add to DOM, click, then remove
-    html.document.body?.append(anchor);
+    web.document.body?.appendChild(anchor);
     anchor.click();
     anchor.remove();
   }
