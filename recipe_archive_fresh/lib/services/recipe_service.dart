@@ -69,7 +69,28 @@ class RecipeService {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> recipesJson = data['recipes'] ?? [];
         developer.log('Loaded ${recipesJson.length} recipes from API', name: 'RecipeService');
-        return recipesJson.map((json) => Recipe.fromJson(json)).toList();
+        
+        // Debug: Log first recipe's raw data
+        if (recipesJson.isNotEmpty) {
+          final firstRecipe = recipesJson.first;
+          developer.log('First recipe raw data: ${json.encode({
+            'id': firstRecipe['id'],
+            'title': firstRecipe['title'],
+            'servings': firstRecipe['servings'],
+            'totalTimeMinutes': firstRecipe['totalTimeMinutes'],
+            'prepTime': firstRecipe['prepTime'],
+          })}', name: 'RecipeService');
+        }
+        
+        final recipes = recipesJson.map((json) => Recipe.fromJson(json)).toList();
+        
+        // Debug: Log first parsed recipe
+        if (recipes.isNotEmpty) {
+          final firstParsed = recipes.first;
+          developer.log('First recipe parsed: id=${firstParsed.id}, servings=${firstParsed.servings}, cookingTime=${firstParsed.cookingTime}, prepTime=${firstParsed.prepTime}', name: 'RecipeService');
+        }
+        
+        return recipes;
       } else {
         developer.log('API error: ${response.statusCode} - ${response.body}', name: 'RecipeService', level: 1000);
         throw Exception('Failed to load recipes: ${response.statusCode}');

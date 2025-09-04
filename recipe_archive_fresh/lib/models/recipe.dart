@@ -146,12 +146,14 @@ class Recipe {
   final String? sourceUrl;
   final String? sourceName;
   final String? difficulty;
+  
+  @JsonKey(fromJson: _parseTime)
   final int? prepTime;
   
   final List<RecipeIngredient> ingredients;
   final List<RecipeInstruction> instructions;
   
-  @JsonKey(name: 'totalTimeMinutes')
+  @JsonKey(name: 'totalTimeMinutes', fromJson: _parseTime)
   final int? cookingTime;
   
   @JsonKey(fromJson: _parseServings)
@@ -217,6 +219,17 @@ class Recipe {
       if (match != null) {
         return int.tryParse(match.group(1)!);
       }
+    }
+    return null;
+  }
+  
+  // Helper function to parse time from various formats (string or int)
+  static int? _parseTime(dynamic timeValue) {
+    if (timeValue is int) {
+      return timeValue;
+    } else if (timeValue is String && timeValue.isNotEmpty) {
+      // Parse string numbers like "45" or "30"
+      return int.tryParse(timeValue);
     }
     return null;
   }

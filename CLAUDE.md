@@ -14,6 +14,31 @@ cd recipe_archive_fresh && flutter run -d chrome     # Run Flutter app
 cd tools/recipe-report && go run main.go             # Generate recipe report (uses .env)
 ```
 
+## 🚀 FLUTTER WEB DEPLOYMENT (AUTOMATED)
+
+**CRITICAL**: Always use automated deployment scripts to avoid CloudFront cache issues!
+
+### Automated Deployment Scripts
+```bash
+cd recipe_archive_fresh
+
+# Full deployment (build + deploy + invalidate)
+./deploy.sh
+
+# Quick deployment (deploy existing build + invalidate)  
+./quick-deploy.sh
+```
+
+### Manual Deployment (NOT RECOMMENDED)
+```bash
+# Only use if scripts fail - always include CloudFront invalidation!
+flutter build web
+aws s3 sync build/web/ s3://recipearchive-web-app-prod-990537043943/ --delete
+aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
+```
+
+**⚠️ VERIFICATION CONCERN**: CloudFront cache MUST be invalidated after every Flutter deployment or changes won't be visible. The automated scripts handle this automatically.
+
 ## 🎯 CURRENT PRIORITIES (September 3, 2025)
 
 ### ✅ MAJOR BREAKTHROUGH: FULL HTML CONTEXT ANALYSIS IMPLEMENTED
