@@ -26,8 +26,8 @@ class RecipeIngredient {
     
     String scaledText = text;
     
-    // Simple and robust regex that matches number + optional unit at start of ingredient
-    final regex = RegExp(r'^(\d+(?:\.\d+)?(?:\s*\d+/\d+)?)\s+(.+)', multiLine: false);
+    // Comprehensive regex that matches fractions, decimals, and whole numbers at start of ingredient
+    final regex = RegExp(r'^(\d+(?:\s+\d+/\d+)?|\d+\.\d+|\d+/\d+)\s+(.+)', multiLine: false);
     
     scaledText = scaledText.replaceAllMapped(regex, (match) {
       try {
