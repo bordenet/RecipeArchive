@@ -7,6 +7,51 @@ export class SmittenKitchenParser extends BaseParser {
 		return url.includes("smittenkitchen.com");
 	}
 
+	private extractInstructionText(instruction: any): string {
+		// Handle various JSON-LD instruction formats
+		if (typeof instruction === "string") {
+			return this.sanitizeText(instruction);
+		}
+		
+		if (typeof instruction === "object" && instruction !== null) {
+			// Try different possible properties for instruction text
+			const possibleTextFields = ["text", "name", "description"];
+			
+			for (const field of possibleTextFields) {
+				if (instruction[field] && typeof instruction[field] === "string") {
+					const text = this.sanitizeText(instruction[field]);
+					// Filter out JavaScript code fragments
+					if (!this.isJavaScriptCode(text)) {
+						return text;
+					}
+				}
+			}
+		}
+		
+		return "See original recipe for this step.";
+	}
+
+	private isJavaScriptCode(text: string): boolean {
+		// Check for JavaScript patterns that shouldn't be in recipe instructions
+		const jsPatterns = [
+			/window\./,
+			/document\./,
+			/function\s*\(/,
+			/var\s+\w+\s*=/,
+			/\.addEventListener/,
+			/console\./,
+			/\$\(/,
+			/\.html\(/,
+			/\.css\(/,
+			/typeof\s+/,
+			/return\s+/,
+			/\+\+|\-\-/,
+			/===|!==|&&|\|\|/
+		];
+		
+		return jsPatterns.some(pattern => pattern.test(text));
+	}
+
 	async parse(html: string, url: string): Promise<Recipe> {
 		const $ = cheerio.load(html);
 		const jsonLd = this.extractJsonLD(html);
@@ -17,7 +62,10 @@ export class SmittenKitchenParser extends BaseParser {
 				source: url,
 				author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name || "Deb Perelman",
 				ingredients: (jsonLd.recipeIngredient || []).map(i => ({ text: this.sanitizeText(i) })),
-				instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({ stepNumber: idx + 1, text: typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text) })),
+				instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({ 
+					stepNumber: idx + 1, 
+					text: this.extractInstructionText(i)
+				})),
 				imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? (typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url) : jsonLd.image?.url,
 				prepTime: jsonLd.prepTime || '',
 				cookTime: jsonLd.cookTime || '',
