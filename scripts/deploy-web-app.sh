@@ -7,7 +7,7 @@ set -e
 
 DISTRIBUTION_ID="E1D19F7SLOJM5H"
 S3_BUCKET="recipearchive-web-app-prod-990537043943"
-APP_DIR="recipe_archive_fresh"
+APP_DIR="recipe_archive"
 
 echo "🚀 Deploying RecipeArchive Flutter Web App to CloudFront"
 echo "=========================================================="

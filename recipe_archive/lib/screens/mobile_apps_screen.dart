@@ -31,7 +31,7 @@ class MobileAppsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'RecipeArchive Mobile Apps',
+                    'Recipe Archive Mobile Apps',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: Colors.green[800],
                       fontWeight: FontWeight.bold,

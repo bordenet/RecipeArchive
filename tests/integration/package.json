@@ -1,7 +1,7 @@
 {
   "name": "recipe-archive-integration-tests",
   "version": "1.0.0",
-  "description": "Integration tests for RecipeArchive browser extensions",
+  "description": "Integration tests for Recipe Archive browser extensions",
   "scripts": {
     "test": "npm run test:comprehensive && npm run test:sites && npm run test:extensions",
     "test:comprehensive": "node test-comprehensive-recipes.js",

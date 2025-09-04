@@ -218,7 +218,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: updateAvailable ? Colors.orange : color,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
                 ),
@@ -226,9 +226,9 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _showInstallationInstructions(platform),
                   icon: const Icon(Icons.help_outline),
-                  label: const Text('Instructions'),
+                  label: const Text('Instructions '),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
                 if (isInstalled) ...[
@@ -286,7 +286,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'RecipeArchive Browser Extensions',
+                      'Recipe Archive Browser Extensions',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.green[800],
                         fontWeight: FontWeight.bold,
