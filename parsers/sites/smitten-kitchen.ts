@@ -46,7 +46,24 @@ export class SmittenKitchenParser extends BaseParser {
 			/typeof\s+/,
 			/return\s+/,
 			/\+\+|\-\-/,
-			/===|!==|&&|\|\|/
+			/===|!==|&&|\|\|/,
+			/ai_\w+/,               // Ad injection patterns
+			/htlbid/,              // Ad service patterns  
+			/b64d\s*\(/,           // Base64 decode patterns
+			/getElementById/,       // DOM manipulation
+			/innerHTML/,           // HTML manipulation
+			/readyState/,          // Document ready state
+			/dataLayer/,           // Google Analytics
+			/\.push\s*\(/,         // Array/object manipulation
+			/gtag\s*\(/,           // Google Tag Manager
+			/\.call\s*\(/,         // Function calls
+			/sessionStorage/,      // Web storage
+			/localStorage/,        // Web storage
+			/_wp\w+/,              // WordPress patterns
+			/jetpack_\w+/,         // Jetpack patterns
+			/\.prototype\./,       // Prototype manipulation
+			/new\s+\w+\s*\(/,      // Constructor calls
+			/JSON\.(parse|stringify)/, // JSON operations
 		];
 		
 		return jsPatterns.some(pattern => pattern.test(text));
@@ -130,9 +147,39 @@ export class SmittenKitchenParser extends BaseParser {
 				}
 			}
 			let instructions: Instruction[] = [];
-			const jetpackDirections = $('.jetpack-recipe-directions').text().trim();
-			if (jetpackDirections) {
-				instructions.push({ stepNumber: 1, text: this.sanitizeText(jetpackDirections) });
+			// Enhanced jetpack directions parsing - extract clean paragraph content
+			const jetpackDirectionsContainer = $('.jetpack-recipe-directions');
+			if (jetpackDirectionsContainer.length > 0) {
+				let stepNumber = 1;
+				
+				// Get the raw HTML and parse it carefully
+				const directionsHtml = jetpackDirectionsContainer.html();
+				if (directionsHtml) {
+					// Split by paragraph tags but preserve bold headers
+					const steps = directionsHtml.split(/<\/p>\s*<p[^>]*>|<p[^>]*>|<\/p>/i);
+					
+					for (const step of steps) {
+						if (!step.trim()) continue;
+						
+						// Remove HTML tags and get clean text
+						const cleanText = step.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+						
+						// Skip JavaScript patterns and short fragments
+						if (!cleanText || cleanText.length < 10 || this.isJavaScriptCode(cleanText)) {
+							continue;
+						}
+						
+						// Skip fragments that are just HTML/CSS/JS
+						if (cleanText.match(/^(function|var|window\.|document\.|ai_|htlbid)/)) {
+							continue;
+						}
+						
+						instructions.push({ 
+							stepNumber: stepNumber++, 
+							text: this.sanitizeText(cleanText) 
+						});
+					}
+				}
 			}
 			if (instructions.length === 0) {
 				instructions = $('.instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step, ul li, .entry-content ol li, .entry-content ul li').map((i, el) => ({ stepNumber: i + 1, text: this.sanitizeText($(el).text()) })).get();

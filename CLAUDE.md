@@ -41,6 +41,42 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 ## 🎯 CURRENT PRIORITIES (September 4, 2025)
 
+### 🚨 CRITICAL PARSER REGRESSION RESOLVED (September 4, 2025 - 3:50 PM)
+
+**ISSUE**: Smitten Kitchen recipes showing broken instructions and JavaScript code instead of recipe steps
+- **Symptom 1**: Instructions displayed as just numbers (1, 2, 3, 4, 5) 
+- **Symptom 2**: JavaScript code fragments like "window.tude = window.tude" appearing in instructions
+- **Root Cause**: JSON-LD parsing failure + inadequate Jetpack recipe format handling + JS code contamination
+
+**CRITICAL FIXES IMPLEMENTED**:
+- ✅ **Robust JSON-LD Instruction Parsing**: Enhanced extractInstructionText() with fallback logic for multiple JSON-LD formats
+- ✅ **Enhanced Jetpack Parser**: Completely rewrote jetpack-recipe-directions parsing with HTML-aware extraction
+- ✅ **JavaScript Detection**: Added 20+ regex patterns to filter out ad injection, analytics, and WordPress code
+- ✅ **Content Sanitization**: Multi-stage filtering to prevent JavaScript code from contaminating recipe instructions
+
+**TECHNICAL IMPLEMENTATION**:
+- **extractInstructionText()**: Handles JSON-LD with text/name/description fields + JS filtering
+- **isJavaScriptCode()**: Detects ai_, htlbid, dataLayer, DOM manipulation, etc.
+- **Jetpack HTML Parsing**: Splits by paragraph tags, removes HTML, filters JS patterns
+- **Enhanced Patterns**: Added WordPress, analytics, and ad service pattern detection
+
+**IMPACT**: Fixes broken instructions for all Smitten Kitchen recipes using Jetpack format
+
+### ✅ FLUTTER WEB BRANDING FIXES COMPLETED (September 4, 2025)
+
+**ISSUE**: Web app still showed "recipe_archive_fresh" name and generic descriptions despite directory rename
+- **Root Cause**: HTML metadata files not updated during rename process
+
+**BRANDING FIXES IMPLEMENTED**:
+- ✅ **Browser Title**: Updated web/index.html title from "recipe_archive_fresh" → "Recipe Archive"
+- ✅ **Apple Web App**: Updated apple-mobile-web-app-title to "Recipe Archive"  
+- ✅ **PWA Manifest**: Updated manifest.json name and short_name to "Recipe Archive"
+- ✅ **App Description**: Enhanced description to "Capture, organize, and manage your favorite recipes from across the web"
+- ✅ **Theme Colors**: Updated from blue (#0175C2) to green (#4CAF50) to match app branding
+- ✅ **Meta Description**: Updated HTML meta description for better SEO
+
+**NEXT STEP**: Full rebuild and production deployment needed to see changes live
+
 ### ✅ JUST COMPLETED: APP RENAME & PARSER ENHANCEMENTS (September 4, 2025)
 
 **FLUTTER APP RENAME COMPLETED**:
