@@ -183,7 +183,7 @@ if command -v code &> /dev/null; then
     "hashicorp.terraform"                         # Infrastructure as Code
     "ms-vscode-remote.remote-containers"          # Container development
     "ms-vscode-remote.remote-ssh"                 # Remote development
-    "ms-vscode.vscode-json"                       # JSON support
+    "vscode-icons-team.vscode-icons"              # File icons
     "redhat.vscode-yaml"                          # YAML support
     "ms-python.python"                            # Python support (for automation)
     "bradlc.vscode-tailwindcss"                   # Tailwind CSS (future web app)
@@ -191,9 +191,6 @@ if command -v code &> /dev/null; then
     "ms-vscode.test-adapter-converter"            # Testing support
     "hbenl.vscode-test-explorer"                  # Test explorer
     "ms-playwright.playwright"                    # Playwright test support
-    "bradlc.vscode-tailwindcss"                   # Tailwind CSS (future web app)
-    "ms-vscode.vscode-eslint"                     # ESLint integration
-    "ms-vscode.vscode-typescript-next"            # Enhanced TypeScript
   )
   
   for extension in "${extensions[@]}"; do

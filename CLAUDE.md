@@ -48,39 +48,30 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 **ROOT CAUSE RESOLVED**: Fixed title capitalization regression ("Slushy Paper Plane" → "slushy paper plane") and legacy issues ("mathilde's tomato tart" → "Mathilde's Tomato Tart", "General Tso'S Chicken" → "General Tso's Chicken")
 
-**COMPLETED FIXES - DEPLOYED TO PRODUCTION**:
-- ✅ **Background Normalizer**: Fixed fallback function incorrectly capitalizing letters after apostrophes (lines 480-481)
-- ✅ **Content Normalizer**: Enhanced OpenAI prompt with explicit title capitalization rules and examples
-- ✅ **Direct AWS Deployment**: Lambda functions deployed via AWS CLI after CDK failed to detect changes
-- ✅ **Regression Fix**: "Slushy Paper Plane" case specifically addressed with CRITICAL TITLE RULE examples
-- ✅ **Deployment Documentation**: Created preferred deployment path for future Lambda updates
-
 ### ⚠️ PLAYWRIGHT E2E TESTS ASSESSMENT
 
 **CURRENT STATUS**: Playwright tests are **NOT ADDING VALUE** in their current state
 
 **ROOT ISSUE**: Tests were designed for standard HTML elements but Flutter web renders custom canvas-based UI
+
 - Tests look for `input[type="email"]` but Flutter uses custom rendered input widgets
 - Previous tests targeted production CloudFront deployment, now fixed to target `localhost:3000`
 - Basic loading tests pass, but authentication flow tests fail due to element selector incompatibility
 
-**RECOMMENDATION**: 
-- **OPTION 1**: Redesign tests using Flutter integration test framework instead of Playwright
-- **OPTION 2**: Use Flutter web semantic labels and accessibility selectors for Playwright  
-- **OPTION 3**: Remove Playwright tests and rely on Flutter widget tests + manual testing
+**TODO**:
+
+- Redesign tests using Flutter integration test framework instead of Playwright
+- Remove Playwright tests and rely on Flutter widget tests + manual testing
 
 **CURRENT DECISION**: Playwright tests disabled pending architecture review
 
-
 ### 🔧 REMAINING ISSUES
 
-**ISSUE**: Loads of dart test failures. FIX! Repro: `cd recipe_archive && flutter test`
-**ISSUE**: Fix failing tests. Repro: `npx playwright test --config tests/e2e/playwright.config.js`
-**ISSUE**: Fix failing tests. `  Site-specific parsers... ✗` Repro: `./validate-monorepo.sh` and WAIT LONG ENOUGH FOR THE TESTS TO FAIL.
-**ISSUE**: Recent recipe imports from Chrome web extension fail in title capitalization: "General Tso'S Chicken" is obviously WRONG. Why didn't the LLM pass correct for this? Investigate and fix.
-**LAYOUT**: When the web app is in tall/narrow display mode, each recipe tile in the gallery page is too short, vertically. For recipes whose title spans more than a single line, text (and website attribution) is truncated.
+**ISSUE**: Capitalization regression of recipe title when a recipe such as "double chocolate zucchini read" is imported from web extension. Perform additional investigation and fix. Our LLM integration is clearly broken. We thought this was fixed. IT IS NOT FIXED as-of 2025-09-04 1330 PDT. Review server logs.
 **ISSUE**: All tiles on the gallery page continue to specify "Unknown" for cook time and "Unknown servings" for serving size. FIX THIS!! We've discussed this for the past TWO DAYS, and it's still broken.
-**NOISE!**: Review past five git commits. Purge all celebrations from this CLAUDE.md document which have already been submitted to GitHub. Ensure this document focuses on forward-looking actions and existing issues/bugs/flaws/gaps.
+**ISSUE**: Update validate-monorepo.sh so that it's faster to run AND is clean of ALL warnings and errors (obviously fix the code-- don't just disable tests). Fix issues like Quality Gates: Empty markdown files
+**ISSUE**: Fix failing tests. `  Site-specific parsers... ✗` Repro: `./validate-monorepo.sh` and WAIT LONG ENOUGH FOR THE TESTS TO FAIL.
+**LAYOUT**: When the web app is in tall/narrow display mode, each recipe tile in the gallery page is too short, vertically. For recipes whose title spans more than a single line, text (and website attribution) is truncated.
 
 ### 🚨 CRITICAL PARSER REGRESSION RESOLVED (September 4, 2025 - 3:50 PM)
 
@@ -123,7 +114,6 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 **NEXT STEP**: Full rebuild and production deployment needed to see changes live
 
-
 ### 🚨 CRITICAL BUG: INGREDIENT SCALING NOT WORKING
 
 **PRIORITY 1 ISSUE**: Serving size changes on recipe detail pages do NOT trigger immediate ingredient quantity updates. This is a fundamental recipe app requirement.
@@ -141,9 +131,6 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 2. **Visual Feedback**: UI must reflect scaling changes without page refresh
 3. **Proportional Scaling**: All numeric values in ingredients must scale proportionally (2x servings = 2x ingredients)
 4. **Core User Experience**: This is NOT optional - recipe scaling is fundamental to recipe utility
-
-
-
 
 ### ✅ CRITICAL SUCCESS: MAJOR INFRASTRUCTURE RESOLVED
 
@@ -172,7 +159,6 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
    - ✅ Flutter Extensions screen with download buttons and version tracking
    - ✅ Accessible via drawer navigation → "Browser Extensions"
 
-
 ## 🏗️ Architecture
 
 ### Components
@@ -196,9 +182,11 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 ## ⚠️ CRITICAL REMINDERS & DEPLOYMENT PROCEDURES
 
 ### 🚀 AWS Lambda Deployment Path (REQUIRED)
+
 When CDK deployment fails to detect changes, use **direct AWS CLI deployment**:
+
 ```bash
-# Build for Linux deployment  
+# Build for Linux deployment
 cd aws-backend/functions/[function-name]
 GOOS=linux GOARCH=amd64 go build -o main main.go
 zip deployment-package.zip main
@@ -210,10 +198,11 @@ aws lambda list-functions --region us-west-2 --query 'Functions[?contains(Functi
 aws lambda update-function-code --function-name [FUNCTION-NAME] --zip-file fileb://deployment-package.zip --region us-west-2
 ```
 
-### 📋 Standard Procedures  
+### 📋 Standard Procedures
+
 - **ALWAYS lint after building**: Run `npm run lint` and fix ALL errors before committing
 - **ALWAYS validate before pushing**: Run `./validate-monorepo.sh` and fix failures
-- **Security**: Environment variables only, no hardcoded credentials  
+- **Security**: Environment variables only, no hardcoded credentials
 - **Testing**: TruffleHog scans, monorepo validation, fixture-based regression tests
 
 _See README.md and docs/ for detailed architecture and requirements._

@@ -366,24 +366,19 @@ run_linting_by_area() {
         ((PASSED_TESTS++)) # Count as passed since it's optional
     fi
     
-    print_step "End-to-end web app tests"
-    if [ -f "tests/e2e/playwright.config.js" ]; then
-        if command -v npx &> /dev/null; then
-            # Run E2E tests in headless mode
-            if (npx playwright test --config tests/e2e/playwright.config.js --reporter=line > /dev/null 2>&1); then
-                print_success
-                ((PASSED_TESTS++))
-            else
-                print_warning "E2E tests failed - run 'npx playwright test --config tests/e2e/playwright.config.js' for details"
-                echo "    Note: E2E tests require live CloudFront deployment and valid test credentials"
-                ((PASSED_TESTS++)) # Count as passed since it may be environment dependent
-            fi
-        else
-            print_warning "npx not installed (skipping E2E tests)"
+    print_step "Flutter app comprehensive tests"
+    if [ -d "recipe_archive" ]; then
+        cd recipe_archive
+        # Run all Flutter tests (unit + widget tests)
+        if flutter test > /dev/null 2>&1; then
+            print_success
             ((PASSED_TESTS++))
+        else
+            print_error "Flutter tests failed - run 'cd recipe_archive && flutter test' for details"
         fi
+        cd - > /dev/null
     else
-        print_warning "E2E test configuration not found (skipping)"
+        print_warning "Flutter app directory not found (skipping comprehensive tests)"
         ((PASSED_TESTS++))
     fi
     
@@ -474,7 +469,7 @@ run_husky_checks() {
     
     if [ $missing_prds -eq 0 ] && [ -d "docs/requirements" ]; then
         print_success
-        ((PASSED_TESTS+=2))
+        ((PASSED_TESTS++))
     else
         print_error
         echo "    Missing PRD documents or directory - check docs/requirements/"
@@ -536,7 +531,7 @@ run_husky_checks() {
         echo "    Documentation checks failed - rerun with details: npm run docs:organize && npm run docs:review"
     fi
     
-    ((TOTAL_TESTS+=8))
+    ((TOTAL_TESTS+=7))
 }
 
 # Run final recipe report tool validation
