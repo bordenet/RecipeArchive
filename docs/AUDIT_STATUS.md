@@ -40,7 +40,7 @@ All legacy parsers successfully migrated to registry-driven architecture:
 
 ## Development Guidelines
 - Use `./validate-monorepo.sh` to verify all components
-- Run Flutter app: `cd recipe_archive && flutter run -d chrome`
+- Production app: https://d1jcaphz4458q7.cloudfront.net
 - All parsers in `/parsers/sites/site-registry.ts`
 - Contract validation enforces required fields (title, ingredients, instructions)
 

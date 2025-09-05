@@ -13,9 +13,10 @@
 ```bash
 git clone https://github.com/bordenet/RecipeArchive
 ./validate-monorepo.sh                               # Validates all components
-cd recipe_archive && flutter run -d chrome          # Run Flutter app locally
 cd tools/recipe-report && go run main.go            # Generate recipe report (uses .env)
 ```
+
+**Production App**: https://d1jcaphz4458q7.cloudfront.net
 
 ## 🚨 Critical Procedures
 

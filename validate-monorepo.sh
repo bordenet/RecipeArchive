@@ -585,7 +585,7 @@ check_frontend_status() {
     if [ -d "recipe_archive" ]; then
         if [ -f "recipe_archive/pubspec.yaml" ]; then
             print_success
-            echo "    Flutter web app ready - run 'cd recipe_archive && flutter run -d chrome'"
+            echo "    Flutter web app ready - production: https://d1jcaphz4458q7.cloudfront.net"
         else
             print_error
             echo "    pubspec.yaml not found in recipe_archive directory"

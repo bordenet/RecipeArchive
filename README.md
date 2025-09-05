@@ -74,10 +74,9 @@ RecipeArchive uses AWS for backend services. You'll need:
 Modern, responsive recipe management interface
 ```bash
 cd recipe_archive
-flutter run -d chrome  # Development server
 flutter build web      # Production build
 ```
-- **Live Demo:** https://d1jcaphz4458q7.cloudfront.net
+- **Production App:** https://d1jcaphz4458q7.cloudfront.net
 
 ### **Browser Extensions**
 Chrome and Safari extensions for recipe capture

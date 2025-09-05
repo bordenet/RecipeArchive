@@ -8,7 +8,7 @@ This document outlines a comprehensive plan for hosting the RecipeArchive Flutte
 
 Our RecipeArchive Flutter web application currently operates with:
 - **Flutter Web App**: Built with `flutter build web` from `recipe_archive/` directory
-- **Local Development**: `flutter run -d chrome` for development server
+- **Production App**: https://d1jcaphz4458q7.cloudfront.net (CloudFront distribution)
 - **Static Assets**: Generated in `build/web/` directory after build process
 - **AWS Backend**: Existing Lambda + S3 + Cognito infrastructure in US-West-2
 - **Mobile Apps**: Native iOS/iPad and Android apps with AWS integration

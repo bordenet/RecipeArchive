@@ -4,10 +4,9 @@ A clean, modern Flutter web application for the Recipe Archive platform.
 
 ## 🚀 Quick Start
 
-```bash
-# Run the web app
-flutter run -d chrome
+**Production App**: https://d1jcaphz4458q7.cloudfront.net
 
+```bash
 # Build for production
 flutter build web --release
 ```
