@@ -20,7 +20,7 @@ func TestFindProjectRoot(t *testing.T) {
 	}
 
 	// Check that the root contains expected directories
-	expectedDirs := []string{"extensions", "aws-backend", "dev-tools"}
+	expectedDirs := []string{"extensions", "aws-backend", "tools"}
 	for _, dir := range expectedDirs {
 		dirPath := filepath.Join(root, dir)
 		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
@@ -35,8 +35,8 @@ func TestCookieFilePathGeneration(t *testing.T) {
 		t.Fatalf("Failed to find project root: %v", err)
 	}
 
-	expected := filepath.Join(root, "dev-tools", "wapost-subscription-cookies.json")
-	cookiesFile := filepath.Join(root, "dev-tools", "wapost-subscription-cookies.json")
+	expected := filepath.Join(root, "config", "wapost-subscription-cookies.json")
+	cookiesFile := filepath.Join(root, "config", "wapost-subscription-cookies.json")
 
 	if cookiesFile != expected {
 		t.Errorf("Expected cookies file path %s, got %s", expected, cookiesFile)

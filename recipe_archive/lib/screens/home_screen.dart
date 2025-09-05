@@ -166,38 +166,46 @@ class HomeScreen extends ConsumerWidget {
             },
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Responsive grid with improved density
+                // Improved responsive grid with better breakpoints and minimum sizing
                 int crossAxisCount = 1;
-                double childAspectRatio = 0.85; // Default ratio
+                double childAspectRatio = 0.85;
+                double minCardWidth = 280; // Minimum card width to ensure content fits
                 
-                if (constraints.maxWidth > 1400) {
-                  crossAxisCount = 6; // 6 columns on large desktops
-                  childAspectRatio = 0.75; // Taller cards for more columns
-                } else if (constraints.maxWidth > 1200) {
-                  crossAxisCount = 5; // 5 columns on desktops
-                  childAspectRatio = 0.8; // Slightly taller
-                } else if (constraints.maxWidth > 900) {
-                  crossAxisCount = 4; // 4 columns on medium screens
-                  childAspectRatio = 0.85; // Standard ratio
-                } else if (constraints.maxWidth > 600) {
-                  crossAxisCount = 3; // 3 columns on tablets
-                  childAspectRatio = 0.9; // Taller for tablets
-                } else if (constraints.maxWidth > 400) {
-                  crossAxisCount = 2; // 2 columns on large phones
-                  childAspectRatio = 1.0; // Much taller for narrow screens
+                // Calculate optimal number of columns based on min/max width constraints
+                double availableWidth = constraints.maxWidth - 24; // Account for padding
+                int maxColumns = (availableWidth / minCardWidth).floor();
+                
+                if (constraints.maxWidth > 1600) {
+                  crossAxisCount = (maxColumns > 6) ? 6 : maxColumns; // Max 6 columns
+                  childAspectRatio = 0.72; // Taller for more columns
+                } else if (constraints.maxWidth > 1300) {
+                  crossAxisCount = (maxColumns > 5) ? 5 : maxColumns; // Max 5 columns
+                  childAspectRatio = 0.75; 
+                } else if (constraints.maxWidth > 1000) {
+                  crossAxisCount = (maxColumns > 4) ? 4 : maxColumns; // Max 4 columns
+                  childAspectRatio = 0.78;
+                } else if (constraints.maxWidth > 700) {
+                  crossAxisCount = (maxColumns > 3) ? 3 : maxColumns; // Max 3 columns
+                  childAspectRatio = 0.82;
+                } else if (constraints.maxWidth > 500) {
+                  crossAxisCount = 2; // 2 columns for medium narrow screens
+                  childAspectRatio = 0.88; // Taller to accommodate content
                 } else {
                   // Single column for very narrow screens
                   crossAxisCount = 1;
-                  childAspectRatio = 1.5; // Very tall for single column
+                  childAspectRatio = 1.2; // Much taller for single column to show all content
                 }
+                
+                // Ensure we have at least 1 column
+                crossAxisCount = crossAxisCount < 1 ? 1 : crossAxisCount;
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(6), // Reduced padding
+                  padding: const EdgeInsets.all(12), // Better padding
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    childAspectRatio: childAspectRatio, // Dynamic aspect ratio
-                    crossAxisSpacing: 6, // Reduced spacing
-                    mainAxisSpacing: 6, // Reduced spacing
+                    childAspectRatio: childAspectRatio,
+                    crossAxisSpacing: 12, // Better spacing
+                    mainAxisSpacing: 12, // Better spacing
                   ),
                   itemCount: recipes.length,
                   itemBuilder: (context, index) {

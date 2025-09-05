@@ -48,7 +48,7 @@ func main() {
 		logrus.Fatalf("Failed to find project root: %v", err)
 	}
 
-	cookiesFile := filepath.Join(projectRoot, "dev-tools", "wapost-subscription-cookies.json")
+	cookiesFile := filepath.Join(projectRoot, "config", "wapost-subscription-cookies.json")
 
 	fmt.Println("🔐 Washington Post Cookie Capture (Go Edition)")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

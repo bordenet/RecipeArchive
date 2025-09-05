@@ -544,5 +544,59 @@ Environment Variables (.env file support):
 	// Print results
 	PrintReport(entries)
 
+	// Print failed parser report if there are failures
+	PrintFailedParserReport(entries)
+
 	fmt.Printf("\n✅ Report generation completed successfully\n")
+}
+
+// PrintFailedParserReport prints a dedicated section for parsing failures and errors
+func PrintFailedParserReport(entries []ReportEntry) {
+	// Filter for failures and errors only
+	var failures []ReportEntry
+	for _, entry := range entries {
+		if entry.Type == "failure" || entry.Type == "error" {
+			failures = append(failures, entry)
+		}
+	}
+
+	if len(failures) == 0 {
+		return
+	}
+
+	fmt.Printf("\n🚨 FAILED PARSER REPORT\n")
+	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+
+	// Sort failures by date (newest first)
+	sort.Slice(failures, func(i, j int) bool {
+		return failures[i].Date.After(failures[j].Date)
+	})
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "Recipe Name\tDomain\tDate Submitted\tStatus\n")
+	fmt.Fprintf(w, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━━━━━━━━━\t━━━━━━━━━━\n")
+
+	for _, entry := range failures {
+		name := entry.Name
+		if len(name) > 48 {
+			name = name[:45] + "..."
+		}
+
+		domain := entry.Domain
+		if len(domain) > 20 {
+			domain = domain[:17] + "..."
+		}
+
+		dateStr := entry.Date.Format("2006-01-02 15:04")
+
+		status := "❌"
+		if entry.Type == "error" {
+			status = "🚨"
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, domain, dateStr, status)
+	}
+	w.Flush()
+
+	fmt.Printf("\n💡 Found %d parsing failures/errors. Consider improving parsers for these domains.\n", len(failures))
 }
