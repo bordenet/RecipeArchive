@@ -25,9 +25,9 @@ class RecipeCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Recipe Image (reduced height by 20%)
+                // Recipe Image with responsive height
                 SizedBox(
-                  height: 160,
+                  height: 140, // Slightly reduced to leave more room for text
                   width: double.infinity,
                   child: recipe.imageUrl != null
                       ? Image.network(
@@ -68,34 +68,37 @@ class RecipeCard extends StatelessWidget {
                         ),
                 ),
                 
-                // Recipe Info (compacted)
-                Padding(
-                  padding: const EdgeInsets.all(12), // Reduced padding
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title (with HTML entity decoding)
-                      Text(
-                        recipe.cleanTitle,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      
-                      const SizedBox(height: 6), // Reduced spacing
-                      
-                      // Description (more compact, with HTML entity decoding)
-                      if (recipe.description != null)
+                // Recipe Info (better content management)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title with better wrapping
                         Text(
-                          recipe.cleanDescription,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                          recipe.cleanTitle,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15, // Slightly smaller for better fit
                           ),
-                          maxLines: 1, // Reduced to 1 line
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        
+                        const SizedBox(height: 6),
+                        
+                        // Description (adaptive)
+                        if (recipe.description != null)
+                          Text(
+                            recipe.cleanDescription,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontSize: 12, // Smaller text
+                            ),
+                            maxLines: 2, // Allow 2 lines for better readability
+                            overflow: TextOverflow.ellipsis,
+                          ),
                       
                       const SizedBox(height: 8), // Reduced spacing
                       
@@ -132,74 +135,78 @@ class RecipeCard extends StatelessWidget {
                       
                       const SizedBox(height: 8),
                       
-                      // Source website (clickable) - moved to new line and left-aligned
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: GestureDetector(
-                            onTap: () => _launchSourceUrl(recipe.sourceUrl),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(8),
-                                border: recipe.sourceUrl != null 
-                                  ? Border.all(color: Colors.blue[200]!, width: 0.5)
-                                  : null,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    recipe.displaySourceName,
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Colors.blue[700],
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  if (recipe.sourceUrl != null) ...[
-                                    const SizedBox(width: 2),
-                                    Icon(
-                                      Icons.launch,
-                                      size: 10,
-                                      color: Colors.blue[600],
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                        ),
-                      ),
-                      
-                      // Tags (more compact)
+                      // Tags (more compact) - show before source
                       if (recipe.tags.isNotEmpty) ...[
-                        const SizedBox(height: 6), // Reduced spacing
                         Wrap(
                           spacing: 3, // Reduced spacing
                           runSpacing: 3, // Reduced spacing
-                          children: recipe.tags.take(2).map((tag) => Container( // Only show 2 tags
+                          children: recipe.tags.take(2).map((tag) => Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 4, // Reduced padding
-                              vertical: 1, // Reduced padding
+                              horizontal: 4,
+                              vertical: 1,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(6), // Smaller radius
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               '#$tag',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith( // Smaller text
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: Colors.grey[700],
+                                fontSize: 10,
                               ),
                             ),
                           )).toList(),
                         ),
+                        const SizedBox(height: 6),
                       ],
+                      
+                      // Source website (always visible at bottom)
+                      const Spacer(), // Push to bottom
+                      GestureDetector(
+                        onTap: () => _launchSourceUrl(recipe.sourceUrl),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(6),
+                            border: recipe.sourceUrl != null 
+                              ? Border.all(color: Colors.blue[200]!, width: 0.5)
+                              : null,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  recipe.displaySourceName,
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.blue[700],
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 11,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (recipe.sourceUrl != null) ...[
+                                const SizedBox(width: 3),
+                                Icon(
+                                  Icons.launch,
+                                  size: 10,
+                                  color: Colors.blue[600],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
+              ),
               ],
             ),
             

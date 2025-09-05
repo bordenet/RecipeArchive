@@ -423,6 +423,11 @@ class CognitoAuth {
     }
   }
 
+  // Public method to refresh tokens (called by popup.js)
+  async refreshToken(providedRefreshToken = null) {
+    return await this._refreshTokens();
+  }
+
   // Check if current token is valid (not expired) with proper JWT validation
   async _isTokenValid() {
     try {
