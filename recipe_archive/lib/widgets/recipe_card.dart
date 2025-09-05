@@ -15,203 +15,191 @@ class RecipeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2, // Reduced elevation for cleaner look
-      margin: const EdgeInsets.all(4), // Reduced margin
+      elevation: 1,
+      margin: const EdgeInsets.all(6),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Recipe Image with responsive height
-                AspectRatio(
-                  aspectRatio: 16 / 9, // More responsive than fixed height
-                  child: SizedBox(
-                    width: double.infinity,
-                  child: recipe.imageUrl != null
-                      ? Image.network(
-                          recipe.imageUrl!,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;
-                            }
-                            return Center(
+            // Recipe Image - compact but properly sized
+            AspectRatio(
+              aspectRatio: 4 / 3, // More horizontal, less square
+              child: recipe.imageUrl != null
+                  ? Image.network(
+                      recipe.imageUrl!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey[100],
+                          child: Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: Colors.green,
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                               ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            // print('Image load error for ${recipe.imageUrl}: $error');
-                            return Container(
-                              color: Colors.grey[300],
-                              child: const Icon(
-                                Icons.restaurant_menu,
-                                size: 64,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: Colors.grey[300],
-                          child: const Icon(
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[100],
+                          child: Icon(
                             Icons.restaurant_menu,
-                            size: 64,
-                            color: Colors.grey,
+                            size: 48,
+                            color: Colors.grey[400],
                           ),
-                        ),
-                  ),
-                ),
-                
-                // Recipe Info (better content management)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title with better wrapping
-                        Text(
-                          recipe.cleanTitle,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15, // Slightly smaller for better fit
+                        );
+                      },
+                    )
+                  : Container(
+                      color: Colors.grey[100],
+                      child: Icon(
+                        Icons.restaurant_menu,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+            ),
+            
+            // Recipe Content - compact padding with pinned bottom
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      recipe.cleanTitle,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    
+                    const SizedBox(height: 4),
+                    
+                    // Description - take up available space
+                    if (recipe.description != null)
+                      Expanded(
+                        child: Text(
+                          recipe.cleanDescription,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                            fontSize: 11,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        
-                        const SizedBox(height: 6),
-                        
-                        // Description (adaptive)
-                        if (recipe.description != null)
-                          Text(
-                            recipe.cleanDescription,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontSize: 12, // Smaller text
-                            ),
-                            maxLines: 2, // Allow 2 lines for better readability
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      
-                      const SizedBox(height: 8), // Reduced spacing
-                      
-                      // Recipe Meta Info
-                      Row(
-                        children: [
-                          // Cooking Time
-                          Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            recipe.displayTime,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          
-                          const SizedBox(width: 16),
-                          
-                          // Servings
-                          Icon(
-                            Icons.people,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            recipe.displayServings,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
                       ),
-                      
-                      const SizedBox(height: 8),
-                      
-                      // Tags (more compact) - show before source
-                      if (recipe.tags.isNotEmpty) ...[
-                        Wrap(
-                          spacing: 3, // Reduced spacing
-                          runSpacing: 3, // Reduced spacing
-                          children: recipe.tags.take(2).map((tag) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '#$tag',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Colors.grey[700],
-                                fontSize: 10,
+                    
+                    // If no description, add flexible space
+                    if (recipe.description == null)
+                      const Spacer(),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Time & Servings row - pinned above source
+                    if (recipe.displayTime != 'Unknown' || recipe.displayServings != 'Unknown servings')
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            if (recipe.displayTime != 'Unknown') ...[
+                              Icon(
+                                Icons.access_time,
+                                size: 14,
+                                color: Colors.grey[500],
                               ),
-                            ),
-                          )).toList(),
-                        ),
-                        const SizedBox(height: 6),
-                      ],
-                      
-                      // Source website (always visible at bottom)
-                      const Spacer(), // Push to bottom
-                      GestureDetector(
-                        onTap: () => _launchSourceUrl(recipe.sourceUrl),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(6),
-                            border: recipe.sourceUrl != null 
-                              ? Border.all(color: Colors.blue[200]!, width: 0.5)
-                              : null,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
+                              const SizedBox(width: 4),
+                              Text(
+                                recipe.displayTime,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 11,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                            
+                            if (recipe.displayTime != 'Unknown' && recipe.displayServings != 'Unknown servings')
+                              const SizedBox(width: 12),
+                            
+                            if (recipe.displayServings != 'Unknown servings') ...[
+                              Icon(
+                                Icons.people,
+                                size: 14,
+                                color: Colors.grey[500],
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
                                 child: Text(
-                                  recipe.displaySourceName,
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Colors.blue[700],
-                                    fontWeight: FontWeight.w500,
+                                  recipe.displayServings,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     fontSize: 11,
+                                    color: Colors.grey[600],
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (recipe.sourceUrl != null) ...[
-                                const SizedBox(width: 3),
-                                Icon(
-                                  Icons.launch,
-                                  size: 10,
-                                  color: Colors.blue[600],
-                                ),
-                              ],
                             ],
-                          ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    
+                    // Source website - always pinned to bottom
+                    GestureDetector(
+                      onTap: () => _launchSourceUrl(recipe.sourceUrl),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(6),
+                          border: recipe.sourceUrl != null 
+                            ? Border.all(color: Colors.blue[200]!, width: 0.5)
+                            : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                recipe.displaySourceName,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (recipe.sourceUrl != null) ...[
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.launch,
+                                size: 12,
+                                color: Colors.blue[600],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              ],
             ),
-            
           ],
         ),
       ),

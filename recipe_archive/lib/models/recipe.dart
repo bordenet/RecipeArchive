@@ -26,15 +26,18 @@ class RecipeIngredient {
     
     String scaledText = text;
     
-    // Comprehensive regex that matches fractions, decimals, and whole numbers at start of ingredient
-    final regex = RegExp(r'^(\d+(?:\s+\d+/\d+)?|\d+\.\d+|\d+/\d+)\s+(.+)', multiLine: false);
+    // Single comprehensive regex that handles both cases:
+    // 1. Numbers at beginning: "6 hard-boiled eggs" -> captures "6" and "hard-boiled eggs"
+    // 2. Numbers embedded: "flesh of 1 ripe avocado" -> captures "flesh of", "1", and "ripe avocado"
+    final regex = RegExp(r'^(\d+(?:\s+\d+/\d+)?|\d+\.\d+|\d+/\d+)\s+(.+)|^(.*?)(\d+)(\s+.+)$', multiLine: false);
     
     scaledText = scaledText.replaceAllMapped(regex, (match) {
       try {
-        final amountStr = match.group(1)?.trim();
-        final restOfIngredient = match.group(2)?.trim();
-        
-        if (amountStr != null && restOfIngredient != null) {
+        // Case 1: Number at beginning (groups 1 and 2)
+        if (match.group(1) != null && match.group(2) != null) {
+          final amountStr = match.group(1)!.trim();
+          final restOfIngredient = match.group(2)!.trim();
+          
           final amount = _parseScalingAmount(amountStr);
           if (amount != null) {
             final scaledAmount = amount * ratio;
@@ -42,6 +45,20 @@ class RecipeIngredient {
             return '$formattedAmount $restOfIngredient';
           }
         }
+        // Case 2: Number embedded (groups 3, 4, and 5)
+        else if (match.group(3) != null && match.group(4) != null && match.group(5) != null) {
+          final prefix = match.group(3)!;
+          final amountStr = match.group(4)!.trim();
+          final suffix = match.group(5)!.trim();
+          
+          final amount = _parseScalingAmount(amountStr);
+          if (amount != null) {
+            final scaledAmount = amount * ratio;
+            final formattedAmount = _formatScaledAmount(scaledAmount);
+            return '$prefix$formattedAmount $suffix';
+          }
+        }
+        
         return match.group(0)!;
       } catch (e) {
         return match.group(0)!;

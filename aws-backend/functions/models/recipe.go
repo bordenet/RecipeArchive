@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+	"strconv"
 	"time"
 )
 
@@ -167,4 +169,90 @@ type PaginationResult struct {
 	NextCursor string `json:"nextCursor,omitempty"`
 	HasMore    bool   `json:"hasMore"`
 	Total      int    `json:"total"`
+}
+
+// FlexInt handles both string and integer JSON values
+type FlexInt struct {
+	Value *int
+}
+
+// UnmarshalJSON custom unmarshaler for FlexInt
+func (f *FlexInt) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 || string(data) == "null" {
+		f.Value = nil
+		return nil
+	}
+
+	// Try to unmarshal as integer first
+	var intVal int
+	if err := json.Unmarshal(data, &intVal); err == nil {
+		f.Value = &intVal
+		return nil
+	}
+
+	// Try to unmarshal as string
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		if strVal == "" {
+			f.Value = nil
+			return nil
+		}
+		if parsed, err := strconv.Atoi(strVal); err == nil {
+			f.Value = &parsed
+			return nil
+		}
+	}
+
+	f.Value = nil
+	return nil
+}
+
+// MarshalJSON custom marshaler for FlexInt
+func (f FlexInt) MarshalJSON() ([]byte, error) {
+	if f.Value == nil {
+		return []byte("null"), nil
+	}
+	return json.Marshal(*f.Value)
+}
+
+// Custom JSON unmarshaling for Recipe to handle string/int compatibility and field name variations
+func (r *Recipe) UnmarshalJSON(data []byte) error {
+	// Create a temporary struct with FlexInt fields
+	type RecipeAlias Recipe
+	aux := &struct {
+		// New field names (preferred)
+		PrepTimeMinutes  FlexInt `json:"prepTimeMinutes,omitempty"`
+		CookTimeMinutes  FlexInt `json:"cookTimeMinutes,omitempty"`
+		TotalTimeMinutes FlexInt `json:"totalTimeMinutes,omitempty"`
+		Servings         FlexInt `json:"servings,omitempty"`
+
+		// Legacy field names for backward compatibility
+		PrepTime FlexInt `json:"prepTime,omitempty"`
+		CookTime FlexInt `json:"cookTime,omitempty"`
+		*RecipeAlias
+	}{
+		RecipeAlias: (*RecipeAlias)(r),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Map the FlexInt values to the original fields with fallback logic
+	if aux.PrepTimeMinutes.Value != nil {
+		r.PrepTimeMinutes = aux.PrepTimeMinutes.Value
+	} else if aux.PrepTime.Value != nil {
+		r.PrepTimeMinutes = aux.PrepTime.Value // Use legacy prepTime field
+	}
+
+	if aux.CookTimeMinutes.Value != nil {
+		r.CookTimeMinutes = aux.CookTimeMinutes.Value
+	} else if aux.CookTime.Value != nil {
+		r.CookTimeMinutes = aux.CookTime.Value // Use legacy cookTime field
+	}
+
+	r.TotalTimeMinutes = aux.TotalTimeMinutes.Value
+	r.Servings = aux.Servings.Value
+
+	return nil
 }

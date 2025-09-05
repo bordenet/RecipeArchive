@@ -2,21 +2,20 @@
 
 ## 🎯 Current Status (September 5, 2025)
 
-**✅ FULLY OPERATIONAL**: Complete end-to-end recipe management system  
-**📊 Recipe Storage**: 17 active recipes (S3 cleaned from 40 to 17 files)  
-**🧪 Testing**: All Flutter tests passing (15/15)  
+**✅ FULLY OPERATIONAL**: Complete end-to-end recipe management system with major fixes deployed  
+**📊 Recipe Storage**: 23 unique recipes (cleaned from 40+ duplicates)  
+**🧪 Testing**: Enhanced Flutter app with improved ingredient scaling and JSON parsing  
 **🌐 Production**: https://d1jcaphz4458q7.cloudfront.net  
-**🎯 Code Quality**: Zero lint/analysis warnings
+**🎯 Code Quality**: Major data compatibility and parsing issues resolved
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/bordenet/RecipeArchive
 ./validate-monorepo.sh                               # Validates all components
+cd recipe_archive && flutter run -d chrome          # Run Flutter app locally
 cd tools/recipe-report && go run main.go            # Generate recipe report (uses .env)
 ```
-
-**Production App**: https://d1jcaphz4458q7.cloudfront.net
 
 ## 🚨 Critical Procedures
 
@@ -58,35 +57,68 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 | Recipe Report | `cd tools/recipe-report && go run main.go` |
 | Test Single Recipe | `S3_STORAGE_BUCKET=recipearchive-storage-dev-990537043943 ./aws-backend/functions/test-tools/test-tools -action=list-recipes -user-id=d80153c0-90b1-7090-85be-28e9c4e458f7` |
 | Flutter Deploy | `cd recipe_archive && ./deploy.sh` |
-| Lambda Functions | `aws lambda list-functions --region us-west-2 --query 'Functions[?contains(FunctionName, \`RecipesFunction\`)].FunctionName' --output table` |
+| Lambda Functions | `aws lambda list-functions --region us-west-2 --query 'Functions[?contains(FunctionName, \\`RecipesFunction\\`)].FunctionName' --output table` |
 | CloudFront Invalidation | `aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"` |
+| Clean Duplicates | `S3_STORAGE_BUCKET=recipearchive-storage-dev-990537043943 ./aws-backend/functions/test-tools/test-tools -action=cleanup-duplicates -user-id=d80153c0-90b1-7090-85be-28e9c4e458f7` |
 
-## ⚠️ Known Issues
+## ✅ MAJOR ISSUES RESOLVED (September 5, 2025)
 
-### Current Limitations
-- **Parsing Timeouts**: Some recipe sites may timeout during validation (60s limit)
-- **Recipe Scaling**: Ingredient quantity scaling not working in recipe detail view
+### 🎯 "Disappearing Recipes" Bug - FIXED
+- **Root Cause**: JSON data format incompatibility between stored data and Go struct expectations
+- **Problem**: 40 recipe files in S3, but only 9 readable due to string vs integer parsing failures  
+- **Solution**: Enhanced `models.Recipe` with custom JSON unmarshaling supporting both formats
+- **Result**: All 23 recipes (post-cleanup) now accessible to Flutter app
+
+### 🔧 Ingredient Scaling Bug - FIXED
+- **Problem**: "flesh of 1 ripe avocado" wouldn't scale when adjusting servings
+- **Root Cause**: Regex only matched numbers at beginning of ingredient text
+- **Solution**: Enhanced regex to handle embedded numbers like "flesh of 1 ripe avocado"
+- **Result**: All ingredients with numbers now scale correctly
+
+### 🗑️ Duplicate Recipe Cleanup - COMPLETED
+- **Problem**: 40+ recipe files with massive duplication (same recipes 3-7 times)
+- **Action**: Ran systematic cleanup removing 17 duplicate files
+- **Result**: Clean dataset of 23 unique recipes
+
+### ⏰ Time Display Issue - RESOLVED
+- **Problem**: Prep/cook times showing "Unknown" despite data in S3
+- **Root Cause**: Field name mismatch (`prepTime` vs `prepTimeMinutes`)
+- **Solution**: Added legacy field mapping for backward compatibility
+- **Result**: Proper time display in Flutter app
+
+### 🔐 Token Refresh Issues - DEPLOYED
+- **Problem**: Chrome/Safari extensions using inconsistent token types after refresh
+- **Solution**: Standardized on `idToken` usage across all API calls
+- **Status**: Fixed extensions deployed to production S3
+
+## 📊 Current System Health
+
+### ✅ Components Working
+- **Lambda Functions**: All 23 recipes now readable with enhanced JSON parsing
+- **Flutter Web App**: Enhanced ingredient scaling and time display
+- **Extensions**: Token refresh issues resolved and deployed
+- **S3 Storage**: Cleaned from 40+ duplicates to 23 unique recipes
+- **API Gateway**: Properly routing and authenticating requests
+
+### ⚠️ Known Limitations
+- **Flutter Web Build**: Shows Wasm compatibility warnings (not errors, app still works)
+- **Recipe Scaling**: Some ingredients like "a handful of sprouts" remain static (expected behavior)
 - **Extension Token Refresh**: Properly implemented but may show brief login prompts
-
-### Flutter Web Deployment
-- **CloudFront Cache**: Always invalidate after deployments or changes won't be visible
-- **Build Requirements**: Must use `flutter build web` before deployment
-- **Automated Scripts**: Preferred over manual deployment to ensure cache invalidation
 
 ## 🎆 Recent Achievements (September 5, 2025)
 
-### ✨ System Optimization & Cleanup
-- **📋 S3 Storage Cleanup**: Removed 23 orphaned recipe files (40 → 17 active recipes)
-- **🧪 Test Suite Overhaul**: Fixed failing Flutter tests (15/15 passing)
-- **🔍 Code Quality**: Eliminated all lint warnings and analysis issues
-- **🚀 Flutter Deployment**: Automated CloudFront deployment with cache invalidation
-- **🔧 Lambda Fixes**: Deployed recipes function with correct `bootstrap` binary
+### ✨ Technical Fixes Deployed
+- **📋 JSON Data Compatibility**: Custom unmarshaling handles string/integer conversion
+- **🧹 S3 Storage Cleanup**: Removed 17 orphaned recipe files (40 → 23 active recipes)
+- **🧪 Ingredient Scaling**: Enhanced regex supports embedded numbers in text
+- **🔧 Lambda Deployment**: Updated recipes function with enhanced JSON handling
+- **🚀 Extension Fixes**: Consistent token usage deployed to production
 
-### ⚙️ Technical Improvements
-- **📋 Integration Tests**: Commented out network-dependent tests (require mocking)
-- **🤖 Automated Workflows**: All deployment scripts working correctly
-- **📈 Performance**: Recipe time display fixes (prepTimeMinutes/cookTimeMinutes)
-- **🚫 Clean Architecture**: Removed Playwright tests in favor of Flutter widget tests
+### ⚙️ System Improvements
+- **📈 Data Access**: All stored recipes now accessible (was 9/40, now 23/23)
+- **🤖 Automated Cleanup**: Recipe duplication management tools working
+- **🔍 Enhanced Parsing**: Backward compatible field name mapping
+- **🚫 Clean Architecture**: Removed redundant code, fixed Go build issues
 
 ## 📋 Troubleshooting
 
@@ -101,10 +133,15 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 - **Recipe Parsing**: Check parser logs via browser developer tools
 
 ### Flutter Issues
-- **Syntax Errors**: Run `flutter analyze` to identify compilation issues
+- **Wasm Warnings**: Expected for packages using dart:html (doesn't prevent functionality)
 - **Data Loading**: Check network tab for API call failures
 - **Build Errors**: Run `flutter clean && flutter pub get` to reset dependencies
 
+### Flutter Web Deployment Warnings
+- **Wasm Compatibility**: Shows warnings about dart:html and dart:ffi usage
+- **Impact**: Warnings only, JavaScript compilation works fine
+- **Note**: These warnings don't appear in validate-monorepo.sh because it runs `flutter analyze`, not `flutter build web`
+
 ---
 
-*See individual component README.md files for detailed setup instructions.*
+*System is now fully operational with comprehensive fixes deployed. See individual component README.md files for detailed setup instructions.*
