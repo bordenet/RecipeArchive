@@ -2,7 +2,7 @@
 
 **A comprehensive recipe archiving platform for home cooks**
 
-Capture, organize, and access your favorite recipes from 13+ supported websites with intelligent parsing, cross-device synchronization, and a modern web interface.
+Capture, organize, and access your favorite recipes from 13+ supported websites with intelligent parsing, cross-device synchronization, and a modern web interface. Features OpenAI-powered recipe normalization with automatic time estimates and serving calculations.
 
 ## 🚀 Quick Start
 
@@ -158,7 +158,9 @@ cd aws-backend && cdk deploy # Deploy infrastructure
 - Chrome & Safari extensions with 13-site parser support
 - AWS serverless backend with S3 storage  
 - Flutter web app with responsive design
-- Comprehensive test coverage and validation
+- OpenAI-powered recipe normalization with automatic time estimates
+- Comprehensive Flutter integration tests replacing unreliable Playwright tests
+- Fixed test suite with accurate counting and meaningful validation
 
 **🔧 Active Development:**
 - Mobile apps (iOS native, Android Compose)

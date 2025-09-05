@@ -168,23 +168,34 @@ class HomeScreen extends ConsumerWidget {
               builder: (context, constraints) {
                 // Responsive grid with improved density
                 int crossAxisCount = 1;
+                double childAspectRatio = 0.85; // Default ratio
+                
                 if (constraints.maxWidth > 1400) {
                   crossAxisCount = 6; // 6 columns on large desktops
+                  childAspectRatio = 0.75; // Taller cards for more columns
                 } else if (constraints.maxWidth > 1200) {
                   crossAxisCount = 5; // 5 columns on desktops
+                  childAspectRatio = 0.8; // Slightly taller
                 } else if (constraints.maxWidth > 900) {
                   crossAxisCount = 4; // 4 columns on medium screens
+                  childAspectRatio = 0.85; // Standard ratio
                 } else if (constraints.maxWidth > 600) {
                   crossAxisCount = 3; // 3 columns on tablets
+                  childAspectRatio = 0.9; // Taller for tablets
                 } else if (constraints.maxWidth > 400) {
                   crossAxisCount = 2; // 2 columns on large phones
+                  childAspectRatio = 1.0; // Much taller for narrow screens
+                } else {
+                  // Single column for very narrow screens
+                  crossAxisCount = 1;
+                  childAspectRatio = 1.5; // Very tall for single column
                 }
 
                 return GridView.builder(
                   padding: const EdgeInsets.all(6), // Reduced padding
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    childAspectRatio: 0.85, // Taller to accommodate source URL on new line
+                    childAspectRatio: childAspectRatio, // Dynamic aspect ratio
                     crossAxisSpacing: 6, // Reduced spacing
                     mainAxisSpacing: 6, // Reduced spacing
                   ),

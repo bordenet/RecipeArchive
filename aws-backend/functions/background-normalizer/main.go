@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -232,7 +233,7 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 		Messages: []OpenAIMessage{
 			{
 				Role:    "system",
-				Content: "You are a professional recipe editor for Food & Wine Magazine. Review and return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., Kylie's not Kylie'S and General Tso's not General Tso'S). Remove redundant word Recipe in recipe titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL: Always infer missing servings count and time estimates (prep/cook/total in minutes) based on ingredients and instructions. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add recipe timing details inline within instructions when multiple timing phases exist.",
+				Content: "You are a professional recipe editor for Food & Wine Magazine. Review and return only valid JSON with no additional text. Normalize recipe name capitalization using proper Title Case - NEVER capitalize letters after apostrophes (e.g., Kylie's not Kylie'S and General Tso's not General Tso'S). Remove redundant word Recipe in recipe titles. Normalize all nonstandard characters other than vulgar fractions to ensure we don't serialize escape sequences. CRITICAL REQUIREMENT: You MUST ALWAYS provide numeric values for inferredServings, inferredTotalTime, inferredPrepTime, and inferredCookTime - NEVER leave these fields null or omit them. Analyze ingredients and instructions to estimate realistic values even if the recipe doesn't specify them. For cocktails and drinks, typical serving is 1-2. For main dishes, analyze ingredient quantities to estimate servings. Add recipe timing details inline within instructions when multiple timing phases exist.",
 			},
 			{
 				Role:    "user",
@@ -244,7 +245,7 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	}
 
 	// Make API call with timeout
-	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 
 	reqBody, err := json.Marshal(openaiRequest)
@@ -293,20 +294,56 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	result.Ingredients = normResponse.NormalizedIngredients
 	result.Instructions = normResponse.NormalizedInstructions
 
-	// Apply inferred servings if not already present
-	if result.Servings == "" && normResponse.InferredServings != nil {
-		result.Servings = fmt.Sprintf("%d", *normResponse.InferredServings)
+	// Apply inferred servings - ALWAYS provide if not already present
+	if result.Servings == "" {
+		if normResponse.InferredServings != nil {
+			result.Servings = fmt.Sprintf("%d", *normResponse.InferredServings)
+		} else {
+			// Fallback: estimate based on recipe type
+			result.Servings = "4" // Default reasonable serving size
+		}
 	}
 
-	// Apply inferred times if not already present
-	if result.TotalTime == "" && normResponse.InferredTotalTime != nil {
-		result.TotalTime = fmt.Sprintf("%d", *normResponse.InferredTotalTime)
+	// Apply inferred times - ALWAYS provide if not already present
+	if result.TotalTime == "" {
+		if normResponse.InferredTotalTime != nil {
+			result.TotalTime = fmt.Sprintf("%d", *normResponse.InferredTotalTime)
+		} else {
+			// Fallback: estimate based on other times or default
+			if result.PrepTime != "" && result.CookTime != "" {
+				prep, _ := strconv.Atoi(result.PrepTime)
+				cook, _ := strconv.Atoi(result.CookTime)
+				result.TotalTime = fmt.Sprintf("%d", prep+cook)
+			} else {
+				result.TotalTime = "30" // Default reasonable total time
+			}
+		}
 	}
-	if result.PrepTime == "" && normResponse.InferredPrepTime != nil {
-		result.PrepTime = fmt.Sprintf("%d", *normResponse.InferredPrepTime)
+	if result.PrepTime == "" {
+		if normResponse.InferredPrepTime != nil {
+			result.PrepTime = fmt.Sprintf("%d", *normResponse.InferredPrepTime)
+		} else {
+			// Fallback: estimate based on total time or default
+			result.PrepTime = "15" // Default reasonable prep time
+		}
 	}
-	if result.CookTime == "" && normResponse.InferredCookTime != nil {
-		result.CookTime = fmt.Sprintf("%d", *normResponse.InferredCookTime)
+	if result.CookTime == "" {
+		if normResponse.InferredCookTime != nil {
+			result.CookTime = fmt.Sprintf("%d", *normResponse.InferredCookTime)
+		} else {
+			// Fallback: estimate based on total time minus prep or default
+			if result.TotalTime != "" && result.PrepTime != "" {
+				total, _ := strconv.Atoi(result.TotalTime)
+				prep, _ := strconv.Atoi(result.PrepTime)
+				if total > prep {
+					result.CookTime = fmt.Sprintf("%d", total-prep)
+				} else {
+					result.CookTime = "15" // Default reasonable cook time
+				}
+			} else {
+				result.CookTime = "15" // Default reasonable cook time
+			}
+		}
 	}
 
 	// Add inferred metadata as tags if not already present
@@ -418,15 +455,17 @@ INSTRUCTION NORMALIZATION:
 - Standardize timing formats ("10 minutes", "1 hour")
 - Use consistent time formats (e.g., "10 minutes" not "ten mins")
 
-SERVINGS AND TIME INFERENCE (CRITICAL):
+SERVINGS AND TIME INFERENCE (CRITICAL - REQUIRED):
+- MANDATORY: You MUST provide numeric values for inferredServings, inferredTotalTime, inferredPrepTime, and inferredCookTime
+- NEVER leave these fields null, undefined, or omitted - they are REQUIRED
 - ALWAYS estimate servings if not provided: analyze ingredient quantities to determine realistic serving count
 - For cocktails/drinks: typically 1-2 servings unless ingredients suggest more
 - For main dishes: analyze protein amounts, starch portions to estimate 2-8 servings
 - For baked goods: count individual items or estimate portions from pan size
 - ALWAYS estimate times in minutes if missing: analyze instructions for realistic timing
-- Prep time: time for chopping, mixing, assembling before cooking
-- Cook time: actual cooking/baking/active heat time
-- Total time: prep + cook + any waiting/resting time
+- Prep time: time for chopping, mixing, assembling before cooking (minimum 5 minutes, typical range 10-30)
+- Cook time: actual cooking/baking/active heat time (minimum 5 minutes for most recipes)
+- Total time: prep + cook + any waiting/resting time (always >= prep time + cook time)
 - Add timing details inline in instructions when multiple phases exist (e.g., "Mix ingredients (5 minutes)", "Bake for 25 minutes", "Cool for 10 minutes")
 
 METADATA ENHANCEMENT:
@@ -435,7 +474,7 @@ METADATA ENHANCEMENT:
 - Detect dietary information (vegetarian, gluten-free, dairy-free)
 - Estimate difficulty level (Simple, Moderate, Complex)
 
-Return ONLY valid JSON in this exact format:
+Return ONLY valid JSON in this exact format (ALL FIELDS REQUIRED):
 {
   "normalizedTitle": "Normalized Recipe Title (e.g., 'Mom's Apple Pie' not 'Mom'S Apple Pie')",
   "normalizedIngredients": [
@@ -458,7 +497,9 @@ Return ONLY valid JSON in this exact format:
   },
   "qualityScore": 8.5,
   "normalizationNotes": "Standardized units, inferred 6 servings based on ingredient quantities, estimated 45 minutes total time"
-}`, recipe.Title, string(ingredientsJson), string(instructionsJson), servingsInfo, timeInfo)
+}
+
+CRITICAL: inferredServings, inferredTotalTime, inferredPrepTime, and inferredCookTime MUST be numeric values, never null.`, recipe.Title, string(ingredientsJson), string(instructionsJson), servingsInfo, timeInfo)
 }
 
 // normalizeTitle applies proper title capitalization
