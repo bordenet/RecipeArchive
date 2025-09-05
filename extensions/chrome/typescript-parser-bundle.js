@@ -14422,6 +14422,75 @@
     canParse(url) {
       return url.includes("smittenkitchen.com");
     }
+    extractInstructionText(instruction) {
+      if (typeof instruction === "string") {
+        return this.sanitizeText(instruction);
+      }
+      if (typeof instruction === "object" && instruction !== null) {
+        const possibleTextFields = ["text", "name", "description"];
+        for (const field of possibleTextFields) {
+          if (instruction[field] && typeof instruction[field] === "string") {
+            const text3 = this.sanitizeText(instruction[field]);
+            if (!this.isJavaScriptCode(text3)) {
+              return text3;
+            }
+          }
+        }
+      }
+      return "See original recipe for this step.";
+    }
+    isJavaScriptCode(text3) {
+      const jsPatterns = [
+        /window\./,
+        /document\./,
+        /function\s*\(/,
+        /var\s+\w+\s*=/,
+        /\.addEventListener/,
+        /console\./,
+        /\$\(/,
+        /\.html\(/,
+        /\.css\(/,
+        /typeof\s+/,
+        /return\s+/,
+        /\+\+|\-\-/,
+        /===|!==|&&|\|\|/,
+        /ai_\w+/,
+        // Ad injection patterns
+        /htlbid/,
+        // Ad service patterns  
+        /b64d\s*\(/,
+        // Base64 decode patterns
+        /getElementById/,
+        // DOM manipulation
+        /innerHTML/,
+        // HTML manipulation
+        /readyState/,
+        // Document ready state
+        /dataLayer/,
+        // Google Analytics
+        /\.push\s*\(/,
+        // Array/object manipulation
+        /gtag\s*\(/,
+        // Google Tag Manager
+        /\.call\s*\(/,
+        // Function calls
+        /sessionStorage/,
+        // Web storage
+        /localStorage/,
+        // Web storage
+        /_wp\w+/,
+        // WordPress patterns
+        /jetpack_\w+/,
+        // Jetpack patterns
+        /\.prototype\./,
+        // Prototype manipulation
+        /new\s+\w+\s*\(/,
+        // Constructor calls
+        /JSON\.(parse|stringify)/
+        // JSON operations
+      ];
+      return jsPatterns.some((pattern) => pattern.test(text3));
+    }
     async parse(html3, url) {
       const $2 = load(html3);
       const jsonLd = this.extractJsonLD(html3);
@@ -14432,7 +14501,10 @@
           source: url,
           author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name || "Deb Perelman",
           ingredients: (jsonLd.recipeIngredient || []).map((i) => ({ text: this.sanitizeText(i) })),
-          instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({ stepNumber: idx + 1, text: typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text) })),
+          instructions: (jsonLd.recipeInstructions || []).map((i, idx) => ({
+            stepNumber: idx + 1,
+            text: this.extractInstructionText(i)
+          })),
           imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
           prepTime: jsonLd.prepTime || "",
           cookTime: jsonLd.cookTime || "",
@@ -14488,9 +14560,27 @@
           }
         }
         let instructions = [];
-        const jetpackDirections = $2(".jetpack-recipe-directions").text().trim();
-        if (jetpackDirections) {
-          instructions.push({ stepNumber: 1, text: this.sanitizeText(jetpackDirections) });
+        const jetpackDirectionsContainer = $2(".jetpack-recipe-directions");
+        if (jetpackDirectionsContainer.length > 0) {
+          let stepNumber = 1;
+          const directionsHtml = jetpackDirectionsContainer.html();
+          if (directionsHtml) {
+            const steps = directionsHtml.split(/<\/p>\s*<p[^>]*>|<p[^>]*>|<\/p>/i);
+            for (const step of steps) {
+              if (!step.trim()) continue;
+              const cleanText = step.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+              if (!cleanText || cleanText.length < 10 || this.isJavaScriptCode(cleanText)) {
+                continue;
+              }
+              if (cleanText.match(/^(function|var|window\.|document\.|ai_|htlbid)/)) {
+                continue;
+              }
+              instructions.push({
+                stepNumber: stepNumber++,
+                text: this.sanitizeText(cleanText)
+              });
+            }
+          }
         }
         if (instructions.length === 0) {
           instructions = $2(".instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step, ul li, .entry-content ol li, .entry-content ul li").map((i, el) => ({ stepNumber: i + 1, text: this.sanitizeText($2(el).text()) })).get();
