@@ -187,13 +187,13 @@ class HomeScreen extends ConsumerWidget {
                 } else if (constraints.maxWidth > 700) {
                   crossAxisCount = (maxColumns > 3) ? 3 : maxColumns; // Max 3 columns
                   childAspectRatio = 0.82;
-                } else if (constraints.maxWidth > 500) {
+                } else if (constraints.maxWidth > 600) {
                   crossAxisCount = 2; // 2 columns for medium narrow screens
-                  childAspectRatio = 0.88; // Taller to accommodate content
+                  childAspectRatio = 1.1; // Much taller to prevent text truncation
                 } else {
                   // Single column for very narrow screens
                   crossAxisCount = 1;
-                  childAspectRatio = 1.2; // Much taller for single column to show all content
+                  childAspectRatio = 1.5; // Even taller for single column to show all content
                 }
                 
                 // Ensure we have at least 1 column

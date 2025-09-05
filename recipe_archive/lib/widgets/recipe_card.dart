@@ -26,9 +26,10 @@ class RecipeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Recipe Image with responsive height
-                SizedBox(
-                  height: 140, // Slightly reduced to leave more room for text
-                  width: double.infinity,
+                AspectRatio(
+                  aspectRatio: 16 / 9, // More responsive than fixed height
+                  child: SizedBox(
+                    width: double.infinity,
                   child: recipe.imageUrl != null
                       ? Image.network(
                           recipe.imageUrl!,
@@ -66,6 +67,7 @@ class RecipeCard extends StatelessWidget {
                             color: Colors.grey,
                           ),
                         ),
+                  ),
                 ),
                 
                 // Recipe Info (better content management)
