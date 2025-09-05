@@ -147,8 +147,11 @@ class Recipe {
   final String? sourceName;
   final String? difficulty;
   
-  @JsonKey(fromJson: _parseTime)
+  @JsonKey(name: 'prepTimeMinutes', fromJson: _parseTime)
   final int? prepTime;
+  
+  @JsonKey(name: 'cookTimeMinutes', fromJson: _parseTime)
+  final int? cookTime;
   
   final List<RecipeIngredient> ingredients;
   final List<RecipeInstruction> instructions;
@@ -189,6 +192,7 @@ class Recipe {
     this.sourceName,
     this.difficulty,
     this.prepTime,
+    this.cookTime,
     this.ingredients = const [],
     this.instructions = const [],
     this.cookingTime,
@@ -249,11 +253,34 @@ class Recipe {
 
   // Helper methods
   String get displayTime {
-    if (cookingTime == null) return 'Unknown';
-    if (cookingTime! < 60) return '${cookingTime}m';
-    final hours = cookingTime! ~/ 60;
-    final minutes = cookingTime! % 60;
-    return minutes > 0 ? '${hours}h ${minutes}m' : '${hours}h';
+    // Try to use individual prep/cook times if available
+    if (prepTime != null && cookTime != null) {
+      final prepDisplay = _formatTime(prepTime!);
+      final cookDisplay = _formatTime(cookTime!);
+      return '$prepDisplay prep, $cookDisplay cook';
+    }
+    
+    // Fall back to total cooking time
+    if (cookingTime != null) {
+      return _formatTime(cookingTime!);
+    }
+    
+    // Last resort - check individual times
+    if (prepTime != null) {
+      return '${_formatTime(prepTime!)} prep';
+    }
+    if (cookTime != null) {
+      return '${_formatTime(cookTime!)} cook';
+    }
+    
+    return 'Unknown';
+  }
+  
+  String _formatTime(int minutes) {
+    if (minutes < 60) return '${minutes}m';
+    final hours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? '${hours}h ${remainingMinutes}m' : '${hours}h';
   }
 
   String get displayServings {
@@ -286,6 +313,7 @@ class Recipe {
     String? imageUrl,
     String? difficulty,
     int? prepTime,
+    int? cookTime,
     List<RecipeIngredient>? ingredients,
     List<RecipeInstruction>? instructions,
     int? cookingTime,
@@ -311,6 +339,7 @@ class Recipe {
       sourceName: sourceName,
       difficulty: difficulty ?? this.difficulty,
       prepTime: prepTime ?? this.prepTime,
+      cookTime: cookTime ?? this.cookTime,
       ingredients: ingredients ?? this.ingredients,
       instructions: instructions ?? this.instructions,
       cookingTime: cookingTime ?? this.cookingTime,
