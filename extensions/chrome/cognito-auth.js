@@ -424,7 +424,7 @@ class CognitoAuth {
   }
 
   // Public method to refresh tokens (called by popup.js)
-  async refreshToken(providedRefreshToken = null) {
+  async refreshToken(_providedRefreshToken = null) {
     return await this._refreshTokens();
   }
 
