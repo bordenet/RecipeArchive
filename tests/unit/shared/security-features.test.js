@@ -29,7 +29,7 @@ describe('Security Features', () => {
   });
 
   describe('Input Sanitization', () => {
-    test.skip('sanitizes malicious HTML from recipe titles (legacy test - needs update)', () => {
+    test('sanitizes malicious HTML from recipe titles', () => {
       const maliciousTitle = '<script>alert("xss")</script>Chocolate Cake<img src=x onerror=alert(1)>';
       const result = securityValidator.validateTitle(maliciousTitle);
       
@@ -39,7 +39,7 @@ describe('Security Features', () => {
       expect(result.value).not.toContain('onerror');
     });
 
-    test.skip('validates recipe ingredients and removes HTML (legacy test - needs update)', () => {
+    test('validates recipe ingredients and removes HTML', () => {
       const maliciousIngredients = [
         '2 cups flour',
         '<script>evil()</script>1 cup sugar',
@@ -53,11 +53,11 @@ describe('Security Features', () => {
       expect(result.value).toHaveLength(4);
       expect(result.value[0]).toBe('2 cups flour');
       expect(result.value[1]).toBe('1 cup sugar');
-      expect(result.value[2]).toBe('javascript:alert("xss")'); // URL patterns allowed in ingredients
+      expect(result.value[2]).toBe(':alert("xss")'); // JavaScript URL prefix removed
       expect(result.value[3]).toBe('1 tsp vanilla');
     });
 
-    test.skip('rejects empty or invalid recipe data (legacy test - needs update)', () => {
+    test('rejects empty or invalid recipe data', () => {
       const invalidRecipe = {
         title: '',
         ingredients: [],
@@ -141,7 +141,7 @@ describe('Security Features', () => {
   });
 
   describe('Diagnostic Data Validation', () => {
-    test.skip('sanitizes diagnostic data to prevent injection (legacy test - needs update)', () => {
+    test('sanitizes diagnostic data to prevent injection', () => {
       const maliciousDiagnosticData = {
         url: 'https://example.com',
         userAgent: '<script>alert("xss")</script>Mozilla/5.0',
@@ -205,7 +205,7 @@ describe('Security Features', () => {
       
       expect(result.valid).toBe(true);
       expect(result.sanitized.title).toBe('Chocolate Chip Cookies');
-      expect(result.sanitized.description).toContain('<b>with chocolate chips</b>'); // Allowed HTML
+      expect(result.sanitized.description).toBe('Delicious homemade cookies with chocolate chips'); // HTML stripped
       expect(result.sanitized.ingredients).toHaveLength(5);
       expect(result.sanitized.instructions).toHaveLength(7);
       expect(result.sanitized.tags).toHaveLength(3);

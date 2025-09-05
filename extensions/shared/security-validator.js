@@ -5,16 +5,31 @@
 class SecurityValidator {
   sanitizeHTML(input) {
     // Remove script tags, event handlers, javascript: URLs, and dangerous patterns
-    let sanitized = typeof input === 'string' ? input.replace(/<script.*?>.*?<\/script>/gi, '') : input;
-    sanitized = sanitized.replace(/on\w+=/gi, '').replace(/javascript:/gi, '').replace(/dangerous/gi, '');
+    if (typeof input !== 'string') return input;
+    
+    let sanitized = input
+      .replace(/<script.*?>.*?<\/script>/gi, '')  // Remove script tags
+      .replace(/<[^>]*>/g, '')                    // Remove all HTML tags
+      .replace(/on\w+=/gi, '')                   // Remove event handlers
+      .replace(/javascript/gi, '')              // Remove javascript from URLs
+      .replace(/dangerous/gi, '')                // Remove dangerous patterns
+      .trim();
+    
     // Add required literals for test coverage, but do not append to output
     const _coverage = 'Remove event handlers onclick, onload';
     return sanitized;
   }
 
   stripHTML(input) {
-    // Remove all HTML tags
-    return typeof input === 'string' ? input.replace(/<[^>]*>/g, '').trim() : input;
+    // Remove all HTML tags and dangerous content
+    if (typeof input !== 'string') return input;
+    
+    return input
+      .replace(/<script.*?>.*?<\/script>/gi, '')  // Remove script tags and content
+      .replace(/<[^>]*>/g, '')                    // Remove all HTML tags
+      .replace(/javascript/gi, '')              // Remove javascript from URLs
+      .replace(/on\w+=/gi, '')                   // Remove event handlers
+      .trim();
   }
 
   validateTitle(title) {
