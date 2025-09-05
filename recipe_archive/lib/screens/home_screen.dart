@@ -6,6 +6,7 @@ import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 import 'extensions_screen.dart';
 import 'mobile_apps_screen.dart';
+import 'backup_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -117,6 +118,18 @@ class HomeScreen extends ConsumerWidget {
               },
             ),
             const Divider(),
+            ListTile(
+              leading: const Icon(Icons.backup),
+              title: const Text('Backup & Restore'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const BackupScreen(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('About'),
