@@ -412,7 +412,14 @@ class CognitoAuth {
       
       if (response.AuthenticationResult) {
         await this._storeTokens(response.AuthenticationResult);
-        return { success: true };
+        return { 
+          success: true,
+          tokens: {
+            accessToken: response.AuthenticationResult.AccessToken,
+            idToken: response.AuthenticationResult.IdToken,
+            refreshToken: response.AuthenticationResult.RefreshToken
+          }
+        };
       } else {
         throw new Error("Token refresh failed");
       }

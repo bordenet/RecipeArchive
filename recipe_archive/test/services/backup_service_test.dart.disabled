@@ -59,7 +59,7 @@ void main() {
           ),
         ];
 
-        when(mockRecipeService.getAllRecipes()).thenAnswer((_) async => testRecipes);
+        when(mockRecipeService.getRecipes()).thenAnswer((_) async => testRecipes);
 
         // Act
         final result = await backupService.exportRecipes();
@@ -73,12 +73,12 @@ void main() {
         expect(result.content!.contains('Test Recipe 1'), true);
         expect(result.content!.contains('Test Recipe 2'), true);
         
-        verify(mockRecipeService.getAllRecipes()).called(1);
+        verify(mockRecipeService.getRecipes()).called(1);
       });
 
       test('should handle empty recipe list', () async {
         // Arrange
-        when(mockRecipeService.getAllRecipes()).thenAnswer((_) async => []);
+        when(mockRecipeService.getRecipes()).thenAnswer((_) async => []);
 
         // Act
         final result = await backupService.exportRecipes();
@@ -88,12 +88,12 @@ void main() {
         expect(result.content, isNotNull);
         expect(result.content!.contains('"recipeCount": 0'), true);
         
-        verify(mockRecipeService.getAllRecipes()).called(1);
+        verify(mockRecipeService.getRecipes()).called(1);
       });
 
       test('should handle recipe service error', () async {
         // Arrange
-        when(mockRecipeService.getAllRecipes()).thenThrow(Exception('Database error'));
+        when(mockRecipeService.getRecipes()).thenThrow(Exception('Database error'));
 
         // Act
         final result = await backupService.exportRecipes();
@@ -102,7 +102,7 @@ void main() {
         expect(result.success, false);
         expect(result.message.contains('Failed to export recipes'), true);
         
-        verify(mockRecipeService.getAllRecipes()).called(1);
+        verify(mockRecipeService.getRecipes()).called(1);
       });
     });
 
@@ -137,8 +137,15 @@ void main() {
         }
         ''';
 
-        when(mockRecipeService.getRecipeById('recipe1')).thenAnswer((_) async => null);
-        when(mockRecipeService.saveRecipe(any)).thenAnswer((_) async => {});
+        when(mockRecipeService.getRecipes()).thenAnswer((_) async => []);
+        when(mockRecipeService.getRecipe('recipe1')).thenAnswer((_) async => null);
+        when(mockRecipeService.saveRecipe(any)).thenAnswer((_) async => const Recipe(
+          id: 'recipe1', 
+          userId: 'user123', 
+          title: 'Imported Recipe', 
+          ingredients: [], 
+          instructions: []
+        ));
 
         // Act
         final result = await backupService.importRecipes(validBackupJson);
@@ -150,7 +157,8 @@ void main() {
         expect(result.skipped, 0);
         expect(result.errors.isEmpty, true);
         
-        verify(mockRecipeService.getRecipeById('recipe1')).called(1);
+        verify(mockRecipeService.getRecipes()).called(1);
+        verify(mockRecipeService.getRecipe('recipe1')).called(1);
         verify(mockRecipeService.saveRecipe(any)).called(1);
       });
 
@@ -184,19 +192,26 @@ void main() {
         }
         ''';
 
-        final existingRecipe = Recipe(
+        const existingRecipe = Recipe(
           id: 'recipe1',
           userId: 'user123',
           title: 'Existing Recipe',
-          ingredients: const [RecipeIngredient(text: '2 cups flour')],
-          instructions: const [RecipeInstruction(stepNumber: 1, text: 'Mix ingredients')],
-          tags: const ['existing'],
-          categories: const ['Test'],
+          ingredients: [RecipeIngredient(text: '2 cups flour')],
+          instructions: [RecipeInstruction(stepNumber: 1, text: 'Mix ingredients')],
+          tags: ['existing'],
+          categories: ['Test'],
           isFavorite: false,
         );
 
-        when(mockRecipeService.getRecipeById('recipe1')).thenAnswer((_) async => existingRecipe);
-        when(mockRecipeService.saveRecipe(any)).thenAnswer((_) async => {});
+        when(mockRecipeService.getRecipes()).thenAnswer((_) async => []);
+        when(mockRecipeService.getRecipe('recipe1')).thenAnswer((_) async => existingRecipe);
+        when(mockRecipeService.saveRecipe(any)).thenAnswer((_) async => const Recipe(
+          id: 'new-id', 
+          userId: 'user123', 
+          title: 'Existing Recipe (Imported)', 
+          ingredients: [], 
+          instructions: []
+        ));
 
         // Act
         final result = await backupService.importRecipes(validBackupJson, overwriteExisting: false);
@@ -207,7 +222,8 @@ void main() {
         expect(result.updated, 0);
         expect(result.skipped, 0);
         
-        verify(mockRecipeService.getRecipeById('recipe1')).called(1);
+        verify(mockRecipeService.getRecipes()).called(1);
+        verify(mockRecipeService.getRecipe('recipe1')).called(1);
         verify(mockRecipeService.saveRecipe(any)).called(1);
       });
 
@@ -241,19 +257,26 @@ void main() {
         }
         ''';
 
-        final existingRecipe = Recipe(
+        const existingRecipe = Recipe(
           id: 'recipe1',
           userId: 'user123',
           title: 'Old Recipe',
-          ingredients: const [RecipeIngredient(text: '2 cups flour')],
-          instructions: const [RecipeInstruction(stepNumber: 1, text: 'Mix ingredients')],
-          tags: const ['old'],
-          categories: const ['Test'],
+          ingredients: [RecipeIngredient(text: '2 cups flour')],
+          instructions: [RecipeInstruction(stepNumber: 1, text: 'Mix ingredients')],
+          tags: ['old'],
+          categories: ['Test'],
           isFavorite: false,
         );
 
-        when(mockRecipeService.getRecipeById('recipe1')).thenAnswer((_) async => existingRecipe);
-        when(mockRecipeService.updateRecipe(any)).thenAnswer((_) async => {});
+        when(mockRecipeService.getRecipes()).thenAnswer((_) async => []);
+        when(mockRecipeService.getRecipe('recipe1')).thenAnswer((_) async => existingRecipe);
+        when(mockRecipeService.updateRecipe(any)).thenAnswer((_) async => const Recipe(
+          id: 'recipe1', 
+          userId: 'user123', 
+          title: 'Updated Recipe', 
+          ingredients: [], 
+          instructions: []
+        ));
 
         // Act
         final result = await backupService.importRecipes(validBackupJson, overwriteExisting: true);
@@ -264,7 +287,8 @@ void main() {
         expect(result.updated, 1);
         expect(result.skipped, 0);
         
-        verify(mockRecipeService.getRecipeById('recipe1')).called(1);
+        verify(mockRecipeService.getRecipes()).called(1);
+        verify(mockRecipeService.getRecipe('recipe1')).called(1);
         verify(mockRecipeService.updateRecipe(any)).called(1);
       });
 
@@ -357,13 +381,21 @@ void main() {
         }
         ''';
 
-        when(mockRecipeService.getRecipeById('recipe1')).thenAnswer((_) async => null);
-        when(mockRecipeService.getRecipeById('recipe2')).thenAnswer((_) async => null);
+        when(mockRecipeService.getRecipes()).thenAnswer((_) async => []);
+        when(mockRecipeService.getRecipe('recipe1')).thenAnswer((_) async => null);
+        when(mockRecipeService.getRecipe('recipe2')).thenAnswer((_) async => null);
         when(mockRecipeService.saveRecipe(any)).thenAnswer((invocation) async {
           final recipe = invocation.positionalArguments[0] as Recipe;
           if (recipe.title == 'Bad Recipe') {
             throw Exception('Database constraint violation');
           }
+          return Recipe(
+            id: 'saved-id', 
+            userId: 'user123', 
+            title: recipe.title, 
+            ingredients: const [], 
+            instructions: const []
+          );
         });
 
         // Act

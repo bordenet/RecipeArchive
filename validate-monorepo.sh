@@ -192,8 +192,9 @@ validate_prerequisites() {
             echo "    Security scan: TruffleHog available ✓"
             mark_passed
         else
-            echo "    Security scan: TruffleHog not installed ⚠"
-            mark_passed # Don't fail validation for missing security tools
+            print_error
+            echo "    Security scan: TruffleHog not installed"
+            echo "    Install with: brew install trufflehog"
         fi
         
         track_section_completion
@@ -346,8 +347,8 @@ run_meaningful_tests() {
     if jest tests/parser-registry-integration.test.js > /dev/null 2>&1; then
         print_success
     else
-        print_warning "Extension integration tests failed - parser bundle issues"
-        mark_passed # Count as passed since functionality works manually
+        print_error
+        echo "    Extension integration tests failed - parser bundle issues"
     fi
     
     # ADDED: Backend API endpoint tests
@@ -389,8 +390,8 @@ run_quality_checks() {
     if npm run lint > /dev/null 2>&1; then
         print_success
     else
-        print_warning "Extension linting found issues - run 'npm run lint' for details"
-        mark_passed # Don't fail validation for linting issues
+        print_error
+        echo "    Extension linting found issues - run 'npm run lint' for details"
     fi
     
     print_step "ESLint - Extension scoping"
@@ -409,8 +410,8 @@ run_quality_checks() {
             if (cd recipe_archive && flutter analyze > /dev/null 2>&1); then
                 print_success
             else
-                print_warning "Flutter analysis found issues"
-                mark_passed # Don't fail validation for analysis issues
+                print_error
+                echo "    Flutter analysis found issues - run 'cd recipe_archive && flutter analyze' for details"
             fi
         else
             print_warning "Flutter not installed - skipping"
@@ -428,8 +429,8 @@ run_quality_checks() {
             if (cd recipe_archive && flutter test > /dev/null 2>&1); then
                 print_success
             else
-                print_warning "Flutter tests had issues"
-                mark_passed # Don't fail validation
+                print_error
+                echo "    Flutter tests failed - run 'cd recipe_archive && flutter test' for details"
             fi
         else
             print_warning "Flutter not installed - skipping"
@@ -445,8 +446,8 @@ run_quality_checks() {
     if (cd tools && make fmt > /dev/null 2>&1 && git diff --exit-code > /dev/null 2>&1); then
         print_success
     else
-        print_warning "Go formatting issues (auto-fixable)"
-        mark_passed # Don't fail validation for formatting
+        print_error
+        echo "    Go formatting issues - run 'cd tools && make fmt' to fix"
     fi
     
     track_section_completion
@@ -537,8 +538,8 @@ run_quality_gates() {
     if npm run docs:organize > /dev/null 2>&1 && npm run docs:review > /dev/null 2>&1; then
         print_success
     else
-        print_warning "Documentation checks had issues"
-        mark_passed # Don't fail validation for docs
+        print_error
+        echo "    Documentation checks failed - check npm run docs:organize and npm run docs:review"
     fi
     
     track_section_completion
@@ -561,8 +562,8 @@ validate_recipe_storage() {
                 print_success
                 echo "    S3 storage contains $recipe_count recipes"
             else
-                print_warning "Recipe report failed or timed out"
-                mark_passed # Don't fail validation for storage check
+                print_error
+                echo "    Recipe report failed or timed out - check credentials and network"
             fi
         else
             print_warning "Missing .env credentials"

@@ -15,7 +15,7 @@ class BackupService {
   /// Export all user recipes to a JSON backup file
   Future<BackupResult> exportRecipes() async {
     try {
-      final recipes = await _recipeService.getAllRecipes();
+      final recipes = await _recipeService.getRecipes();
       
       final backupData = {
         'version': '1.0',
@@ -57,7 +57,7 @@ class BackupService {
           .toList();
       
       // Get all existing recipes for deduplication
-      final existingRecipes = await _recipeService.getAllRecipes();
+      final existingRecipes = await _recipeService.getRecipes();
       
       int imported = 0;
       int skipped = 0;
@@ -68,7 +68,7 @@ class BackupService {
       for (final recipe in recipes) {
         try {
           // Check for existing recipe by ID first
-          final existingById = await _recipeService.getRecipeById(recipe.id);
+          final existingById = await _recipeService.getRecipe(recipe.id);
           
           // Check for duplicate by content (title + source URL)
           final duplicateByContent = _findDuplicateByContent(recipe, existingRecipes);
@@ -90,7 +90,34 @@ class BackupService {
             errors.add('Skipped duplicate recipe "${recipe.title}" (matches existing "${duplicateByContent.title}")');
           } else if (duplicateByContent != null && overwriteExisting) {
             // Update the existing duplicate with new content
-            final updatedRecipe = recipe.copyWith(id: duplicateByContent.id);
+            final updatedRecipe = Recipe(
+              id: duplicateByContent.id, // Use existing ID
+              userId: recipe.userId,
+              title: recipe.title,
+              description: recipe.description,
+              imageUrl: recipe.imageUrl,
+              sourceUrl: recipe.sourceUrl,
+              sourceName: recipe.sourceName,
+              difficulty: recipe.difficulty,
+              prepTime: recipe.prepTime,
+              cookTime: recipe.cookTime,
+              ingredients: recipe.ingredients,
+              instructions: recipe.instructions,
+              cookingTime: recipe.cookingTime,
+              servings: recipe.servings,
+              cuisine: recipe.cuisine,
+              tags: recipe.tags,
+              personalNotes: recipe.personalNotes,
+              personalRating: recipe.personalRating,
+              cookingNotes: recipe.cookingNotes,
+              categories: recipe.categories,
+              isFavorite: recipe.isFavorite,
+              personalYield: recipe.personalYield,
+              hasUserModifications: recipe.hasUserModifications,
+              originalData: recipe.originalData,
+              createdAt: duplicateByContent.createdAt, // Keep original creation date
+              updatedAt: DateTime.now(),
+            );
             await _recipeService.updateRecipe(updatedRecipe);
             updated++;
           } else {

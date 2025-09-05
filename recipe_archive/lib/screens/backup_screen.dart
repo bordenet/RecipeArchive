@@ -1,29 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/backup_service.dart';
 import '../services/recipe_service.dart';
 
-class BackupScreen extends StatefulWidget {
+class BackupScreen extends ConsumerStatefulWidget {
   const BackupScreen({super.key});
 
   @override
-  State<BackupScreen> createState() => _BackupScreenState();
+  ConsumerState<BackupScreen> createState() => _BackupScreenState();
 }
 
-class _BackupScreenState extends State<BackupScreen> {
-  late final BackupService _backupService;
+class _BackupScreenState extends ConsumerState<BackupScreen> {
   bool _isLoading = false;
   String? _statusMessage;
   bool _overwriteExisting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // TODO: Get RecipeService from dependency injection or provider
-    _backupService = BackupService(RecipeService());
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,7 +172,7 @@ class _BackupScreenState extends State<BackupScreen> {
             if (_statusMessage != null) ...[
               const SizedBox(height: 24),
               Card(
-                color: Theme.of(context).colorScheme.surfaceVariant,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
@@ -244,13 +237,15 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 
   Future<void> _exportRecipes() async {
+    final recipeService = ref.read(recipeServiceProvider);
+    final backupService = BackupService(recipeService);
     setState(() {
       _isLoading = true;
       _statusMessage = 'Creating backup...';
     });
 
     try {
-      final result = await _backupService.exportRecipes();
+      final result = await backupService.exportRecipes();
       
       setState(() {
         _isLoading = false;
@@ -292,6 +287,8 @@ class _BackupScreenState extends State<BackupScreen> {
   }
 
   Future<void> _importRecipes() async {
+    final recipeService = ref.read(recipeServiceProvider);
+    final backupService = BackupService(recipeService);
     try {
       // Pick file
       final result = await FilePicker.platform.pickFiles(
@@ -323,7 +320,7 @@ class _BackupScreenState extends State<BackupScreen> {
         _statusMessage = 'Importing recipes...';
       });
 
-      final importResult = await _backupService.importRecipes(
+      final importResult = await backupService.importRecipes(
         content,
         overwriteExisting: _overwriteExisting,
       );

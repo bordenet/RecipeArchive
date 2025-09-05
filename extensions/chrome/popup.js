@@ -322,6 +322,19 @@ async function refreshAuthToken() {
         
         if (result.success) {
             console.log("✅ Token refresh successful");
+            
+            // Update the localStorage auth data with new tokens from the response
+            if (result.tokens) {
+                const updatedAuth = {
+                    ...auth,
+                    token: result.tokens.accessToken,
+                    idToken: result.tokens.idToken,
+                    refreshToken: result.tokens.refreshToken || auth.refreshToken
+                };
+                localStorage.setItem("recipeArchive.auth", JSON.stringify(updatedAuth));
+                console.log("✅ Updated localStorage with new tokens");
+            }
+            
             return { success: true };
         } else {
             console.error("❌ Token refresh failed:", result.error);
