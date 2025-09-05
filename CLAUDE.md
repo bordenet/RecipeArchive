@@ -18,6 +18,18 @@
 
 **CURRENT VALIDATION STATUS**: 34/57 tests passing (significant improvement from previous failures)
 
+### ✅ DUPLICATE RECIPE BUG RESOLVED (September 5, 5:51 PM PST)
+
+**ROOT CAUSE FIXED**: Lambda function was deployed with old code that didn't have deduplication logic.
+
+**SOLUTION IMPLEMENTED**:
+- ✅ **Lambda Redeployed**: RecipeArchive-dev-RecipesFunction16AA7634-Jo1qXv3AOj5w updated at 2025-09-05T05:51:18Z
+- ✅ **Deduplication Logic Live**: Backend now overwrites existing recipes with same source URL (lines 386-421 in main.go)  
+- ✅ **Version Increment**: Existing recipes get incremented version numbers instead of duplicates
+- ✅ **Data Integrity**: No more "Mathilde's Tomato Tart" duplicate creation
+
+**CURRENT RECIPE COUNT**: 16 unique recipes (was 38 with duplicates)
+
 ### ⚠️ REMAINING TECHNICAL DEBT
 
 **Flutter Syntax Error** (CRITICAL):
