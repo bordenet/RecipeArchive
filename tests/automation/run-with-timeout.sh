@@ -67,8 +67,38 @@ fi
 echo "🧪 Running Chrome extension tests (timeout: ${TEST_TIMEOUT}s)..."
 cd tests/automation
 
-# Use timeout command to limit test execution
-timeout ${TEST_TIMEOUT}s npx playwright test extension-tests/simple-workflow.spec.js --reporter=list || {
+# Cross-platform timeout function
+run_with_timeout() {
+    local timeout_duration=$1
+    shift
+    local command_to_run=("$@")
+    
+    # Run command in background and get its PID
+    "${command_to_run[@]}" &
+    local pid=$!
+    
+    # Wait for either completion or timeout
+    local count=0
+    while [ $count -lt $timeout_duration ]; do
+        if ! kill -0 $pid 2>/dev/null; then
+            # Process finished
+            wait $pid
+            return $?
+        fi
+        sleep 1
+        count=$((count + 1))
+    done
+    
+    # Timeout reached - kill the process
+    kill -TERM $pid 2>/dev/null || true
+    sleep 1
+    kill -KILL $pid 2>/dev/null || true
+    wait $pid 2>/dev/null || true
+    return 124  # Standard timeout exit code
+}
+
+# Use cross-platform timeout to limit test execution
+run_with_timeout ${TEST_TIMEOUT} npx playwright test extension-tests/simple-workflow.spec.js --reporter=list || {
     exit_code=$?
     if [ $exit_code -eq 124 ]; then
         echo "⏰ Tests timed out after ${TEST_TIMEOUT} seconds"

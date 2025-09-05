@@ -24,6 +24,45 @@ declare -i BUILD_FAILURES=0
 COMPLETED_SECTIONS=""
 CURRENT_SECTION=""
 
+# Cross-platform timeout function
+run_with_timeout() {
+    local timeout_duration=$1
+    shift
+    local command_to_run=("$@")
+    
+    # Create a temporary script to run the command
+    local temp_script="/tmp/timeout_command_$$"
+    echo '#!/bin/bash' > "$temp_script"
+    echo 'exec "$@"' >> "$temp_script"
+    chmod +x "$temp_script"
+    
+    # Run command in background and get its PID
+    "$temp_script" "${command_to_run[@]}" &
+    local pid=$!
+    
+    # Wait for either completion or timeout
+    local count=0
+    while [ $count -lt $timeout_duration ]; do
+        if ! kill -0 $pid 2>/dev/null; then
+            # Process finished
+            wait $pid
+            local exit_code=$?
+            rm -f "$temp_script"
+            return $exit_code
+        fi
+        sleep 1
+        count=$((count + 1))
+    done
+    
+    # Timeout reached - kill the process
+    kill -TERM $pid 2>/dev/null || true
+    sleep 1
+    kill -KILL $pid 2>/dev/null || true
+    wait $pid 2>/dev/null || true
+    rm -f "$temp_script"
+    return 124  # Standard timeout exit code
+}
+
 # Helper functions
 print_header() {
     echo -e "\n${BLUE}=== $1 ===${NC}"
@@ -421,7 +460,7 @@ validate_parsers() {
     add_test
     if [ -f "tests/parser-validation/test-parser-integration.cjs" ]; then
         local start_time=$(date +%s)
-        if (cd tests/parser-validation && timeout 60 node test-parser-integration.cjs > /tmp/parser_test.log 2>&1); then
+        if (cd tests/parser-validation && run_with_timeout 60 node test-parser-integration.cjs > /tmp/parser_test.log 2>&1); then
             local end_time=$(date +%s)
             local duration=$((end_time - start_time))
             print_success
@@ -517,7 +556,7 @@ validate_recipe_storage() {
         set +o allexport
         
         if [ -n "$RECIPE_USER_EMAIL" ] && [ -n "$RECIPE_USER_PASSWORD" ]; then
-            if (cd tools/recipe-report && timeout 30 go run main.go --user "$RECIPE_USER_EMAIL" --password "$RECIPE_USER_PASSWORD" > /tmp/recipe_report.log 2>&1); then
+            if (cd tools/recipe-report && run_with_timeout 30 go run main.go --user "$RECIPE_USER_EMAIL" --password "$RECIPE_USER_PASSWORD" > /tmp/recipe_report.log 2>&1); then
                 recipe_count=$(grep -o '[0-9]\+ recipes' /tmp/recipe_report.log | head -1 | grep -o '[0-9]\+' || echo "0")
                 print_success
                 echo "    S3 storage contains $recipe_count recipes"
