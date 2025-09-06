@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/advanced_search_service.dart';
 import '../widgets/recipe_card.dart';
-import '../models/recipe.dart';
 import 'recipe_detail_screen.dart';
 
 // Provider for search state management
@@ -532,7 +531,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   Widget _buildDropdown(String label, String? value, List<String> options, 
                        Function(String?) onChanged, {bool allowNull = true}) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),

@@ -339,8 +339,14 @@ build_typescript() {
     print_step "Compiling infrastructure TypeScript"
     add_operation
     if [ -d "aws-backend/infrastructure" ]; then
-        echo "    Skipping slow TypeScript compilation - directory exists ✓"
-        print_success
+        if (cd aws-backend/infrastructure && npx tsc --noEmit > /dev/null 2>&1); then
+            print_success
+        else
+            print_error
+            echo "    Infrastructure TypeScript compilation failed"
+            BUILD_FAILURES=$((BUILD_FAILURES + 1))
+            return 1
+        fi
     else
         print_warning "Infrastructure directory not found - skipping"
         mark_passed

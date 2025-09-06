@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/recipe_service.dart';
 import '../services/auth_service.dart';
 import '../widgets/recipe_card.dart';
+import '../widgets/onboarding_content.dart';
 import 'recipe_detail_screen.dart';
 import 'extensions_screen.dart';
 import 'mobile_apps_screen.dart';
@@ -168,33 +169,7 @@ class HomeScreen extends ConsumerWidget {
       body: recipesAsync.when(
         data: (recipes) {
           if (recipes.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.restaurant_menu,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'No recipes found',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Add your first recipe to get started!',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return const OnboardingContent();
           }
 
           return RefreshIndicator(
