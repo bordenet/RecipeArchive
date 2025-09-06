@@ -119,6 +119,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Route based on HTTP method and path
 	switch request.HTTPMethod {
 	case "GET":
+		// Check if this is a search request
+		if strings.Contains(request.Path, "/search") {
+			return handleSearchRecipes(ctx, request, userID)
+		}
 		return handleGetRecipes(ctx, request, userID)
 	case "POST":
 		return handleCreateRecipe(ctx, request, userID)
@@ -293,6 +297,153 @@ func handleListRecipes(ctx context.Context, userID string, queryParams map[strin
 
 	response := models.RecipesListResponse{
 		Recipes: recipes,
+		Pagination: models.Pagination{
+			NextCursor: nextCursor,
+			HasMore:    hasMore,
+			Total:      &total,
+		},
+	}
+
+	apiResponse, responseErr := utils.NewAPIResponse(http.StatusOK, response)
+	if responseErr != nil {
+		return events.APIGatewayProxyResponse{}, responseErr
+	}
+	return apiResponse, nil
+}
+
+// handleSearchRecipes handles GET requests to search recipes with cost-efficient in-Lambda filtering
+func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequest, userID string) (events.APIGatewayProxyResponse, error) {
+	// Get all recipes for user from S3 (cost-efficient: no external search service needed)
+	allRecipes, err := recipeDB.ListRecipes(userID)
+	if err != nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to retrieve recipes for search",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Filter out soft-deleted recipes
+	var activeRecipes []models.Recipe
+	for _, recipe := range allRecipes {
+		if !recipe.IsDeleted {
+			activeRecipes = append(activeRecipes, recipe)
+		}
+	}
+
+	// Parse search parameters
+	queryParams := request.QueryStringParameters
+	searchQuery := strings.ToLower(strings.TrimSpace(queryParams["q"]))
+	
+	// Time-based filtering
+	var minPrepTime, maxPrepTime, minCookTime, maxCookTime *int
+	if val := queryParams["minPrepTime"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 0 {
+			minPrepTime = &parsed
+		}
+	}
+	if val := queryParams["maxPrepTime"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 0 {
+			maxPrepTime = &parsed
+		}
+	}
+	if val := queryParams["minCookTime"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 0 {
+			minCookTime = &parsed
+		}
+	}
+	if val := queryParams["maxCookTime"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 0 {
+			maxCookTime = &parsed
+		}
+	}
+
+	// Servings filtering
+	var minServings, maxServings *int
+	if val := queryParams["minServings"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 1 {
+			minServings = &parsed
+		}
+	}
+	if val := queryParams["maxServings"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 1 {
+			maxServings = &parsed
+		}
+	}
+
+	// Advanced search filters using SearchMetadata (cost-optimized)
+	semanticTags := parseSearchArray(queryParams["semanticTags"])
+	primaryIngredients := parseSearchArray(queryParams["primaryIngredients"])
+	cookingMethods := parseSearchArray(queryParams["cookingMethods"])
+	dietaryTags := parseSearchArray(queryParams["dietaryTags"])
+	flavorProfile := parseSearchArray(queryParams["flavorProfile"])
+	equipment := parseSearchArray(queryParams["equipment"])
+	timeCategory := strings.ToLower(strings.TrimSpace(queryParams["timeCategory"]))
+	complexity := strings.ToLower(strings.TrimSpace(queryParams["complexity"]))
+
+	// Source URL filtering
+	sourceFilter := strings.ToLower(strings.TrimSpace(queryParams["source"]))
+
+	// Apply cost-efficient in-memory filtering
+	var matchingRecipes []models.Recipe
+	for _, recipe := range activeRecipes {
+		if matchesSearchCriteria(recipe, searchQuery, minPrepTime, maxPrepTime, minCookTime, maxCookTime,
+			minServings, maxServings, semanticTags, primaryIngredients, cookingMethods, dietaryTags,
+			flavorProfile, equipment, timeCategory, complexity, sourceFilter) {
+			matchingRecipes = append(matchingRecipes, recipe)
+		}
+	}
+
+	// Sort results (cost-efficient: in-memory sorting)
+	sortBy := queryParams["sortBy"]
+	sortOrder := queryParams["sortOrder"]
+	sortSearchResults(matchingRecipes, sortBy, sortOrder)
+
+	// Apply pagination
+	limit := 50 // Default limit
+	if limitStr, exists := queryParams["limit"]; exists {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	total := len(matchingRecipes)
+	start := 0
+	if cursor, exists := queryParams["cursor"]; exists {
+		if startIdx, err := strconv.Atoi(cursor); err == nil && startIdx >= 0 {
+			start = startIdx
+		}
+	}
+
+	end := start + limit
+	if end > total {
+		end = total
+	}
+
+	var paginatedRecipes []models.Recipe
+	var nextCursor *string
+	hasMore := false
+
+	if start < total {
+		paginatedRecipes = matchingRecipes[start:end]
+		if end < total {
+			hasMore = true
+			cursorStr := strconv.Itoa(end)
+			nextCursor = &cursorStr
+		}
+	} else {
+		paginatedRecipes = []models.Recipe{}
+	}
+
+	// Build search response
+	response := models.RecipesListResponse{
+		Recipes: paginatedRecipes,
 		Pagination: models.Pagination{
 			NextCursor: nextCursor,
 			HasMore:    hasMore,
@@ -995,4 +1146,308 @@ func parseServingsFromNormalizer(servingsStr string, fallback *int) *int {
 	}
 
 	return fallback
+}
+
+// Cost-efficient search helper functions for in-Lambda filtering
+
+// parseSearchArray parses comma-separated search values into an array
+func parseSearchArray(value string) []string {
+	if value == "" {
+		return nil
+	}
+	
+	parts := strings.Split(value, ",")
+	var result []string
+	for _, part := range parts {
+		if trimmed := strings.ToLower(strings.TrimSpace(part)); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
+// matchesSearchCriteria performs cost-efficient in-memory recipe filtering
+func matchesSearchCriteria(recipe models.Recipe, searchQuery string, 
+	minPrepTime, maxPrepTime, minCookTime, maxCookTime, minServings, maxServings *int,
+	semanticTags, primaryIngredients, cookingMethods, dietaryTags, flavorProfile, equipment []string,
+	timeCategory, complexity, sourceFilter string) bool {
+
+	// Basic text search across title, ingredients, and instructions
+	if searchQuery != "" {
+		recipeText := strings.ToLower(recipe.Title)
+		
+		// Search in ingredients
+		for _, ingredient := range recipe.Ingredients {
+			recipeText += " " + strings.ToLower(ingredient.Text)
+		}
+		
+		// Search in instructions
+		for _, instruction := range recipe.Instructions {
+			recipeText += " " + strings.ToLower(instruction.Text)
+		}
+		
+		// Check if search query matches any part of the recipe text
+		if !strings.Contains(recipeText, searchQuery) {
+			return false
+		}
+	}
+
+	// Time-based filtering
+	if minPrepTime != nil && (recipe.PrepTimeMinutes == nil || *recipe.PrepTimeMinutes < *minPrepTime) {
+		return false
+	}
+	if maxPrepTime != nil && (recipe.PrepTimeMinutes != nil && *recipe.PrepTimeMinutes > *maxPrepTime) {
+		return false
+	}
+	if minCookTime != nil && (recipe.CookTimeMinutes == nil || *recipe.CookTimeMinutes < *minCookTime) {
+		return false
+	}
+	if maxCookTime != nil && (recipe.CookTimeMinutes != nil && *recipe.CookTimeMinutes > *maxCookTime) {
+		return false
+	}
+
+	// Servings filtering
+	if minServings != nil && (recipe.Servings == nil || *recipe.Servings < *minServings) {
+		return false
+	}
+	if maxServings != nil && (recipe.Servings != nil && *recipe.Servings > *maxServings) {
+		return false
+	}
+
+	// Source URL filtering
+	if sourceFilter != "" && !strings.Contains(strings.ToLower(recipe.SourceURL), sourceFilter) {
+		return false
+	}
+
+	// Advanced SearchMetadata filtering (cost-optimized)
+	if recipe.SearchMetadata != nil {
+		// Semantic tags matching
+		if len(semanticTags) > 0 && !containsAnyMatch(semanticTags, recipe.SearchMetadata.SemanticTags) {
+			return false
+		}
+		
+		// Primary ingredients matching
+		if len(primaryIngredients) > 0 && !containsAnyMatch(primaryIngredients, recipe.SearchMetadata.PrimaryIngredients) {
+			return false
+		}
+		
+		// Cooking methods matching
+		if len(cookingMethods) > 0 && !containsAnyMatch(cookingMethods, recipe.SearchMetadata.CookingMethods) {
+			return false
+		}
+		
+		// Dietary tags matching
+		if len(dietaryTags) > 0 && !containsAnyMatch(dietaryTags, recipe.SearchMetadata.DietaryTags) {
+			return false
+		}
+		
+		// Flavor profile matching
+		if len(flavorProfile) > 0 && !containsAnyMatch(flavorProfile, recipe.SearchMetadata.FlavorProfile) {
+			return false
+		}
+		
+		// Equipment matching
+		if len(equipment) > 0 && !containsAnyMatch(equipment, recipe.SearchMetadata.Equipment) {
+			return false
+		}
+		
+		// Time category matching
+		if timeCategory != "" && strings.ToLower(recipe.SearchMetadata.TimeCategory) != timeCategory {
+			return false
+		}
+		
+		// Complexity matching
+		if complexity != "" && strings.ToLower(recipe.SearchMetadata.Complexity) != complexity {
+			return false
+		}
+	} else {
+		// If SearchMetadata is not available, only fail if advanced filters are being used
+		// This ensures backward compatibility with recipes that haven't been normalized yet
+		if len(semanticTags) > 0 || len(primaryIngredients) > 0 || len(cookingMethods) > 0 || 
+		   len(dietaryTags) > 0 || len(flavorProfile) > 0 || len(equipment) > 0 || 
+		   timeCategory != "" || complexity != "" {
+			return false // Skip recipes without SearchMetadata when advanced filters are used
+		}
+	}
+
+	return true
+}
+
+// containsAnyMatch checks if any of the search terms match any of the recipe values (case-insensitive)
+func containsAnyMatch(searchTerms []string, recipeValues []string) bool {
+	for _, searchTerm := range searchTerms {
+		for _, recipeValue := range recipeValues {
+			if strings.Contains(strings.ToLower(recipeValue), searchTerm) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// sortSearchResults performs cost-efficient in-memory sorting of search results
+func sortSearchResults(recipes []models.Recipe, sortBy, sortOrder string) {
+	if len(recipes) <= 1 {
+		return
+	}
+
+	// Default to sorting by creation date (newest first)
+	if sortBy == "" {
+		sortBy = "createdAt"
+	}
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+
+	// Implement sorting logic
+	switch sortBy {
+	case "title":
+		if sortOrder == "desc" {
+			// Sort titles Z-A
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					if recipes[i].Title < recipes[j].Title {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		} else {
+			// Sort titles A-Z
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					if recipes[i].Title > recipes[j].Title {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		}
+	case "prepTime":
+		if sortOrder == "desc" {
+			// Sort prep time high to low
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					iPrepTime := 0
+					if recipes[i].PrepTimeMinutes != nil {
+						iPrepTime = *recipes[i].PrepTimeMinutes
+					}
+					jPrepTime := 0
+					if recipes[j].PrepTimeMinutes != nil {
+						jPrepTime = *recipes[j].PrepTimeMinutes
+					}
+					if iPrepTime < jPrepTime {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		} else {
+			// Sort prep time low to high
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					iPrepTime := 999999 // Put nil values at the end for ascending
+					if recipes[i].PrepTimeMinutes != nil {
+						iPrepTime = *recipes[i].PrepTimeMinutes
+					}
+					jPrepTime := 999999
+					if recipes[j].PrepTimeMinutes != nil {
+						jPrepTime = *recipes[j].PrepTimeMinutes
+					}
+					if iPrepTime > jPrepTime {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		}
+	case "cookTime":
+		if sortOrder == "desc" {
+			// Sort cook time high to low
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					iCookTime := 0
+					if recipes[i].CookTimeMinutes != nil {
+						iCookTime = *recipes[i].CookTimeMinutes
+					}
+					jCookTime := 0
+					if recipes[j].CookTimeMinutes != nil {
+						jCookTime = *recipes[j].CookTimeMinutes
+					}
+					if iCookTime < jCookTime {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		} else {
+			// Sort cook time low to high
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					iCookTime := 999999 // Put nil values at the end for ascending
+					if recipes[i].CookTimeMinutes != nil {
+						iCookTime = *recipes[i].CookTimeMinutes
+					}
+					jCookTime := 999999
+					if recipes[j].CookTimeMinutes != nil {
+						jCookTime = *recipes[j].CookTimeMinutes
+					}
+					if iCookTime > jCookTime {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		}
+	case "servings":
+		if sortOrder == "desc" {
+			// Sort servings high to low
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					iServings := 0
+					if recipes[i].Servings != nil {
+						iServings = *recipes[i].Servings
+					}
+					jServings := 0
+					if recipes[j].Servings != nil {
+						jServings = *recipes[j].Servings
+					}
+					if iServings < jServings {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		} else {
+			// Sort servings low to high
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					iServings := 999999 // Put nil values at the end for ascending
+					if recipes[i].Servings != nil {
+						iServings = *recipes[i].Servings
+					}
+					jServings := 999999
+					if recipes[j].Servings != nil {
+						jServings = *recipes[j].Servings
+					}
+					if iServings > jServings {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		}
+	default: // "createdAt"
+		if sortOrder == "desc" {
+			// Sort newest first (default)
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					if recipes[i].CreatedAt.Before(recipes[j].CreatedAt) {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		} else {
+			// Sort oldest first
+			for i := 0; i < len(recipes)-1; i++ {
+				for j := i + 1; j < len(recipes); j++ {
+					if recipes[i].CreatedAt.After(recipes[j].CreatedAt) {
+						recipes[i], recipes[j] = recipes[j], recipes[i]
+					}
+				}
+			}
+		}
+	}
 }

@@ -38,6 +38,23 @@ type Recipe struct {
 
 	// Archive & Backup
 	WebArchiveURL *string `json:"webArchiveUrl,omitempty" dynamodb:"webArchiveUrl,omitempty"`
+
+	// Search Optimization (Cost-Efficient In-Memory Search)
+	SearchMetadata *SearchMetadata `json:"searchMetadata,omitempty" dynamodb:"searchMetadata,omitempty"`
+}
+
+// SearchMetadata contains OpenAI-generated search fields for cost-efficient in-Lambda filtering
+// Designed to minimize S3 storage costs while enabling fast in-memory search
+type SearchMetadata struct {
+	// Core search fields optimized for small storage footprint
+	SemanticTags       []string `json:"semanticTags,omitempty" dynamodb:"semanticTags,omitempty"`           // Max 5 tags
+	PrimaryIngredients []string `json:"primaryIngredients,omitempty" dynamodb:"primaryIngredients,omitempty"` // Max 5 ingredients
+	CookingMethods     []string `json:"cookingMethods,omitempty" dynamodb:"cookingMethods,omitempty"`         // Max 3 methods
+	DietaryTags        []string `json:"dietaryTags,omitempty" dynamodb:"dietaryTags,omitempty"`               // Max 5 tags
+	FlavorProfile      []string `json:"flavorProfile,omitempty" dynamodb:"flavorProfile,omitempty"`           // Max 4 flavors
+	Equipment          []string `json:"equipment,omitempty" dynamodb:"equipment,omitempty"`                   // Max 3 items
+	TimeCategory       string   `json:"timeCategory,omitempty" dynamodb:"timeCategory,omitempty"`             // Single category
+	Complexity         string   `json:"complexity,omitempty" dynamodb:"complexity,omitempty"`                 // Single level
 }
 
 // Ingredient represents a structured ingredient

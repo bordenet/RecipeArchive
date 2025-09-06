@@ -399,6 +399,23 @@ run_meaningful_tests() {
         echo "    Backend API tests failed"
     fi
     
+    # ADDED: Search functionality validation tests
+    print_step "Search functionality tests"
+    add_test
+    if [ -f "tests/search-validation.sh" ]; then
+        if tests/search-validation.sh > /tmp/search_validation.log 2>&1; then
+            print_test_success
+            search_test_count=$(grep -o '[0-9]\+/[0-9]\+' /tmp/search_validation.log | tail -1 || echo "0/0")
+            echo "    Search validation: $search_test_count tests"
+        else
+            print_test_error
+            echo "    Search validation failed - check /tmp/search_validation.log"
+        fi
+    else
+        print_test_error
+        echo "    Search validation script not found at tests/search-validation.sh"
+    fi
+    
     track_section_completion
 }
 
