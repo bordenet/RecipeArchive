@@ -72,22 +72,36 @@ func (f FlexInt) MarshalJSON() ([]byte, error) {
 
 // Simplified recipe structure for normalization
 type Recipe struct {
-	ID           string        `json:"id"`
-	UserID       string        `json:"userId"`
-	Title        string        `json:"title"`
-	Ingredients  []Ingredient  `json:"ingredients"`
-	Instructions []Instruction `json:"instructions"`
-	SourceURL    string        `json:"sourceUrl"`
-	MainPhotoURL string        `json:"mainPhotoUrl,omitempty"`
-	Servings     FlexInt       `json:"servings,omitempty"`
-	TotalTime    FlexInt       `json:"totalTimeMinutes,omitempty"`
-	PrepTime     FlexInt       `json:"prepTime,omitempty"`
-	CookTime     FlexInt       `json:"cookTime,omitempty"`
-	Tags         []string      `json:"tags,omitempty"`
-	CreatedAt    string        `json:"createdAt"`
-	UpdatedAt    string        `json:"updatedAt"`
-	IsDeleted    bool          `json:"isDeleted"`
-	Version      int           `json:"version"`
+	ID                 string              `json:"id"`
+	UserID             string              `json:"userId"`
+	Title              string              `json:"title"`
+	Ingredients        []Ingredient        `json:"ingredients"`
+	Instructions       []Instruction       `json:"instructions"`
+	SourceURL          string              `json:"sourceUrl"`
+	MainPhotoURL       string              `json:"mainPhotoUrl,omitempty"`
+	Servings           FlexInt             `json:"servings,omitempty"`
+	TotalTime          FlexInt             `json:"totalTimeMinutes,omitempty"`
+	PrepTime           FlexInt             `json:"prepTime,omitempty"`
+	CookTime           FlexInt             `json:"cookTime,omitempty"`
+	Tags               []string            `json:"tags,omitempty"`
+	SearchMetadata     *SearchMetadata     `json:"searchMetadata,omitempty"`
+	CreatedAt          string              `json:"createdAt"`
+	UpdatedAt          string              `json:"updatedAt"`
+	IsDeleted          bool                `json:"isDeleted"`
+	Version            int                 `json:"version"`
+}
+
+// SearchMetadata contains OpenAI-generated search optimization fields
+type SearchMetadata struct {
+	SemanticTags       []string `json:"semanticTags"`       // ["italian", "comfort-food", "weeknight"]
+	PrimaryIngredients []string `json:"primaryIngredients"` // ["chicken", "tomatoes", "pasta"]
+	CookingMethods     []string `json:"cookingMethods"`     // ["baked", "sautéed"]
+	DietaryTags        []string `json:"dietaryTags"`        // ["vegetarian", "gluten-free"]  
+	FlavorProfile      []string `json:"flavorProfile"`      // ["savory", "herbed"]
+	Equipment          []string `json:"equipment"`          // ["oven", "large-pot"]
+	TimeCategory       string   `json:"timeCategory"`       // "medium-30min"
+	Complexity         string   `json:"complexity"`         // "beginner", "intermediate", "advanced"
+	MealType           string   `json:"mealType"`           // "breakfast", "lunch", "brunch", "dinner", "snack", "dessert", "appetizer", "drink"
 }
 
 type Ingredient struct {
@@ -130,6 +144,7 @@ type NormalizationResponse struct {
 	NormalizedIngredients  []Ingredient     `json:"normalizedIngredients"`
 	NormalizedInstructions []Instruction    `json:"normalizedInstructions"`
 	InferredMetadata       InferredMetadata `json:"inferredMetadata"`
+	SearchMetadata         SearchMetadata   `json:"searchMetadata"`
 	InferredServings       *int             `json:"inferredServings,omitempty"`
 	InferredTotalTime      *int             `json:"inferredTotalTime,omitempty"`
 	InferredPrepTime       *int             `json:"inferredPrepTime,omitempty"`
@@ -390,6 +405,12 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 		result.Tags = append(result.Tags, diet)
 	}
 
+	// Apply search metadata for intelligent recipe discovery
+	result.SearchMetadata = &normResponse.SearchMetadata
+
+	fmt.Printf("✨ Enhanced recipe %s with search metadata: %d semantic tags, %d primary ingredients, %s complexity\n", 
+		result.ID, len(normResponse.SearchMetadata.SemanticTags), len(normResponse.SearchMetadata.PrimaryIngredients), normResponse.SearchMetadata.Complexity)
+
 	return &result, nil
 }
 
@@ -498,11 +519,55 @@ SERVINGS AND TIME INFERENCE (CRITICAL - REQUIRED):
 - Total time: prep + cook + any waiting/resting time (always >= prep time + cook time)
 - Add timing details inline in instructions when multiple phases exist (e.g., "Mix ingredients (5 minutes)", "Bake for 25 minutes", "Cool for 10 minutes")
 
-METADATA ENHANCEMENT:
-- Infer cuisine type when possible
-- Identify cooking methods (baked, sautéed, grilled, etc.)
-- Detect dietary information (vegetarian, gluten-free, dairy-free)
-- Estimate difficulty level (Simple, Moderate, Complex)
+SEARCH METADATA GENERATION (CRITICAL FOR SEARCH FUNCTIONALITY):
+Generate comprehensive search metadata to enable intelligent recipe discovery:
+
+SEMANTIC TAGS (3-5 tags):
+- Cuisine types: "italian", "mexican", "asian", "american", "mediterranean", "indian", "french", "greek", "thai", "chinese", "japanese"
+- Meal types: "breakfast", "lunch", "dinner", "snack", "appetizer", "dessert", "drink", "cocktail"
+- Occasion tags: "weeknight", "weekend", "holiday", "party", "comfort-food", "date-night", "family-friendly"
+- Style tags: "quick", "easy", "healthy", "indulgent", "rustic", "elegant", "casual", "fancy"
+- Season tags: "summer", "winter", "spring", "fall" (when seasonal ingredients are prominent)
+
+PRIMARY INGREDIENTS (3-5 main ingredients):
+- Extract the most prominent ingredients that define the dish
+- Use simple, searchable names: "chicken", "beef", "pasta", "rice", "tomatoes", "cheese", "eggs"
+- Focus on proteins, main starches, and key vegetables/fruits
+- Avoid minor seasonings, oils, or garnishes
+
+COOKING METHODS (1-3 methods):
+- Primary cooking techniques: "baked", "roasted", "grilled", "fried", "sautéed", "boiled", "steamed", "braised", "slow-cooked", "no-cook", "pressure-cooked", "air-fried"
+- Use the most prominent cooking method first
+
+DIETARY TAGS (identify applicable restrictions):
+- "vegetarian" (no meat/poultry/fish), "vegan" (no animal products), "gluten-free", "dairy-free", "nut-free", "egg-free", "low-carb", "keto", "paleo", "whole30"
+- Only include tags that are clearly applicable based on ingredients
+
+FLAVOR PROFILE (2-4 flavor descriptors):
+- Primary tastes: "sweet", "savory", "spicy", "tangy", "bitter", "umami", "rich", "light", "fresh", "creamy", "crispy", "cheesy", "herbed", "garlicky", "citrusy"
+- Focus on the most prominent flavor characteristics
+
+EQUIPMENT (1-3 key pieces):
+- Essential equipment needed: "oven", "stovetop", "grill", "slow-cooker", "pressure-cooker", "air-fryer", "blender", "food-processor", "mixer", "large-pot", "skillet", "baking-sheet", "dutch-oven"
+- Include specialized equipment if critical to the recipe
+
+TIME CATEGORY (single category):
+- "quick-15min" (≤15 min total), "medium-30min" (16-45 min), "long-60min" (46-90 min), "extended-2hr+" (>90 min)
+- Base on total time including prep and cooking
+
+COMPLEXITY LEVEL (single level):
+- "beginner" (basic techniques, few steps, common ingredients)
+- "intermediate" (some skill required, multiple techniques, longer process)  
+- "advanced" (complex techniques, timing-critical, specialty ingredients or equipment)
+MEAL TYPE (single primary category):
+- "breakfast" (morning meals, coffee accompaniments)
+- "lunch" (midday meals, light dishes)
+- "brunch" (late morning/early afternoon combination meals)
+- "dinner" (main evening meals, substantial dishes)
+- "snack" (small portions, between-meal foods)
+- "dessert" (sweet treats, post-meal sweets)
+- "appetizer" (starters, party foods, small plates)
+- "drink" (beverages, cocktails, smoothies, juices)
 
 Return ONLY valid JSON in this exact format (ALL FIELDS REQUIRED):
 {
@@ -519,6 +584,17 @@ Return ONLY valid JSON in this exact format (ALL FIELDS REQUIRED):
   "inferredTotalTime": 45,
   "inferredPrepTime": 15,
   "inferredCookTime": 30,
+  "searchMetadata": {
+    "semanticTags": ["american", "dessert", "comfort-food", "weekend"],
+    "primaryIngredients": ["apples", "flour", "butter"],
+    "cookingMethods": ["baked"],
+    "dietaryTags": ["vegetarian"],
+    "flavorProfile": ["sweet", "cinnamon", "buttery"],
+    "equipment": ["oven", "pie-pan", "rolling-pin"],
+    "timeCategory": "medium-30min",
+    "complexity": "intermediate",
+    "mealType": "dessert"
+  },
   "inferredMetadata": {
     "cuisineType": "American",
     "cookingMethods": ["baked"],
@@ -526,7 +602,7 @@ Return ONLY valid JSON in this exact format (ALL FIELDS REQUIRED):
     "difficultyLevel": "Simple"
   },
   "qualityScore": 8.5,
-  "normalizationNotes": "Standardized units, inferred 6 servings based on ingredient quantities, estimated 45 minutes total time"
+  "normalizationNotes": "Standardized units, inferred 6 servings based on ingredient quantities, estimated 45 minutes total time, generated comprehensive search metadata for intelligent recipe discovery"
 }
 
 CRITICAL: inferredServings, inferredTotalTime, inferredPrepTime, and inferredCookTime MUST be numeric values, never null.`, recipe.Title, string(ingredientsJson), string(instructionsJson), servingsInfo, timeInfo)

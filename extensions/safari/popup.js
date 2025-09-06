@@ -38,9 +38,37 @@ document.addEventListener("DOMContentLoaded", function() {
     // Initialize cross-browser extension API
     initializeExtensionAPI();
     
-    // Check authentication status on load
-    checkAuthenticationStatus();
+    // Initialize with proper dependencies loading
+    initializePopupSafelySafari();
 });
+
+// Safe initialization with dependency checking (Safari version)
+async function initializePopupSafelySafari(retryCount = 0) {
+    const MAX_INIT_RETRIES = 5;
+    const INIT_RETRY_DELAY = 100;
+    
+    try {
+        // Check if critical dependencies are loaded
+        if (typeof CONFIG === "undefined" || typeof localStorage === "undefined" || !extensionAPI) {
+            if (retryCount < MAX_INIT_RETRIES) {
+                console.log(`⏳ Waiting for Safari dependencies to load (attempt ${retryCount + 1}/${MAX_INIT_RETRIES})`);
+                setTimeout(() => {
+                    initializePopupSafelySafari(retryCount + 1);
+                }, INIT_RETRY_DELAY);
+                return;
+            } else {
+                console.error("⚠️ Critical Safari dependencies failed to load");
+            }
+        }
+        
+        // Check authentication status on load
+        checkAuthenticationStatus();
+    } catch (error) {
+        console.error("Error during Safari popup initialization:", error);
+        // Fallback initialization
+        checkAuthenticationStatus();
+    }
+}
 
 function initializeExtensionAPI() {
     // Safari Web Extensions use the browser API, not chrome API
@@ -93,6 +121,77 @@ function checkAuthenticationStatus() {
     renderUI();
 }
 
+// Robust site support checking with race condition protection (Safari version)
+async function checkSiteSupportSafari(captureBtn, retryCount = 0) {
+    const MAX_RETRIES = 10; // Maximum number of retries
+    const RETRY_DELAY = 50; // Milliseconds between retries
+    
+    try {
+        // Check if extensionAPI and tabs are available
+        if (!extensionAPI || !extensionAPI.tabs) {
+            console.warn("⚠️ Safari extension API not available");
+            updateCaptureButtonSafari(captureBtn, false, "API Error");
+            return;
+        }
+        
+        // Get current tab with proper error handling
+        const tabs = await new Promise((resolve, reject) => {
+            extensionAPI.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                if (tabs && tabs.length > 0) {
+                    resolve(tabs);
+                } else {
+                    reject(new Error("No active tab found"));
+                }
+            });
+        });
+        
+        const tab = tabs[0];
+        let isSupported = false;
+        
+        // Check if RecipeArchiveSites is available with retry logic
+        if (typeof window.RecipeArchiveSites !== "undefined") {
+            if (tab && tab.url) {
+                isSupported = window.RecipeArchiveSites.isSupportedSite(tab.url);
+            }
+            updateCaptureButtonSafari(captureBtn, isSupported);
+        } else if (retryCount < MAX_RETRIES) {
+            // RecipeArchiveSites not loaded yet, retry after delay
+            console.log(`⏳ Waiting for RecipeArchiveSites to load (Safari attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            setTimeout(() => {
+                checkSiteSupportSafari(captureBtn, retryCount + 1);
+            }, RETRY_DELAY);
+            return;
+        } else {
+            // Max retries reached, disable button with error state
+            console.warn("⚠️ RecipeArchiveSites failed to load after max retries (Safari)");
+            updateCaptureButtonSafari(captureBtn, false, "Loading Error");
+        }
+    } catch (error) {
+        console.error("Error checking site support (Safari):", error);
+        updateCaptureButtonSafari(captureBtn, false, "Check Failed");
+    }
+}
+
+// Update capture button state with proper error handling (Safari version)
+function updateCaptureButtonSafari(captureBtn, isSupported, errorMessage = null) {
+    if (!captureBtn) return;
+    
+    captureBtn.disabled = !isSupported;
+    captureBtn.style.opacity = isSupported ? "1" : "0.5";
+    captureBtn.style.cursor = isSupported ? "pointer" : "not-allowed";
+    
+    if (errorMessage) {
+        captureBtn.textContent = errorMessage;
+        captureBtn.title = "Failed to check site compatibility";
+    } else if (!isSupported) {
+        captureBtn.textContent = "Site Not Supported";
+        captureBtn.title = "This site is not supported";
+    } else {
+        captureBtn.textContent = "Capture Recipe";
+        captureBtn.title = "Capture Recipe";
+    }
+}
+
 function renderUI() {
     const container = document.getElementById("main-container");
     const versionDisplay = createVersionDisplay();
@@ -123,29 +222,8 @@ function renderUI() {
             signOut();
         };
 
-        // Check if current site is supported and enable/disable button
-        if (extensionAPI && extensionAPI.tabs) {
-            extensionAPI.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if (tabs && tabs.length > 0) {
-                    const tab = tabs[0];
-                    let isSupported = false;
-                    if (tab && typeof window.RecipeArchiveSites !== "undefined") {
-                        isSupported = window.RecipeArchiveSites.isSupportedSite(tab.url);
-                    }
-                    captureBtn.disabled = !isSupported;
-                    captureBtn.style.opacity = isSupported ? "1" : "0.5";
-                    captureBtn.style.cursor = isSupported ? "pointer" : "not-allowed";
-                    captureBtn.title = isSupported ? "Capture Recipe" : "This site is not supported";
-                    
-                    // Update button text to be more descriptive
-                    if (!isSupported) {
-                        captureBtn.textContent = "Site Not Supported";
-                    } else {
-                        captureBtn.textContent = "Capture Recipe";
-                    }
-                }
-            });
-        }
+        // Check if current site is supported with race condition protection
+        checkSiteSupportSafari(captureBtn);
         
     } else {
         // Load saved credentials

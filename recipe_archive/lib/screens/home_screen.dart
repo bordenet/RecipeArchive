@@ -7,6 +7,7 @@ import 'recipe_detail_screen.dart';
 import 'extensions_screen.dart';
 import 'mobile_apps_screen.dart';
 import 'backup_screen.dart';
+import 'advanced_search_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -22,6 +23,17 @@ class HomeScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AdvancedSearchScreen(),
+                ),
+              );
+            },
+            tooltip: 'Advanced search',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -91,6 +103,18 @@ class HomeScreen extends ConsumerWidget {
               selectedTileColor: Colors.green.withValues(alpha: 0.1),
               onTap: () {
                 Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('Advanced Search'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AdvancedSearchScreen(),
+                  ),
+                );
               },
             ),
             ListTile(

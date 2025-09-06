@@ -84,9 +84,37 @@ document.addEventListener("DOMContentLoaded", function() {
     
     document.body.appendChild(container);
     
-    // Check authentication status on extension load
-    checkAuthenticationStatus();
+    // Initialize with proper dependencies loading
+    initializePopupSafely();
 });
+
+// Safe initialization with dependency checking
+async function initializePopupSafely(retryCount = 0) {
+    const MAX_INIT_RETRIES = 5;
+    const INIT_RETRY_DELAY = 100;
+    
+    try {
+        // Check if critical dependencies are loaded
+        if (typeof CONFIG === "undefined" || typeof localStorage === "undefined") {
+            if (retryCount < MAX_INIT_RETRIES) {
+                console.log(`⏳ Waiting for dependencies to load (attempt ${retryCount + 1}/${MAX_INIT_RETRIES})`);
+                setTimeout(() => {
+                    initializePopupSafely(retryCount + 1);
+                }, INIT_RETRY_DELAY);
+                return;
+            } else {
+                console.error("⚠️ Critical dependencies failed to load");
+            }
+        }
+        
+        // Check authentication status on extension load
+        checkAuthenticationStatus();
+    } catch (error) {
+        console.error("Error during popup initialization:", error);
+        // Fallback initialization
+        checkAuthenticationStatus();
+    }
+}
 
 function checkAuthenticationStatus() {
     // Check if user is signed in (from storage or session)
@@ -100,6 +128,70 @@ function checkAuthenticationStatus() {
         }
     }
     renderUI();
+}
+
+// Robust site support checking with race condition protection
+async function checkSiteSupport(captureBtn, retryCount = 0) {
+    const MAX_RETRIES = 10; // Maximum number of retries
+    const RETRY_DELAY = 50; // Milliseconds between retries
+    
+    try {
+        // Get current tab with proper error handling
+        const tabs = await new Promise((resolve, reject) => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else {
+                    resolve(tabs);
+                }
+            });
+        });
+        
+        const tab = tabs[0];
+        let isSupported = false;
+        
+        // Check if RecipeArchiveSites is available with retry logic
+        if (typeof window.RecipeArchiveSites !== "undefined") {
+            if (tab && tab.url) {
+                isSupported = window.RecipeArchiveSites.isSupportedSite(tab.url);
+            }
+            updateCaptureButton(captureBtn, isSupported);
+        } else if (retryCount < MAX_RETRIES) {
+            // RecipeArchiveSites not loaded yet, retry after delay
+            console.log(`⏳ Waiting for RecipeArchiveSites to load (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            setTimeout(() => {
+                checkSiteSupport(captureBtn, retryCount + 1);
+            }, RETRY_DELAY);
+            return;
+        } else {
+            // Max retries reached, disable button with error state
+            console.warn("⚠️ RecipeArchiveSites failed to load after max retries");
+            updateCaptureButton(captureBtn, false, "Loading Error");
+        }
+    } catch (error) {
+        console.error("Error checking site support:", error);
+        updateCaptureButton(captureBtn, false, "Check Failed");
+    }
+}
+
+// Update capture button state with proper error handling
+function updateCaptureButton(captureBtn, isSupported, errorMessage = null) {
+    if (!captureBtn) return;
+    
+    captureBtn.disabled = !isSupported;
+    captureBtn.style.opacity = isSupported ? "1" : "0.5";
+    captureBtn.style.cursor = isSupported ? "pointer" : "not-allowed";
+    
+    if (errorMessage) {
+        captureBtn.textContent = errorMessage;
+        captureBtn.title = "Failed to check site compatibility";
+    } else if (!isSupported) {
+        captureBtn.textContent = "Site Not Supported";
+        captureBtn.title = "This site is not supported";
+    } else {
+        captureBtn.textContent = "Capture Recipe";
+        captureBtn.title = "Capture Recipe";
+    }
 }
 
 function renderUI() {
@@ -127,25 +219,8 @@ function renderUI() {
             e.preventDefault();
             signOut();
         };
-        // Check if current site is supported and enable/disable button
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            const tab = tabs[0];
-            let isSupported = false;
-            if (tab && typeof window.RecipeArchiveSites !== "undefined") {
-                isSupported = window.RecipeArchiveSites.isSupportedSite(tab.url);
-            }
-            captureBtn.disabled = !isSupported;
-            captureBtn.style.opacity = isSupported ? "1" : "0.5";
-            captureBtn.style.cursor = isSupported ? "pointer" : "not-allowed";
-            captureBtn.title = isSupported ? "Capture Recipe" : "This site is not supported";
-            
-            // Update button text to be more descriptive
-            if (!isSupported) {
-                captureBtn.textContent = "Site Not Supported";
-            } else {
-                captureBtn.textContent = "Capture Recipe";
-            }
-        });
+        // Check if current site is supported with race condition protection
+        checkSiteSupport(captureBtn);
         
     } else {
         // Not signed in UI - show sign in form
