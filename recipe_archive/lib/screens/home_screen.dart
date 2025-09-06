@@ -9,6 +9,7 @@ import 'extensions_screen.dart';
 import 'mobile_apps_screen.dart';
 import 'backup_screen.dart';
 import 'advanced_search_screen.dart';
+import 'search_analytics_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -151,6 +152,18 @@ class HomeScreen extends ConsumerWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const BackupScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.analytics),
+              title: const Text('Search Analytics'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SearchAnalyticsScreen(),
                   ),
                 );
               },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/advanced_search_service.dart';
+import '../services/search_analytics_service.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
 
@@ -11,7 +12,22 @@ final searchParametersProvider = StateProvider<SearchParameters>((ref) =>
 final searchResultProvider = FutureProvider.autoDispose.family<SearchResult, SearchParameters>(
   (ref, parameters) async {
     final searchService = ref.read(advancedSearchServiceProvider);
-    return await searchService.searchRecipes(parameters);
+    final analyticsService = ref.read(searchAnalyticsServiceProvider);
+    
+    // Track search performance
+    final stopwatch = Stopwatch()..start();
+    final result = await searchService.searchRecipes(parameters);
+    stopwatch.stop();
+    
+    // Track search analytics
+    await analyticsService.trackSearch(
+      query: parameters.query ?? '',
+      resultCount: result.recipes.length,
+      responseTimeMs: stopwatch.elapsedMilliseconds,
+      searchParams: parameters,
+    );
+    
+    return result;
   },
 );
 
@@ -420,6 +436,15 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           _buildTagSection('Cooking Methods', AdvancedSearchService.commonCookingMethods, _selectedCookingMethods),
           const SizedBox(height: 16),
 
+          // Meal type
+          _buildDropdown(
+            'Meal Type',
+            _selectedMealType,
+            AdvancedSearchService.mealTypes,
+            (value) => setState(() => _selectedMealType = value),
+          ),
+          const SizedBox(height: 16),
+
           // Time category and complexity
           Row(
             children: [
@@ -631,12 +656,23 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                   final recipe = result.recipes[index];
                   return RecipeCard(
                     recipe: recipe,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => RecipeDetailScreen(recipe: recipe),
-                        ),
+                    onTap: () async {
+                      // Track result click for analytics
+                      final analyticsService = ref.read(searchAnalyticsServiceProvider);
+                      final currentSearchParams = ref.read(searchParametersProvider);
+                      await analyticsService.trackResultClick(
+                        recipeId: recipe.id,
+                        clickPosition: index + 1,
+                        query: currentSearchParams.query,
                       );
+                      
+                      if (context.mounted) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => RecipeDetailScreen(recipe: recipe),
+                          ),
+                        );
+                      }
                     },
                   );
                 },
