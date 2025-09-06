@@ -142,6 +142,24 @@ test_advanced_search_filters() {
     else
         print_error "Time and servings filtering failed (HTTP $time_response)"
     fi
+    
+    print_test "Meal type filtering" 
+    local meal_response=$(curl -s -o /dev/null -w "%{http_code}" "${API_BASE_URL}/v1/recipes/search?mealType=dinner" 2>/dev/null || echo "000")
+    
+    if [[ "$meal_response" == "200" ]] || [[ "$meal_response" == "401" ]]; then
+        print_success
+    else
+        print_error "Meal type filtering failed (HTTP $meal_response)"
+    fi
+    
+    print_test "Total time filtering"
+    local total_time_response=$(curl -s -o /dev/null -w "%{http_code}" "${API_BASE_URL}/v1/recipes/search?minTotalTime=15&maxTotalTime=60" 2>/dev/null || echo "000")
+    
+    if [[ "$total_time_response" == "200" ]] || [[ "$total_time_response" == "401" ]]; then
+        print_success
+    else
+        print_error "Total time filtering failed (HTTP $total_time_response)"
+    fi
 }
 
 # Test sorting and pagination

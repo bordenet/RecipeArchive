@@ -101,6 +101,7 @@ type SearchMetadata struct {
 	Equipment          []string `json:"equipment"`          // ["oven", "large-pot"]
 	TimeCategory       string   `json:"timeCategory"`       // "medium-30min"
 	Complexity         string   `json:"complexity"`         // "beginner", "intermediate", "advanced"
+	MealType           string   `json:"mealType"`           // "breakfast", "lunch", "brunch", "dinner", "snack", "dessert", "appetizer", "drink"
 }
 
 type Ingredient struct {
@@ -558,6 +559,15 @@ COMPLEXITY LEVEL (single level):
 - "beginner" (basic techniques, few steps, common ingredients)
 - "intermediate" (some skill required, multiple techniques, longer process)  
 - "advanced" (complex techniques, timing-critical, specialty ingredients or equipment)
+MEAL TYPE (single primary category):
+- "breakfast" (morning meals, coffee accompaniments)
+- "lunch" (midday meals, light dishes)
+- "brunch" (late morning/early afternoon combination meals)
+- "dinner" (main evening meals, substantial dishes)
+- "snack" (small portions, between-meal foods)
+- "dessert" (sweet treats, post-meal sweets)
+- "appetizer" (starters, party foods, small plates)
+- "drink" (beverages, cocktails, smoothies, juices)
 
 Return ONLY valid JSON in this exact format (ALL FIELDS REQUIRED):
 {
@@ -582,7 +592,8 @@ Return ONLY valid JSON in this exact format (ALL FIELDS REQUIRED):
     "flavorProfile": ["sweet", "cinnamon", "buttery"],
     "equipment": ["oven", "pie-pan", "rolling-pin"],
     "timeCategory": "medium-30min",
-    "complexity": "intermediate"
+    "complexity": "intermediate",
+    "mealType": "dessert"
   },
   "inferredMetadata": {
     "cuisineType": "American",

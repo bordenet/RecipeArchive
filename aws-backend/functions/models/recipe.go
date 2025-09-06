@@ -55,6 +55,7 @@ type SearchMetadata struct {
 	Equipment          []string `json:"equipment,omitempty" dynamodb:"equipment,omitempty"`                   // Max 3 items
 	TimeCategory       string   `json:"timeCategory,omitempty" dynamodb:"timeCategory,omitempty"`             // Single category
 	Complexity         string   `json:"complexity,omitempty" dynamodb:"complexity,omitempty"`                 // Single level
+	MealType           string   `json:"mealType,omitempty" dynamodb:"mealType,omitempty"`                     // Single meal type: breakfast, lunch, brunch, dinner, snack, dessert, appetizer, drink
 }
 
 // Ingredient represents a structured ingredient

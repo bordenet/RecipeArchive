@@ -386,6 +386,20 @@ func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequ
 	equipment := parseSearchArray(queryParams["equipment"])
 	timeCategory := strings.ToLower(strings.TrimSpace(queryParams["timeCategory"]))
 	complexity := strings.ToLower(strings.TrimSpace(queryParams["complexity"]))
+	mealType := strings.ToLower(strings.TrimSpace(queryParams["mealType"]))
+	
+	// Total time filtering 
+	var minTotalTime, maxTotalTime *int
+	if val := queryParams["minTotalTime"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 0 {
+			minTotalTime = &parsed
+		}
+	}
+	if val := queryParams["maxTotalTime"]; val != "" {
+		if parsed, err := strconv.Atoi(val); err == nil && parsed >= 0 {
+			maxTotalTime = &parsed
+		}
+	}
 
 	// Source URL filtering
 	sourceFilter := strings.ToLower(strings.TrimSpace(queryParams["source"]))
@@ -394,8 +408,8 @@ func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequ
 	var matchingRecipes []models.Recipe
 	for _, recipe := range activeRecipes {
 		if matchesSearchCriteria(recipe, searchQuery, minPrepTime, maxPrepTime, minCookTime, maxCookTime,
-			minServings, maxServings, semanticTags, primaryIngredients, cookingMethods, dietaryTags,
-			flavorProfile, equipment, timeCategory, complexity, sourceFilter) {
+			minServings, maxServings, minTotalTime, maxTotalTime, semanticTags, primaryIngredients, cookingMethods, dietaryTags,
+			flavorProfile, equipment, timeCategory, complexity, mealType, sourceFilter) {
 			matchingRecipes = append(matchingRecipes, recipe)
 		}
 	}
@@ -1168,9 +1182,9 @@ func parseSearchArray(value string) []string {
 
 // matchesSearchCriteria performs cost-efficient in-memory recipe filtering
 func matchesSearchCriteria(recipe models.Recipe, searchQuery string, 
-	minPrepTime, maxPrepTime, minCookTime, maxCookTime, minServings, maxServings *int,
+	minPrepTime, maxPrepTime, minCookTime, maxCookTime, minServings, maxServings, minTotalTime, maxTotalTime *int,
 	semanticTags, primaryIngredients, cookingMethods, dietaryTags, flavorProfile, equipment []string,
-	timeCategory, complexity, sourceFilter string) bool {
+	timeCategory, complexity, mealType, sourceFilter string) bool {
 
 	// Basic text search across title, ingredients, and instructions
 	if searchQuery != "" {
@@ -1211,6 +1225,14 @@ func matchesSearchCriteria(recipe models.Recipe, searchQuery string,
 		return false
 	}
 	if maxServings != nil && (recipe.Servings != nil && *recipe.Servings > *maxServings) {
+		return false
+	}
+
+	// Total time filtering
+	if minTotalTime != nil && (recipe.TotalTimeMinutes == nil || *recipe.TotalTimeMinutes < *minTotalTime) {
+		return false
+	}
+	if maxTotalTime != nil && (recipe.TotalTimeMinutes != nil && *recipe.TotalTimeMinutes > *maxTotalTime) {
 		return false
 	}
 
@@ -1260,12 +1282,17 @@ func matchesSearchCriteria(recipe models.Recipe, searchQuery string,
 		if complexity != "" && strings.ToLower(recipe.SearchMetadata.Complexity) != complexity {
 			return false
 		}
+		
+		// Meal type matching
+		if mealType != "" && strings.ToLower(recipe.SearchMetadata.MealType) != mealType {
+			return false
+		}
 	} else {
 		// If SearchMetadata is not available, only fail if advanced filters are being used
 		// This ensures backward compatibility with recipes that haven't been normalized yet
 		if len(semanticTags) > 0 || len(primaryIngredients) > 0 || len(cookingMethods) > 0 || 
 		   len(dietaryTags) > 0 || len(flavorProfile) > 0 || len(equipment) > 0 || 
-		   timeCategory != "" || complexity != "" {
+		   timeCategory != "" || complexity != "" || mealType != "" {
 			return false // Skip recipes without SearchMetadata when advanced filters are used
 		}
 	}
