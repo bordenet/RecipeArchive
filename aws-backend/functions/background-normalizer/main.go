@@ -26,6 +26,50 @@ type NormalizationMessage struct {
 	Action   string `json:"action"`
 }
 
+// FlexInt handles both string and int types for flexible JSON unmarshaling
+type FlexInt struct {
+	Value *int
+}
+
+func (f *FlexInt) UnmarshalJSON(data []byte) error {
+	// Try parsing as int first
+	var intVal int
+	if err := json.Unmarshal(data, &intVal); err == nil {
+		f.Value = &intVal
+		return nil
+	}
+	
+	// Try parsing as string
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		if strVal == "" {
+			f.Value = nil
+			return nil
+		}
+		if parsed, err := strconv.Atoi(strVal); err == nil {
+			f.Value = &parsed
+			return nil
+		}
+	}
+	
+	f.Value = nil
+	return nil
+}
+
+func (f FlexInt) String() string {
+	if f.Value == nil {
+		return ""
+	}
+	return fmt.Sprintf("%d", *f.Value)
+}
+
+func (f FlexInt) MarshalJSON() ([]byte, error) {
+	if f.Value == nil {
+		return json.Marshal(nil)
+	}
+	return json.Marshal(*f.Value)
+}
+
 // Simplified recipe structure for normalization
 type Recipe struct {
 	ID           string        `json:"id"`
@@ -35,10 +79,10 @@ type Recipe struct {
 	Instructions []Instruction `json:"instructions"`
 	SourceURL    string        `json:"sourceUrl"`
 	MainPhotoURL string        `json:"mainPhotoUrl,omitempty"`
-	Servings     string        `json:"servings,omitempty"`
-	TotalTime    string        `json:"totalTimeMinutes,omitempty"`
-	PrepTime     string        `json:"prepTime,omitempty"`
-	CookTime     string        `json:"cookTime,omitempty"`
+	Servings     FlexInt       `json:"servings,omitempty"`
+	TotalTime    FlexInt       `json:"totalTimeMinutes,omitempty"`
+	PrepTime     FlexInt       `json:"prepTime,omitempty"`
+	CookTime     FlexInt       `json:"cookTime,omitempty"`
 	Tags         []string      `json:"tags,omitempty"`
 	CreatedAt    string        `json:"createdAt"`
 	UpdatedAt    string        `json:"updatedAt"`
@@ -294,56 +338,42 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	result.Ingredients = normResponse.NormalizedIngredients
 	result.Instructions = normResponse.NormalizedInstructions
 
-	// Apply inferred servings - ALWAYS provide if not already present
-	if result.Servings == "" {
-		if normResponse.InferredServings != nil {
-			result.Servings = fmt.Sprintf("%d", *normResponse.InferredServings)
-		} else {
-			// Fallback: estimate based on recipe type
-			result.Servings = "4" // Default reasonable serving size
-		}
+	// Apply inferred servings - ALWAYS use OpenAI values if available (override existing)
+	if normResponse.InferredServings != nil {
+		result.Servings.Value = normResponse.InferredServings
+	} else if result.Servings.Value == nil {
+		// Fallback only if no OpenAI value and no existing value
+		defaultServings := 4
+		result.Servings.Value = &defaultServings
 	}
 
-	// Apply inferred times - ALWAYS provide if not already present
-	if result.TotalTime == "" {
-		if normResponse.InferredTotalTime != nil {
-			result.TotalTime = fmt.Sprintf("%d", *normResponse.InferredTotalTime)
-		} else {
-			// Fallback: estimate based on other times or default
-			if result.PrepTime != "" && result.CookTime != "" {
-				prep, _ := strconv.Atoi(result.PrepTime)
-				cook, _ := strconv.Atoi(result.CookTime)
-				result.TotalTime = fmt.Sprintf("%d", prep+cook)
-			} else {
-				result.TotalTime = "30" // Default reasonable total time
-			}
-		}
+	// Apply inferred times - ALWAYS use OpenAI values if available (override existing)
+	if normResponse.InferredPrepTime != nil {
+		result.PrepTime.Value = normResponse.InferredPrepTime
+	} else if result.PrepTime.Value == nil {
+		defaultPrep := 15
+		result.PrepTime.Value = &defaultPrep
 	}
-	if result.PrepTime == "" {
-		if normResponse.InferredPrepTime != nil {
-			result.PrepTime = fmt.Sprintf("%d", *normResponse.InferredPrepTime)
-		} else {
-			// Fallback: estimate based on total time or default
-			result.PrepTime = "15" // Default reasonable prep time
-		}
+
+	if normResponse.InferredCookTime != nil {
+		result.CookTime.Value = normResponse.InferredCookTime
+	} else if result.CookTime.Value == nil {
+		defaultCook := 15
+		result.CookTime.Value = &defaultCook
 	}
-	if result.CookTime == "" {
-		if normResponse.InferredCookTime != nil {
-			result.CookTime = fmt.Sprintf("%d", *normResponse.InferredCookTime)
-		} else {
-			// Fallback: estimate based on total time minus prep or default
-			if result.TotalTime != "" && result.PrepTime != "" {
-				total, _ := strconv.Atoi(result.TotalTime)
-				prep, _ := strconv.Atoi(result.PrepTime)
-				if total > prep {
-					result.CookTime = fmt.Sprintf("%d", total-prep)
-				} else {
-					result.CookTime = "15" // Default reasonable cook time
-				}
-			} else {
-				result.CookTime = "15" // Default reasonable cook time
-			}
-		}
+
+	// ALWAYS calculate total time from prep + cook if both are available
+	// This ensures consistency and fixes erroneous total times
+	if result.PrepTime.Value != nil && result.CookTime.Value != nil {
+		calculatedTotal := *result.PrepTime.Value + *result.CookTime.Value
+		result.TotalTime.Value = &calculatedTotal
+	} else if normResponse.InferredTotalTime != nil {
+		// Use OpenAI total time if we don't have both prep and cook
+		result.TotalTime.Value = normResponse.InferredTotalTime
+	} else if result.TotalTime.Value == nil {
+		// Fallback only if no calculated, no OpenAI, and no existing value
+		defaultTotal := 30
+		result.TotalTime.Value = &defaultTotal
 	}
 
 	// Add inferred metadata as tags if not already present
@@ -369,14 +399,14 @@ func buildNormalizationPrompt(recipe *Recipe) string {
 
 	// Extract current servings info for context
 	servingsInfo := "not specified"
-	if recipe.Servings != "" {
-		servingsInfo = recipe.Servings
+	if recipe.Servings.Value != nil {
+		servingsInfo = recipe.Servings.String()
 	}
 
 	// Extract current time info for context
 	timeInfo := "not specified"
-	if recipe.PrepTime != "" || recipe.CookTime != "" || recipe.TotalTime != "" {
-		timeInfo = fmt.Sprintf("prep: %s, cook: %s, total: %s", recipe.PrepTime, recipe.CookTime, recipe.TotalTime)
+	if recipe.PrepTime.Value != nil || recipe.CookTime.Value != nil || recipe.TotalTime.Value != nil {
+		timeInfo = fmt.Sprintf("prep: %s, cook: %s, total: %s", recipe.PrepTime.String(), recipe.CookTime.String(), recipe.TotalTime.String())
 	}
 
 	return fmt.Sprintf(`You are a professional recipe editor  for Food & Wine Magazine tasked with normalizing recipe data for consistent storage and presentation.

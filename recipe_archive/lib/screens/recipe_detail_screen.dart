@@ -285,8 +285,14 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...widget.recipe.getScaledIngredients(currentServings).map((ingredient) {
+                  ...widget.recipe.getScaledIngredients(currentServings).asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final ingredient = entry.value;
+                    final originalIngredient = widget.recipe.ingredients[index];
                     final displayText = UnitsConverter.convertIngredient(ingredient.text, useMetricUnits);
+                    
+                    // Check if ingredient was actually scaled by comparing with original
+                    final wasScaled = ingredient.text != originalIngredient.text;
                     
                     // Check if this is a section header (starts with ##)
                     if (ingredient.text.startsWith('## ')) {
@@ -325,15 +331,18 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.only(top: 8, right: 12),
-                            decoration: const BoxDecoration(
-                              color: Colors.green,
+                            decoration: BoxDecoration(
+                              color: wasScaled ? Colors.green : Colors.grey[400],
                               shape: BoxShape.circle,
                             ),
                           ),
                           Expanded(
                             child: Text(
                               displayText,
-                              style: Theme.of(context).textTheme.bodyLarge,
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontStyle: wasScaled ? FontStyle.normal : FontStyle.italic,
+                                color: wasScaled ? null : Colors.grey[600],
+                              ),
                             ),
                           ),
                         ],

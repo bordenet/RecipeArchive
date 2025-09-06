@@ -14,11 +14,16 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Counters - Fixed to track actual tests
+# Counters - Separated by operation type for accuracy
+declare -i TOTAL_OPERATIONS=0
+declare -i PASSED_OPERATIONS=0
+declare -i FAILED_OPERATIONS=0
+declare -i BUILD_FAILURES=0
+
+# Test-specific counters (subset of operations that are actual tests)
 declare -i TOTAL_TESTS=0
 declare -i PASSED_TESTS=0
 declare -i FAILED_TESTS=0
-declare -i BUILD_FAILURES=0
 
 # Track which sections have been completed
 COMPLETED_SECTIONS=""
@@ -79,14 +84,29 @@ print_step() {
 
 print_success() {
     echo -e "${GREEN}✓${NC}"
-    PASSED_TESTS=$((PASSED_TESTS + 1))
-    TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    PASSED_OPERATIONS=$((PASSED_OPERATIONS + 1))
+    TOTAL_OPERATIONS=$((TOTAL_OPERATIONS + 1))
 }
 
 print_error() {
     echo -e "${RED}✗${NC}"
+    FAILED_OPERATIONS=$((FAILED_OPERATIONS + 1))
+    TOTAL_OPERATIONS=$((TOTAL_OPERATIONS + 1))
+}
+
+# Test-specific success/error functions
+print_test_success() {
+    echo -e "${GREEN}✓${NC}"
+    PASSED_TESTS=$((PASSED_TESTS + 1))
+    PASSED_OPERATIONS=$((PASSED_OPERATIONS + 1))
+    TOTAL_OPERATIONS=$((TOTAL_OPERATIONS + 1))
+}
+
+print_test_error() {
+    echo -e "${RED}✗${NC}"
     FAILED_TESTS=$((FAILED_TESTS + 1))
-    TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    FAILED_OPERATIONS=$((FAILED_OPERATIONS + 1))
+    TOTAL_OPERATIONS=$((TOTAL_OPERATIONS + 1))
 }
 
 print_warning() {
@@ -97,14 +117,32 @@ print_info() {
     echo "  $1"
 }
 
-# Add test without immediate execution
-add_test() {
-    TOTAL_TESTS=$((TOTAL_TESTS + 1))
+# Add operation (build, quality check, etc.) without immediate execution
+add_operation() {
+    TOTAL_OPERATIONS=$((TOTAL_OPERATIONS + 1))
 }
 
-# Mark test as passed
+# Add actual test without immediate execution  
+add_test() {
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    TOTAL_OPERATIONS=$((TOTAL_OPERATIONS + 1))
+}
+
+# Mark operation as passed
 mark_passed() {
+    PASSED_OPERATIONS=$((PASSED_OPERATIONS + 1))
+}
+
+# Mark test as passed (used with add_test)
+mark_test_passed() {
     PASSED_TESTS=$((PASSED_TESTS + 1))
+    PASSED_OPERATIONS=$((PASSED_OPERATIONS + 1))
+}
+
+# Mark test as failed (used with add_test)
+mark_test_failed() {
+    FAILED_TESTS=$((FAILED_TESTS + 1))
+    FAILED_OPERATIONS=$((FAILED_OPERATIONS + 1))
 }
 
 # Validate prerequisites
@@ -121,7 +159,7 @@ validate_prerequisites() {
         echo "    Node.js is not installed"
         errors=$((errors + 1))
     else
-        add_test; mark_passed
+        add_operation; mark_passed
     fi
     
     # Check for npm
@@ -130,7 +168,7 @@ validate_prerequisites() {
         echo "    npm is not installed"
         errors=$((errors + 1))
     else
-        add_test; mark_passed
+        add_operation; mark_passed
     fi
     
     # Check for Go
@@ -139,7 +177,7 @@ validate_prerequisites() {
         echo "    Go is not installed"
         errors=$((errors + 1))
     else
-        add_test; mark_passed
+        add_operation; mark_passed
     fi
     
     # Check for Make
@@ -148,7 +186,7 @@ validate_prerequisites() {
         echo "    Make is not installed"
         errors=$((errors + 1))
     else
-        add_test; mark_passed
+        add_operation; mark_passed
     fi
     
     # Check for ESLint
@@ -157,7 +195,7 @@ validate_prerequisites() {
         echo "    ESLint is not available"
         errors=$((errors + 1))
     else
-        add_test; mark_passed
+        add_operation; mark_passed
     fi
     
     # Check for TruffleHog
@@ -167,7 +205,7 @@ validate_prerequisites() {
         echo "    Install with: brew install trufflehog or go install github.com/trufflesecurity/trufflehog/v3@latest"
         errors=$((errors + 1))
     else
-        add_test; mark_passed
+        add_operation; mark_passed
     fi
     
     # Check for Flutter (optional for web app development)
@@ -175,9 +213,9 @@ validate_prerequisites() {
         if ! command -v flutter &> /dev/null; then
             print_warning "Flutter not found - web app validation will be skipped"
             echo "    Install Flutter from: https://flutter.dev/docs/get-started/install"
-            add_test; mark_passed  # Count as passed since it's optional
+            add_operation; mark_passed  # Count as passed since it's optional
         else
-            add_test; mark_passed
+            add_operation; mark_passed
         fi
     fi
     
@@ -186,7 +224,7 @@ validate_prerequisites() {
         echo "    All prerequisites available"
         
         # Quick security scan check
-        add_test
+        add_operation
         echo "    Running security scan..."
         if command -v trufflehog > /dev/null 2>&1; then
             echo "    Security scan: TruffleHog available ✓"
@@ -208,7 +246,7 @@ install_dependencies() {
     print_header "DEPENDENCIES"
     
     print_step "Installing root dependencies"
-    add_test
+    add_operation
     if npm install > /dev/null 2>&1; then
         print_success
     else
@@ -219,7 +257,7 @@ install_dependencies() {
     fi
     
     print_step "Installing AWS infrastructure dependencies"
-    add_test
+    add_operation
     if (cd aws-backend/infrastructure && npm install > /dev/null 2>&1); then
         print_success
     else
@@ -230,7 +268,7 @@ install_dependencies() {
     fi
     
     print_step "Installing Safari test dependencies"
-    add_test
+    add_operation
     if (cd extensions/tests/safari && npm install > /dev/null 2>&1); then
         print_success
     else
@@ -248,7 +286,7 @@ build_go_binaries() {
     print_header "GO BUILDS"
     
     print_step "Building AWS backend"
-    add_test
+    add_operation
     if (cd aws-backend && make build > /dev/null 2>&1); then
         print_success
     else
@@ -259,7 +297,7 @@ build_go_binaries() {
     fi
     
     print_step "Building tools"
-    add_test
+    add_operation
     if (cd tools && make build > /dev/null 2>&1); then
         print_success
     else
@@ -270,7 +308,7 @@ build_go_binaries() {
     fi
     
     print_step "Building recipe-report"
-    add_test
+    add_operation
     if (cd tools/recipe-report && go build -o recipe-report . > /dev/null 2>&1); then
         print_success
     else
@@ -288,7 +326,7 @@ build_typescript() {
     print_header "TYPESCRIPT"
     
     print_step "Compiling parsers TypeScript"
-    add_test
+    add_operation
     if npx tsc --project parsers/tsconfig.json --noEmit > /dev/null 2>&1; then
         print_success
     else
@@ -299,7 +337,7 @@ build_typescript() {
     fi
     
     print_step "Compiling infrastructure TypeScript"
-    add_test
+    add_operation
     if [ -d "aws-backend/infrastructure" ]; then
         echo "    Skipping slow TypeScript compilation - directory exists ✓"
         print_success
@@ -318,36 +356,36 @@ run_meaningful_tests() {
     print_step "Parser system tests"
     add_test
     if npm run test:parsers > /dev/null 2>&1; then
-        print_success
+        print_test_success
     else
-        print_error
+        print_test_error
         echo "    Parser tests failed - rerun with: npm run test:parsers"
     fi
     
     print_step "Go backend tests"
     add_test
     if (cd aws-backend/functions/local-server && go test -v > /dev/null 2>&1); then
-        print_success
+        print_test_success
     else
-        print_error
+        print_test_error
         echo "    Go tests failed - rerun with: cd aws-backend/functions/local-server && go test -v"
     fi
     
     print_step "Go tools tests"
     add_test
     if (cd tools && make test > /dev/null 2>&1); then
-        print_success
+        print_test_success
     else
-        print_error
+        print_test_error
         echo "    Go tools tests failed - rerun with: cd tools && make test"
     fi
     
     print_step "Extension integration tests"
     add_test
     if jest tests/parser-registry-integration.test.js > /dev/null 2>&1; then
-        print_success
+        print_test_success
     else
-        print_error
+        print_test_error
         echo "    Extension integration tests failed - parser bundle issues"
     fi
     
@@ -355,9 +393,9 @@ run_meaningful_tests() {
     print_step "Backend API endpoint tests"
     add_test
     if test_backend_api_endpoints; then
-        print_success
+        print_test_success
     else
-        print_error
+        print_test_error
         echo "    Backend API tests failed"
     fi
     
@@ -386,7 +424,7 @@ run_quality_checks() {
     print_header "CODE QUALITY"
     
     print_step "ESLint - Web Extensions"
-    add_test
+    add_operation
     if npm run lint > /dev/null 2>&1; then
         print_success
     else
@@ -395,7 +433,7 @@ run_quality_checks() {
     fi
     
     print_step "ESLint - Extension scoping"
-    add_test
+    add_operation
     if npm run lint:scoping > /dev/null 2>&1; then
         print_success
     else
@@ -404,7 +442,7 @@ run_quality_checks() {
     fi
     
     print_step "Flutter analysis"
-    add_test
+    add_operation
     if [ -d "recipe_archive" ]; then
         if command -v flutter &> /dev/null; then
             if (cd recipe_archive && flutter analyze > /dev/null 2>&1); then
@@ -427,22 +465,22 @@ run_quality_checks() {
     if [ -d "recipe_archive" ]; then
         if command -v flutter &> /dev/null; then
             if (cd recipe_archive && flutter test > /dev/null 2>&1); then
-                print_success
+                print_test_success
             else
-                print_error
+                print_test_error
                 echo "    Flutter tests failed - run 'cd recipe_archive && flutter test' for details"
             fi
         else
             print_warning "Flutter not installed - skipping"
-            mark_passed
+            mark_test_passed
         fi
     else
         print_warning "Flutter app directory not found - skipping"
-        mark_passed
+        mark_test_passed
     fi
     
     print_step "Go code formatting"
-    add_test
+    add_operation
     if (cd tools && make fmt > /dev/null 2>&1 && git diff --exit-code > /dev/null 2>&1); then
         print_success
     else
@@ -464,16 +502,16 @@ validate_parsers() {
         if (cd tests/parser-validation && run_with_timeout 60 node test-parser-integration.cjs > /tmp/parser_test.log 2>&1); then
             local end_time=$(date +%s)
             local duration=$((end_time - start_time))
-            print_success
+            print_test_success
             echo "    Parser validation completed in ${duration}s"
         else
-            print_error
+            print_test_error
             echo "    Parser validation failed or timed out after 60s"
             echo "    Check /tmp/parser_test.log for details"
             echo "    Common issues: Network timeouts, site structure changes, missing TypeScript bundle"
         fi
     else
-        print_error
+        print_test_error
         echo "    Parser validation tool not found at tests/parser-validation/test-parser-integration.cjs"
     fi
     
@@ -485,7 +523,7 @@ run_quality_gates() {
     print_header "QUALITY GATES"
     
     print_step "PRD document protection"
-    add_test
+    add_operation
     local missing_prds=0
     PRD_FILES=("docs/requirements/browser-extension.md" "docs/requirements/aws-backend.md" "docs/requirements/website.md" "docs/requirements/ios-app.md")
     
@@ -501,7 +539,7 @@ run_quality_gates() {
     fi
     
     print_step "File organization"
-    add_test
+    add_operation
     misplaced_files=$(find . -maxdepth 1 -name "*test*" -o -name "*validation*" -o -name "*report*" 2>/dev/null | grep -v node_modules | grep -v "^./tests$" | grep -v "^./test-results$" | grep -v "^./validate-monorepo.sh$" || true)
     
     if [ -z "$misplaced_files" ]; then
@@ -512,7 +550,7 @@ run_quality_gates() {
     fi
     
     print_step "Empty markdown files"
-    add_test
+    add_operation
     empty_md_files=$(find . -name "*.md" -type f -size 0 2>/dev/null | grep -v node_modules | grep -v .git || true)
     
     if [ -z "$empty_md_files" ]; then
@@ -523,7 +561,7 @@ run_quality_gates() {
     fi
     
     print_step "Orphaned development files"
-    add_test
+    add_operation
     orphaned_files=$(find . -name "*.bak" -o -name "*-clean.*" -o -name "*-minimal.*" -o -name "*-debug.*" -o -name "*-old.*" -o -name "*-backup.*" 2>/dev/null | grep -v node_modules | grep -v .git || true)
     
     if [ -z "$orphaned_files" ]; then
@@ -534,7 +572,7 @@ run_quality_gates() {
     fi
     
     print_step "Documentation checks"
-    add_test
+    add_operation
     if npm run docs:organize > /dev/null 2>&1 && npm run docs:review > /dev/null 2>&1; then
         print_success
     else
@@ -550,7 +588,7 @@ validate_recipe_storage() {
     print_header "RECIPE STORAGE"
     
     print_step "S3 storage report"
-    add_test
+    add_operation
     if [ -f ".env" ]; then
         set -o allexport
         source .env > /dev/null 2>&1
@@ -581,7 +619,7 @@ validate_recipe_storage() {
 check_frontend_status() {
     print_header "FRONTEND STATUS"
     
-    add_test
+    add_operation
     if [ -d "recipe_archive" ]; then
         if [ -f "recipe_archive/pubspec.yaml" ]; then
             print_success

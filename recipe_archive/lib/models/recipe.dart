@@ -26,10 +26,11 @@ class RecipeIngredient {
     
     String scaledText = text;
     
-    // Single comprehensive regex that handles both cases:
+    // Improved regex that handles multiple cases:
     // 1. Numbers at beginning: "6 hard-boiled eggs" -> captures "6" and "hard-boiled eggs"
-    // 2. Numbers embedded: "flesh of 1 ripe avocado" -> captures "flesh of", "1", and "ripe avocado"
-    final regex = RegExp(r'^(\d+(?:\s+\d+/\d+)?|\d+\.\d+|\d+/\d+)\s+(.+)|^(.*?)(\d+)(\s+.+)$', multiLine: false);
+    // 2. Mixed fractions at beginning: "1 1/2 cups flour" -> captures "1 1/2" and "cups flour"
+    // 3. Numbers embedded with clear word boundaries: "flesh of 1 ripe avocado" -> captures "flesh of ", "1", and " ripe avocado"
+    final regex = RegExp(r'^(\d+(?:\s+\d+/\d+)?|\d+\.\d+|\d+/\d+)\s+(.+)|^(.+\s)(\d+(?:\.\d+|/\d+)?)(?=\s)(.+)$', multiLine: false);
     
     scaledText = scaledText.replaceAllMapped(regex, (match) {
       try {
@@ -45,17 +46,17 @@ class RecipeIngredient {
             return '$formattedAmount $restOfIngredient';
           }
         }
-        // Case 2: Number embedded (groups 3, 4, and 5)
+        // Case 2: Number embedded with word boundaries (groups 3, 4, and 5)
         else if (match.group(3) != null && match.group(4) != null && match.group(5) != null) {
-          final prefix = match.group(3)!;
+          final prefix = match.group(3)!; // Already includes trailing space
           final amountStr = match.group(4)!.trim();
-          final suffix = match.group(5)!.trim();
+          final suffix = match.group(5)!; // Already includes leading space
           
           final amount = _parseScalingAmount(amountStr);
           if (amount != null) {
             final scaledAmount = amount * ratio;
             final formattedAmount = _formatScaledAmount(scaledAmount);
-            return '$prefix$formattedAmount $suffix';
+            return '$prefix$formattedAmount$suffix';
           }
         }
         

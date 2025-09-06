@@ -104,6 +104,7 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 - **Flutter Web Build**: Shows Wasm compatibility warnings (not errors, app still works)
 - **Recipe Scaling**: Some ingredients like "a handful of sprouts" remain static (expected behavior)
 - **Extension Token Refresh**: Properly implemented but may show brief login prompts
+- **🚨 Epicurious Paywall**: JavaScript-enforced paywall bypasses initial parsing, creates empty recipes in backend
 
 ## 🎆 Recent Achievements (September 5, 2025)
 
@@ -141,6 +142,40 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 - **Wasm Compatibility**: Shows warnings about dart:html and dart:ffi usage
 - **Impact**: Warnings only, JavaScript compilation works fine
 - **Note**: These warnings don't appear in validate-monorepo.sh because it runs `flutter analyze`, not `flutter build web`
+
+---
+
+## 🔮 Future Work Queue
+
+### 🚨 HIGH PRIORITY: Epicurious Paywall Detection & Handling
+**Problem**: Epicurious.com enforces JavaScript paywall after initial page load, causing extensions to capture empty/incomplete recipe data and push dead recipes to backend.
+
+**Paywall Behavior**:
+- Page appears to fully load with recipe content
+- JavaScript then enforces paywall with message: *"You've read your last free article. Get unlimited access for $6 $3/month for one year—cancel anytime."*
+- Recipe content gets hidden/replaced with subscription prompt
+- Extensions capture incomplete data and create empty recipes in S3
+
+**Required Implementation**:
+1. **Parser Enhancement**: Detect paywall CSS classes and JavaScript-modified content
+   - Look for: `PaywallModalWrapper-eXxAbG`, `PaywallBarWrapper-ebFvsu`, `consumer-marketing-unit--paywall-*`
+   - Detect empty/missing critical recipe fields (ingredients, instructions)
+2. **Extension UX**: Display clear paywall detection message in popup instead of success
+   - "⚠️ Recipe behind paywall - subscription required to access full content"
+   - Provide link to original article for user to handle subscription
+3. **Backend Protection**: Prevent storage of incomplete recipes
+   - Validate recipe completeness before S3 storage
+   - Return appropriate error codes to extensions
+4. **Testing**: Use `/tests/fixtures/html-samples/epicurious-PAYWALL-failure-edge-case.html` as test case
+
+**Files to Modify**:
+- `extensions/chrome/parsers/epicurious.js` - Add paywall detection
+- `extensions/safari/RecipeArchive Extension/Resources/parsers/epicurious.js` - Sync paywall detection  
+- `extensions/chrome/popup.js` - Handle paywall error response in UX
+- `extensions/safari/RecipeArchive Extension/Resources/popup.js` - Sync popup handling
+- `aws-backend/functions/recipes/main.go` - Add recipe validation before storage
+
+**Expected Outcome**: Users see clear feedback about paywall instead of broken/empty recipes in their archive.
 
 ---
 
