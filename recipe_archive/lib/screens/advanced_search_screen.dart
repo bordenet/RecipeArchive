@@ -33,6 +33,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   final TextEditingController _maxPrepTimeController = TextEditingController();
   final TextEditingController _minCookTimeController = TextEditingController();
   final TextEditingController _maxCookTimeController = TextEditingController();
+  final TextEditingController _minTotalTimeController = TextEditingController();
+  final TextEditingController _maxTotalTimeController = TextEditingController();
   final TextEditingController _minServingsController = TextEditingController();
   final TextEditingController _maxServingsController = TextEditingController();
   final TextEditingController _sourceController = TextEditingController();
@@ -46,6 +48,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   List<String> _selectedEquipment = [];
   String? _selectedTimeCategory;
   String? _selectedComplexity;
+  String? _selectedMealType;
   String _sortBy = 'createdAt';
   String _sortOrder = 'desc';
 
@@ -63,6 +66,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     _maxPrepTimeController.text = params.maxPrepTime?.toString() ?? '';
     _minCookTimeController.text = params.minCookTime?.toString() ?? '';
     _maxCookTimeController.text = params.maxCookTime?.toString() ?? '';
+    _minTotalTimeController.text = params.minTotalTime?.toString() ?? '';
+    _maxTotalTimeController.text = params.maxTotalTime?.toString() ?? '';
     _minServingsController.text = params.minServings?.toString() ?? '';
     _maxServingsController.text = params.maxServings?.toString() ?? '';
     _sourceController.text = params.source ?? '';
@@ -75,6 +80,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     _selectedEquipment = params.equipment ?? [];
     _selectedTimeCategory = params.timeCategory;
     _selectedComplexity = params.complexity;
+    _selectedMealType = params.mealType;
     _sortBy = params.sortBy ?? 'createdAt';
     _sortOrder = params.sortOrder ?? 'desc';
   }
@@ -86,6 +92,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       maxPrepTime: _parseIntInput(_maxPrepTimeController.text),
       minCookTime: _parseIntInput(_minCookTimeController.text),
       maxCookTime: _parseIntInput(_maxCookTimeController.text),
+      minTotalTime: _parseIntInput(_minTotalTimeController.text),
+      maxTotalTime: _parseIntInput(_maxTotalTimeController.text),
       minServings: _parseIntInput(_minServingsController.text),
       maxServings: _parseIntInput(_maxServingsController.text),
       semanticTags: _selectedSemanticTags.isNotEmpty ? _selectedSemanticTags : null,
@@ -96,6 +104,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment : null,
       timeCategory: _selectedTimeCategory,
       complexity: _selectedComplexity,
+      mealType: _selectedMealType,
       source: _sourceController.text.isNotEmpty ? _sourceController.text : null,
       sortBy: _sortBy,
       sortOrder: _sortOrder,
@@ -117,6 +126,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       _maxPrepTimeController.clear();
       _minCookTimeController.clear();
       _maxCookTimeController.clear();
+      _minTotalTimeController.clear();
+      _maxTotalTimeController.clear();
       _minServingsController.clear();
       _maxServingsController.clear();
       _sourceController.clear();
@@ -129,6 +140,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       _selectedEquipment.clear();
       _selectedTimeCategory = null;
       _selectedComplexity = null;
+      _selectedMealType = null;
       _sortBy = 'createdAt';
       _sortOrder = 'desc';
     });
@@ -331,6 +343,34 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                   controller: _maxCookTimeController,
                   decoration: const InputDecoration(
                     labelText: 'Max Cook Time',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Total time filters
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _minTotalTimeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Min Total Time',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _maxTotalTimeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Max Total Time',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
@@ -617,6 +657,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     _maxPrepTimeController.dispose();
     _minCookTimeController.dispose();
     _maxCookTimeController.dispose();
+    _minTotalTimeController.dispose();
+    _maxTotalTimeController.dispose();
     _minServingsController.dispose();
     _maxServingsController.dispose();
     _sourceController.dispose();

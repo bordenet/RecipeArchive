@@ -22,6 +22,8 @@ class SearchParameters {
   final int? maxPrepTime;
   final int? minCookTime;
   final int? maxCookTime;
+  final int? minTotalTime;
+  final int? maxTotalTime;
   
   // Servings filtering
   final int? minServings;
@@ -36,6 +38,7 @@ class SearchParameters {
   final List<String>? equipment;
   final String? timeCategory;
   final String? complexity;
+  final String? mealType;
   
   // Source filtering
   final String? source;
@@ -52,6 +55,8 @@ class SearchParameters {
     this.maxPrepTime,
     this.minCookTime,
     this.maxCookTime,
+    this.minTotalTime,
+    this.maxTotalTime,
     this.minServings,
     this.maxServings,
     this.semanticTags,
@@ -62,6 +67,7 @@ class SearchParameters {
     this.equipment,
     this.timeCategory,
     this.complexity,
+    this.mealType,
     this.source,
     this.sortBy,
     this.sortOrder,
@@ -77,6 +83,8 @@ class SearchParameters {
     if (maxPrepTime != null) params['maxPrepTime'] = maxPrepTime.toString();
     if (minCookTime != null) params['minCookTime'] = minCookTime.toString();
     if (maxCookTime != null) params['maxCookTime'] = maxCookTime.toString();
+    if (minTotalTime != null) params['minTotalTime'] = minTotalTime.toString();
+    if (maxTotalTime != null) params['maxTotalTime'] = maxTotalTime.toString();
     if (minServings != null) params['minServings'] = minServings.toString();
     if (maxServings != null) params['maxServings'] = maxServings.toString();
     
@@ -105,6 +113,9 @@ class SearchParameters {
     if (complexity != null && complexity!.isNotEmpty) {
       params['complexity'] = complexity!;
     }
+    if (mealType != null && mealType!.isNotEmpty) {
+      params['mealType'] = mealType!;
+    }
     if (source != null && source!.isNotEmpty) {
       params['source'] = source!;
     }
@@ -126,6 +137,8 @@ class SearchParameters {
     int? maxPrepTime,
     int? minCookTime,
     int? maxCookTime,
+    int? minTotalTime,
+    int? maxTotalTime,
     int? minServings,
     int? maxServings,
     List<String>? semanticTags,
@@ -136,6 +149,7 @@ class SearchParameters {
     List<String>? equipment,
     String? timeCategory,
     String? complexity,
+    String? mealType,
     String? source,
     String? sortBy,
     String? sortOrder,
@@ -148,6 +162,8 @@ class SearchParameters {
       maxPrepTime: maxPrepTime ?? this.maxPrepTime,
       minCookTime: minCookTime ?? this.minCookTime,
       maxCookTime: maxCookTime ?? this.maxCookTime,
+      minTotalTime: minTotalTime ?? this.minTotalTime,
+      maxTotalTime: maxTotalTime ?? this.maxTotalTime,
       minServings: minServings ?? this.minServings,
       maxServings: maxServings ?? this.maxServings,
       semanticTags: semanticTags ?? this.semanticTags,
@@ -158,6 +174,7 @@ class SearchParameters {
       equipment: equipment ?? this.equipment,
       timeCategory: timeCategory ?? this.timeCategory,
       complexity: complexity ?? this.complexity,
+      mealType: mealType ?? this.mealType,
       source: source ?? this.source,
       sortBy: sortBy ?? this.sortBy,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -276,6 +293,10 @@ class AdvancedSearchService {
 
   static const List<String> complexityLevels = [
     'beginner', 'intermediate', 'advanced'
+  ];
+
+  static const List<String> mealTypes = [
+    'breakfast', 'lunch', 'brunch', 'dinner', 'snack', 'dessert', 'appetizer', 'drink'
   ];
 
   static const List<String> sortOptions = [
