@@ -1,74 +1,63 @@
-# Product Requirements Document (PRD): RecipeArchive AWS Backend
+# RecipeArchive Cloud Infrastructure - User Benefits
 
-## Overview
+## 🎯 What This Means for You
 
-The AWS backend for RecipeArchive provides secure, scalable, and cost-effective storage and management of recipe data. It supports multi-device access, future multi-tenancy, and integration with browser extensions and mobile/web apps.
+The RecipeArchive cloud backend is the invisible foundation that makes your recipe experience seamless across all your devices. When you save a recipe on your computer, it instantly appears on your phone. When you edit a recipe on your iPad, the changes sync everywhere.
 
-### Related Product Requirements
+### Why Cloud-Powered Recipe Storage Matters
 
-This backend infrastructure supports the complete RecipeArchive ecosystem. See related PRDs:
+- **🔒 Your recipes are always safe** - Never lose a recipe to a crashed device or lost bookmark
+- **📱 Access anywhere, anytime** - Your complete recipe library on every device you own
+- **⚡ Lightning-fast sync** - Save on one device, cook from another seconds later
+- **🛡️ Enterprise-grade security** - Your personal recipe collection is protected and private
+- **🔄 Conflict-free editing** - Make changes on multiple devices without losing data
 
-- **[Browser Extension PRD](browser-extension.md)** - Chrome and Safari extensions for one-click recipe capture and archival
-- **[iOS App PRD](ios-app.md)** - Native mobile app that consumes backend APIs for recipe access and management
-- **[Website PRD](website.md)** - Web application that provides comprehensive recipe management interface
+### The RecipeArchive Ecosystem
 
-The AWS backend serves as the **central data layer** that enables seamless sync between the browser extension (capture), iOS app (mobile access), and website (management interface).
+Your cloud storage powers the complete RecipeArchive experience:
 
-## Goals
+- **[Browser Extension](browser-extension.md)** - Captures recipes and saves them to your cloud library
+- **[Website](website.md)** - Full recipe management and organization interface
+- **[iOS App](ios-app.md)** - Native mobile access to your complete recipe collection
 
-- Store and manage recipes for users with unified data model
-- Support CRUD and search operations via RESTful API
-- Enable multi-device sync and offline caching with conflict resolution
-- Prepare for future multi-tenant support
-- Integrate with AWS Cognito authentication from day 1
-- Support diagnostic data collection for continuous parser improvement
+The backend is the **invisible backbone** that makes all your devices work together as one unified cooking companion.
 
-## Functional Requirements
+## 🚀 Key User Benefits
 
-### 1. Recipe Data Management
+### Seamless Multi-Device Experience
+- **One-click recipe access** across phone, tablet, computer, and browser
+- **Real-time synchronization** - changes appear instantly everywhere
+- **Smart conflict resolution** - handles simultaneous edits gracefully
+- **Offline access** - your recipes work even without internet connection
 
-**Unified Recipe Data Model** (see `../architecture/data-model.md` for complete specification):
+### Rock-Solid Reliability  
+- **99.9% uptime guarantee** - your recipes are always available when you need them
+- **Automatic backups** - multiple copies keep your data ultra-safe
+- **Version history** - recover accidentally deleted or changed recipes
+- **Global accessibility** - fast access from anywhere in the world
 
-#### Core Recipe Entity
+## 🍳 What Your Cloud-Powered Recipe Library Can Do
 
-- **Required Fields**: `id`, `userId`, `title`, `ingredients[]`, `instructions[]`, `sourceUrl`
-- **Optional Metadata**: `prepTimeMinutes`, `cookTimeMinutes`, `totalTimeMinutes`, `servings`, `mainPhotoUrl`
-- **System Fields**: `createdAt`, `updatedAt`, `isDeleted`, `version`
-- **Archive Fields**: `webArchiveUrl`, `webArchiveFormat`
-- **Future Extensions**: `tags[]`, `notes`, `rating`
+### Complete Recipe Information Storage
+- **Full recipe details** - title, ingredients, instructions, cook times, and servings
+- **Original source tracking** - always know where you found each recipe
+- **High-quality photos** - visual reference for every dish
+- **Smart ingredient formatting** - quantities, measurements, and preparation notes
+- **Step-by-step instructions** - clear directions with timing and temperature details
 
-#### Structured Ingredient Format
+### Intelligent Recipe Management
+- **Automatic organization** - recipes are structured and searchable from day one
+- **Version control** - track changes and recover previous versions
+- **Conflict resolution** - handle simultaneous edits from multiple devices
+- **Smart formatting** - consistent presentation regardless of source website
+- **Metadata enhancement** - cooking times and serving information automatically inferred
 
-```typescript
-interface Ingredient {
-  quantity?: number;
-  unit?: string;
-  name: string;
-  notes?: string;
-  originalText: string;
-}
-```
-
-#### Structured Instruction Format
-
-```typescript
-interface Instruction {
-  stepNumber: number;
-  text: string;
-  timeMinutes?: number;
-  temperature?: string;
-}
-```
-
-### 2. API Endpoints
-
-#### Recipe CRUD Operations
-
-- **POST** `/v1/recipes` - Create new recipe
-- **GET** `/v1/recipes/{id}` - Retrieve specific recipe
-- **PUT** `/v1/recipes/{id}` - Update existing recipe
-- **DELETE** `/v1/recipes/{id}` - Soft delete recipe
-- **GET** `/v1/recipes` - List user's recipes with pagination
+### Powerful Search & Discovery
+- **Find recipes instantly** - search by ingredient, cooking time, or recipe name  
+- **Smart filtering** - narrow down by prep time, servings, or source website
+- **Recently added tracking** - easily find your newest recipe discoveries
+- **Frequently accessed** - your most-used recipes rise to the top
+- **Cross-device search** - same search results on every device
 
 #### Recipe Search & Filtering
 

@@ -1,12 +1,13 @@
 # RecipeArchive Project Guide
 
-## 🎯 Current Status (September 5, 2025)
+## 🎯 Current Status (September 6, 2025)
 
 **✅ FULLY OPERATIONAL**: Complete end-to-end recipe management system with major fixes deployed  
 **📊 Recipe Storage**: 23 unique recipes (cleaned from 40+ duplicates)  
 **🧪 Testing**: Enhanced Flutter app with improved ingredient scaling and JSON parsing  
 **🌐 Production**: https://d1jcaphz4458q7.cloudfront.net  
-**🎯 Code Quality**: Major data compatibility and parsing issues resolved
+**🎯 Code Quality**: Major data compatibility and parsing issues resolved  
+**🔍 Search Design**: Comprehensive OpenAI-powered search functionality specification completed
 
 ## Quick Start
 
@@ -106,20 +107,25 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 - **Extension Token Refresh**: Properly implemented but may show brief login prompts
 - **🚨 Epicurious Paywall**: JavaScript-enforced paywall bypasses initial parsing, creates empty recipes in backend
 
-## 🎆 Recent Achievements (September 5, 2025)
+## 🎆 Recent Achievements (September 6, 2025)
 
-### ✨ Technical Fixes Deployed
-- **📋 JSON Data Compatibility**: Custom unmarshaling handles string/integer conversion
-- **🧹 S3 Storage Cleanup**: Removed 17 orphaned recipe files (40 → 23 active recipes)
-- **🧪 Ingredient Scaling**: Enhanced regex supports embedded numbers in text
-- **🔧 Lambda Deployment**: Updated recipes function with enhanced JSON handling
-- **🚀 Extension Fixes**: Consistent token usage deployed to production
+### 🔧 Major System Fixes & Enhancements
+- **⏰ Background Normalizer Overhaul**: Fixed critical JSON parsing with FlexInt compatibility for string/numeric fields
+- **📊 Recipe Time Display Fix**: Resolved incorrect time calculations - recipes now show accurate total times (Braised Beef: 270min vs previous 35min)
+- **🧬 Advanced Ingredient Scaling**: Enhanced regex patterns handle descriptive text ("flesh of 1 ripe avocado") with visual feedback
+- **🚀 Extension Race Condition Resolution**: Eliminated popup delays with 10-attempt retry logic for both Chrome and Safari
+- **✅ Validation Script Improvements**: Fixed daily Go formatting issues and accurate test reporting (7/7 tests)
 
-### ⚙️ System Improvements
-- **📈 Data Access**: All stored recipes now accessible (was 9/40, now 23/23)
-- **🤖 Automated Cleanup**: Recipe duplication management tools working
-- **🔍 Enhanced Parsing**: Backward compatible field name mapping
-- **🚫 Clean Architecture**: Removed redundant code, fixed Go build issues
+### 🔍 Advanced Feature Development  
+- **🎯 Comprehensive Search Design**: Completed 4-phase OpenAI-powered search specification with semantic indexing
+- **📚 Documentation Transformation**: Cleaned up technical PRDs, focused on user value (browser-extension.md, aws-backend.md)
+- **🌟 Visual Enhancement**: Added italicized styling for unscaled ingredients providing clear user feedback
+- **🛡️ Paywall Detection**: Added comprehensive Epicurious paywall detection specification to Future Work Queue
+
+### 📈 Production Stability & Quality
+- **🧪 Testing Excellence**: All Flutter tests passing (15/15) with proper quality gates
+- **🗄️ Data Integrity**: 23 unique recipes maintained with clean S3 storage
+- **🌐 Production Health**: https://d1jcaphz4458q7.cloudfront.net fully operational with all enhancements deployed
 
 ## 📋 Troubleshooting
 
@@ -176,6 +182,140 @@ Smitten Kitchen, Food Network, NYT Cooking, Washington Post, Love & Lemons, Food
 - `aws-backend/functions/recipes/main.go` - Add recipe validation before storage
 
 **Expected Outcome**: Users see clear feedback about paywall instead of broken/empty recipes in their archive.
+
+### 🔍 NEXT PRIORITY: Comprehensive Search Functionality with OpenAI Normalization
+
+**Overview**: Implement intelligent recipe search leveraging existing OpenAI normalization to create semantic search capabilities with rich metadata indexing.
+
+**Current State Analysis**:
+- ✅ **OpenAI Integration**: Already implemented in background normalizer with sophisticated recipe analysis
+- ✅ **Basic Search UI**: Flutter app has search UI calling `searchRecipes()` method
+- ❌ **Backend Search**: No search logic in Lambda `/v1/recipes` endpoint (only pagination)
+- ❌ **Search Indexing**: No searchable metadata beyond basic recipe fields
+
+**Technical Architecture**:
+
+#### Phase 1: Enhanced Metadata Generation
+**Goal**: Extend OpenAI normalization to generate search-optimized metadata
+```go
+// Add to background-normalizer prompt:
+"SEARCH METADATA GENERATION:
+- Generate semantic tags (cuisine, dietary, difficulty, meal-type, season)
+- Extract key ingredients list (top 5 primary ingredients)
+- Categorize cooking methods (baked, fried, grilled, no-cook, etc.)  
+- Identify dietary restrictions (vegetarian, vegan, gluten-free, dairy-free)
+- Generate flavor profiles (spicy, sweet, savory, tangy, umami)
+- Extract equipment requirements (oven, stovetop, grill, slow-cooker)
+- Time categorization (quick-15min, medium-30min, long-60min+)"
+```
+
+**New Recipe Fields**:
+```go
+type SearchMetadata struct {
+    SemanticTags      []string `json:"semanticTags"`      // ["italian", "comfort-food", "weeknight"]
+    PrimaryIngredients []string `json:"primaryIngredients"` // ["chicken", "tomatoes", "pasta"]
+    CookingMethods    []string `json:"cookingMethods"`     // ["baked", "sautéed"]
+    DietaryTags       []string `json:"dietaryTags"`        // ["vegetarian", "gluten-free"]  
+    FlavorProfile     []string `json:"flavorProfile"`      // ["savory", "herbed"]
+    Equipment         []string `json:"equipment"`          // ["oven", "large-pot"]
+    TimeCategory      string   `json:"timeCategory"`       // "medium-30min"
+    Complexity        string   `json:"complexity"`         // "beginner", "intermediate"
+}
+```
+
+#### Phase 2: Backend Search Implementation
+**Goal**: Add comprehensive search endpoint with multiple query types
+
+**Search Query Types**:
+1. **Text Search**: Full-text across title, ingredients, instructions
+2. **Semantic Search**: Match against OpenAI-generated tags and categories  
+3. **Ingredient Search**: "recipes with chicken and garlic"
+4. **Dietary Filter Search**: "gluten-free vegetarian recipes"
+5. **Time-based Search**: "quick recipes under 30 minutes"
+6. **Equipment Search**: "no-oven recipes" or "slow-cooker recipes"
+7. **Combined Search**: Multiple criteria with AND/OR logic
+
+**Backend Implementation** (`aws-backend/functions/recipes/main.go`):
+```go
+func handleSearchRecipes(ctx context.Context, userID string, queryParams map[string]string) (events.APIGatewayProxyResponse, error) {
+    searchQuery := queryParams["search"]
+    filters := parseSearchFilters(queryParams) // dietary, time, equipment, etc.
+    
+    // Multi-field search with scoring
+    results := performMultiFieldSearch(allRecipes, searchQuery, filters)
+    
+    // Rank by relevance score
+    sortedResults := rankSearchResults(results, searchQuery)
+    
+    return buildSearchResponse(sortedResults)
+}
+
+type SearchFilters struct {
+    DietaryRestrictions []string
+    MaxCookTime        *int
+    RequiredEquipment  []string
+    ExcludedIngredients []string
+    CuisineTypes       []string
+}
+```
+
+#### Phase 3: Advanced Flutter Search UI  
+**Goal**: Rich search interface with filters, suggestions, and faceted search
+
+**Search Features**:
+```dart
+// Enhanced search widget with:
+- Auto-complete from recipe titles and ingredients
+- Quick filter chips (Vegetarian, <30min, No-cook, etc.)
+- Advanced filter modal (Cuisine, Time Range, Equipment)  
+- Search history with saved searches
+- Recipe suggestions based on incomplete queries
+- "More like this" recommendations using semantic tags
+```
+
+**Search Provider Enhancement** (`recipe_archive/lib/services/recipe_service.dart`):
+```dart
+Future<SearchResults> advancedSearch({
+  String? textQuery,
+  List<String>? dietaryFilters,
+  int? maxCookTime,
+  List<String>? cuisineTypes,
+  List<String>? requiredEquipment,
+  List<String>? excludedIngredients,
+}) async {
+  // Build complex query parameters
+  final queryParams = buildAdvancedSearchParams(...);
+  return await performAdvancedSearch(queryParams);
+}
+```
+
+#### Phase 4: Search Analytics & Optimization
+**Goal**: Track search performance and optimize based on usage patterns
+
+**Implementation**:
+- **Search Analytics**: Track query patterns, result click-through rates
+- **Query Optimization**: Most searched ingredients/cuisines inform UI suggestions
+- **Performance Monitoring**: Search response times and result relevance scoring
+- **A/B Testing**: Test different search ranking algorithms
+
+**Expected Deliverables**:
+1. **Enhanced OpenAI Prompt**: Generate rich search metadata for all existing recipes
+2. **Backend Search Engine**: Multi-faceted search with ranking algorithms  
+3. **Flutter Search UI**: Advanced search interface with filters and suggestions
+4. **Search Analytics**: Usage tracking and optimization insights
+
+**Files to Modify**:
+- `aws-backend/functions/background-normalizer/main.go` - Extend OpenAI prompt for search metadata
+- `aws-backend/functions/recipes/main.go` - Add comprehensive search endpoint
+- `recipe_archive/lib/services/recipe_service.dart` - Enhanced search methods
+- `recipe_archive/lib/screens/search_screen.dart` - Advanced search UI
+- `recipe_archive/lib/models/recipe.dart` - Add SearchMetadata fields
+
+**Success Metrics**:
+- Users can find relevant recipes in <3 query attempts
+- Search covers 90%+ of common cooking scenarios (ingredients, time, diet)
+- Search response time <500ms for any query complexity
+- 80%+ user satisfaction with search result relevance
 
 ---
 
