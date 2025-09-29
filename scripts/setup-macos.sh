@@ -659,21 +659,13 @@ EOF
     npm install
     print_success "AWS CDK dependencies installed"
 
-    # Build Lambda functions before CDK synthesis
-    print_info "Building Lambda functions for CDK..."
-    cd ../functions
-    ./deploy-lambda.sh --build-only 2>/dev/null || {
-      # Fallback: build missing flutter console diagnostics package
-      if [ ! -d "dist/flutter-console-diagnostics-package" ]; then
-        print_info "Building missing flutter console diagnostics package..."
-        cd flutter-console-diagnostics
-        GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
-        mkdir -p ../dist/flutter-console-diagnostics-package
-        cp bootstrap ../dist/flutter-console-diagnostics-package/
-        cd ..
-      fi
-    }
-    cd ../infrastructure
+    # Check if Lambda functions are built
+    if [ ! -d "../functions/dist" ] || [ -z "$(ls -A ../functions/dist 2>/dev/null)" ]; then
+      print_info "Lambda function packages not found. They will be built during CDK deployment."
+      print_info "To build them now, run: cd aws-backend/functions && make build"
+    else
+      print_success "Lambda function packages already built"
+    fi
 
     # Verify CDK setup
     if timed_confirm "Verify AWS CDK setup by synthesizing CloudFormation templates?" 10 "Y"; then
