@@ -1,10 +1,10 @@
-# RecipeArchive
+# RecipeArchive v1.0.0
 
 <table style="width:100%;">
   <tr>
     <td style="text-align: center; vertical-align: top;">
       <img src="./FlutterSample.png" alt="Flutter app screenshot" width="75%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-      <div><a href="https://d1jcaphz4458q7.cloudfront.net"><b>Development Website</b></a></div>
+      <div><a href="https://d1jcaphz4458q7.cloudfront.net"><b>Production Website</b></a></div>
     </td>
     <td style="text-align: center; vertical-align: top;">
       <img src="./WebExtensionSample.png" alt="Web Extension - Chrome" width="100%" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
@@ -13,7 +13,7 @@
   </tr>
 </table>
 
-**Cross-platform recipe management solution** - Capture and organize recipes from 14+ supported websites with browser extensions, Flutter web/mobile apps, and AWS backend infrastructure.
+**Production-ready cross-platform recipe management solution** - Complete system ready for new adopters to clone and deploy. Capture and organize recipes from 14+ supported websites with browser extensions, Flutter web/mobile apps, and cost-optimized AWS backend infrastructure.
 
 | Supported Sites |  |  |
 |-----------------|--|--|
