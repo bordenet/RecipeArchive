@@ -1,0 +1,14 @@
+{
+  "RecipeArchive-dev": {
+    "RecipeArchiveAPIEndpointCA9171A1": "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/",
+    "UserPoolClientId": "7lm8mqr03s0m0fn17dnv373s4h",
+    "StorageBucketName": "recipearchive-storage-dev-990537043943",
+    "ApiGatewayUrl": "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/",
+    "UserPoolId": "us-west-2_rpBcEEhYK",
+    "BillingAlertTopicArn": "arn:aws:sns:us-west-2:990537043943:recipearchive-billing-alerts-dev",
+    "TempBucketName": "recipearchive-temp-dev-990537043943",
+    "FailedParsingBucketName": "recipearchive-failed-parsing-dev-990537043943",
+    "Region": "us-west-2",
+    "AdminEmail": "admin@example.com"
+  }
+}

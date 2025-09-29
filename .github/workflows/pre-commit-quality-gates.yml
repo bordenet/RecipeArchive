@@ -1,0 +1,174 @@
+name: Quality Gates - Prevent Production Breaking Changes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  critical-quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: |
+          cd aws-backend/functions && find . -name go.mod -execdir go mod download \;
+          npm install
+
+      - name: CRITICAL - Test All Go Modules Build
+        run: |
+          echo "🏗️ Testing all Go modules compile..."
+          failed_modules=()
+          for module_dir in aws-backend/functions/*/; do
+            if [ -f "$module_dir/go.mod" ]; then
+              echo "Testing: $module_dir"
+              cd "$module_dir"
+              if ! go build .; then
+                failed_modules+=("$module_dir")
+              fi
+              cd - > /dev/null
+            fi
+          done
+
+          if [ ${#failed_modules[@]} -ne 0 ]; then
+            echo "❌ CRITICAL: Go modules failed to build:"
+            printf '  %s\n' "${failed_modules[@]}"
+            exit 1
+          fi
+          echo "✅ All Go modules compile successfully"
+
+      - name: CRITICAL - Test Lambda Functions Build for AWS
+        run: |
+          echo "🚀 Testing Lambda functions build for deployment..."
+          failed_lambdas=()
+          for lambda_dir in aws-backend/functions/*/; do
+            if [ -f "$lambda_dir/main.go" ]; then
+              echo "Testing Lambda: $lambda_dir"
+              cd "$lambda_dir"
+              if ! GOOS=linux GOARCH=amd64 go build -o bootstrap *.go; then
+                failed_lambdas+=("$lambda_dir")
+              fi
+              rm -f bootstrap  # cleanup
+              cd - > /dev/null
+            fi
+          done
+
+          if [ ${#failed_lambdas[@]} -ne 0 ]; then
+            echo "❌ CRITICAL: Lambda functions failed to build:"
+            printf '  %s\n' "${failed_lambdas[@]}"
+            exit 1
+          fi
+          echo "✅ All Lambda functions build successfully for AWS"
+
+      - name: CRITICAL - Test AWS SDK Dependencies
+        run: |
+          echo "🔍 Testing AWS SDK dependencies compatibility..."
+          # Test that test-tools can at least build (endpoint resolution tested separately)
+          cd aws-backend/functions/test-tools
+          if ! go build -o test-tools .; then
+            echo "❌ CRITICAL: test-tools failed to build - AWS SDK dependency issue"
+            exit 1
+          fi
+          rm -f test-tools
+          echo "✅ AWS SDK dependencies are compatible"
+
+      - name: CRITICAL - Test Flutter App Compiles
+        run: |
+          echo "📱 Testing Flutter app compilation..."
+          cd recipe_archive
+          
+          # Create dummy .env for CI build in the correct location
+          echo "Creating temporary .env for compilation test..."
+          echo "DUMMY_CONFIG=true" > .env
+          # Also create it in parent directory for any other processes that might need it
+          echo "DUMMY_CONFIG=true" > ../.env
+          
+          flutter pub get
+          
+          # Test Flutter analysis first
+          if ! flutter analyze --no-congratulate; then
+            echo "❌ CRITICAL: Flutter analysis failed"
+            rm -f .env
+            exit 1
+          fi
+          
+          # Test web build
+          if ! flutter build web --release --no-wasm-dry-run; then
+            echo "❌ CRITICAL: Flutter app failed to compile for web"
+            rm -f .env
+            exit 1
+          fi
+          
+          # Test Android build configuration (config validation only)
+          if ! flutter build apk --debug --config-only; then
+            echo "❌ CRITICAL: Flutter Android build configuration failed"
+            rm -f .env
+            exit 1
+          fi
+          
+          rm -f .env
+          echo "✅ Flutter app compiles successfully for web and Android"
+
+      - name: CRITICAL - Security Scan
+        run: |
+          echo "🔒 Running security scan..."
+          if ! npm run security:scan; then
+            echo "❌ CRITICAL: Security vulnerabilities detected"
+            exit 1
+          fi
+          echo "✅ Security scan passed"
+
+      - name: CRITICAL - Lint All Code
+        run: |
+          echo "🧹 Running comprehensive linting..."
+          if ! npm run lint; then
+            echo "❌ CRITICAL: Linting failed"
+            exit 1
+          fi
+          echo "✅ All linting passed"
+
+      - name: CRITICAL - Run All Tests
+        run: |
+          echo "🧪 Running all automated tests..."
+          if ! npm run test:go; then
+            echo "❌ CRITICAL: Go tests failed"
+            exit 1
+          fi
+          echo "✅ All tests passed"
+
+      - name: FAIL FAST - Block Breaking Changes
+        if: failure()
+        run: |
+          echo "❌ QUALITY GATE FAILURE - BLOCKING COMMIT"
+          echo "🚨 Production-breaking changes detected!"
+          echo "🔧 Please fix all issues before pushing to main branch"
+          echo "💡 Run './validate-monorepo.sh' locally to test before pushing"
+          exit 1
+
+  summary:
+    needs: critical-quality-gates
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Quality Gates Passed
+        run: |
+          echo "✅ ALL QUALITY GATES PASSED"
+          echo "🚀 Safe to deploy to production"

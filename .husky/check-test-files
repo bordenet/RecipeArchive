@@ -1,0 +1,22 @@
+#!/bin/sh
+# Pre-commit hook to check for misplaced test files and reports
+
+echo "🧹 Checking for misplaced test files..."
+
+# Check for test files in root directory
+misplaced_files=$(find . -maxdepth 1 -name "*test*" -o -name "*validation*" -o -name "*report*" | grep -v node_modules | grep -v "^./tests$" | grep -v "^./test-results$")
+
+if [ -n "$misplaced_files" ]; then
+    echo "❌ ERROR: Test/validation files found in root directory:"
+    echo "$misplaced_files"
+    echo ""
+    echo "Please move these files to appropriate directories:"
+    echo "  - Test files: tests/ or extensions/*/tests/"
+    echo "  - Validation reports: tools/reports/"
+    echo "  - Test results: test-results/ or tools/reports/"
+    echo ""
+    echo "Commit blocked to maintain clean repository structure."
+    exit 1
+fi
+
+echo "✅ No misplaced test files found"

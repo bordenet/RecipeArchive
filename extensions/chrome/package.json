@@ -1,0 +1,23 @@
+{
+  "name": "chrome-extension-tests",
+  "version": "0.2.0",
+  "description": "Jest setup for Chrome extension unit tests",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --setupFiles ./__tests__/setupJest.js",
+    "test:unit": "jest --testMatch='**/*.test.js' --setupFiles ./__tests__/setupJest.js",
+    "test:integration": "node test-recipe-extraction.js",
+    "lint": "eslint --config eslint.config.js *.js --ignore-pattern typescript-parser-bundle.js",
+    "lint:fix": "eslint --config eslint.config.js *.js --fix --ignore-pattern typescript-parser-bundle.js",
+    "build:parser-bundle": "node ../../tools/build-parser-bundle.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "esbuild": "^0.25.9",
+    "eslint": "^9.34.0",
+    "jest": "^29.0.0",
+    "jsdom": "^22.0.0",
+    "playwright": "^1.55.0"
+  }
+}

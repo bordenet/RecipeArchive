@@ -1,0 +1,7 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"originalRecipe\":{\"title\":\"Test Recipe\",\"ingredients\":[{\"text\":\"1 cup flour\"}],\"instructions\":[{\"stepNumber\":1,\"text\":\"Mix ingredients\"}],\"sourceUrl\":\"https://example.com\"},\"userId\":\"test\",\"sourceUrl\":\"https://example.com\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

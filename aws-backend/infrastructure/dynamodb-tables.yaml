@@ -1,0 +1,23 @@
+# DEPRECATED: DynamoDB Tables Removed - S3-Based Invitation System Now In Use
+#
+# This file is kept for historical reference only.
+#
+# Date Deprecated: September 12, 2025
+# Reason: Cost optimization - migrated to S3-based JSON storage
+# Cost Savings: ~70-90% reduction (from ~$5-15/month to ~$0.50-2.00/month)
+#
+# Migration Details:
+# - InvitationTokens table -> S3 bucket JSON files in invitations/tokens/
+# - UserProfiles table -> removed (not actively used)
+# - UsageTracking table -> removed (not actively used)
+#
+# New Lambda Function: invitation-manager-s3
+# Storage Location: s3://recipearchive-storage-dev-990537043943/invitations/
+#
+# All functionality maintained with S3-based approach:
+# - Token generation and validation
+# - Email lookup and admin management
+# - Expiration handling
+# - Status tracking
+#
+# This file can be safely deleted after confirming S3 system works in production.

@@ -1,0 +1,14 @@
+{
+  "name": "chrome-extension-automation",
+  "version": "1.0.0",
+  "description": "Automated testing for Chrome extension",
+  "scripts": {
+    "test": "playwright test",
+    "test:chrome": "playwright test tests/simple-workflow.spec.js",
+    "test:debug": "playwright test --debug",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}

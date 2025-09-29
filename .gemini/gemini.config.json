@@ -1,0 +1,48 @@
+{
+  "custom_tools": [
+    {
+      "name": "aws_cloudwatch_logs",
+      "description": "Interacts with AWS CloudWatch Logs.",
+      "command": ["aws", "logs", "describe-log-groups", "--output", "json"]
+    },
+    {
+      "name": "aws_cloudformation_stacks",
+      "description": "Interacts with AWS CloudFormation.",
+      "command": [
+        "aws",
+        "cloudformation",
+        "describe-stacks",
+        "--output",
+        "json"
+      ]
+    },
+    {
+      "name": "aws_s3_buckets",
+      "description": "Interacts with AWS S3.",
+      "command": ["aws", "s3api", "list-buckets", "--output", "json"]
+    },
+    {
+      "name": "aws_lambda_functions",
+      "description": "Interacts with AWS Lambda.",
+      "command": ["aws", "lambda", "list-functions", "--output", "json"]
+    },
+    {
+      "name": "github_repos",
+      "description": "Interacts with GitHub.",
+      "command": ["gh", "repo", "list", "--json", "name,url,description"]
+    },
+    {
+      "name": "gitleaks_mcp_server",
+      "description": "Scans for secrets using gitleaks.",
+      "command": [
+        "gitleaks",
+        "detect",
+        "--report-path=gitleaks-report.json",
+        "--report-format=json",
+        "--redact",
+        "--source=.",
+        "--verbose"
+      ]
+    }
+  ]
+}

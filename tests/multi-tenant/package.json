@@ -1,0 +1,27 @@
+{
+  "name": "@recipearchive/multi-tenant-tests",
+  "version": "1.0.0",
+  "description": "Multi-tenant invitation flow integration tests",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "dependencies": {
+    "@jest/globals": "^29.7.0",
+    "aws-sdk": "^2.1490.0",
+    "crypto": "^1.0.1",
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**"
+    ],
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "verbose": true
+  }
+}
