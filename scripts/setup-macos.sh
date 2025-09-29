@@ -269,10 +269,10 @@ EOF
   # Install Android command-line tools and accept licenses
   if command -v sdkmanager &> /dev/null; then
     print_info "Installing Android command-line tools..."
-    sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
-    
+    timeout 30 sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
+
     print_info "Accepting Android SDK licenses..."
-    yes | flutter doctor --android-licenses > /dev/null 2>&1 || true
+    timeout 60 bash -c "yes | flutter doctor --android-licenses" > /dev/null 2>&1 || true
     print_success "Android SDK setup completed"
   fi
   
@@ -472,32 +472,21 @@ fi
 # Install browser automation tools
 print_info "Setting up browser automation and testing tools..."
 
-# Check if Playwright is installed
-if command -v npx &> /dev/null && npx playwright --version &> /dev/null; then
-  print_success "Playwright already installed: $(npx playwright --version)"
-
-  # Check if browsers are installed by looking for install locations
-  PLAYWRIGHT_CACHE_DIR="$HOME/Library/Caches/ms-playwright"
-  if [ -d "$PLAYWRIGHT_CACHE_DIR" ] && [ "$(ls -A "$PLAYWRIGHT_CACHE_DIR" 2>/dev/null | wc -l)" -gt 0 ]; then
-    print_success "Playwright browsers already installed"
-  else
-    if timed_confirm "Playwright is installed but browsers are missing. Install browsers? (~500MB download)" 10 "Y"; then
-      print_info "Installing Playwright browsers..."
-      npx playwright install
-      print_success "Playwright browsers installed"
-    fi
-  fi
+# Check if browsers are installed by looking for install locations
+PLAYWRIGHT_CACHE_DIR="$HOME/Library/Caches/ms-playwright"
+if [ -d "$PLAYWRIGHT_CACHE_DIR" ] && [ "$(ls -A "$PLAYWRIGHT_CACHE_DIR" 2>/dev/null | wc -l)" -gt 0 ]; then
+  print_success "Playwright browsers already installed"
 elif [ -f "package.json" ] && grep -q '"playwright"' package.json; then
   print_success "Playwright listed in package.json"
 
   # Ensure it's actually installed
   print_info "Ensuring Playwright is properly installed..."
-  npm install
+  timeout 180 npm install || print_warning "npm install timed out"
 
   # Install browsers if needed
   if timed_confirm "Install/update Playwright browsers? (~500MB download)" 10 "Y"; then
     print_info "Installing Playwright browsers..."
-    npx playwright install
+    timeout 300 npx playwright install || print_warning "Playwright browser installation timed out"
     print_success "Playwright browsers installed"
   fi
 else
@@ -505,13 +494,13 @@ else
   if timed_confirm "Install Playwright for browser automation testing? (Large download ~500MB for browsers)"; then
     print_info "Installing Playwright..."
     if [ -f "package.json" ]; then
-      npm install --save-dev playwright@^1.55.0
+      timeout 180 npm install --save-dev playwright@^1.55.0 || print_warning "Playwright install timed out"
     else
-      npm install -g playwright@^1.55.0
+      timeout 180 npm install -g playwright@^1.55.0 || print_warning "Playwright install timed out"
     fi
 
     print_info "Installing Playwright browsers..."
-    npx playwright install
+    timeout 300 npx playwright install || print_warning "Playwright browser installation timed out"
 
     print_success "Playwright and browsers installed"
   else
@@ -630,11 +619,46 @@ fi
 if [ -d "aws-backend/infrastructure" ]; then
   print_info "Setting up AWS CDK infrastructure dependencies..."
   cd aws-backend/infrastructure
-  
+
+  # Create CDK app entry point if missing
+  if [ ! -f "bin/recipe-archive.ts" ]; then
+    print_info "Creating missing CDK app entry point..."
+    mkdir -p bin
+    cat > bin/recipe-archive.ts <<'EOF'
+#!/usr/bin/env node
+import "source-map-support/register";
+import * as cdk from "aws-cdk-lib";
+import { RecipeArchiveStack } from "../lib/recipe-archive-stack";
+import * as dotenv from "dotenv";
+
+// Load environment variables from .env file if it exists
+dotenv.config({ path: "../../.env" });
+
+const app = new cdk.App();
+
+// Get admin email from environment variable or use default
+const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
+
+// Create the main stack
+new RecipeArchiveStack(app, "RecipeArchiveStack", {
+  environment: "production",
+  adminEmail: adminEmail,
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION || "us-west-2",
+  },
+  description: "RecipeArchive production infrastructure stack",
+});
+
+app.synth();
+EOF
+    print_success "Created bin/recipe-archive.ts"
+  fi
+
   if [ -f "package.json" ]; then
     npm install
     print_success "AWS CDK dependencies installed"
-    
+
     # Build Lambda functions before CDK synthesis
     print_info "Building Lambda functions for CDK..."
     cd ../functions
@@ -668,12 +692,20 @@ fi
 if [ -d "extensions/chrome" ]; then
   print_info "Setting up Chrome extension dependencies..."
   cd extensions/chrome
-  
+
+  # Fix quote style in env-config.js if it exists
+  if [ -f "env-config.js" ]; then
+    print_info "Fixing quote style in env-config.js..."
+    sed -i.bak "s/typeof window !== 'undefined'/typeof window !== \"undefined\"/g" env-config.js
+    sed -i.bak "s/typeof module !== 'undefined'/typeof module !== \"undefined\"/g" env-config.js
+    rm -f env-config.js.bak
+  fi
+
   # Install dependencies
   if [ -f "package.json" ]; then
     npm install
     print_success "Chrome extension dependencies installed"
-    
+
     # Run tests to verify setup
     if timed_confirm "Run Chrome extension tests to verify setup?" 10 "Y"; then
       npm test || print_warning "Some tests may have failed - check configuration"
@@ -697,19 +729,27 @@ fi
 if [ -d "extensions/safari" ]; then
   print_info "Setting up Safari extension dependencies..."
   cd extensions/safari
-  
+
+  # Fix quote style in env-config.js if it exists
+  if [ -f "env-config.js" ]; then
+    print_info "Fixing quote style in env-config.js..."
+    sed -i.bak "s/typeof window !== 'undefined'/typeof window !== \"undefined\"/g" env-config.js
+    sed -i.bak "s/typeof module !== 'undefined'/typeof module !== \"undefined\"/g" env-config.js
+    rm -f env-config.js.bak
+  fi
+
   # Install dependencies
   if [ -f "package.json" ]; then
     npm install
     print_success "Safari extension dependencies installed"
-    
+
     # Run tests to verify setup
     if timed_confirm "Run Safari extension tests to verify setup?" 10 "Y"; then
       npm test || print_warning "Some tests may have failed - check configuration"
       npm run lint || print_warning "Linting issues found - run 'npm run lint:fix' to resolve"
     fi
   fi
-  
+
   cd - > /dev/null
 else
   print_warning "Safari extension directory not found - skipping Safari setup"
@@ -753,10 +793,10 @@ if [ -d "/Applications/Claude.app" ]; then
   # Install MCP servers globally
   print_info "Installing MCP servers for development workflow..."
 
-  # Install core MCP servers
-  npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force
+  # Install core MCP servers with timeout
+  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
 
-  print_success "MCP servers installed successfully"
+  print_success "MCP servers installation completed"
 
   # Create or update Claude Desktop configuration
   if timed_confirm "Configure Claude Desktop MCP servers automatically?" 10 "Y"; then
@@ -854,8 +894,8 @@ else
 
   # Install MCP servers anyway for when Claude Desktop is installed
   print_info "Installing MCP servers globally..."
-  npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force
-  print_success "MCP servers installed and ready for Claude Desktop setup"
+  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
+  print_success "MCP servers installation completed"
 
   print_info "To complete MCP setup after installing Claude Desktop:"
   print_info "1. Install Claude Desktop from https://claude.ai/download"
@@ -906,7 +946,7 @@ if ! command -v claude &> /dev/null; then
     # Method 1: Try npm global install
     if command -v npm &> /dev/null; then
       print_info "Installing via npm..."
-      npm install -g @anthropics/claude-cli || print_warning "npm installation failed, trying alternative method"
+      timeout 120 npm install -g @anthropics/claude-cli || print_warning "npm installation failed or timed out, trying alternative method"
     fi
 
     # Method 2: Try downloading binary directly
@@ -951,33 +991,33 @@ if command -v claude &> /dev/null; then
   print_info "Configuring MCP servers for Claude Code development workflow..."
 
   # Add GitHub MCP server (requires authentication)
-  if ! claude mcp list 2>/dev/null | grep -q "github"; then
+  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "github"; then
     print_info "Adding GitHub MCP server to Claude Code..."
-    claude mcp add github npx @modelcontextprotocol/server-github --scope user 2>/dev/null || print_warning "GitHub MCP server setup failed - may require authentication"
+    timeout 30 claude mcp add github npx @modelcontextprotocol/server-github --scope user 2>/dev/null || print_warning "GitHub MCP server setup failed - may require authentication"
   else
     print_success "GitHub MCP server already configured"
   fi
 
   # Add filesystem MCP server for project directory
-  if ! claude mcp list 2>/dev/null | grep -q "filesystem"; then
+  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "filesystem"; then
     print_info "Adding filesystem MCP server for project directory..."
-    claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>/dev/null || print_warning "Filesystem MCP server setup failed"
+    timeout 30 claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>/dev/null || print_warning "Filesystem MCP server setup failed"
   else
     print_success "Filesystem MCP server already configured"
   fi
 
   # Add ESLint MCP server
-  if ! claude mcp list 2>/dev/null | grep -q "eslint"; then
+  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "eslint"; then
     print_info "Adding ESLint MCP server..."
-    claude mcp add eslint npx @eslint/mcp --scope user 2>/dev/null || print_warning "ESLint MCP server setup failed"
+    timeout 30 claude mcp add eslint npx @eslint/mcp --scope user 2>/dev/null || print_warning "ESLint MCP server setup failed"
   else
     print_success "ESLint MCP server already configured"
   fi
 
   # Add Flutter MCP server
-  if ! claude mcp list 2>/dev/null | grep -q "flutter"; then
+  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "flutter"; then
     print_info "Adding Flutter MCP server..."
-    claude mcp add flutter npx flutter-mcp --scope user 2>/dev/null || print_warning "Flutter MCP server setup failed"
+    timeout 30 claude mcp add flutter npx flutter-mcp --scope user 2>/dev/null || print_warning "Flutter MCP server setup failed"
   else
     print_success "Flutter MCP server already configured"
   fi
@@ -1147,12 +1187,12 @@ EOM
 # Mobile Development Validation
 if command -v flutter &> /dev/null; then
   print_info "Running Flutter doctor to validate mobile setup..."
-  flutter doctor || print_warning "Flutter doctor found issues - see output above"
-  
+  timeout 60 flutter doctor || print_warning "Flutter doctor found issues or timed out - see output above"
+
   # Run mobile validation if available
   if [ -f "$REPO_ROOT/validate-monorepo.sh" ]; then
     print_info "Running mobile app validation..."
-    "$REPO_ROOT/validate-monorepo.sh" --mobile || print_warning "Mobile validation found issues"
+    timeout 120 "$REPO_ROOT/validate-monorepo.sh" --mobile || print_warning "Mobile validation found issues or timed out"
   fi
 fi
 

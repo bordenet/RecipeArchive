@@ -10,11 +10,11 @@ const ENV_CONFIG = {
 };
 
 // Make it available globally for browser extensions
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.ENV_CONFIG = ENV_CONFIG;
 }
 
 // Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = ENV_CONFIG;
 }

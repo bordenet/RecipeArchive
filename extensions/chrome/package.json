@@ -5,8 +5,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "jest --setupFiles ./__tests__/setupJest.js",
-    "test:unit": "jest --testMatch='**/*.test.js' --setupFiles ./__tests__/setupJest.js",
+    "test": "jest",
+    "test:unit": "jest --testMatch='**/*.test.js'",
     "test:integration": "node test-recipe-extraction.js",
     "lint": "eslint --config eslint.config.js *.js --ignore-pattern typescript-parser-bundle.js",
     "lint:fix": "eslint --config eslint.config.js *.js --fix --ignore-pattern typescript-parser-bundle.js",
