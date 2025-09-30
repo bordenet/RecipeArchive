@@ -24,10 +24,11 @@ When making infrastructure changes, ALWAYS:
 5. Monitor CloudWatch logs for integration errors
 6. Use `./validate-monorepo.sh --all` for comprehensive validation
 
-### Go Tools                                                                                                                                                              │
+### Go Tools
 
 - **`content-ops`**: A multi-tenant content operations utility for analyzing recipes across all tenants in AWS S3. It supports pagination for large datasets and provides operational insights for multi-tenant management.
 - **`recipe-tracer`**: An end-to-end tracing tool that tracks recipe processing through S3, SQS, and CloudWatch logs, with cache performance analysis and detailed normalization debugging.
+- **`diagnostic-harvester`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions for error triage and production monitoring.
 
 ## API VERSIONING MANDATE
 
@@ -105,6 +106,9 @@ iOS/Android toolchain available
 | Content Analysis | `cd tools/content-ops && ./content-ops -user email -password pass` |
 | Recipe ID Lookup | `cd tools/content-ops && ./content-ops -include-recipe-id "RECIPE TITLE"` |
 | Recipe Tracing | `cd tools/recipe-tracer && ./recipe-tracer -recipe RECIPE_ID` |
+| Diagnostic Harvest | `cd tools/diagnostic-harvester && ./diagnostic-harvester -all -since 7d` |
+| Extension Diagnostics | `cd tools/diagnostic-harvester && ./diagnostic-harvester -extensions -since 24h` |
+| Lambda Diagnostics | `cd tools/diagnostic-harvester && ./diagnostic-harvester -lambdas -since 1h` |
 
 ### DEBUGGING PROTOCOL
 
@@ -112,6 +116,12 @@ iOS/Android toolchain available
 1. **Find Recipe ID**: `cd tools/content-ops && ./content-ops -include-recipe-id "Recipe Name"`
 2. **Trace Processing**: `cd tools/recipe-tracer && ./recipe-tracer -recipe RECIPE_ID`
 3. **Check for Cross-Contamination**: Look for foreign recipe data in CloudWatch logs
+
+**For Production Error Triage:**
+1. **Harvest Recent Errors**: `cd tools/diagnostic-harvester && ./diagnostic-harvester -all -since 24h`
+2. **Filter by Source**: Use `-extensions`, `-flutter`, or `-lambdas` flags
+3. **Export for Analysis**: Add `-json` flag to output JSON for further processing
+4. **Check S3 Directly**: Review S3 keys in output for full diagnostic context
 
 Tools are pre-built.
 
