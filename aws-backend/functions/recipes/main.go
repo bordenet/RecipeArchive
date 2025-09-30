@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1268,7 +1269,7 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 	}
 
 	// Create HTTP request to content normalizer endpoint
-	normalizeURL := fmt.Sprintf("%s/v1/normalize", strings.TrimSuffix(baseURL, "/"))
+	normalizeURL := fmt.Sprintf("%s/normalize", strings.TrimSuffix(baseURL, "/"))
 	req, err := http.NewRequestWithContext(ctx, "POST", normalizeURL, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create normalization request: %w", err)
@@ -1667,5 +1668,47 @@ func matchesTimeCategory(recipeTimeCategory, searchTimeCategory string) bool {
 	// Cumulative matching: recipe matches if it's at or below the search category
 	// (e.g., searching for "long" includes "quick", "medium", and "long")
 	return recipeRank <= searchRank
+}
+
+// containsAnyMatch checks if any search term matches any value in the target list (case-insensitive)
+func containsAnyMatch(searchTerms, targetValues []string) bool {
+	for _, searchTerm := range searchTerms {
+		searchLower := strings.ToLower(searchTerm)
+		for _, targetValue := range targetValues {
+			if strings.ToLower(targetValue) == searchLower || strings.Contains(strings.ToLower(targetValue), searchLower) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// SortSearchResults sorts recipes by the specified field and order
+func SortSearchResults(recipes []models.Recipe, sortBy, sortOrder string) {
+	if sortBy == "" {
+		sortBy = "createdAt"
+	}
+	if sortOrder == "" {
+		sortOrder = "desc"
+	}
+
+	sort.Slice(recipes, func(i, j int) bool {
+		var less bool
+		switch sortBy {
+		case "title":
+			less = recipes[i].Title < recipes[j].Title
+		case "updatedAt":
+			less = recipes[i].UpdatedAt.Before(recipes[j].UpdatedAt)
+		case "createdAt":
+			fallthrough
+		default:
+			less = recipes[i].CreatedAt.Before(recipes[j].CreatedAt)
+		}
+
+		if sortOrder == "desc" {
+			return !less
+		}
+		return less
+	})
 }
 

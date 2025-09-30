@@ -93,6 +93,10 @@ if ! command -v brew &> /dev/null; then
   if timed_confirm "Homebrew is required but not installed. Install Homebrew? (Large download ~100MB)"; then
     print_info "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if ! command -v brew &> /dev/null; then
+      print_error "Homebrew installation failed. Please install Homebrew manually."
+      exit 1
+    fi
     print_success "Homebrew installed successfully"
   else
     print_error "Homebrew is required for this setup. Exiting."
@@ -109,6 +113,10 @@ print_info "Installing essential development tools..."
 if ! command -v node &> /dev/null; then
   print_info "Installing Node.js and npm..."
   brew install node
+  if ! command -v node &> /dev/null; then
+    print_error "Node.js installation failed. Please install Node.js manually."
+    exit 1
+  fi
   print_success "Node.js installed: $(node --version)"
 else
   print_success "Node.js already installed: $(node --version)"
@@ -117,7 +125,11 @@ fi
 # Install TypeScript globally
 if ! command -v tsc &> /dev/null; then
   print_info "Installing TypeScript globally..."
-  npm install -g typescript
+  timeout 180 npm install -g typescript
+  if ! command -v tsc &> /dev/null; then
+    print_error "TypeScript installation failed. Please install TypeScript manually."
+    exit 1
+  fi
   print_success "TypeScript installed: $(tsc --version)"
 else
   print_success "TypeScript already installed: $(tsc --version)"
@@ -126,7 +138,11 @@ fi
 # Install AWS CDK globally
 if ! command -v cdk &> /dev/null; then
   print_info "Installing AWS CDK globally..."
-  npm install -g aws-cdk@2.87.0
+  timeout 180 npm install -g aws-cdk@2.87.0
+  if ! command -v cdk &> /dev/null; then
+    print_error "AWS CDK installation failed. Please install AWS CDK manually."
+    exit 1
+  fi
   print_success "AWS CDK installed: $(cdk --version)"
 else
   print_success "AWS CDK already installed: $(cdk --version)"
@@ -136,6 +152,10 @@ fi
 if ! command -v go &> /dev/null; then
   print_info "Installing Go..."
   brew install go
+  if ! command -v go &> /dev/null; then
+    print_error "Go installation failed. Please install Go manually."
+    exit 1
+  fi
   print_success "Go installed: $(go version)"
 else
   print_success "Go already installed: $(go version)"
@@ -145,8 +165,24 @@ fi
 if ! xcode-select -p &> /dev/null; then
   if timed_confirm "Xcode CLI tools are required for iOS development. Install? (Large download ~500MB)"; then
     print_info "Installing Xcode CLI tools..."
-    xcode-select --install || true
-    print_success "Xcode CLI tools installation initiated"
+    xcode-select --install
+    print_info "Please follow the on-screen instructions to install the Xcode CLI tools."
+    print_info "Waiting for installation to complete..."
+    max_wait=300 # 5 minutes
+    wait_interval=10
+    waited=0
+    while [ $waited -lt $max_wait ]; do
+      if xcode-select -p &> /dev/null; then
+        print_success "Xcode CLI tools installed successfully"
+        break
+      fi
+      sleep $wait_interval
+      waited=$((waited + wait_interval))
+    done
+    if ! xcode-select -p &> /dev/null; then
+      print_error "Xcode CLI tools installation timed out. Please complete the installation and run this script again."
+      exit 1
+    fi
   else
     print_warning "Skipping Xcode CLI tools - iOS development will not be available"
   fi
@@ -199,52 +235,40 @@ else
 fi
 
 # Android Development Setup
-if timed_confirm "Set up Android development environment? (Large download ~2GB for Android Studio)"; then
+if timed_confirm "Set up Android development environment?"; then
   print_info "Setting up Android development..."
   
   # Install Android Studio
   if [ ! -d "/Applications/Android Studio.app" ]; then
-    print_info "Installing Android Studio..."
-    brew install --cask android-studio
-    print_success "Android Studio installed"
+    if timed_confirm "Install Android Studio? (Large download ~2GB)"; then
+      print_info "Installing Android Studio..."
+      brew install --cask android-studio
+      print_success "Android Studio installed"
+    else
+      print_warning "Skipping Android Studio installation. You can install it manually later."
+    fi
   else
     print_success "Android Studio already installed"
   fi
   
-  # Install Android SDK via Homebrew (as backup/alternative)
-  if [ ! -d "$HOME/Library/Android/sdk/cmdline-tools/latest" ]; then
-    print_info "Installing Android SDK via Homebrew..."
-    #brew install --cask android-sdk
-
-    ### Install Android SDK command-line tools if not already present ###
-    SDK_ROOT="$HOME/Library/Android/sdk"
-    TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-mac-9477386_latest.zip"
-
-    if [ ! -d "$SDK_ROOT/cmdline-tools/latest" ]; then
-      echo "Installing Android command-line tools..."
-      mkdir -p "$SDK_ROOT/cmdline-tools/latest"
-
-      TMPDIR=$(mktemp -d)
-      trap 'rm -rf "$TMPDIR"' RETURN   # cleans up when this block exits
-
-      curl -sSL "$TOOLS_URL" -o "$TMPDIR/commandlinetools.zip"
-      unzip -q "$TMPDIR/commandlinetools.zip" -d "$TMPDIR/unzipped"
-      mv "$TMPDIR/unzipped/cmdline-tools/"* "$SDK_ROOT/cmdline-tools/latest/"
+  # Install Android SDK command-line tools
+  if ! command -v sdkmanager &> /dev/null; then
+    if timed_confirm "Install Android SDK command-line tools?"; then
+      print_info "Installing Android SDK command-line tools..."
+      brew install --cask android-commandlinetools
+      print_success "Android SDK command-line tools installed"
+    else
+      print_warning "Skipping Android SDK installation. Android development will not be available."
     fi
-    ### End Android SDK install ###
-
-    print_info "CANNOT INSTALL askroid-sdk BECAUSE IT'S DEPRECATED"
-    print_success "Android SDK installed via Homebrew"
   else
-    print_success "Android SDK already installed via Homebrew"
+    print_success "Android SDK command-line tools already installed"
   fi
-  
-  # Set up Android SDK environment variables (using Homebrew installation)
-  ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
+
+  # Set up Android SDK environment variables
+  ANDROID_HOME="$HOME/Library/Android/sdk"
   export ANDROID_HOME
-  export ANDROID_SDK_ROOT="$ANDROID_HOME"
   export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-  
+
   # Add to shell profile
   SHELL_PROFILE=""
   if [ -n "$ZSH_VERSION" ]; then
@@ -252,18 +276,24 @@ if timed_confirm "Set up Android development environment? (Large download ~2GB f
   elif [ -n "$BASH_VERSION" ]; then
     SHELL_PROFILE="$HOME/.bash_profile"
   fi
-  
+
   if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
     if ! grep -q "ANDROID_HOME" "$SHELL_PROFILE"; then
       cat >> "$SHELL_PROFILE" <<EOF
 
 # Android Development
-export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
-export ANDROID_SDK_ROOT=\$ANDROID_HOME
+export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$PATH
 EOF
       print_success "Added Android environment variables to $SHELL_PROFILE"
     fi
+  fi
+
+  # Install platform-tools and a system image
+  if command -v sdkmanager &> /dev/null; then
+    print_info "Installing Android platform-tools and system image..."
+    timeout 300 sdkmanager "platform-tools" "system-images;android-33;google_apis;x86_64" > /dev/null 2>&1 || true
+    print_success "Android platform-tools and system image installed"
   fi
   
   # Install Android command-line tools and accept licenses
@@ -272,7 +302,7 @@ EOF
     timeout 30 sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
 
     print_info "Accepting Android SDK licenses..."
-    timeout 60 bash -c "yes | flutter doctor --android-licenses" > /dev/null 2>&1 || true
+    timeout 60 bash -c "yes | flutter doctor --android-licenses" > /dev/null 2>&1 || print_warning "'flutter doctor --android-licenses' timed out or failed. Please run it manually."
     print_success "Android SDK setup completed"
   fi
   
@@ -286,7 +316,7 @@ else
 fi
 
 # iOS Development Setup
-if timed_confirm "Set up iOS development environment? (Requires Xcode from App Store ~15GB)"; then
+if timed_confirm "Set up iOS development environment?"; then
   print_info "Setting up iOS development..."
   
   # Check if Xcode is installed
@@ -301,29 +331,33 @@ if timed_confirm "Set up iOS development environment? (Requires Xcode from App S
     
     # Install modern Ruby (required for CocoaPods)
     if ! brew list ruby &> /dev/null; then
-      print_info "Installing modern Ruby via Homebrew..."
-      brew install ruby
-      
-      # Add Homebrew Ruby to PATH
-      RUBY_PATH="/opt/homebrew/opt/ruby/bin"
-      export PATH="$RUBY_PATH:$PATH"
-      
-      # Add to shell profile
-      SHELL_PROFILE=""
-      if [ -n "$ZSH_VERSION" ]; then
-        SHELL_PROFILE="$HOME/.zshrc"
-      elif [ -n "$BASH_VERSION" ]; then
-        SHELL_PROFILE="$HOME/.bash_profile"
-      fi
-      
-      if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-        if ! grep -q "export PATH=\"$RUBY_PATH:\$PATH\"" "$SHELL_PROFILE"; then
-          echo "export PATH=\"$RUBY_PATH:\$PATH\"" >> "$SHELL_PROFILE"
-          print_success "Added Homebrew Ruby to PATH in $SHELL_PROFILE"
+      if timed_confirm "Install modern Ruby for CocoaPods?"; then
+        print_info "Installing modern Ruby via Homebrew..."
+        brew install ruby
+        
+        # Add Homebrew Ruby to PATH
+        RUBY_PATH="/opt/homebrew/opt/ruby/bin"
+        export PATH="$RUBY_PATH:$PATH"
+        
+        # Add to shell profile
+        SHELL_PROFILE=""
+        if [ -n "$ZSH_VERSION" ]; then
+          SHELL_PROFILE="$HOME/.zshrc"
+        elif [ -n "$BASH_VERSION" ]; then
+          SHELL_PROFILE="$HOME/.bash_profile"
         fi
+        
+        if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+          if ! grep -q "export PATH=\"$RUBY_PATH:\$PATH\"" "$SHELL_PROFILE"; then
+            echo "export PATH=\"$RUBY_PATH:\$PATH\"" >> "$SHELL_PROFILE"
+            print_success "Added Homebrew Ruby to PATH in $SHELL_PROFILE"
+          fi
+        fi
+        
+        print_success "Modern Ruby installed: $(/opt/homebrew/opt/ruby/bin/ruby --version)"
+      else
+        print_warning "Skipping Ruby installation. CocoaPods installation may fail."
       fi
-      
-      print_success "Modern Ruby installed: $(/opt/homebrew/opt/ruby/bin/ruby --version)"
     else
       print_success "Modern Ruby already installed via Homebrew"
       export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
@@ -331,9 +365,13 @@ if timed_confirm "Set up iOS development environment? (Requires Xcode from App S
     
     # Install CocoaPods with modern Ruby
     if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
-      print_info "Installing CocoaPods with modern Ruby..."
-      /opt/homebrew/opt/ruby/bin/gem install cocoapods
-      print_success "CocoaPods installed"
+      if timed_confirm "Install CocoaPods for iOS development?"; then
+        print_info "Installing CocoaPods with modern Ruby..."
+        /opt/homebrew/opt/ruby/bin/gem install cocoapods
+        print_success "CocoaPods installed"
+      else
+        print_warning "Skipping CocoaPods installation. iOS development may not work correctly."
+      fi
     else
       print_success "CocoaPods already installed"
     fi
@@ -458,7 +496,11 @@ if command -v code &> /dev/null; then
   for extension in "${extensions[@]}"; do
     if ! code --list-extensions | grep -q "$extension"; then
       print_info "Installing $extension..."
-      code --install-extension "$extension" --force
+      if code --install-extension "$extension" --force; then
+        print_success "$extension installed successfully"
+      else
+        print_error "Failed to install $extension"
+      fi
     else
       print_success "$extension already installed"
     fi
@@ -472,40 +514,15 @@ fi
 # Install browser automation tools
 print_info "Setting up browser automation and testing tools..."
 
-# Check if browsers are installed by looking for install locations
-PLAYWRIGHT_CACHE_DIR="$HOME/Library/Caches/ms-playwright"
-if [ -d "$PLAYWRIGHT_CACHE_DIR" ] && [ "$(ls -A "$PLAYWRIGHT_CACHE_DIR" 2>/dev/null | wc -l)" -gt 0 ]; then
-  print_success "Playwright browsers already installed"
-elif [ -f "package.json" ] && grep -q '"playwright"' package.json; then
-  print_success "Playwright listed in package.json"
-
-  # Ensure it's actually installed
-  print_info "Ensuring Playwright is properly installed..."
-  timeout 180 npm install || print_warning "npm install timed out"
-
-  # Install browsers if needed
-  if timed_confirm "Install/update Playwright browsers? (~500MB download)" 10 "Y"; then
-    print_info "Installing Playwright browsers..."
-    timeout 300 npx playwright install || print_warning "Playwright browser installation timed out"
+if timed_confirm "Install/update Playwright browsers? (~500MB download)" 10 "Y"; then
+  print_info "Installing Playwright browsers..."
+  if npx playwright install; then
     print_success "Playwright browsers installed"
+  else
+    print_error "Playwright browser installation failed. Please run 'npx playwright install' manually."
   fi
 else
-  # Playwright not found - ask user to install
-  if timed_confirm "Install Playwright for browser automation testing? (Large download ~500MB for browsers)"; then
-    print_info "Installing Playwright..."
-    if [ -f "package.json" ]; then
-      timeout 180 npm install --save-dev playwright@^1.55.0 || print_warning "Playwright install timed out"
-    else
-      timeout 180 npm install -g playwright@^1.55.0 || print_warning "Playwright install timed out"
-    fi
-
-    print_info "Installing Playwright browsers..."
-    timeout 300 npx playwright install || print_warning "Playwright browser installation timed out"
-
-    print_success "Playwright and browsers installed"
-  else
-    print_warning "Skipping Playwright - browser automation tests will not work"
-  fi
+  print_warning "Skipping Playwright browser installation. Browser automation tests will not work."
 fi
 
 # Install Jest testing framework globally (for compatibility)
@@ -587,7 +604,7 @@ print_info "Setting up RecipeArchive monorepo dependencies..."
 # Install root dependencies first
 if [ -f "package.json" ]; then
   print_info "Installing root monorepo dependencies..."
-  npm install
+  timeout 300 npm install
   
   # Set up pre-commit hooks
   print_info "Setting up Git pre-commit hooks..."
@@ -656,7 +673,7 @@ EOF
   fi
 
   if [ -f "package.json" ]; then
-    npm install
+    timeout 180 npm install
     print_success "AWS CDK dependencies installed"
 
     # Check if Lambda functions are built
@@ -695,7 +712,7 @@ if [ -d "extensions/chrome" ]; then
 
   # Install dependencies
   if [ -f "package.json" ]; then
-    npm install
+    timeout 180 npm install
     print_success "Chrome extension dependencies installed"
 
     # Run tests to verify setup
@@ -732,7 +749,7 @@ if [ -d "extensions/safari" ]; then
 
   # Install dependencies
   if [ -f "package.json" ]; then
-    npm install
+    timeout 180 npm install
     print_success "Safari extension dependencies installed"
 
     # Run tests to verify setup

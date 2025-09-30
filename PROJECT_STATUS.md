@@ -25,7 +25,7 @@ RecipeArchive v1.0.0 is a complete, production-ready recipe management solution 
 ### Browser Extensions
 - **Platforms**: Chrome & Safari
 - **Status**: Operational
-- **Supported Sites**: 14+ recipe websites
+- **Supported Sites**: 14 recipe websites
 
 ### Backend Infrastructure
 - **Technology**: AWS Lambda (Go), API Gateway, Cognito, S3
@@ -134,10 +134,17 @@ The core project functionality is complete. Future enhancements could include:
 - [AWS Setup Guide](docs/setup/aws-setup.md)
 
 ### Developer Resources
+
 - [Project Guide](CLAUDE.md)
-- [API Documentation](docs/api/api-specification.md)
+- [API Documentation](docs/api/api-specification.md) - Backend API reference (updated to reflect current implementation)
+- [Data Model](docs/architecture/data-model.md) - Unified data model for all platforms (updated)
 - [Environment Setup](docs/setup/ENVIRONMENT_SETUP.md)
 - [Extension Distribution](docs/deployment/extension-distribution.md)
+
+### Architecture Diagrams
+
+- [Data Flow Diagram](docs/diagrams/claude_data-flow.md)
+- [API Integration Diagram](docs/diagrams/claude_api-integration.md)
 
 ## System Overview
 

@@ -82,7 +82,7 @@ TEST_USER_PASSWORD=your_test_password
 
 4. **Verify configuration**: Run the monorepo validator tool to ensure everything is working:
    ```bash
-   go run tools/monorepo-validator --med
+   ./validate-monorepo.sh --med
    ```
 
 ## File Structure
@@ -91,12 +91,12 @@ TEST_USER_PASSWORD=your_test_password
 RecipeArchive/
 ├── .env                    # Root project environment (all configuration)
 ├── .env.example           # Template with placeholder values
-├── recipe_archive/        # Flutter web/mobile apps (uses root .env)
+├── recipe_archive/        # Flutter web/mobile apps
 │   ├── android/          # Android app configuration
 │   ├── ios/              # iOS app configuration
 │   └── web/              # Web app configuration
-├── extensions/            # Browser extensions (use localStorage)
-├── aws-backend/           # AWS infrastructure (uses root .env)
+├── extensions/            # Browser extensions
+├── aws-backend/           # AWS infrastructure
 └── docs/
     └── setup/
         └── ENVIRONMENT_SETUP.md  # This file

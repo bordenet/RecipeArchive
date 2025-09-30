@@ -77,7 +77,7 @@
 - **📱 iOS Apps**: Complete development toolchain with device targeting (iPhone 16e, iPad on Mac, iPhone 17 Pro Max)
 - **🤖 Android Apps**: Full development environment with emulator management and APK builds
 - **🔒 Mobile Features**: Screen wakelock for hands-free cooking, optimized mobile UX
-- **🔌 Browser Extensions**: Chrome and Safari extensions with intelligent parsing for 13+ recipe sites
+- **🔌 Browser Extensions**: Chrome and Safari extensions with intelligent parsing for 14+ recipe sites
 - **☁️ Cloud Backend**: AWS Lambda functions with real-time sync and multi-tenant architecture
 </details>
 

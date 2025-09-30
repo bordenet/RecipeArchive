@@ -23,10 +23,6 @@ When making infrastructure changes, ALWAYS:
 - **`recipe-tracer`**: An end-to-end tracing tool that tracks recipe processing through S3, SQS, and CloudWatch logs, with cache performance analysis and detailed normalization debugging.
 - **`get-diagnostics`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions for error triage and production monitoring. Default (no flags) produces a global report.
 
-## API VERSIONING
-
-No /v1/ prefix on any API endpoints: `/report-error`, `/images/upload`, `/recipes`, `/health`
-
 ## CODE STYLE MANDATE
 
 Always use double quotes in JavaScript files. This project uses ESLint with double quote enforcement.

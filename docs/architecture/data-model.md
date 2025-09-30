@@ -50,7 +50,6 @@ interface Recipe {
 
   // Archive & Backup
   webArchiveUrl?: string; // Full page backup (S3 signed URL)
-  webArchiveFormat: 'html' | 'pdf'; // Archive format
 
   // Future Extensions (Optional)
   tags?: string[]; // User-defined tags
@@ -59,18 +58,12 @@ interface Recipe {
 }
 
 interface Ingredient {
-  quantity?: number; // Numeric amount (e.g., 2)
-  unit?: string; // Unit of measurement (e.g., "cups")
-  name: string; // Ingredient name (e.g., "all-purpose flour")
-  notes?: string; // Additional info (e.g., "sifted", "room temperature")
-  originalText: string; // Original extracted text for fallback
+  text: string; // Original extracted text
 }
 
 interface Instruction {
   stepNumber: number; // Sequential step number (1, 2, 3...)
   text: string; // Instruction text
-  timeMinutes?: number; // Time for this step (if specified)
-  temperature?: string; // Temperature (e.g., "350°F", "medium heat")
 }
 ```
 
@@ -146,16 +139,9 @@ interface Instruction {
 
 ```
 recipeArchive-{environment}/
-├── users/
+├── recipes/
 │   └── {userId}/
-│       ├── photos/
-│       │   └── {recipeId}/
-│       │       ├── main.jpg        # Main recipe photo
-│       │       └── step-{n}.jpg    # Future: step photos
-│       └── archives/
-│           └── {recipeId}/
-│               ├── page.html       # Full page backup
-│               └── page.pdf        # PDF fallback
+│       └── {recipeId}.json
 ```
 
 ### API Response Format
