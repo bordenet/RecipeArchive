@@ -577,7 +577,7 @@ Return ONLY valid JSON:
   "qualityScore": 8.0
 }`
 
-	return makeOpenAICall(ctx, apiKey, prompt, 10*time.Second)
+	return makeOpenAICall(ctx, apiKey, prompt, 20*time.Second)
 }
 
 // Stage 2: Advanced instruction processing and multi-method detection
@@ -591,7 +591,7 @@ func performStage2Normalization(ctx context.Context, apiKey string, recipe Recip
 		prompt = buildSingleMethodPrompt(recipe)
 	}
 
-	return makeOpenAICall(ctx, apiKey, prompt, 25*time.Second)
+	return makeOpenAICall(ctx, apiKey, prompt, 40*time.Second)
 }
 
 // Merge results from both stages
