@@ -8,7 +8,9 @@ A Go-based tool for collecting and analyzing diagnostic telemetry from RecipeArc
 - **Flutter App Diagnostics**: Collects mobile app diagnostic data from S3
 - **Lambda Diagnostics**: Queries CloudWatch Logs for Lambda function errors and warnings
 - **Flexible Time Windows**: Query data from 1 hour to multiple days/weeks
-- **Multiple Output Formats**: Human-readable formatted tables or JSON for automated processing
+- **Multiple Output Formats**: Human-readable formatted tables, JSON, or summary reports
+- **Summary Reports**: Generate statistical reports with counts by type, source, and top URLs
+- **Data Deletion**: Delete diagnostic data from S3 with confirmation prompt
 
 ## Building
 
@@ -35,16 +37,24 @@ The binary is automatically added to `.gitignore` and should not be committed.
 
 # Output as JSON for further processing
 ./diagnostic-harvester -all -json > diagnostics.json
+
+# Generate summary report with statistics
+./diagnostic-harvester -all -report -since 7d
+
+# Delete diagnostic data (requires confirmation)
+./diagnostic-harvester -extensions -delete -since 30d
 ```
 
 ### Command Line Options
 
-- `-extensions` - Harvest web extension diagnostic data
-- `-flutter` - Harvest Flutter app diagnostic data
-- `-lambdas` - Harvest Lambda function diagnostic data
-- `-all` - Harvest all diagnostic data (default if none specified)
+- `-extensions` - Harvest/delete web extension diagnostic data
+- `-flutter` - Harvest/delete Flutter app diagnostic data
+- `-lambdas` - Harvest Lambda function diagnostic data (CloudWatch)
+- `-all` - Harvest/delete all diagnostic data
 - `-since duration` - Time window (e.g., 1h, 24h, 7d) [default: 24h]
 - `-json` - Output as JSON instead of formatted table
+- `-report` - Generate summary report (counts by type and source)
+- `-delete` - Delete diagnostic data (requires confirmation)
 - `-bucket string` - S3 bucket name [default: recipe-storage-*]
 - `-help` - Show help message
 
@@ -90,6 +100,14 @@ Human-readable table with:
 ### JSON
 Machine-readable JSON array of diagnostic entries for automated processing and integration with other tools.
 
+### Report
+Statistical summary including:
+- Overall statistics (total count, time range, duration)
+- Breakdown by source (extensions, Flutter, Lambda)
+- Breakdown by error type
+- Cross-tabulation of source and error type
+- Top 10 URLs with error counts
+
 ## Project Structure
 
 ```
@@ -99,7 +117,8 @@ diagnostic-harvester/
 ├── extensions.go    # Web extension diagnostic harvesting
 ├── flutter.go       # Flutter app diagnostic harvesting
 ├── lambda.go        # Lambda CloudWatch Logs harvesting
-├── output.go        # Formatting and display logic
+├── output.go        # Formatting, display, and report generation
+├── delete.go        # S3 data deletion with confirmation
 ├── utils.go         # Helper functions and usage text
 ├── go.mod           # Go module dependencies
 └── README.md        # This file

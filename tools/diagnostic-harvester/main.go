@@ -26,6 +26,8 @@ func main() {
 		since      = flag.String("since", "24h", "Time window to harvest (e.g., 1h, 24h, 7d)")
 		jsonOutput = flag.Bool("json", false, "Output as JSON instead of formatted table")
 		bucket     = flag.String("bucket", DefaultBucket, "S3 bucket name")
+		deleteData = flag.Bool("delete", false, "Delete diagnostic data (requires confirmation)")
+		report     = flag.Bool("report", false, "Generate summary report (counts by type and source)")
 		help       = flag.Bool("help", false, "Show help message")
 	)
 	flag.Parse()
@@ -33,6 +35,12 @@ func main() {
 	if *help {
 		printUsage()
 		os.Exit(0)
+	}
+
+	// Handle delete operation separately
+	if *deleteData {
+		handleDelete(*extensions, *flutter, *all, *since, *bucket)
+		return
 	}
 
 	// Parse time window
@@ -110,7 +118,9 @@ func main() {
 	fmt.Fprintf(os.Stderr, "\n")
 
 	// Output results
-	if *jsonOutput {
+	if *report {
+		outputReport(allDiagnostics)
+	} else if *jsonOutput {
 		outputJSON(allDiagnostics)
 	} else {
 		outputFormatted(allDiagnostics)
