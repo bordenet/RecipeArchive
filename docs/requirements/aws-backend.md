@@ -164,11 +164,11 @@ interface ParserFailureResponse {
    - **Analysis Function**: Extract features for ML retraining pipeline
    - **Notification Function**: Alert development team of critical parsing failures
 
-5. **DynamoDB Tracking Table: `parser-failures`**
-   - **Partition Key**: `userId` (String)
-   - **Sort Key**: `submissionId` (String)
-   - **Attributes**: `url`, `timestamp`, `failureReason`, `processingStatus`, `s3Location`
-   - **TTL**: 90 days for automatic cleanup
+5. **S3 Diagnostic Storage:**
+   - **Path**: `diagnostics/{timestamp}_{url}.json`
+   - **Attributes**: `url`, `timestamp`, `failureReason`, `userAgent`, `extensionVersion`
+   - **HTML Context**: `failed-parsing/{timestamp}_{url}.html`
+   - **Analysis**: Use `get-diagnostics` tool for querying
 
 6. **ML Retraining Integration:**
    - **Feature Extraction**: Automated analysis of HTML structure patterns
@@ -215,19 +215,13 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 - **User Scoping**: All file paths include `userId` for isolation
 - **Content Types**: Support JPEG, PNG for photos; HTML, PDF for archives
 
-### 5. Database Schema (DynamoDB)
+### 5. Data Storage Architecture
 
-#### Primary Table: `recipes`
-
-- **Partition Key**: `userId` (String)
-- **Sort Key**: `id` (String)
-- **Attributes**: All Recipe fields except computed URLs
-
-#### Global Secondary Indexes
-
-1. **recipes-by-created**: `userId` (PK) + `createdAt` (SK) - chronological listing
-2. **recipes-by-title**: `userId` (PK) + `title` (SK) - alphabetical search
-3. **recipes-search-date**: `userId` (PK) + `createdAt` (SK) - date range filtering
+**S3-Only Storage:**
+- All recipe data stored as JSON files in S3
+- Path structure: `recipes/{userId}/{recipeId}.json`
+- Search via in-memory filtering after loading user recipes
+- Cost-efficient alternative to DynamoDB for MVP scale
 
 ### 6. Multi-device Sync & Conflict Resolution
 
@@ -248,14 +242,14 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 
 ### Scalability & Cost Optimization
 
-- **Architecture**: Serverless (Lambda, API Gateway, DynamoDB, S3)
-- **Auto-scaling**: DynamoDB on-demand, Lambda concurrent execution
+- **Architecture**: Serverless (Lambda, API Gateway, S3, SQS)
+- **Auto-scaling**: Lambda concurrent execution
 - **Cost Protection**: Rate limiting per user to prevent runaway costs
 - **Regional Deployment**: US-West-2 primary region
 
 ### Security Requirements
 
-- **Data Encryption**: At rest (DynamoDB, S3) and in transit (HTTPS)
+- **Data Encryption**: At rest (S3) and in transit (HTTPS)
 - **Authentication**: JWT validation on all endpoints
 - **Authorization**: User-scoped data access only
 - **Audit Logging**: CloudTrail for API access, CloudWatch for application logs
@@ -280,10 +274,10 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 
 ### Cost Protection Measures
 
-- **DynamoDB**: On-demand billing with burst protection
-- **S3**: Lifecycle policies for archive cleanup
+- **S3**: Lifecycle policies for diagnostic cleanup
 - **Lambda**: Memory optimization and timeout controls
 - **API Gateway**: Request throttling and quota management
+- **SQS**: Queue-based async processing for expensive operations
 
 ## New Feature Requirements
 
@@ -381,15 +375,12 @@ recipearchive-failed-parsing-{environment}-{accountId}/
 
 ---
 
-**Implementation Priority**:
+**Current Status**: v1.0.0 Production
 
-1. **Week 1**: Core CRUD APIs with DynamoDB schema
-2. **Week 2**: Authentication integration and S3 file handling
-3. **Week 3**: Search functionality and diagnostic endpoints
-4. **Week 4**: Performance optimization and monitoring setup
-
-This PRD will be updated as requirements evolve, maintaining alignment with browser extension, iOS app, and website requirements.
-
----
-
-**Document Attribution**: This Product Requirements Document was created using the [Product Requirements Assistant](https://github.com/bordenet/product-requirements-assistant) - an AI-powered tool for generating comprehensive, structured PRDs. The assistant helped ensure thoroughness, consistency, and professional formatting throughout the requirements definition process.
+Core functionality implemented:
+- Recipe CRUD operations via S3 storage
+- Authentication via AWS Cognito
+- Image uploads with S3 presigned URLs
+- Two-stage OpenAI normalization
+- Async processing via SQS
+- Diagnostic error collection

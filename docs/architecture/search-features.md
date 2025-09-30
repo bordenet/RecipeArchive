@@ -2,95 +2,32 @@
 
 **See also:** [Website Parsers Architecture Decision Record](./website-parsers.md)
 
-## Document Status: **URGENT RESOLUTION REQUIRED**
+## Document Status: **Active**
 
-**Date**: August 24, 2025  
-**Issue**: Critical feature scope conflict across PRDs
+Search functionality for RecipeArchive v1.0.0.
 
-## Problem Statement
+## Search Types
 
-**CRITICAL CONFLICT IDENTIFIED**:
+### Recipe Library Search (Included)
 
-- **Browser Extension PRD**: **EXCLUDES** "Recipe search/discovery"
-- **iOS App PRD**: **REQUIRES** "Search/filter by name, ingredient, date"
-- **Website PRD**: **REQUIRES** "Search/filter by name, ingredient, date"
+Search and filter within user's personal saved recipe collection.
 
-This creates incompatible feature requirements that block development.
+**Functionality:**
+- Text Search: By recipe title, ingredient names
+- Filter Options: Date range, cook/prep time, servings, source website
+- Sort Options: Alphabetical, chronological, recently accessed
+- Scope: Only user's saved recipes
 
-## Root Cause Analysis
+### Recipe Discovery (Excluded)
 
-The conflict stems from **ambiguous terminology** mixing two distinct concepts:
+Finding new recipes from external sources is not implemented:
+- No external recipe website search
+- No recipe recommendations
+- No social recipe sharing/browsing
 
-1. **Recipe Discovery**: Finding NEW recipes from external sources/websites
-2. **Recipe Library Search**: Searching within user's personal saved recipe collection
+## Implementation
 
-## Proposed Resolution: Clarified Feature Definitions
-
-### ✅ **INCLUDED: Recipe Library Search** (All Platforms)
-
-**Definition**: Search and filter within user's personal saved recipe collection
-
-**Required Functionality**:
-
-- **Text Search**: Search by recipe title, ingredient names
-- **Filter Options**:
-  - By date range (created/modified)
-  - By cook time / prep time
-  - By servings count
-  - By source website
-- **Sort Options**:
-  - Alphabetical (A-Z, Z-A)
-  - Chronological (newest first, oldest first)
-  - Recently accessed
-- **Search Scope**: Only user's saved recipes, never external content
-
-### ❌ **EXCLUDED: Recipe Discovery** (All Platforms - MVP)
-
-**Definition**: Finding new recipes from external sources or recipe databases
-
-**Explicitly Excluded**:
-
-- Searching external recipe websites
-- Recipe recommendation engines
-- "Discover new recipes" features
-- Social recipe sharing/browsing
-- Recipe aggregation from multiple sources
-
-## Updated Platform Requirements
-
-### Browser Extension
-
-**CHANGE REQUIRED**: Update exclusions list for clarity
-
-- **Remove**: "Recipe search/discovery" (ambiguous)
-- **Add to Inclusions**: "Recipe library search within saved recipes"
-- **Add to Exclusions**: "External recipe discovery and recommendations"
-
-### iOS App
-
-**NO CHANGE REQUIRED**: Already correctly specifies library search functionality
-
-- ✅ "Search/filter by name, ingredient, date" = Recipe library search
-
-### Website
-
-**NO CHANGE REQUIRED**: Already correctly specifies library search functionality
-
-- ✅ "Search/filter by name, ingredient, date" = Recipe library search
-
-### AWS Backend
-
-**ADDITION REQUIRED**: Add search API specifications
-
-- **New Endpoint**: `GET /recipes/search`
-- **Search Indexing**: DynamoDB GSI for title and ingredient search
-- **Performance Target**: <300ms search response times
-
-## Implementation Specifications
-
-### Search API Design
-
-#### Endpoint: `GET /recipes/search`
+### Search API: `GET /recipes/search`
 
 **Query Parameters**:
 
@@ -120,86 +57,16 @@ interface SearchResponse {
 }
 ```
 
-### Database Indexing Requirements
+### Search Strategy
 
-#### DynamoDB Global Secondary Indexes
+**Current Implementation:**
+- Load all user recipes from S3
+- In-memory filtering in Lambda
+- Text matching on title and ingredients
+- Filter by metadata fields
+- Sort by specified field
 
-1. **recipes-search-title**
-   - Partition Key: `userId`
-   - Sort Key: `title` (for alphabetical search)
-
-2. **recipes-search-date**
-   - Partition Key: `userId`
-   - Sort Key: `createdAt` (for date range filtering)
-
-#### Search Strategy
-
-- **Text Search**: DynamoDB scan with FilterExpression (acceptable for MVP scale)
-- **Future Enhancement**: Amazon OpenSearch for full-text search capabilities
-
-### Browser Extension Search UI
-
-#### Popup Search Interface
-
-- **Search Bar**: Text input with real-time search suggestions
-- **Quick Filters**: Buttons for "Recent", "Favorites", "This Week"
-- **Results View**: List with recipe title, source, and thumbnail
-- **Performance**: <500ms search response, local caching of recent searches
-
-## PRD Update Requirements
-
-### Browser Extension PRD Updates
-
-**Section 6.2**: Replace exclusions language
-
-```markdown
-### 6.2 Explicitly Excluded (The "Not Now" List)
-
-- External recipe discovery and recommendations
-- Recipe search from external sources or databases
-- Social features (sharing, comments)
-- [... rest unchanged]
-```
-
-**Section 3**: Add search requirements
-
-```markdown
-### 3.4 Recipe Library Management
-
-- Search within saved recipes by title and ingredients
-- Filter by date, cook time, servings, source website
-- Sort alphabetically or chronologically
-- Quick access to recently viewed recipes
-```
-
-### AWS Backend PRD Updates
-
-**Section 2**: Add search API endpoint
-
-```markdown
-### 2. API Endpoints
-
-- GET /recipes/search - Search and filter user's recipe library
-- [... existing endpoints]
-```
-
-### iOS App & Website PRDs
-
-**NO CHANGES REQUIRED**: Already correctly specify library search functionality
-
-## Timeline Impact
-
-- **No Development Delay**: This clarification doesn't change implementation scope
-- **Backend Addition**: Search API adds ~3 days to backend development
-- **Enhanced Value**: Unified search across all platforms improves user experience
-
----
-
-**Immediate Actions Required**:
-
-1. ✅ Get approval for this clarified search definition
-2. Update Browser Extension PRD exclusions section
-3. Update AWS Backend PRD with search API specifications
-4. Update ../development/claude-context.md with resolved conflict status
-
-**Resolution Deadline**: August 24, 2025 (today) - blocks further development
+**Performance:**
+- Target: <500ms for typical user recipe collection
+- Scales to hundreds of recipes per user
+- No additional infrastructure cost (no OpenSearch/ElasticSearch)

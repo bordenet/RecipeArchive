@@ -2,21 +2,9 @@
 
 **See also:** [Website Parsers Architecture Decision Record](./website-parsers.md)
 
-## Document Status: **DRAFT - PENDING APPROVAL**
+## Document Status: **Active**
 
-**Date**: August 24, 2025  
-**Authority**: Master specification for all RecipeArchive platforms
-
-## Problem Statement
-
-The current PRDs define recipe data inconsistently:
-
-- **Browser Extension PRD**: 8 specific fields detailed
-- **iOS App PRD**: Vague "all recipe fields"
-- **Website PRD**: Vague "all recipe fields"
-- **AWS Backend PRD**: Incomplete field list, missing recipe title
-
-This creates implementation ambiguity and potential data incompatibility across platforms.
+Master specification for RecipeArchive data model across all platforms.
 
 ## Unified Recipe Data Model
 
@@ -110,38 +98,28 @@ interface Instruction {
 
 #### AWS Backend
 
-- **Storage**: Recipe metadata in DynamoDB, photos/archives in S3
+- **Storage**: All recipe data in S3 as JSON files
 - **API Format**: Return all fields in JSON format with S3 signed URLs
-- **Search Indexing**: Index `title`, `ingredients[].name`, `tags` for search functionality
+- **Search**: In-memory filtering after loading user's recipes from S3
 - **Versioning**: Increment `version` on every update for sync conflict resolution
-
-### Database Schema (DynamoDB)
-
-#### Primary Table: `recipes`
-
-- **Partition Key**: `userId` (String)
-- **Sort Key**: `id` (String)
-- **Attributes**: All Recipe fields except URLs (computed at runtime)
-
-#### Global Secondary Index: `recipes-by-created`
-
-- **Partition Key**: `userId` (String)
-- **Sort Key**: `createdAt` (String)
-- **Purpose**: Chronological listing
-
-#### Global Secondary Index: `recipes-by-title`
-
-- **Partition Key**: `userId` (String)
-- **Sort Key**: `title` (String)
-- **Purpose**: Alphabetical listing and title search
 
 ### S3 Storage Structure
 
 ```
-recipeArchive-{environment}/
+recipe-archive-dev/
 ├── recipes/
 │   └── {userId}/
-│       └── {recipeId}.json
+│       └── {recipeId}.json               # Recipe JSON objects
+├── recipe-images/
+│   └── {imageId}/
+│       └── {filename}                    # Uploaded images
+├── invitations/
+│   ├── tokens/{tokenId}.json             # Invitation records
+│   ├── by-email/{emailKey}.json          # Email lookup index
+│   └── by-admin/{adminId}.json           # Admin's invitations
+└── diagnostics/
+    ├── {timestamp}_{url}.json            # Error diagnostics
+    └── failed-parsing/{timestamp}_{url}.html
 ```
 
 ### API Response Format
@@ -181,68 +159,24 @@ recipeArchive-{environment}/
 }
 ```
 
-## Migration Impact on PRDs
+## Validation Rules
 
-### Required PRD Updates
+### Required Fields
+- `title`: 1-200 characters
+- `ingredients`: Minimum 1 ingredient
+- `instructions`: Minimum 1 instruction
+- `sourceUrl`: Valid HTTP/HTTPS URL
+- `userId`: Valid AWS Cognito user ID format
 
-#### Browser Extension PRD
+### Optional Fields
+- `prepTimeMinutes`, `cookTimeMinutes`, `totalTimeMinutes`: 0-1440 (24 hours max)
+- `servings`: 1-100
+- `mainPhotoUrl`, `webArchiveUrl`: Valid S3 URLs with proper signatures
+- `tags`: Maximum 10 tags, 50 characters each
+- `notes`: Maximum 2000 characters
 
-- ✅ Recipe data fields already match this specification
-- **Add**: Ingredient and Instruction structured format details
-- **Add**: Validation rules for extracted data
-
-#### iOS App PRD
-
-- **Replace**: "all recipe fields" with specific field list from this spec
-- **Add**: Local storage schema requirements
-- **Add**: Conflict resolution strategy (version-based)
-
-#### Website PRD
-
-- **Replace**: "all recipe fields" with specific field list from this spec
-- **Add**: Form validation requirements
-- **Add**: S3 photo upload specifications
-
-#### AWS Backend PRD
-
-- **Replace**: Incomplete field list with complete Recipe interface
-- **Add**: DynamoDB schema specification
-- **Add**: S3 bucket structure requirements
-- **Add**: API response format specification
-
-## Implementation Priority
-
-### Phase 1: Core Fields (Week 1)
-
-- `id`, `userId`, `title`, `ingredients`, `instructions`, `sourceUrl`
-- Basic DynamoDB schema
-- Simple API endpoints
-
-### Phase 2: Metadata (Week 2)
-
-- Time fields, servings, photos
-- S3 integration
-- Enhanced validation
-
-### Phase 3: Archives & Search (Week 3)
-
-- Web archive storage
-- Search indexing
-- Advanced querying
-
-### Phase 4: Extensions (Week 4)
-
-- Tags, notes, ratings
-- Conflict resolution
-- Performance optimization
-
----
-
-**Next Steps**:
-
-1. Get approval for this unified data model
-2. Update all four PRDs with consistent field specifications
-3. Begin DynamoDB table design
-4. Create API endpoint specifications
-
-**Approval Required By**: August 25, 2025
+### Data Integrity
+- `totalTimeMinutes` should equal `prepTimeMinutes + cookTimeMinutes` when all present
+- `ingredients[].stepNumber` must be sequential starting from 1
+- `instructions[].stepNumber` must be sequential starting from 1
+- Image URLs must be from S3 bucket (security requirement)

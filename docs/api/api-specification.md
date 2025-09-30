@@ -53,16 +53,8 @@ Submit diagnostic data for parsing failures and errors (no authentication requir
 
 ```json
 {
-  "status": "healthy",
-  "services": {
-    "dynamodb": "healthy",
-    "s3": "healthy",
-    "cognito": "healthy"
-  },
-  "user": {
-    "userId": "us-west-2:12345...",
-    "email": "user@example.com"
-  },
+  "message": "Error report received",
+  "diagnosticId": "diag-uuid-1234",
   "timestamp": "2025-08-24T16:30:00Z"
 }
 ```
@@ -319,29 +311,22 @@ Based on the performance requirements from the PRDs:
 
 ## AWS Free Tier Considerations
 
-### DynamoDB Optimization
-
-- Use composite keys for efficient queries
-- Minimize scan operations
-- Stay within 25 RCU/WCU limits
-
 ### S3 Optimization
 
 - Use presigned URLs for direct client uploads
 - Implement image compression for thumbnails
-- Stay within 5GB storage limit with lifecycle policies
+- Lifecycle policies for old diagnostic data
 
 ### Lambda Optimization
 
-- Keep functions warm with scheduled pings
-- Optimize memory allocation (128MB-256MB)
-- Stay within 1M requests/month limit
+- Optimize memory allocation (128MB-512MB)
+- Efficient S3 operations with batch reads
+- In-memory filtering for search
 
 ### API Gateway Optimization
 
 - Enable response caching where appropriate
 - Use request validation to reduce Lambda invocations
-- Stay within 1M requests/month limit
 
 ---
 
@@ -349,21 +334,22 @@ Based on the performance requirements from the PRDs:
 
 ### Data Protection
 
-- All data encrypted at rest (DynamoDB, S3)
+- All data encrypted at rest (S3)
 - All data encrypted in transit (HTTPS only)
 - JWT tokens validated on every request
 
 ### Access Control
 
-- User isolation via userId in all DynamoDB queries
+- User isolation via userId in all S3 paths
 - S3 bucket policies prevent cross-user access
 - No public read access to any resources
+- Image URLs must be from S3 (SSRF prevention)
 
 ### Input Validation
 
 - Strict schema validation for all requests
 - File type and size validation for uploads
-- SQL injection prevention (parameterized queries)
+- URL validation to prevent malicious inputs
 
 ---
 

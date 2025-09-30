@@ -84,12 +84,12 @@ graph TB
     %% S3 manager utilities
     S3MGR -->|Cleanup/List| S3
 
-    %% Storage structure
-    S3 -.->|recipes/{userId}/{recipeId}.json| RECIPES
-    S3 -.->|recipe-images/{imageId}/{filename}| IMGUP
-    S3 -.->|invitations/tokens/{tokenId}.json| INV
-    S3DIAG -.->|diagnostics/{timestamp}_{url}.json| DIAG
-    S3DIAG -.->|failed-parsing/{timestamp}_{url}.html| DIAG
+    %% Storage structure (note references in documentation)
+    %% S3: recipes/userId/recipeId.json
+    %% S3: recipe-images/imageId/filename
+    %% S3: invitations/tokens/tokenId.json
+    %% S3DIAG: diagnostics/timestamp_url.json
+    %% S3DIAG: failed-parsing/timestamp_url.html
 
     style WEB fill:#e1f5ff
     style EXT fill:#e1f5ff

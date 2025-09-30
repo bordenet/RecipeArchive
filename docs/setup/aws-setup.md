@@ -46,7 +46,6 @@ Attach these policies to your user:
 - `IAMFullAccess`
 - `CloudFormationFullAccess`
 - `S3FullAccess`
-- `DynamoDBFullAccess`
 - `AWSLambda_FullAccess`
 - `AmazonAPIGatewayAdministrator`
 - `AmazonCognitoPowerUser`

@@ -14,12 +14,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+// NOTE: DynamoDB client and UserProfile structs are legacy code kept for potential future use
+// Current implementation uses S3-only storage. DynamoDB methods are not actively called.
+// See aws-backend/infrastructure/dynamodb-tables.yaml for migration details.
+
 // TenantValidation provides enhanced security validation for multi-tenant access
 type TenantValidation struct {
 	dynamoClient *dynamodb.Client
 }
 
-// UserProfile represents user profile data stored in DynamoDB
+// UserProfile represents user profile data (legacy - not currently stored in DynamoDB)
 type UserProfile struct {
 	UserID      string    `json:"userId"`
 	Email       string    `json:"email"`

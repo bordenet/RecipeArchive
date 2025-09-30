@@ -1,232 +1,102 @@
-# Performance Standards Unification
+# Performance Standards
 
-**See also:** [Website Parsers Architecture Decision Record](./website-parsers.md)
+## Document Status: **Active**
 
-## Document Status: **IMPORTANT - PENDING APPROVAL**
+Performance targets for RecipeArchive v1.0.0 production system.
 
-**Date**: August 24, 2025  
-**Issue**: Inconsistent performance targets across PRDs
+## Performance Targets
 
-## Problem Statement
+### API Response Times
 
-**PERFORMANCE TARGET CONFLICTS**:
+Target response times (95th percentile):
 
-- **Browser Extension PRD**: `<500ms API response`, `<3s extraction`, `<500ms popup load`
-- **AWS Backend PRD**: `<300ms typical` (aspirational, no SLA)
-- **iOS App PRD**: `<1s typical load times` (vague)
-- **Website PRD**: `<1s typical load times` (vague)
-
-This creates confusion about actual performance requirements and SLA commitments.
-
-## Unified Performance Standards
-
-### 🎯 **API Response Time Standards**
-
-#### Tier 1: Critical User-Facing APIs
-
-**SLA Requirement**: `<300ms response time` (95th percentile)
-**Applies To**:
-
+**Critical Operations** (`<300ms`):
 - `GET /recipes/{id}` - Single recipe retrieval
 - `POST /recipes` - Recipe creation
 - `PUT /recipes/{id}` - Recipe updates
 - `DELETE /recipes/{id}` - Recipe deletion
 
-#### Tier 2: Background/List Operations
-
-**SLA Requirement**: `<500ms response time` (95th percentile)
-**Applies To**:
-
+**List Operations** (`<500ms`):
 - `GET /recipes` - Recipe listing
 - `GET /recipes/search` - Recipe search
 - `POST /report-error` - Diagnostic data submission
 
-#### Tier 3: Heavy Operations
-
-**SLA Requirement**: `<2s response time` (95th percentile)  
-**Applies To**:
-
+**Heavy Operations** (`<2s`):
 - File uploads to S3
 - Web archive generation
 - Bulk sync operations
 
-### 📱 **Client Performance Standards**
+### Client Performance
 
-#### Browser Extension
+**Browser Extension:**
+- Popup Load: `<500ms` to interactive
+- Recipe Extraction: `<3s` for supported sites
+- Background Sync: `<5s` for cached recipes
+- Local Storage Access: `<100ms` for cached data
 
-- **Popup Load**: `<500ms` to interactive (95th percentile)
-- **Recipe Extraction**: `<3s` for supported sites (95th percentile)
-- **Background Sync**: `<5s` for cached recipes
-- **Local Storage Access**: `<100ms` for cached data
+**iOS App:**
+- App Launch: `<2s` cold start, `<1s` warm start
+- Recipe List Load: `<1s` with cached data, `<2s` from network
+- Recipe Detail View: `<500ms` with cached data, `<1s` from network
+- Search Results: `<1s` for local cache, `<2s` for server search
 
-#### iOS App
+**Website:**
+- Initial Page Load: `<2s` to interactive (First Contentful Paint)
+- Recipe List Render: `<1s` with cached data, `<2s` from network
+- Recipe Detail Load: `<500ms` with cached data, `<1s` from network
+- Search Results: `<1s` for typical queries
 
-- **App Launch**: `<2s` cold start, `<1s` warm start
-- **Recipe List Load**: `<1s` with cached data, `<2s` from network
-- **Recipe Detail View**: `<500ms` with cached data, `<1s` from network
-- **Search Results**: `<1s` for local cache, `<2s` for server search
+### Infrastructure Performance
 
-#### Website
+**AWS Lambda Functions:**
+- Cold Start: `<1s`
+- Warm Execution: `<100ms` for simple operations
 
-- **Initial Page Load**: `<2s` to interactive (First Contentful Paint)
-- **Recipe List Render**: `<1s` with cached data, `<2s` from network
-- **Recipe Detail Load**: `<500ms` with cached data, `<1s` from network
-- **Search Results**: `<1s` for typical queries
+**S3 Operations:**
+- Recipe Read (single): `<100ms`
+- Recipe List (100 items): `<500ms` in-memory filtering
+- Recipe Write: `<200ms`
+- Signed URL Generation: `<50ms`
+- File Upload Initiation: `<200ms`
+- File Download Access: `<100ms` (excluding transfer time)
 
-### ☁️ **Infrastructure Performance Standards**
+## Performance Monitoring
 
-#### AWS Lambda Functions
+### When Performance Degrades
 
-- **Cold Start**: `<1s` (optimized with provisioned concurrency if needed)
-- **Warm Execution**: `<100ms` for simple operations
-- **Memory Allocation**: Right-sized to meet performance targets cost-effectively
+Timeouts and slow operations automatically generate error diagnostics in S3.
 
-#### DynamoDB Performance
+**To investigate performance issues:**
 
-- **Single Item Read**: `<10ms` average
-- **Query Operations**: `<50ms` for typical result sets
-- **Scan Operations**: `<200ms` for user-scoped scans
-- **Write Operations**: `<20ms` average
+```bash
+# Get global diagnostic report
+cd tools/get-diagnostics && ./get-diagnostics
 
-#### S3 Operations
+# Check recent errors across all sources
+cd tools/get-diagnostics && ./get-diagnostics -all -since 24h
 
-- **Signed URL Generation**: `<50ms`
-- **File Upload Initiation**: `<200ms`
-- **File Download Access**: `<100ms` (excluding transfer time)
+# Filter by source type
+cd tools/get-diagnostics && ./get-diagnostics -lambdas -since 1h
+cd tools/get-diagnostics && ./get-diagnostics -extensions -since 1h
+cd tools/get-diagnostics && ./get-diagnostics -flutter -since 1h
+```
 
-### 📊 **Monitoring & SLA Enforcement**
+### CloudWatch Metrics
 
-#### CloudWatch Metrics
-
+Monitor these metrics:
 - **API Gateway**: P95 response times per endpoint
 - **Lambda**: Duration, error rate, cold start frequency
-- **DynamoDB**: Throttling events, consumed capacity
 - **S3**: Request latency, error rates
 
-#### Performance Budgets
+### Optimization Strategies
 
-- **API Budget**: 95% of requests must meet tier SLAs
-- **Error Budget**: <1% error rate for critical operations
-- **Availability Budget**: 99.9% uptime (52.6 minutes downtime/year)
+**Caching:**
+- Browser Extension: Local storage for 50 most recent recipes
+- iOS/Website: Aggressive caching with smart invalidation
+- API Gateway: Response caching for read-heavy endpoints
 
-#### Alerting Thresholds
-
-- **Warning**: Performance degrades to 90% of SLA target
-- **Critical**: Performance violates SLA target
-- **Emergency**: Error rate exceeds 2% or complete outage
-
-### 🔧 **Performance Optimization Strategies**
-
-#### Caching Layers
-
-- **Browser Extension**: Local storage for 50 most recent recipes
-- **iOS/Website**: Aggressive caching with smart invalidation
-- **API Gateway**: Response caching for read-heavy endpoints
-- **DynamoDB**: DAX caching for hot data (if needed)
-
-#### Connection Optimization
-
-- **Keep-Alive**: Persistent connections where possible
-- **HTTP/2**: Leverage multiplexing for multiple requests
-- **CDN**: CloudFront for static assets and API caching
-- **Regional Deployment**: US-West-2 primary, expand based on usage
-
-#### Code Optimization
-
-- **Lambda**: Optimize bundle sizes, use ARM64 Graviton2
-- **Frontend**: Code splitting, lazy loading, tree shaking
-- **Database**: Efficient query patterns, proper indexing
-- **Images**: WebP format, multiple sizes, lazy loading
-
-## PRD Update Requirements
-
-### Browser Extension PRD
-
-**Section 4.1**: Update performance targets table
-
-```markdown
-| Metric           | Target                        | Measurement          |
-| ---------------- | ----------------------------- | -------------------- |
-| API Response     | <300ms critical, <500ms lists | 95th percentile      |
-| Extraction Speed | <3 seconds                    | 95th percentile      |
-| Popup Load Time  | <500ms                        | Time to interactive  |
-| Background Sync  | <5 seconds                    | Recipe availability  |
-| Offline Cache    | 50 recipes                    | Most recent/frequent |
-```
-
-### AWS Backend PRD
-
-**Section**: Replace "Fast response times (<300ms typical)" with:
-
-```markdown
-### Performance Requirements
-
-- **Critical APIs**: <300ms response time (95th percentile SLA)
-- **List Operations**: <500ms response time (95th percentile SLA)
-- **Heavy Operations**: <2s response time (95th percentile SLA)
-- **Availability**: 99.9% uptime SLA
-- **Error Rate**: <1% for all operations
-```
-
-### iOS App PRD
-
-**Section**: Replace "<1s typical load times" with:
-
-```markdown
-### Performance Requirements
-
-- **App Launch**: <2s cold start, <1s warm start
-- **Recipe Views**: <500ms cached, <1s network
-- **Search Results**: <1s local cache, <2s server
-- **Sync Operations**: <5s background sync
-```
-
-### Website PRD
-
-**Section**: Replace "<1s typical load times" with:
-
-```markdown
-### Performance Requirements
-
-- **Page Load**: <2s to interactive (First Contentful Paint)
-- **Recipe Views**: <500ms cached, <1s network
-- **Search Results**: <1s typical queries
-- **API Operations**: <300ms critical, <500ms lists
-```
-
-## Implementation Priority
-
-### Phase 1: Baseline Monitoring (Week 1)
-
-- Set up CloudWatch dashboards
-- Implement performance logging
-- Establish baseline measurements
-
-### Phase 2: Critical Path Optimization (Week 2)
-
-- Optimize high-frequency API endpoints
-- Implement caching strategies
-- Monitor against new SLA targets
-
-### Phase 3: Advanced Optimizations (Week 3)
-
-- Implement performance budgets
-- Set up automated alerting
-- Fine-tune based on real usage
-
-### Phase 4: Continuous Improvement (Ongoing)
-
-- Weekly performance reviews
-- Proactive optimization based on trends
-- Capacity planning for growth
-
----
-
-**Next Steps**:
-
-1. Get approval for unified performance standards
-2. Update all four PRDs with consistent performance targets
-3. Implement CloudWatch monitoring dashboards
-4. Establish performance testing procedures
-
-**Implementation Deadline**: Performance standards must be in place before beta launch
+**Code:**
+- Lambda: Optimize bundle sizes, use ARM64 Graviton2
+- Frontend: Code splitting, lazy loading, tree shaking
+- S3: Efficient filtering patterns, batch operations
+- Images: WebP format, multiple sizes, lazy loading
