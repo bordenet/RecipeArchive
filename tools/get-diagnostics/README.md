@@ -1,4 +1,4 @@
-# Diagnostic Harvester
+# get-diagnostics
 
 A Go-based tool for collecting and analyzing diagnostic telemetry from RecipeArchive's production infrastructure.
 
@@ -7,16 +7,18 @@ A Go-based tool for collecting and analyzing diagnostic telemetry from RecipeArc
 - **Web Extension Diagnostics**: Harvests error reports from browser extensions stored in S3
 - **Flutter App Diagnostics**: Collects mobile app diagnostic data from S3
 - **Lambda Diagnostics**: Queries CloudWatch Logs for Lambda function errors and warnings
+- **Global Report Mode**: Default (no flags) produces a comprehensive report of all diagnostics
 - **Flexible Time Windows**: Query data from 1 hour to multiple days/weeks
 - **Multiple Output Formats**: Human-readable formatted tables, JSON, or summary reports
 - **Summary Reports**: Generate statistical reports with counts by type, source, and top URLs
 - **Data Deletion**: Delete diagnostic data from S3 with confirmation prompt
+- **Environment Integration**: Automatically loads configuration from `.env` file
 
 ## Building
 
 ```bash
-cd tools/diagnostic-harvester
-go build -o diagnostic-harvester *.go
+cd tools/get-diagnostics
+go build -o get-diagnostics *.go
 ```
 
 The binary is automatically added to `.gitignore` and should not be committed.
@@ -26,42 +28,49 @@ The binary is automatically added to `.gitignore` and should not be committed.
 ### Basic Examples
 
 ```bash
-# Harvest all diagnostics from last 24 hours (default)
-./diagnostic-harvester -all
+# Global report (default - all diagnostics with summary)
+./get-diagnostics
+
+# Harvest all diagnostics from last 24 hours (detailed view)
+./get-diagnostics -all
 
 # Harvest only extension errors from last hour
-./diagnostic-harvester -extensions -since 1h
+./get-diagnostics -extensions -since 1h
 
 # Harvest Flutter and Lambda diagnostics from last week
-./diagnostic-harvester -flutter -lambdas -since 7d
+./get-diagnostics -flutter -lambdas -since 7d
 
 # Output as JSON for further processing
-./diagnostic-harvester -all -json > diagnostics.json
+./get-diagnostics -all -json > diagnostics.json
 
 # Generate summary report with statistics
-./diagnostic-harvester -all -report -since 7d
+./get-diagnostics -report -since 7d
 
 # Delete diagnostic data (requires confirmation)
-./diagnostic-harvester -extensions -delete -since 30d
+./get-diagnostics -extensions -delete -since 30d
 ```
 
 ### Command Line Options
 
-- `-extensions` - Harvest/delete web extension diagnostic data
-- `-flutter` - Harvest/delete Flutter app diagnostic data
-- `-lambdas` - Harvest Lambda function diagnostic data (CloudWatch)
+- No flags - Global report mode (all diagnostics, summary format)
+- `-extensions` - Harvest/delete web extension diagnostic data only
+- `-flutter` - Harvest/delete Flutter app diagnostic data only
+- `-lambdas` - Harvest Lambda function diagnostic data (CloudWatch) only
 - `-all` - Harvest/delete all diagnostic data
 - `-since duration` - Time window (e.g., 1h, 24h, 7d) [default: 24h]
 - `-json` - Output as JSON instead of formatted table
 - `-report` - Generate summary report (counts by type and source)
 - `-delete` - Delete diagnostic data (requires confirmation)
-- `-bucket string` - S3 bucket name [default: recipe-storage-*]
+- `-bucket string` - S3 bucket name [default: from .env]
 - `-help` - Show help message
 
 ### Environment Variables
 
+Automatically loaded from `.env` file at repository root:
+- `S3_BUCKET_NAME` - S3 bucket name
 - `AWS_REGION` - AWS region (default: us-west-2)
-- `AWS_PROFILE` - AWS credentials profile
+- `AWS_ACCESS_KEY_ID` - AWS credentials
+- `AWS_SECRET_ACCESS_KEY` - AWS credentials
 
 ## Data Sources
 
@@ -111,7 +120,7 @@ Statistical summary including:
 ## Project Structure
 
 ```
-diagnostic-harvester/
+get-diagnostics/
 ├── main.go          # Entry point and CLI argument handling
 ├── types.go         # Data structures
 ├── extensions.go    # Web extension diagnostic harvesting
@@ -119,7 +128,7 @@ diagnostic-harvester/
 ├── lambda.go        # Lambda CloudWatch Logs harvesting
 ├── output.go        # Formatting, display, and report generation
 ├── delete.go        # S3 data deletion with confirmation
-├── utils.go         # Helper functions and usage text
+├── utils.go         # Helper functions, env loading, and usage text
 ├── go.mod           # Go module dependencies
 └── README.md        # This file
 ```

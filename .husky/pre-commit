@@ -20,7 +20,7 @@ for file in $STAGED_FILES; do
     continue
   fi
 
-  # Check for tool binaries without extensions (like content-ops, recipe-tracer, diagnostic-harvester)
+  # Check for tool binaries without extensions (like content-ops, recipe-tracer, get-diagnostics)
   if echo "$file" | grep -qE '^tools/[^/]+/[^/]+$' && [ -x "$file" ]; then
     # Use 'file' command to check if it's a binary
     if file "$file" | grep -qE "(Mach-O|ELF|PE32|executable)"; then

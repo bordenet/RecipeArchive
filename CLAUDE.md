@@ -3,15 +3,8 @@
 ## Current Status
 
 **v1.0.0 Production Release**: https://d1jcaphz4458q7.cloudfront.net
-**Ready for New Adopters**: Complete production system ready to clone and deploy
 
 PLEASE review PROJECT_STATUS.md and keep that document up to date
-
-**CURRENT PRIORITIES:**
-
-1. **Infrastructure Optimization** (MEDIUM PRIORITY)
-   - Monitor Lambda function performance
-   - Evaluate cost optimization impact
 
 ### Infrastructure Validation Protocol
 
@@ -28,23 +21,19 @@ When making infrastructure changes, ALWAYS:
 
 - **`content-ops`**: A multi-tenant content operations utility for analyzing recipes across all tenants in AWS S3. It supports pagination for large datasets and provides operational insights for multi-tenant management.
 - **`recipe-tracer`**: An end-to-end tracing tool that tracks recipe processing through S3, SQS, and CloudWatch logs, with cache performance analysis and detailed normalization debugging.
-- **`diagnostic-harvester`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions for error triage and production monitoring.
+- **`get-diagnostics`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions for error triage and production monitoring. Default (no flags) produces a global report.
 
-## API VERSIONING MANDATE
+## API VERSIONING
 
-**ABSOLUTE RULE: NO /v1/ PREFIX ON ANY API ENDPOINTS**
-
-- `/report-error`, `/images/upload`, `/recipes`, `/health`
+No /v1/ prefix on any API endpoints: `/report-error`, `/images/upload`, `/recipes`, `/health`
 
 ## CODE STYLE MANDATE
 
-**CRITICAL: ALWAYS USE DOUBLE QUOTES IN JAVASCRIPT FILES**
+Always use double quotes in JavaScript files. This project uses ESLint with double quote enforcement.
+- Correct: `console.log("Checking URL:", url);`
+- Wrong: `console.log('Checking URL:', url);`
 
-This project uses ESLint with double quote enforcement. This has been fixed TEN TIMES across sessions:
-- **CORRECT**: `console.log("Checking URL:", url);`
-- **WRONG**: `console.log('Checking URL:', url);`
-
-**ALWAYS run `npm run lint -- --fix` after editing JavaScript files to prevent quote style errors.**
+Always run `npm run lint -- --fix` after editing JavaScript files to prevent quote style errors.
 
 ## Quick Start Commands
 
@@ -57,11 +46,7 @@ npm run security:scan                  # Check for security issues
 
 ## New Adopter Security
 
-**CRITICAL**: Browser extensions contain hardcoded AWS infrastructure references. New adopters MUST:
-
-1. Deploy their own AWS infrastructure via CDK
-2. Run `./scripts/setup-new-adopter-environment.sh` to configure extensions
-3. Ensure all validation passes before use
+Browser extensions contain hardcoded AWS infrastructure references. New adopters must deploy their own AWS infrastructure via CDK and run `./scripts/setup-new-adopter-environment.sh` to configure extensions.
 
 ## Mobile Development
 
@@ -70,19 +55,17 @@ iOS/Android toolchain available
 ## Security & Validation
 
 ### Image Security Architecture
-- **CRITICAL**: Extensions upload images directly to S3 only
-- **NEVER** implement server-side image fetching - major security risk
+- Extensions upload images directly to S3 only
 - Backend validates S3-only image URLs, external URLs rejected for security
+- Never implement server-side image fetching
 
 ### CORS Issue Handling
-- **REPORT, DON'T BYPASS**: When CORS blocks image downloads, report via diagnostics
+- When CORS blocks image downloads, report via diagnostics
 - Use diagnostic reporting to identify domains needing CORS rule updates
-- Push extension updates to handle new domains properly
-- **NEVER** fall back to server-side downloads as "solution"
+- Do not fall back to server-side downloads
 
 ### Storage Architecture
-- **S3-ONLY**: All data storage uses S3, no DynamoDB in production
-- Cost optimized
+- All data storage uses S3, no DynamoDB in production
 
 ## Essential Commands
 
@@ -103,12 +86,13 @@ iOS/Android toolchain available
 
 | Task | Command |
 | --- | --- |
-| Content Analysis | `cd tools/content-ops && ./content-ops -user email -password pass` |
+| Content Analysis | `cd tools/content-ops && ./content-ops` |
 | Recipe ID Lookup | `cd tools/content-ops && ./content-ops -include-recipe-id "RECIPE TITLE"` |
 | Recipe Tracing | `cd tools/recipe-tracer && ./recipe-tracer -recipe RECIPE_ID` |
-| Diagnostic Harvest | `cd tools/diagnostic-harvester && ./diagnostic-harvester -all -since 7d` |
-| Extension Diagnostics | `cd tools/diagnostic-harvester && ./diagnostic-harvester -extensions -since 24h` |
-| Lambda Diagnostics | `cd tools/diagnostic-harvester && ./diagnostic-harvester -lambdas -since 1h` |
+| Diagnostics Global Report | `cd tools/get-diagnostics && ./get-diagnostics` |
+| Diagnostic Harvest | `cd tools/get-diagnostics && ./get-diagnostics -all -since 7d` |
+| Extension Diagnostics | `cd tools/get-diagnostics && ./get-diagnostics -extensions -since 24h` |
+| Lambda Diagnostics | `cd tools/get-diagnostics && ./get-diagnostics -lambdas -since 1h` |
 
 ### DEBUGGING PROTOCOL
 
@@ -118,10 +102,11 @@ iOS/Android toolchain available
 3. **Check for Cross-Contamination**: Look for foreign recipe data in CloudWatch logs
 
 **For Production Error Triage:**
-1. **Harvest Recent Errors**: `cd tools/diagnostic-harvester && ./diagnostic-harvester -all -since 24h`
-2. **Filter by Source**: Use `-extensions`, `-flutter`, or `-lambdas` flags
-3. **Export for Analysis**: Add `-json` flag to output JSON for further processing
-4. **Check S3 Directly**: Review S3 keys in output for full diagnostic context
+1. **Global Report**: `cd tools/get-diagnostics && ./get-diagnostics` (default shows all diagnostics with summary)
+2. **Harvest Recent Errors**: `cd tools/get-diagnostics && ./get-diagnostics -all -since 24h`
+3. **Filter by Source**: Use `-extensions`, `-flutter`, or `-lambdas` flags
+4. **Export for Analysis**: Add `-json` flag to output JSON for further processing
+5. **Check S3 Directly**: Review S3 keys in output for full diagnostic context
 
 Tools are pre-built.
 
@@ -168,17 +153,10 @@ Tools are pre-built.
 
 ### Quality Gates
 
-**CRITICAL - ENHANCED PROCEDURES TO PREVENT COMPILATION FAILURES:**
-
-- ALWAYS run `./validate-monorepo.sh --all` before GitHub push (includes comprehensive compilation testing)
-- ALWAYS test multi-file Go builds: `go build -o bootstrap *.go` in function directories
-- FIXED: GitHub Actions uses `*.go` instead of `main.go` for Lambda compilation testing
-- FIXED: Multi-file Lambda functions (like test-tools) build correctly in CI/CD
-- FIXED: Flutter test platform compatibility with conditional imports for web-only code
-- Pre-commit hooks include comprehensive compilation validation for ALL components
-- NEVER bypass Husky checks - they catch compilation errors locally
-- NEVER hand off broken builds - quality gates enhanced to catch platform/import mismatches
-- NEVER let deployment scripts bit-rot
+- Always run `./validate-monorepo.sh --all` before GitHub push
+- Test multi-file Go builds: `go build -o bootstrap *.go` in function directories
+- Pre-commit hooks include comprehensive compilation validation for all components
+- Do not bypass Husky checks
 
 ### Lambda Deployment
 

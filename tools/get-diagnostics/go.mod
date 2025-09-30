@@ -1,4 +1,4 @@
-module github.com/bordenet/recipe-archive/tools/diagnostic-harvester
+module github.com/bordenet/recipe-archive/tools/get-diagnostics
 
 go 1.21
 

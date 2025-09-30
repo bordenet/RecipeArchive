@@ -12,11 +12,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-const (
-	DefaultBucket = "recipe-storage-0ea7007d57f67ecb-990537043943"
-)
-
 func main() {
+	// Load environment variables from .env file
+	loadEnvFile()
+
+	// Get defaults from environment variables
+	defaultBucket := os.Getenv("S3_BUCKET_NAME")
+	if defaultBucket == "" {
+		defaultBucket = "recipe-storage-0ea7007d57f67ecb-990537043943"
+	}
+
 	// Command line flags
 	var (
 		extensions = flag.Bool("extensions", false, "Harvest web extension diagnostic data")
@@ -25,7 +30,7 @@ func main() {
 		all        = flag.Bool("all", false, "Harvest all diagnostic data")
 		since      = flag.String("since", "24h", "Time window to harvest (e.g., 1h, 24h, 7d)")
 		jsonOutput = flag.Bool("json", false, "Output as JSON instead of formatted table")
-		bucket     = flag.String("bucket", DefaultBucket, "S3 bucket name")
+		bucket     = flag.String("bucket", defaultBucket, "S3 bucket name")
 		deleteData = flag.Bool("delete", false, "Delete diagnostic data (requires confirmation)")
 		report     = flag.Bool("report", false, "Generate summary report (counts by type and source)")
 		help       = flag.Bool("help", false, "Show help message")
@@ -63,15 +68,17 @@ func main() {
 		CWClient:   cloudwatchlogs.NewFromConfig(cfg),
 	}
 
-	// Determine what to harvest
+	// Determine what to harvest - default to ALL if no flags specified
 	harvestExtensions := *extensions || *all
 	harvestFlutter := *flutter || *all
 	harvestLambdas := *lambdas || *all
 
-	if !harvestExtensions && !harvestFlutter && !harvestLambdas {
-		fmt.Fprintf(os.Stderr, "❌ Please specify at least one data source: -extensions, -flutter, -lambdas, or -all\n")
-		printUsage()
-		os.Exit(1)
+	// If no specific flags were set, default to harvesting everything
+	if !*extensions && !*flutter && !*lambdas && !*all {
+		harvestExtensions = true
+		harvestFlutter = true
+		harvestLambdas = true
+		*report = true // Default to report view for global report
 	}
 
 	var allDiagnostics []DiagnosticEntry
@@ -126,7 +133,8 @@ func main() {
 		outputFormatted(allDiagnostics)
 	}
 
-	if len(allDiagnostics) == 0 {
+	// Only show "no diagnostics" message if not using report mode (which handles it internally)
+	if len(allDiagnostics) == 0 && !*report {
 		fmt.Fprintf(os.Stderr, "✨ No diagnostics found in the specified time window\n")
 	}
 }

@@ -47,4 +47,4 @@ _Tools are designed for interactive use and manual operations, while scripts are
 
 - **`content-ops`**: A multi-tenant content operations utility for analyzing recipes across all tenants in AWS S3. It supports pagination for large datasets and provides operational insights for multi-tenant management.
 - **`recipe-tracer`**: An end-to-end tracing tool that tracks recipe processing through S3, SQS, and CloudWatch logs, providing a chronological view of all events and a summary of the processing status.
-- **`diagnostic-harvester`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions. Queries S3 storage and CloudWatch Logs to provide formatted reports or JSON output for error triage and monitoring.
+- **`get-diagnostics`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions. Queries S3 storage and CloudWatch Logs to provide formatted reports or JSON output for error triage and monitoring. Default (no flags) produces a global report.

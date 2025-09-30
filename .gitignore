@@ -114,8 +114,8 @@ tools/monorepo-validator-go/monorepo-validator-go
 tools/monorepo-validator-go/monorepo-validator-go.exe
 tools/recipe-tracer/recipe-tracer
 tools/recipe-tracer/recipe-tracer.exe
-tools/diagnostic-harvester/diagnostic-harvester
-tools/diagnostic-harvester/diagnostic-harvester.exe
+tools/get-diagnostics/get-diagnostics
+tools/get-diagnostics/get-diagnostics.exe
 tools/refresh-token
 tools/refresh-token.exe
 
