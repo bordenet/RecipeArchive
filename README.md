@@ -1,17 +1,29 @@
 # RecipeArchive v1.0.0
 
-<table style="width:100%;">
+<table style="width:100%; border-collapse: collapse;">
+  <!-- Top row: Gallery image -->
   <tr>
-    <td style="text-align: center; vertical-align: top;">
-      <img src="./FlutterSample.png" alt="Flutter app screenshot" width="75%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-      <div><a href="https://d1jcaphz4458q7.cloudfront.net"><b>Production Website</b></a></div>
+    <td colspan="2" style="text-align: center;">
+      <img src="./docs/img/Desktop_Gallery.png" alt="v1.0 desktop website gallery view" width="85%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
+      <div style="margin-top: 4px; font-size: 0.9em;">
+        <a href="https://d1jcaphz4458q7.cloudfront.net"><b>Production Website Sample</b></a>
+      </div>
     </td>
-    <td style="text-align: center; vertical-align: top;">
-      <img src="./WebExtensionSample.png" alt="Web Extension - Chrome" width="100%" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-      <div>Web Extension</div>
+  </tr>
+
+  <!-- Second row: Desktop Details + Web Extension side-by-side -->
+  <tr>
+    <td style="text-align: left; vertical-align: top;">
+      <img src="./docs/img/Desktop_Details.png" alt="v1.0 desktop website details view" width="560px" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
+      <div style="font-size: 0.9em;">Desktop Details View</div>
+    </td>
+    <td style="text-align: left; vertical-align: top;">
+      <img src="./docs/img/WebExtensionSample.png" alt="Web Extension - Chrome" width="362px" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
+      <div style="font-size: 0.9em;">Web Extension</div>
     </td>
   </tr>
 </table>
+
 
 **Production-ready cross-platform recipe management solution** - Complete system ready for new adopters to clone and deploy. Capture and organize recipes from 14+ supported websites with browser extensions, Flutter web/mobile apps, and cost-optimized AWS backend infrastructure.
 
