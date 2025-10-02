@@ -2,159 +2,74 @@
 
 **Status: Production Release**
 
-RecipeArchive v1.0.0 is a complete, production-ready recipe management solution with cross-platform coverage and comprehensive new adopter support.
+Production-ready recipe management solution with web app, browser extensions, and AWS serverless backend. Mobile apps and store submissions are not currently prioritized.
 
+## Platform Status
 
-## Current System Status
+### ✅ Production Deployed
+- **Web App**: https://d1jcaphz4458q7.cloudfront.net (Flutter web)
+- **Backend**: AWS Lambda (Go), API Gateway, Cognito, S3
+- **Browser Extensions**: Chrome & Safari (14+ supported recipe sites)
 
-### System Health
-- Production system operational
-
-## Platform Coverage
-
-### Web Application
-- **Technology**: Flutter web
-- **Status**: Production deployed
-- **URL**: https://d1jcaphz4458q7.cloudfront.net
-- **Features**: Responsive design, real-time sync, authentication
-
-### Mobile Applications
-- **Technology**: Flutter (Android & iOS)
-- **Status**: Development toolchain operational
-
-### Browser Extensions
-- **Platforms**: Chrome & Safari
-- **Status**: Operational
-- **Supported Sites**: 14 recipe websites
-
-### Backend Infrastructure
-- **Technology**: AWS Lambda (Go), API Gateway, Cognito, S3
-- **Status**: Production deployed
+### 🛠️ Development Toolchains Available
+- **Mobile Apps**: Flutter iOS/Android toolchains operational
+- **Distribution**: Not currently pursuing app store or extension store submissions
 
 ## New Adopter Support
 
-### Setup Documentation
-- **AWS Infrastructure**: Complete CDK deployment guide in `docs/setup/aws-setup.md`
-- **Infrastructure README**: Detailed deployment instructions in `aws-backend/infrastructure/README.md`
-- **Environment Configuration**: Comprehensive `.env.example` with all required variables
-- **Browser Extension Security**: Warning documentation in `extensions/NEW-ADOPTERS-READ-FIRST.md`
+Clone-and-deploy ready with complete AWS infrastructure setup:
+- Setup script: `./scripts/setup-new-adopter-environment.sh`
+- AWS deployment guide: [docs/setup/aws-setup.md](docs/setup/aws-setup.md)
+- Security: Extensions configured for adopter's own AWS resources
+- Validation: `./validate-monorepo.sh --all` ensures correctness
 
-### Configuration Tools
-- **Setup Script**: `./scripts/setup-new-adopter-environment.sh` configures extensions for user's AWS infrastructure
-- **Validation**: Environment validation prevents accidental use of example values
-- **Backup System**: Automatic backup of modified files during configuration
-- **Security**: Ensures new adopters use their own AWS resources, not original developer's
+## Core Features
 
-### Ready-to-Clone Status
-- **Complete Documentation**: Step-by-step guide from AWS setup to working application
-- **Infrastructure Isolation**: New adopters deploy independent AWS infrastructure
-- **Extension Configuration**: Automated replacement of hardcoded production values
-- **Validation Pipeline**: Comprehensive testing ensures setup correctness
-
-## Deployment Status
-
-### Production Deployments
-- **Web App**: Live at CloudFront URL
-- **Backend APIs**: All Lambda functions deployed
-- **Database**: DynamoDB tables configured
-- **Authentication**: AWS Cognito fully configured
-- **Storage**: S3 buckets for recipes and diagnostics
-
-### Preparing for Store Submission
-- **Android**: APK build system configured, finalizing development environment
-- **iOS**: iOS build system configured, requires Xcode setup completion
-- **Chrome Extension**: ZIP package ready for Chrome Web Store
-- **Safari Extension**: ZIP package ready for Safari Extensions
-
-## Development Infrastructure
-
-### CI/CD Pipeline
-- **Validation**: Monorepo validator (`./validate-monorepo.sh`)
-- **Testing**: Parser tests, integration tests, security scans
-- **Building**: Automated builds for web, mobile, extensions
-- **Deployment**: One-command deployment (`./scripts/deploy-all.sh`)
-
-### Quality Assurance
-- **Security**: TruffleHog scanning, image URL validation
-- **Code Quality**: ESLint, Flutter analyzer, Go formatting
-- **Testing**: Parser validation, API endpoint health checks
-
-## Feature Status
-
-### Core Features
-- Recipe capture from 14+ websites
-- Intelligent parsing with JSON-LD and HTML fallbacks
+- Recipe capture from 14+ websites with intelligent parsing
+- OpenAI-powered recipe normalization
 - Cross-platform authentication (AWS Cognito)
 - Real-time synchronization across devices
-- Responsive design for all screen sizes
-- Offline support for mobile apps
-- Error handling and diagnostics
-
-### Advanced Features
-- OpenAI-powered recipe normalization
 - Multi-tenant invitation system
-- Analytics and usage tracking
-- Automated deployment and scaling
+- Diagnostic telemetry and error tracking
 - Security validation and monitoring
-- Cross-browser compatibility
 
-## Current Development Focus
+## Current Focus
 
-1. **Infrastructure Optimization**
-   - Monitor Lambda function performance
-   - Evaluate cost optimization impact
+Monitoring Lambda function performance and cost optimization.
 
-## Future Enhancements (Optional)
+**Note:** This project has been deliberately tuned to minimize web hosting expenses.
 
-The core project functionality is complete. Future enhancements could include:
+## Known Limitations
 
-### Store Submissions
-1. **Google Play Store**: Submit Android APK
-2. **Apple App Store**: Submit iOS app bundle
-3. **Chrome Web Store**: Publish Chrome extension
-4. **Safari Extensions**: Publish Safari extension
+### Search Functionality
+Search logic is currently brittle with exact word matching:
+- Searching for `drink` works, but `drinks` may not match
+- No fuzzy matching or stemming
+- Logical operators (AND/OR/NOT) not fully implemented
+- Could be enhanced if there's sufficient demand
 
-### Marketing & Distribution
-1. Create app store listings with screenshots
-2. Develop user documentation and tutorials
-3. Set up user feedback and support channels
-4. Consider beta testing programs
+## Future Considerations
 
-### Feature Expansions (Optional)
-1. Additional recipe website support
-2. Recipe sharing and social features
-3. Meal planning and grocery list integration
-4. Recipe rating and review system
+Core functionality complete. Potential future work (not currently prioritized):
+- App store submissions (Google Play, Apple App Store, Chrome/Safari extension stores)
+- Additional recipe website support
+- Social features (sharing, ratings, reviews)
+- Meal planning and grocery list integration
 
 ## Documentation
 
-### User Guides
-- [Mobile Deployment Guide](recipe_archive/MOBILE_DEPLOYMENT.md)
-- [Browser Extension Guide](extensions/README.md)
+### Setup & Deployment
 - [AWS Setup Guide](docs/setup/aws-setup.md)
-
-### Developer Resources
-
-- [Project Guide](CLAUDE.md)
-- [API Documentation](docs/api/api-specification.md) - Backend API reference (updated to reflect current implementation)
-- [Data Model](docs/architecture/data-model.md) - Unified data model for all platforms (updated)
+- [Mobile Deployment Guide](recipe_archive/MOBILE_DEPLOYMENT.md)
 - [Environment Setup](docs/setup/ENVIRONMENT_SETUP.md)
-- [Extension Distribution](docs/deployment/extension-distribution.md)
 
-### Architecture Diagrams
-
+### Architecture & API
+- [API Documentation](docs/api/api-specification.md)
+- [Data Model](docs/architecture/data-model.md)
 - [Data Flow Diagram](docs/diagrams/claude_data-flow.md)
 - [API Integration Diagram](docs/diagrams/claude_api-integration.md)
 
-## System Overview
-
-Production-ready cross-platform application with:
-
-- **4 Platform Targets**: Web, Android, iOS, Browser Extensions
-- **14+ Supported Websites**: Comprehensive recipe site coverage
-- **AWS Serverless Backend**: Scalable, cost-effective infrastructure
-- **Production Deployment**: Live web app with development environment configured
-
----
-
-*Active development focusing on infrastructure optimization and enhanced site support.*
+### Developer Guides
+- [Project Guide](CLAUDE.md) - Development workflows and critical instructions
+- [Command Reference](COMMANDS.md) - Complete command lookup tables
+- [Browser Extensions](extensions/README.md)
