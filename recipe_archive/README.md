@@ -1,16 +1,57 @@
-# recipe_archive
+# RecipeArchive Flutter App
 
-A new Flutter project.
+Cross-platform Flutter application for web, iOS, and Android.
 
-## Getting Started
+## Quick Start
 
-This project is a starting point for a Flutter application.
+```bash
+# Web development
+flutter run -d chrome
 
-A few resources to get you started if this is your first Flutter project:
+# iOS development
+cd .. && ./scripts/ios-simulator.sh
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+# Android development
+cd .. && ./scripts/android-run.sh
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Production Deployment
+
+**Web App**: https://d1jcaphz4458q7.cloudfront.net
+
+```bash
+# Deploy web app
+cd .. && ./scripts/deploy-web-app.sh
+```
+
+## Mobile Builds
+
+```bash
+# From repository root
+cd recipe_archive
+
+# Build for specific platforms
+./scripts/build-mobile.sh android release
+./scripts/build-mobile.sh ios release
+./scripts/build-mobile.sh both release
+```
+
+See [MOBILE_DEPLOYMENT.md](MOBILE_DEPLOYMENT.md) for complete mobile build and distribution guide.
+
+## Features
+
+- AWS Cognito authentication
+- Real-time recipe sync across devices
+- OpenAI-powered recipe normalization
+- Full-text search with metadata
+- Multi-tenant architecture
+- Screen wakelock for hands-free cooking
+- Cross-platform (web, iOS, Android)
+
+## Environment Configuration
+
+The app uses `../.env` (main project environment file). See repository root for configuration details.
+
+## Commands Reference
+
+See [../COMMANDS.md](../COMMANDS.md) for complete command reference.

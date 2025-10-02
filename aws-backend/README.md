@@ -5,14 +5,10 @@ Go-based serverless backend for RecipeArchive with comprehensive CRUD operations
 ## Quick Start
 
 ```bash
-# Deploy infrastructure
-cd aws-backend && cdk deploy
-
-# Run tests
-make test-all
-
-# Load test data
-make load-test-data
+# From repository root:
+./scripts/deploy-lambda.sh --all      # Deploy all Lambda functions
+./scripts/deploy-all.sh               # Deploy everything (infrastructure + functions)
+./validate-monorepo.sh --all          # Validate deployment
 ```
 
 ## Key Features
@@ -20,24 +16,21 @@ make load-test-data
 - **CRUD Operations:** Full recipe management with soft delete
 - **Multi-tenant:** Complete user isolation with JWT authentication
 - **URL Overwrite:** Automatic recipe updates when re-extracted from same URL
-- **Backup System:** Automated backup creation and restoration
-- **S3 Storage:** File uploads and management
+- **S3 Storage:** All data storage uses S3 (no DynamoDB in production)
+- **Diagnostic Telemetry:** Error reporting and production monitoring
 
-## API Endpoints
+## Lambda Functions
 
-- `GET/POST /recipes` - Recipe CRUD operations
-- `GET /health` - Health check endpoint
-- `POST /report-error` - Diagnostic error reporting
-- `POST /backup/create` - Backup creation
-- `GET /backup/list` - Backup listing
+Located in `functions/` directory. Each function is independently deployable.
 
-## Testing
-
+**Deployment:**
 ```bash
-make help              # Show available commands
-make test-all          # Complete test suite
-make validate-crud     # CRUD operation validation
-make cleanup-all       # Clean test data
+./scripts/deploy-lambda.sh recipes              # Deploy specific function
+./scripts/deploy-lambda.sh --all                # Deploy all functions
 ```
 
-See [API Documentation](../docs/api/api-specification.md) for detailed endpoint specifications.
+## Infrastructure
+
+CDK infrastructure code in `infrastructure/` directory.
+
+See [COMMANDS.md](../COMMANDS.md) for complete command reference and [API Documentation](../docs/api/api-specification.md) for detailed endpoint specifications.
