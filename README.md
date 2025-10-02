@@ -1,5 +1,7 @@
 # RecipeArchive v1.0.0
 
+**Save, normalize, search, and cook recipes—with instant links back to the original sources.** Simple browser extensions capture recipes. OpenAI-powered back-end does the heavy lifting of normalization. Dead simple UX makes it easy to scale yields, convert between metric and imperial units, and bypass the life stories and ad bombardment when it's time to cook.
+
 <table style="width:100%; border-collapse: collapse;">
   <!-- Top row: Gallery image -->
   <tr>
