@@ -37,7 +37,7 @@ Clone-and-deploy ready with complete AWS infrastructure setup:
 
 Monitoring Lambda function performance and cost optimization.
 
-**Note:** This project has been deliberately tuned to minimize web hosting expenses.
+**Note:** This project has been [deliberately tuned](./aws-backend/infrastructure#cost-management) to minimize web hosting expenses.
 
 ## Known Limitations
 
