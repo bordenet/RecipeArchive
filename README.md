@@ -49,7 +49,8 @@
 - **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow
 </details>
 <details>
-  <summary>Screenshots</summary>
+  <summary>Screenshots -- Native Apps</summary>
+  These screenshots were taken from XCode and Android Studio emulators. The mobile website looks identical in these form factors.
 <table style="width:100%; margin-top: 4px; margin-bottom: 4px; border: 0;">
   <tr style="border: 0;">
     <td style="text-align: center;">
