@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RecipeArchive Safari",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Capture and archive recipes from the web.",
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],

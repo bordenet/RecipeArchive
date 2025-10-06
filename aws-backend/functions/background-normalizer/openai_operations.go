@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -41,6 +42,25 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 		return nil, fmt.Errorf("OPENAI_API_KEY environment variable not set")
 	}
 
+	// VALIDATION: Detect broken recipes with no content
+	ingredientCount := len(recipe.Ingredients)
+	instructionCount := len(recipe.Instructions)
+
+	if ingredientCount == 0 && instructionCount == 0 {
+		log.Printf("❌ BROKEN RECIPE DETECTED: Recipe %s has 0 ingredients and 0 instructions", recipe.ID)
+		log.Printf("   Title: %s", recipe.Title)
+		log.Printf("   Source: %s", recipe.SourceURL)
+		return nil, fmt.Errorf("recipe has no content (0 ingredients, 0 instructions) - scraper likely failed")
+	}
+
+	if ingredientCount == 0 {
+		log.Printf("⚠️ WARNING: Recipe %s has 0 ingredients (but has %d instructions)", recipe.ID, instructionCount)
+	}
+
+	if instructionCount == 0 {
+		log.Printf("⚠️ WARNING: Recipe %s has 0 instructions (but has %d ingredients)", recipe.ID, ingredientCount)
+	}
+
 	// Check if this is a placeholder recipe that needs URL parsing first
 	if isPlaceholderRecipe(recipe) {
 		fmt.Printf("🔍 Detected placeholder recipe, parsing URL: %s\n", recipe.SourceURL)
@@ -59,15 +79,9 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 		}
 	}
 
-	// Check cache first
-	contentHash := generateContentHash(recipe)
-	cacheMutex.RLock()
-	if cachedResponse, exists := responseCache[contentHash]; exists {
-		cacheMutex.RUnlock()
-		fmt.Printf("🚀 Cache hit! Skipping OpenAI API call for similar content\n")
-		return applyNormalization(recipe, cachedResponse)
-	}
-	cacheMutex.RUnlock()
+	// CACHE DISABLED: Always call OpenAI to ensure fresh normalization
+	// The cache was causing broken recipes to persist across re-ingestions
+	fmt.Printf("📝 Cache disabled - calling OpenAI for fresh normalization\n")
 
 	// Build normalization prompt
 	prompt := buildNormalizationPrompt(recipe)
@@ -141,11 +155,8 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	// DEBUG: Log the parsed cookingMethods to see if they exist
 	fmt.Printf("🐛 Parsed cookingMethods count: %d\n", len(normResponse.CookingMethods))
 
-	// Cache the successful response
-	cacheMutex.Lock()
-	responseCache[contentHash] = &normResponse
-	fmt.Printf("💾 Cached OpenAI response for content hash: %s\n", contentHash[:8])
-	cacheMutex.Unlock()
+	// CACHE DISABLED - not storing response
+	fmt.Printf("📝 OpenAI normalization complete (cache disabled)\n")
 
 	return applyNormalization(recipe, &normResponse)
 }

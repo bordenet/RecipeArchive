@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RecipeArchive Extension",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Capture and archive recipes from the web.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
