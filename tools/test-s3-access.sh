@@ -11,7 +11,7 @@
 #   ./test-s3-access.sh
 #
 # ENVIRONMENT VARIABLES:
-#   - S3_BUCKET_NAME: The name of the S3 bucket to use for testing.
+#   - S3_RECIPE_STORAGE_BUCKET: The name of the S3 bucket to use for testing.
 #   - RECIPE_USER_EMAIL: The email address of the user to create the test data for.
 #   - RECIPE_USER_PASSWORD: The password for the user.
 #
@@ -24,13 +24,13 @@
 set -e
 
 # Check for required environment variables
-if [ -z "$S3_BUCKET_NAME" ] || [ -z "$RECIPE_USER_EMAIL" ] || [ -z "$RECIPE_USER_PASSWORD" ]; then
-    echo "❌ Missing required environment variables: S3_BUCKET_NAME, RECIPE_USER_EMAIL, RECIPE_USER_PASSWORD"
+if [ -z "$S3_RECIPE_STORAGE_BUCKET" ] || [ -z "$RECIPE_USER_EMAIL" ] || [ -z "$RECIPE_USER_PASSWORD" ]; then
+    echo "❌ Missing required environment variables: S3_RECIPE_STORAGE_BUCKET, RECIPE_USER_EMAIL, RECIPE_USER_PASSWORD"
     echo "💡 Please set them in your environment or in a .env file."
     exit 1
 fi
 
-BUCKET_NAME="$S3_BUCKET_NAME"
+BUCKET_NAME="$S3_RECIPE_STORAGE_BUCKET"
 USER_ID=$(echo "$RECIPE_USER_EMAIL" | sed 's/@/_at_/' | sed 's/\./_dot_/g')
 TEST_RECIPE_ID="test-recipe-$(date +%s)"
 

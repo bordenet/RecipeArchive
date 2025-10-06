@@ -29,7 +29,7 @@ const EXTENSION_ENV_VARS = [
   'COGNITO_APP_CLIENT_ID',
   'API_BASE_URL',
   'WEB_APP_URL',
-  'S3_BUCKET_NAME',
+  'S3_RECIPE_STORAGE_BUCKET',
 ];
 
 const TEST_ENV_VARS = [
@@ -176,7 +176,7 @@ class ExtensionEnvBuilder {
       COGNITO_APP_CLIENT_ID: this.envVars.COGNITO_APP_CLIENT_ID,
       API_BASE_URL: this.envVars.API_BASE_URL,
       WEB_APP_URL: this.envVars.WEB_APP_URL,
-      S3_BUCKET_NAME: this.envVars.S3_BUCKET_NAME,
+      S3_RECIPE_STORAGE_BUCKET: this.envVars.S3_RECIPE_STORAGE_BUCKET,
     };
 
     const configContent = `// Auto-generated environment configuration

@@ -34,7 +34,7 @@ if [[ -f "$ENV_FILE" ]]; then
     export $(grep -v '^#' "$ENV_FILE" | grep -v '^$' | xargs)
     echo "✅ Environment variables loaded successfully"
     echo "📧 Test user email: $TEST_USER_EMAIL"
-    echo "🪣 S3 bucket: $S3_BUCKET_NAME"
+    echo "🪣 S3 recipe storage: $S3_RECIPE_STORAGE_BUCKET"
     echo "🌍 AWS region: $AWS_REGION"
 else
     echo "❌ Error: .env file not found at $ENV_FILE"

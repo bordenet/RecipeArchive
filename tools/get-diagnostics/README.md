@@ -67,7 +67,7 @@ The binary is automatically added to `.gitignore` and should not be committed.
 ### Environment Variables
 
 Automatically loaded from `.env` file at repository root:
-- `S3_BUCKET_NAME` - S3 bucket name
+- `S3_RECIPE_STORAGE_BUCKET` - S3 bucket name
 - `AWS_REGION` - AWS region (default: us-west-2)
 - `AWS_ACCESS_KEY_ID` - AWS credentials
 - `AWS_SECRET_ACCESS_KEY` - AWS credentials

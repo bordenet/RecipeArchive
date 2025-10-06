@@ -182,7 +182,7 @@ API_BASE_URL=https://4eprojzbrc.execute-api.us-west-2.amazonaws.com/prod
 WEB_APP_URL=https://d1jcaphz4458q7.cloudfront.net
 
 # S3 Configuration (SECURE - New buckets with randomized names)
-S3_BUCKET_NAME=$STORAGE_BUCKET
+S3_RECIPE_STORAGE_BUCKET=$STORAGE_BUCKET
 S3_TEMP_BUCKET_NAME=$TEMP_BUCKET
 
 # Development Settings
@@ -214,7 +214,7 @@ CLOUDFRONT_DISTRIBUTION_ID=E1D19F7SLOJM5H
 CLOUDFRONT_URL=https://d1jcaphz4458q7.cloudfront.net
 
 # S3 Configuration (for web app deployment)
-S3_BUCKET=recipearchive-web-app-prod-990537043943
+S3_WEB_APP_BUCKET=recipearchive-web-app-prod-990537043943
 
 # OpenAI Configuration
 OPENAI_API_KEY=\\\${OPENAI_API_KEY}

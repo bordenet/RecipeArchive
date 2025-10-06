@@ -19,8 +19,8 @@ function loadEnvironmentConfig() {
     WEB_APP_URL:
       localStorage.getItem("WEB_APP_URL") ||
       "https://your-cloudfront-distribution.cloudfront.net",
-    S3_BUCKET_NAME:
-      localStorage.getItem("S3_BUCKET_NAME") ||
+    S3_RECIPE_STORAGE_BUCKET:
+      localStorage.getItem("S3_RECIPE_STORAGE_BUCKET") ||
       "your-recipe-storage-bucket-name",
   };
 }
