@@ -94,6 +94,8 @@ ls -la "dist/extensions/RecipeArchive-Chrome-v$CHROME_VERSION.zip"
 ls -la "dist/extensions/RecipeArchive-Safari-v$SAFARI_VERSION.zip"
 
 # Create version manifest for web app consumption
+# Use S3_RECIPE_STORAGE_BUCKET for extensions storage
+EXTENSIONS_BUCKET="${S3_RECIPE_STORAGE_BUCKET:-$S3_WEB_APP_BUCKET}"
 echo "📝 Creating version manifest..."
 cat > "dist/extensions/versions.json" << EOF
 {
@@ -103,34 +105,36 @@ cat > "dist/extensions/versions.json" << EOF
       "version": "$CHROME_VERSION",
       "filename": "$CHROME_PACKAGE",
       "size": $(ls -la "dist/extensions/$CHROME_PACKAGE" | awk '{print $5}'),
-      "downloadUrl": "https://$S3_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$CHROME_PACKAGE"
+      "downloadUrl": "https://$EXTENSIONS_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$CHROME_PACKAGE"
     },
     "safari": {
-      "version": "$SAFARI_VERSION", 
+      "version": "$SAFARI_VERSION",
       "filename": "$SAFARI_PACKAGE",
       "size": $(ls -la "dist/extensions/$SAFARI_PACKAGE" | awk '{print $5}'),
-      "downloadUrl": "https://$S3_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$SAFARI_PACKAGE"
+      "downloadUrl": "https://$EXTENSIONS_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$SAFARI_PACKAGE"
     }
   }
 }
 EOF
 
 # Upload to S3 (if AWS CLI is available and configured)
-if command -v aws &> /dev/null && [ -n "$S3_BUCKET" ]; then
+# Use S3_RECIPE_STORAGE_BUCKET for extensions storage
+EXTENSIONS_BUCKET="${S3_RECIPE_STORAGE_BUCKET:-$S3_WEB_APP_BUCKET}"
+if command -v aws &> /dev/null && [ -n "$EXTENSIONS_BUCKET" ]; then
     echo "☁️  Uploading extensions to S3..."
-    if ! aws s3 sync dist/extensions/ s3://$S3_BUCKET/extensions/
+    if ! aws s3 sync dist/extensions/ s3://$EXTENSIONS_BUCKET/extensions/
         --exclude "*" --include "*.zip" --include "versions.json" > /tmp/package-extensions.log 2>&1; then
         echo "❌ Failed to upload extensions to S3. See /tmp/package-extensions.log for details."
         exit 1
     fi
-    
+
     echo "✅ Extensions uploaded to S3 successfully!"
-    echo "📍 Chrome: https://$S3_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$CHROME_PACKAGE"
-    echo "📍 Safari: https://$S3_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$SAFARI_PACKAGE"
-    echo "📍 Versions: https://$S3_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/versions.json"
+    echo "📍 Chrome: https://$EXTENSIONS_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$CHROME_PACKAGE"
+    echo "📍 Safari: https://$EXTENSIONS_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/$SAFARI_PACKAGE"
+    echo "📍 Versions: https://$EXTENSIONS_BUCKET.s3.$AWS_REGION.amazonaws.com/extensions/versions.json"
 else
-    echo "⚠️  AWS CLI not found or S3_BUCKET not set. Extensions packaged locally only."
-    echo "💡 To upload to S3, install AWS CLI, set S3_BUCKET in your .env file and run again."
+    echo "⚠️  AWS CLI not found or EXTENSIONS_BUCKET not set. Extensions packaged locally only."
+    echo "💡 To upload to S3, install AWS CLI, set S3_RECIPE_STORAGE_BUCKET in your .env file and run again."
 fi
 
 echo ""

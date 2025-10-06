@@ -23,7 +23,7 @@
 #   - Go installed
 #   - Flutter installed
 #   - .env file in the root of the repository with the following variables:
-#       - S3_BUCKET: The name of the S3 bucket for the web app.
+#       - S3_WEB_APP_BUCKET: The name of the S3 bucket for the web app.
 #       - CLOUDFRONT_DISTRIBUTION_ID: The ID of the CloudFront distribution.
 #       - CLOUDFRONT_URL: The URL of the CloudFront distribution.
 #       - AWS_REGION: The AWS region to deploy to.
@@ -73,11 +73,12 @@ else
 fi
 
 # Configuration from environment variables
-if [ -z "$S3_BUCKET" ] || [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ] || [ -z "$CLOUDFRONT_URL" ] || [ -z "$AWS_REGION" ] || [ -z "$API_GATEWAY_ID" ]; then
+if [ -z "$S3_WEB_APP_BUCKET" ] || [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ] || [ -z "$CLOUDFRONT_URL" ] || [ -z "$AWS_REGION" ] || [ -z "$API_GATEWAY_ID" ]; then
     log_error "Missing required environment variables in .env file."
     log_error "Please check the .env.example file for a complete list of required variables and explanations."
     exit 1
 fi
+S3_BUCKET=$S3_WEB_APP_BUCKET  # Backward compatibility alias
 
 # Lambda Functions will be auto-discovered from AWS (no hardcoded values)
 declare -A LAMBDA_FUNCTIONS

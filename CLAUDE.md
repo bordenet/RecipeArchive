@@ -72,7 +72,7 @@ iOS/Android toolchain available
 ### AWS Environment Setup
 
 The project uses environment variables from `.env` for AWS authentication and bucket names:
-- **S3_BUCKET_NAME**: `recipe-storage-0ea7007d57f67ecb-990537043943`
+- **S3_RECIPE_STORAGE_BUCKET**: `recipe-storage-0ea7007d57f67ecb-990537043943`
 - **S3_TEMP_BUCKET_NAME**: `recipe-temp-0ea7007d57f67ecb-990537043943`
 - **S3_FAILED_PARSING_BUCKET_NAME**: `recipe-failed-0ea7007d57f67ecb-990537043943`
 

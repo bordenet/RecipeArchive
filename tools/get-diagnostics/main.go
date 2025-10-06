@@ -17,7 +17,7 @@ func main() {
 	loadEnvFile()
 
 	// Get defaults from environment variables
-	defaultBucket := os.Getenv("S3_BUCKET_NAME")
+	defaultBucket := os.Getenv("S3_RECIPE_STORAGE_BUCKET")
 	if defaultBucket == "" {
 		defaultBucket = "recipe-storage-0ea7007d57f67ecb-990537043943"
 	}

@@ -20,7 +20,7 @@ import (
 
 var (
 	testAPIGatewayURL = getEnvOrDefault("API_BASE_URL", "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod")
-	testBucketName    = getEnvOrDefault("S3_BUCKET_NAME", "recipe-storage-92e63ea21a6fb18c-990537043943")
+	testBucketName    = getEnvOrDefault("S3_RECIPE_STORAGE_BUCKET", "recipe-storage-92e63ea21a6fb18c-990537043943")
 )
 
 func getEnvOrDefault(key, defaultValue string) string {

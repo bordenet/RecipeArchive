@@ -39,7 +39,7 @@ fi
 
 # Configuration from environment variables with fallbacks
 DISTRIBUTION_ID=${CLOUDFRONT_DISTRIBUTION_ID:-"E1D19F7SLOJM5H"}
-S3_BUCKET=${S3_BUCKET:-"recipearchive-web-app-prod-990537043943"}
+S3_BUCKET=${S3_WEB_APP_BUCKET:-"recipearchive-web-app-prod-990537043943"}
 CLOUDFRONT_URL=${CLOUDFRONT_URL:-"https://d1jcaphz4458q7.cloudfront.net"}
 
 # Verify AWS credentials are available

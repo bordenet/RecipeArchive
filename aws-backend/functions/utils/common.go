@@ -35,9 +35,9 @@ type APIError struct {
 
 // Environment variables
 var (
-	S3BucketName      = os.Getenv("S3_BUCKET_NAME")
-	Region            = os.Getenv("AWS_REGION")
-	CognitoUserPoolID = os.Getenv("COGNITO_USER_POOL_ID")
+	S3RecipeStorageBucket = os.Getenv("S3_RECIPE_STORAGE_BUCKET")
+	Region                = os.Getenv("AWS_REGION")
+	CognitoUserPoolID     = os.Getenv("COGNITO_USER_POOL_ID")
 )
 
 // GetAWSRegion returns the AWS region from environment variable with fallback
@@ -50,8 +50,8 @@ func GetAWSRegion() string {
 
 // GetS3BucketName returns the S3 bucket name from environment variable with fallback
 func GetS3BucketName() string {
-	if S3BucketName != "" {
-		return S3BucketName
+	if S3RecipeStorageBucket != "" {
+		return S3RecipeStorageBucket
 	}
 	return "recipe-storage-0ea7007d57f67ecb-990537043943" // fallback to current secure bucket
 }
@@ -239,7 +239,7 @@ func GeneratePresignedURL(key string, expiration time.Duration) (string, error) 
 	presignClient := s3.NewPresignClient(s3Client)
 
 	presignResult, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String(S3BucketName),
+		Bucket: aws.String(GetS3BucketName()),
 		Key:    aws.String(key),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiration

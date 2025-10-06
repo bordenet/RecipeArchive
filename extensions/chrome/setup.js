@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "WEB_APP_URL",
       "https://your-cloudfront-distribution.cloudfront.net"
     );
-    localStorage.setItem("S3_BUCKET_NAME", "your-recipe-storage-bucket-name");
+    localStorage.setItem("S3_RECIPE_STORAGE_BUCKET", "your-recipe-storage-bucket-name");
 
     // Enable production mode for the extension
     localStorage.setItem("recipeArchive.dev", "false");

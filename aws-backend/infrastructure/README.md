@@ -58,7 +58,7 @@ COGNITO_USER_POOL_ID=your-deployed-user-pool-id
 COGNITO_APP_CLIENT_ID=your-deployed-app-client-id
 API_BASE_URL=https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod
 WEB_APP_URL=https://your-cloudfront-distribution.cloudfront.net
-S3_BUCKET_NAME=your-s3-bucket-name
+S3_RECIPE_STORAGE_BUCKET=your-s3-bucket-name
 ```
 
 ## Cost Management

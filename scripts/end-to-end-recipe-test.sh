@@ -43,7 +43,7 @@ TESTDATA_DIR="$TOOLS_DIR/testdata"
 TEMP_DIR="/tmp/recipe-e2e-test"
 TEST_USER_ID=${TEST_USER_ID:-"d80153c0-90b1-7090-85be-28e9c4e458f7"}
 RECIPE_TITLE_PATTERN=${RECIPE_TITLE_PATTERN:-"Margarita"}  # We'll test with margarita recipes
-S3_BUCKET=${S3_BUCKET_NAME}
+S3_BUCKET=${S3_RECIPE_STORAGE_BUCKET}
 
 echo -e "${BLUE}🧪 End-to-End Recipe Workflow Test${NC}"
 echo "Testing: HTML Fixture → Parser → AWS Backend → Flutter App"
