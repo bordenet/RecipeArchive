@@ -14994,7 +14994,7 @@
         }
         if (ingredients.length === 0) {
           ingredients = $2(
-            ".recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient, ul li, .entry-content ul li"
+            ".recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient"
           ).map((_, el) => ({ text: this.sanitizeText($2(el).text()) })).get();
         }
         if (ingredients.length === 0) {
@@ -15017,6 +15017,22 @@
               )
             })).filter((i) => i.text);
           }
+        }
+        if (ingredients.length === 0) {
+          $2(".entry-content p").each((_, el) => {
+            const text3 = $2(el).text().trim();
+            if (text3.match(/\d+\s+(cup|tablespoon|teaspoon|ounce|pound|lb|oz|tsp|tbsp)/gi)) {
+              const lines = text3.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+              if (lines.length > 3 && lines.filter((l) => /\d/.test(l)).length > 2) {
+                lines.forEach((line) => {
+                  if (line.length > 0) {
+                    ingredients.push({ text: this.sanitizeText(line) });
+                  }
+                });
+                return false;
+              }
+            }
+          });
         }
         let instructions = [];
         const jetpackDirectionsContainer = $2(".jetpack-recipe-directions");
@@ -15045,7 +15061,7 @@
         }
         if (instructions.length === 0) {
           instructions = $2(
-            ".instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step, ul li, .entry-content ol li, .entry-content ul li"
+            ".instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step"
           ).map((i, el) => ({
             stepNumber: i + 1,
             text: this.sanitizeText($2(el).text())
@@ -15061,6 +15077,24 @@
                   text: text3
                 });
             });
+          });
+        }
+        if (instructions.length === 0 && ingredients.length > 0) {
+          let foundIngredients = false;
+          $2(".entry-content p").each((_, el) => {
+            const text3 = $2(el).text().trim();
+            if (!foundIngredients && ingredients.some((ing) => text3.includes(ing.text.substring(0, 20)))) {
+              foundIngredients = true;
+              return;
+            }
+            if (foundIngredients && text3.length > 50) {
+              if (/\b(place|add|cook|bring|simmer|stir|transfer|drizzle|serve|boil|heat|mix|combine|cut|slice|halve|quarter|reduce)\b/gi.test(text3)) {
+                instructions.push({
+                  stepNumber: instructions.length + 1,
+                  text: this.sanitizeText(text3)
+                });
+              }
+            }
           });
         }
         let instrIdx = ingredientP.index();

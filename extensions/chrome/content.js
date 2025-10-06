@@ -113,7 +113,16 @@ function initializeContentScript() {
                 sendResponse({ status: "success", data: recipeData });
               } else {
                 console.log("⚠️ No meaningful recipe data found");
-                const basicRecipe = {
+
+                // Report to diagnostics for offline analysis
+                reportDiagnostic("no-recipe-data", new Error("Recipe extraction returned empty ingredients and instructions"), {
+                  url: window.location.href,
+                  pageTitle: document.title,
+                  extractionFailed: true,
+                });
+
+                // Return error status so popup won't submit empty recipe
+                const errorData = {
                   title: document.title || "Unknown Recipe",
                   url: window.location.href,
                   timestamp: new Date().toISOString(),
@@ -121,7 +130,11 @@ function initializeContentScript() {
                   instructions: [],
                   source: "no-recipe-found",
                 };
-                sendResponse({ status: "success", data: basicRecipe });
+                sendResponse({
+                  status: "error",
+                  error: "No recipe content found on this page",
+                  data: errorData
+                });
               }
             } catch (error) {
               console.error("❌ Recipe extraction error:", error);
@@ -132,7 +145,8 @@ function initializeContentScript() {
                 url: window.location.href,
               });
 
-              const errorRecipe = {
+              // Return error status so popup won't submit broken recipe
+              const errorData = {
                 title: document.title || "Unknown Recipe",
                 url: window.location.href,
                 timestamp: new Date().toISOString(),
@@ -141,7 +155,11 @@ function initializeContentScript() {
                 source: "extraction-error",
                 error: error.message,
               };
-              sendResponse({ status: "success", data: errorRecipe });
+              sendResponse({
+                status: "error",
+                error: error.message || "Recipe extraction failed",
+                data: errorData
+              });
             }
           })();
           return true;

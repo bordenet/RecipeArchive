@@ -1001,18 +1001,11 @@ function isValidRecipePage(recipeData, pageUrl) {
     return false;
   }
 
-  // Check for minimum content threshold to avoid capturing incomplete recipes
-  if (ingredientsCount < 2) {
+  // Validation: Reject only if BOTH are suspiciously low
+  // Single long instruction paragraphs are valid, so don't reject on instruction count alone
+  if (ingredientsCount < 2 && instructionsCount < 2) {
     showStatus(
-      "❌ Only found 1 ingredient - this may not be a complete recipe. Please check the page content.",
-      "#ffebee"
-    );
-    return false;
-  }
-
-  if (instructionsCount < 2) {
-    showStatus(
-      "❌ Only found 1 instruction step - this may not be a complete recipe. Please check the page content.",
+      "❌ Incomplete recipe detected (too few ingredients and instructions). Please check the page content.",
       "#ffebee"
     );
     return false;
@@ -1117,7 +1110,9 @@ async function captureRecipe() {
 
     if (response.status === "error") {
       console.error("Content script error:", response.error);
-      showStatus("❌ Error communicating with content script", "#ffebee");
+      const errorMessage = response.error || "Error communicating with content script";
+      showStatus(`❌ ${errorMessage}`, "#ffebee");
+      // Error already reported to diagnostics by content script
       return;
     }
 

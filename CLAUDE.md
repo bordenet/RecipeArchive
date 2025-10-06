@@ -2,9 +2,11 @@
 
 ## Current Status
 
-**v1.0.0 Production Release**: https://d1jcaphz4458q7.cloudfront.net
+**v1.0.0 Production**: https://d1jcaphz4458q7.cloudfront.net
 
-PLEASE review PROJECT_STATUS.md and keep that document up to date
+**CRITICAL**: Review PROJECT_STATUS.md for list of critical issues requiring immediate attention.
+
+ALWAYS review COMMANDS.md to find project-specific tools, including tools for diagnostic error harvesting, tracing, and deployments. DO NOT "wing it" with direct S3 access, direct lambda deployments, etc.
 
 ### Infrastructure Validation Protocol
 
@@ -67,19 +69,49 @@ iOS/Android toolchain available
 
 ## Debugging Protocol
 
-**For Recipe Normalization Issues:**
-1. **Find Recipe ID**: `cd tools/content-ops && ./content-ops -include-recipe-id "Recipe Name"`
-2. **Trace Processing**: `cd tools/recipe-tracer && ./recipe-tracer -recipe RECIPE_ID`
-3. **Check for Cross-Contamination**: Look for foreign recipe data in CloudWatch logs
+### AWS Environment Setup
+
+The project uses environment variables from `.env` for AWS authentication and bucket names:
+- **S3_BUCKET_NAME**: `recipe-storage-0ea7007d57f67ecb-990537043943`
+- **S3_TEMP_BUCKET_NAME**: `recipe-temp-0ea7007d57f67ecb-990537043943`
+- **S3_FAILED_PARSING_BUCKET_NAME**: `recipe-failed-0ea7007d57f67ecb-990537043943`
+
+All Go tools automatically load these from `../../.env` relative to their location.
+
+**NEVER access S3 directly via AWS CLI commands. ALWAYS use the provided Go tools.**
+
+### For Recipe Normalization Issues
+
+**Standard workflow for missing ingredients/instructions:**
+
+1. **Find Recipe ID** (from repo root):
+   ```bash
+   cd tools/content-ops && ./content-ops -include-recipe-id "Recipe Name"
+   ```
+
+2. **Trace Processing** (from repo root):
+   ```bash
+   cd tools/recipe-tracer && ./recipe-tracer -recipe RECIPE_ID
+   ```
+
+   This shows:
+   - Current recipe state (ingredient count, instruction count)
+   - Processing timeline with CloudWatch logs
+   - Cache performance
+   - S3 operations
+   - Any errors encountered
+
+3. **Analyze Output**:
+   - If "Ingredients: 0" and "Instructions: 0" → scraper failed to extract content
+   - Check CloudWatch logs in output for normalization errors
+   - Look for cache hits that might indicate stale data
+   - Verify S3 operations show PUT events
 
 **For Production Error Triage:**
-1. **Global Report**: `cd tools/get-diagnostics && ./get-diagnostics` (default shows all diagnostics with summary)
-2. **Harvest Recent Errors**: `cd tools/get-diagnostics && ./get-diagnostics -all -since 24h`
-3. **Filter by Source**: Use `-extensions`, `-flutter`, or `-lambdas` flags
-4. **Export for Analysis**: Add `-json` flag to output JSON for further processing
-5. **Check S3 Directly**: Review S3 keys in output for full diagnostic context
 
-Tools are pre-built.
+Tools are pre-built and run from repository root.
+
+IMPORTANT: `get-diagnostics` tool location TBD - tool may not exist yet. Use CloudWatch Logs Insights directly if needed.
 
 ## Deployment Rules
 

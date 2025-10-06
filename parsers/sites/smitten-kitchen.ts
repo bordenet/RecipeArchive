@@ -158,7 +158,7 @@ export class SmittenKitchenParser extends BaseParser {
       }
       if (ingredients.length === 0) {
         ingredients = $(
-          '.recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient, ul li, .entry-content ul li'
+          '.recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient'
         )
           .map((_, el) => ({ text: this.sanitizeText($(el).text()) }))
           .get();
@@ -194,6 +194,27 @@ export class SmittenKitchenParser extends BaseParser {
             .filter((i) => i.text);
         }
       }
+
+      // Parse old-style narrative recipes (2013 era) - ingredients in paragraph with newlines
+      if (ingredients.length === 0) {
+        $('.entry-content p').each((_, el) => {
+          const text = $(el).text().trim();
+          // Look for paragraphs with multiple ingredient-like lines (measurements)
+          if (text.match(/\d+\s+(cup|tablespoon|teaspoon|ounce|pound|lb|oz|tsp|tbsp)/gi)) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            // If multiple lines with measurements, treat as ingredient list
+            if (lines.length > 3 && lines.filter(l => /\d/.test(l)).length > 2) {
+              lines.forEach(line => {
+                if (line.length > 0) {
+                  ingredients.push({ text: this.sanitizeText(line) });
+                }
+              });
+              return false; // Stop after finding ingredients
+            }
+          }
+        });
+      }
+
       let instructions: Instruction[] = [];
       // Enhanced jetpack directions parsing - extract clean paragraph content
       const jetpackDirectionsContainer = $('.jetpack-recipe-directions');
@@ -242,7 +263,7 @@ export class SmittenKitchenParser extends BaseParser {
       }
       if (instructions.length === 0) {
         instructions = $(
-          '.instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step, ul li, .entry-content ol li, .entry-content ul li'
+          '.instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step'
         )
           .map((i, el) => ({
             stepNumber: i + 1,
@@ -266,6 +287,30 @@ export class SmittenKitchenParser extends BaseParser {
               });
           });
       }
+
+      // Parse old-style narrative recipes (2013 era) - instructions in paragraphs after ingredients
+      if (instructions.length === 0 && ingredients.length > 0) {
+        let foundIngredients = false;
+        $('.entry-content p').each((_, el) => {
+          const text = $(el).text().trim();
+          // Skip until we find the ingredient paragraph
+          if (!foundIngredients && ingredients.some(ing => text.includes(ing.text.substring(0, 20)))) {
+            foundIngredients = true;
+            return; // Skip ingredient paragraph
+          }
+          // After ingredients, look for cooking instruction paragraphs
+          if (foundIngredients && text.length > 50) {
+            // Look for cooking verbs
+            if (/\b(place|add|cook|bring|simmer|stir|transfer|drizzle|serve|boil|heat|mix|combine|cut|slice|halve|quarter|reduce)\b/gi.test(text)) {
+              instructions.push({
+                stepNumber: instructions.length + 1,
+                text: this.sanitizeText(text),
+              });
+            }
+          }
+        });
+      }
+
       // Refined entry-content selectors for instructions
       let instrIdx = ingredientP.index();
       entryContent
