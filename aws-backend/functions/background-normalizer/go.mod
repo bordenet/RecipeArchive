@@ -1,6 +1,6 @@
 module background-normalizer
 
-go 1.21
+go 1.23.0
 
 require (
 	github.com/aws/aws-lambda-go v1.47.0
@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.56.3
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.60.0
-	golang.org/x/net v0.25.0
+	golang.org/x/net v0.38.0
 )
 
 require (
