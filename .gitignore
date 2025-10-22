@@ -14,8 +14,10 @@ config/secrets.yml
 gitleaks-report.json
 tree.txt
 
-# Claude Code settings contain sensitive infrastructure data
-.claude/
+# Claude Code local settings (may contain sensitive data)
+.claude/settings.local.json
+# But DO track skills (shared workflows)
+# !.claude/skills/
 
 # Binaries
 *.exe
