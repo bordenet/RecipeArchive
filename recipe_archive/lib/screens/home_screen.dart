@@ -90,6 +90,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Check for shared URLs from iOS Share Extension
     _checkForSharedUrl();
 
+    // Set up handler for when app is already running
+    ShareChannel.setSharedUrlHandler((sharedData) {
+      if (mounted) {
+        final url = sharedData['url']!;
+        final html = sharedData['html'];
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(html != null
+                ? 'Processing recipe with HTML...'
+                : 'Processing shared URL...'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        _processSharedRecipe(url, html: html);
+      }
+    });
+
     // Set up infinite scroll listener
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
