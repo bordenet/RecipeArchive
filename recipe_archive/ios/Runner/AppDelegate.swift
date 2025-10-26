@@ -4,7 +4,7 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate {
   private let shareChannelName = "com.recipearchive/share"
-  private let appGroupName = "group.com.recipearchive.shared"
+  private let appGroupName = "group.com.recipearchive.RecipeArchive"
 
   override func application(
     _ application: UIApplication,
