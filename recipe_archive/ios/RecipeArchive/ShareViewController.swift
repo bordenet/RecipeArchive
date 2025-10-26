@@ -34,6 +34,10 @@ class ShareViewController: UIViewController {
             return
         }
 
+        var extractedURL: URL?
+        var extractedHTML: String?
+        let dispatchGroup = DispatchGroup()
+
         // Debug: print all available type identifiers
         for item in extensionItems {
             guard let attachments = item.attachments else { continue }
@@ -46,66 +50,66 @@ class ShareViewController: UIViewController {
                     }
                 }
 
-                // Try public.url first
+                // Extract URL
                 if attachment.hasItemConformingToTypeIdentifier("public.url") {
+                    dispatchGroup.enter()
                     print("DEBUG: Loading public.url")
-                    attachment.loadItem(forTypeIdentifier: "public.url", options: nil) { [weak self] (item, error) in
-                        guard let self = self, !self.hasCompleted else { return }
-
-                        if let error = error {
-                            print("DEBUG: Error loading URL: \(error)")
-                            DispatchQueue.main.async {
-                                self.showErrorAndDismiss(message: "Error loading URL: \(error.localizedDescription)")
-                            }
-                            return
-                        }
+                    attachment.loadItem(forTypeIdentifier: "public.url", options: nil) { (item, error) in
+                        defer { dispatchGroup.leave() }
 
                         if let url = item as? URL {
                             print("DEBUG: Got URL: \(url)")
-                            DispatchQueue.main.async {
-                                self.processURL(url)
-                            }
+                            extractedURL = url
                         } else if let urlString = item as? String, let url = URL(string: urlString) {
                             print("DEBUG: Got URL from string: \(url)")
-                            DispatchQueue.main.async {
-                                self.processURL(url)
-                            }
-                        } else {
-                            print("DEBUG: Item is not a URL: \(String(describing: item))")
-                            DispatchQueue.main.async {
-                                self.showErrorAndDismiss(message: "Could not extract URL from shared content")
-                            }
+                            extractedURL = url
                         }
                     }
-                    return
+                }
+
+                // Extract HTML (for full recipe content, including paywalled sites)
+                if attachment.hasItemConformingToTypeIdentifier("public.html") {
+                    dispatchGroup.enter()
+                    print("DEBUG: Loading public.html")
+                    attachment.loadItem(forTypeIdentifier: "public.html", options: nil) { (item, error) in
+                        defer { dispatchGroup.leave() }
+
+                        if let data = item as? Data, let html = String(data: data, encoding: .utf8) {
+                            print("DEBUG: Got HTML (\(html.count) chars)")
+                            extractedHTML = html
+                        } else if let html = item as? String {
+                            print("DEBUG: Got HTML string (\(html.count) chars)")
+                            extractedHTML = html
+                        }
+                    }
                 }
             }
         }
 
-        // If we get here, no URL type was found
-        print("DEBUG: No public.url found in any attachment")
-        showErrorAndDismiss(message: "No URL found. Please share a web page.")
-    }
+        // Wait for all extractions to complete
+        dispatchGroup.notify(queue: .main) { [weak self] in
+            guard let self = self, !self.hasCompleted else { return }
 
-    private func processURL(_ url: URL) {
-        print("DEBUG: Processing URL: \(url.absoluteString)")
+            // Must have at least a URL
+            guard let url = extractedURL else {
+                print("DEBUG: No URL extracted")
+                self.showErrorAndDismiss(message: "No URL found. Please share a web page.")
+                return
+            }
 
-        // Validate URL scheme
-        guard isValidWebURL(url) else {
-            print("DEBUG: Invalid URL scheme")
-            showErrorAndDismiss(message: "Invalid URL. Please share a web page (http:// or https://)")
-            return
+            // Validate URL
+            guard self.isValidWebURL(url) else {
+                print("DEBUG: Invalid URL scheme")
+                self.showErrorAndDismiss(message: "Invalid URL. Please share a web page (http:// or https://)")
+                return
+            }
+
+            print("DEBUG: Processing URL: \(url.absoluteString), HTML: \(extractedHTML != nil ? "yes" : "no")")
+
+            // Save both URL and HTML to App Group
+            self.saveToAppGroup(url: url, html: extractedHTML)
+            self.showSuccessAndDismiss(url: url)
         }
-
-        print("DEBUG: URL is valid, saving to App Group")
-
-        // Save to App Group
-        saveURLToAppGroup(url)
-
-        print("DEBUG: Saved successfully, showing success and dismissing")
-
-        // Show success message before dismissing
-        showSuccessAndDismiss(url: url)
     }
 
     private func showSuccessAndDismiss(url: URL) {
@@ -129,10 +133,20 @@ class ShareViewController: UIViewController {
         return scheme == "http" || scheme == "https"
     }
 
-    private func saveURLToAppGroup(_ url: URL) {
+    private func saveToAppGroup(url: URL, html: String?) {
         let defaults = UserDefaults(suiteName: "group.com.recipearchive.shared")
         defaults?.set(url.absoluteString, forKey: "shared_url")
         defaults?.set(Date(), forKey: "shared_url_timestamp")
+
+        // Save HTML if available (for paywalled sites and full recipe parsing)
+        if let html = html {
+            defaults?.set(html, forKey: "shared_html")
+            print("DEBUG: Saved HTML to App Group (\(html.count) chars)")
+        } else {
+            defaults?.removeObject(forKey: "shared_html")
+            print("DEBUG: No HTML available, saved URL only")
+        }
+
         defaults?.synchronize()
     }
 
