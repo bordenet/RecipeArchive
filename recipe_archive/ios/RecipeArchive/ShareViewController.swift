@@ -54,7 +54,7 @@ class ShareViewController: UIViewController {
                 if attachment.hasItemConformingToTypeIdentifier("public.url") {
                     dispatchGroup.enter()
                     print("DEBUG: Loading public.url")
-                    attachment.loadItem(forTypeIdentifier: "public.url", options: [NSExtensionItem.ExtensionJavaScriptPreprocessingResultsKey: URL.self]) { (item, error) in
+                    attachment.loadItem(forTypeIdentifier: "public.url", options: nil) { (item, error) in
                         defer { dispatchGroup.leave() }
 
                         if let url = item as? URL {
@@ -71,7 +71,7 @@ class ShareViewController: UIViewController {
                 if attachment.hasItemConformingToTypeIdentifier("public.html") {
                     dispatchGroup.enter()
                     print("DEBUG: Loading public.html")
-                    attachment.loadItem(forTypeIdentifier: "public.html", options: [NSExtensionItem.ExtensionJavaScriptPreprocessingResultsKey: String.self]) { (item, error) in
+                    attachment.loadItem(forTypeIdentifier: "public.html", options: nil) { (item, error) in
                         defer { dispatchGroup.leave() }
 
                         if let data = item as? Data, let html = String(data: data, encoding: .utf8) {
