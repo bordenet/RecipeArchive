@@ -42,6 +42,7 @@ import UIKit
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey : Any] = [:]
   ) -> Bool {
+    print("DEBUG AppDelegate: application:open:options: called")
     // When opened via share extension, the app is already running
     // The URL checking happens in the Flutter side via checkForSharedUrl
     let shareChannel = FlutterMethodChannel(name: shareChannelName, binaryMessenger: (window?.rootViewController as! FlutterViewController).binaryMessenger)
