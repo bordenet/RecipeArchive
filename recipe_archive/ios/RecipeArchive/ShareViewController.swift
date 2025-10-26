@@ -134,7 +134,7 @@ class ShareViewController: UIViewController {
     }
 
     private func saveToAppGroup(url: URL, html: String?) {
-        let defaults = UserDefaults(suiteName: "group.com.recipearchive.shared")
+        let defaults = UserDefaults(suiteName: "group.com.recipearchive.RecipeArchive")
         defaults?.set(url.absoluteString, forKey: "shared_url")
         defaults?.set(Date(), forKey: "shared_url_timestamp")
 
