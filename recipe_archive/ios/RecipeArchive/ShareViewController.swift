@@ -6,100 +6,128 @@
 //
 
 import UIKit
-import Social
 
-class ShareViewController: SLComposeServiceViewController {
+class ShareViewController: UIViewController {
 
-    private var extractedURL: URL?
+    private var hasCompleted = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Extract URL from shared content
-        extractURL()
-    }
+        // Make view transparent while processing
+        view.backgroundColor = .clear
 
-    override func isContentValid() -> Bool {
-        // Validate that we have a valid web URL
-        guard let url = extractedURL else {
-            return false
-        }
-        return isValidWebURL(url)
-    }
-
-    override func didSelectPost() {
-        // Save URL to App Group for main app to process
-        if let url = extractedURL {
-            saveURLToAppGroup(url)
+        // Set a timeout to ensure we don't hang
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+            if !(self?.hasCompleted ?? true) {
+                self?.showErrorAndDismiss(message: "Timeout: Unable to extract URL from shared content")
+            }
         }
 
-        // Close the share extension
-        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
+        // Extract and process URL
+        handleSharedContent()
     }
 
-    override func configurationItems() -> [Any]! {
-        return []
-    }
-
-    // MARK: - URL Extraction
-
-    private func extractURL() {
+    private func handleSharedContent() {
         guard let extensionItems = extensionContext?.inputItems as? [NSExtensionItem] else {
             showErrorAndDismiss(message: "No content to share")
             return
         }
 
+        // Debug: print all available type identifiers
         for item in extensionItems {
             guard let attachments = item.attachments else { continue }
 
             for attachment in attachments {
-                // Try to get URL from different representations
+                print("DEBUG: Available type identifiers:")
+                if let registeredTypeIdentifiers = attachment.registeredTypeIdentifiers as? [String] {
+                    for typeId in registeredTypeIdentifiers {
+                        print("  - \(typeId)")
+                    }
+                }
+
+                // Try public.url first
                 if attachment.hasItemConformingToTypeIdentifier("public.url") {
+                    print("DEBUG: Loading public.url")
                     attachment.loadItem(forTypeIdentifier: "public.url", options: nil) { [weak self] (item, error) in
-                        if let url = item as? URL {
+                        guard let self = self, !self.hasCompleted else { return }
+
+                        if let error = error {
+                            print("DEBUG: Error loading URL: \(error)")
                             DispatchQueue.main.async {
-                                self?.extractedURL = url
-                                self?.validateContent()
+                                self.showErrorAndDismiss(message: "Error loading URL: \(error.localizedDescription)")
+                            }
+                            return
+                        }
+
+                        if let url = item as? URL {
+                            print("DEBUG: Got URL: \(url)")
+                            DispatchQueue.main.async {
+                                self.processURL(url)
+                            }
+                        } else if let urlString = item as? String, let url = URL(string: urlString) {
+                            print("DEBUG: Got URL from string: \(url)")
+                            DispatchQueue.main.async {
+                                self.processURL(url)
+                            }
+                        } else {
+                            print("DEBUG: Item is not a URL: \(String(describing: item))")
+                            DispatchQueue.main.async {
+                                self.showErrorAndDismiss(message: "Could not extract URL from shared content")
                             }
                         }
                     }
                     return
                 }
-
-                // Fallback: try to get URL from web page
-                if attachment.hasItemConformingToTypeIdentifier("public.html") {
-                    attachment.loadItem(forTypeIdentifier: "public.html", options: nil) { [weak self] (item, error) in
-                        // Extract URL from HTML content if needed
-                        // For now, we'll rely on public.url
-                        if error != nil {
-                            DispatchQueue.main.async {
-                                self?.showErrorAndDismiss(message: "Could not extract URL from page")
-                            }
-                        }
-                    }
-                }
             }
         }
+
+        // If we get here, no URL type was found
+        print("DEBUG: No public.url found in any attachment")
+        showErrorAndDismiss(message: "No URL found. Please share a web page.")
     }
 
-    internal override func validateContent() {
-        if !isContentValid() {
+    private func processURL(_ url: URL) {
+        print("DEBUG: Processing URL: \(url.absoluteString)")
+
+        // Validate URL scheme
+        guard isValidWebURL(url) else {
+            print("DEBUG: Invalid URL scheme")
             showErrorAndDismiss(message: "Invalid URL. Please share a web page (http:// or https://)")
+            return
         }
+
+        print("DEBUG: URL is valid, saving to App Group")
+
+        // Save to App Group
+        saveURLToAppGroup(url)
+
+        print("DEBUG: Saved successfully, showing success and dismissing")
+
+        // Show success message before dismissing
+        showSuccessAndDismiss(url: url)
     }
 
-    // MARK: - URL Validation
+    private func showSuccessAndDismiss(url: URL) {
+        let alert = UIAlertController(
+            title: "Recipe Saved",
+            message: "Open RecipeArchive to parse this recipe:\n\(url.absoluteString)",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            self?.dismissExtension()
+        })
+
+        present(alert, animated: true)
+    }
 
     private func isValidWebURL(_ url: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased() else {
             return false
         }
-
-        // Only allow HTTP and HTTPS
         return scheme == "http" || scheme == "https"
     }
-
-    // MARK: - App Group Communication
 
     private func saveURLToAppGroup(_ url: URL) {
         let defaults = UserDefaults(suiteName: "group.com.recipearchive.shared")
@@ -108,7 +136,13 @@ class ShareViewController: SLComposeServiceViewController {
         defaults?.synchronize()
     }
 
-    // MARK: - Error Handling
+
+    private func dismissExtension() {
+        guard !hasCompleted else { return }
+        hasCompleted = true
+        print("DEBUG: Dismissing extension")
+        extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+    }
 
     private func showErrorAndDismiss(message: String) {
         let alert = UIAlertController(
@@ -118,7 +152,7 @@ class ShareViewController: SLComposeServiceViewController {
         )
 
         alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-            self?.cancel()
+            self?.dismissExtension()
         })
 
         present(alert, animated: true)
