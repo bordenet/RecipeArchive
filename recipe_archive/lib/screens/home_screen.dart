@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/paginated_recipe_service.dart';
 import '../services/auth_service.dart';
+import '../services/share_channel.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/onboarding_content.dart';
 import '../utils/platform_detection.dart';
@@ -84,6 +85,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
 
+    // Check for shared URLs from iOS Share Extension
+    _checkForSharedUrl();
+
     // Set up infinite scroll listener
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
@@ -96,6 +100,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       }
     });
+  }
+
+  Future<void> _checkForSharedUrl() async {
+    final sharedUrl = await ShareChannel.checkForSharedUrl();
+    if (sharedUrl != null && mounted) {
+      // Show a snackbar to confirm we received the URL
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Received shared recipe: $sharedUrl'),
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {},
+          ),
+        ),
+      );
+      // TODO: In Step 1.4, we'll process the URL and parse the recipe
+    }
   }
 
   @override
