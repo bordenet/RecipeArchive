@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/paginated_recipe_service.dart';
 import '../services/auth_service.dart';
 import '../services/share_channel.dart';
+import '../services/recipe_service.dart';
+import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/onboarding_content.dart';
 import '../utils/platform_detection.dart';
@@ -105,18 +107,84 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _checkForSharedUrl() async {
     final sharedUrl = await ShareChannel.checkForSharedUrl();
     if (sharedUrl != null && mounted) {
-      // Show a snackbar to confirm we received the URL
+      // Show processing snackbar
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Received shared recipe: $sharedUrl'),
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'OK',
-            onPressed: () {},
-          ),
+        const SnackBar(
+          content: Text('Processing shared recipe...'),
+          duration: Duration(seconds: 2),
         ),
       );
-      // TODO: In Step 1.4, we'll process the URL and parse the recipe
+
+      // Process the shared URL
+      await _processSharedRecipe(sharedUrl);
+    }
+  }
+
+  Future<void> _processSharedRecipe(String url) async {
+    try {
+      // Get the recipe service
+      final recipeService = ref.read(recipeServiceProvider);
+
+      // Extract domain from URL for temporary title
+      final uri = Uri.parse(url);
+      final domain = uri.host.replaceAll('www.', '');
+
+      // TODO: Backend doesn't currently support URL-only parsing
+      // For MVP, save as a bookmark-style placeholder recipe
+      // Future: Create backend endpoint that fetches/parses HTML server-side
+      final recipeData = {
+        'sourceUrl': url,
+        'title': 'Recipe from $domain',
+        'ingredients': [
+          {'text': '📱 Shared from mobile - Full parsing coming soon!'}
+        ],
+        'instructions': [
+          {'stepNumber': 1, 'text': 'Open the source URL to view the recipe'}
+        ],
+      };
+
+      // Call the API to save the recipe
+      final response = await recipeService.saveRecipe(
+        Recipe.fromJson(recipeData)
+      );
+
+      if (mounted) {
+        // Refresh the recipe list
+        ref.invalidate(paginatedRecipesProvider);
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Recipe bookmarked! Use browser extension for full parsing.'),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/recipe-detail',
+                  arguments: response.id,
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save recipe: ${e.toString()}'),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
     }
   }
 
