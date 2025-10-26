@@ -240,4 +240,44 @@ class DiagnosticService {
   double getConfidencePercentage(double confidence) {
     return (confidence * 100).round().toDouble();
   }
+
+  /// Report mobile share failure to diagnostic backend
+  /// This is for mobile app share extension failures (iOS/Android)
+  Future<bool> reportMobileShareFailure({
+    required String url,
+    required String errorType,
+    required String userId,
+    required String authToken,
+    String? errorDetails,
+    String? browserContext,
+    String platform = 'unknown',
+  }) async {
+    try {
+      final payload = {
+        'event_type': 'mobile_share_failure',
+        'url': url,
+        'error_type': errorType,
+        'platform': platform,
+        'app_version': '1.0.0', // TODO: Get from package info
+        'user_id': userId,
+        'timestamp': DateTime.now().toIso8601String(),
+        if (errorDetails != null) 'error_details': errorDetails,
+        if (browserContext != null) 'browser_context': browserContext,
+      };
+
+      final response = await http.post(
+        Uri.parse('https://d1jcaphz4458q7.cloudfront.net/api/v1/diagnostics/mobile-share-failure'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $authToken',
+        },
+        body: jsonEncode(payload),
+      );
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      // Diagnostic reporting should never crash the app
+      return false;
+    }
+  }
 }
