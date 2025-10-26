@@ -48,33 +48,28 @@ import UIKit
   }
 
   private func checkForSharedUrl() -> String? {
-    print("DEBUG AppDelegate: Checking for shared URL...")
     let defaults = UserDefaults(suiteName: appGroupName)
+    guard let urlString = defaults?.string(forKey: "shared_url") else { return nil }
+    let htmlString = defaults?.string(forKey: "shared_html")
 
-    // Check if there's a shared URL
-    guard let urlString = defaults?.string(forKey: "shared_url"),
-          let timestamp = defaults?.object(forKey: "shared_url_timestamp") as? Date else {
-      print("DEBUG AppDelegate: No shared URL found in App Group")
-      return nil
+    // Create JSON payload
+    var payload: [String: Any] = ["url": urlString]
+    if let html = htmlString {
+        payload["html"] = html
     }
 
-    print("DEBUG AppDelegate: Found shared URL: \(urlString), timestamp: \(timestamp)")
-
-    // Only return URLs shared in the last 60 seconds to avoid processing old shares
-    let timeSinceShare = Date().timeIntervalSince(timestamp)
-    print("DEBUG AppDelegate: Time since share: \(timeSinceShare) seconds")
-    guard timeSinceShare < 60 else {
-      print("DEBUG AppDelegate: Timeout expired, ignoring old share")
-      return nil
+    // Return JSON string
+    if let jsonData = try? JSONSerialization.data(withJSONObject: payload, options: []),
+       let jsonString = String(data: jsonData, encoding: .utf8) {
+        // Clear all shared data
+        defaults?.removeObject(forKey: "shared_url")
+        defaults?.removeObject(forKey: "shared_url_timestamp")
+        defaults?.removeObject(forKey: "shared_html")
+        defaults?.synchronize()
+        return jsonString
     }
 
-    print("DEBUG AppDelegate: Returning shared URL: \(urlString)")
-
-    // Clear the shared URL so we don't process it again
-    defaults?.removeObject(forKey: "shared_url")
-    defaults?.removeObject(forKey: "shared_url_timestamp")
-    defaults?.synchronize()
-
+    // Fallback to plain URL string
     return urlString
   }
 }
