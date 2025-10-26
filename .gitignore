@@ -361,3 +361,4 @@ decode_jwt.py
 venv/
 
 recipe_archive/test/services/diagnostic_service_test.dart
+aws-backend/functions/diagnostics-mobile-share/diagnostics-mobile-share
