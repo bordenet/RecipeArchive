@@ -40,4 +40,16 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
   end
+
+  # Exclude Share Extension from inheriting Flutter framework search paths
+  installer.generated_projects.each do |project|
+    project.targets.each do |target|
+      if target.name == 'RecipeArchive'
+        target.build_configurations.each do |config|
+          config.build_settings['FRAMEWORK_SEARCH_PATHS'] ||= ['$(inherited)']
+          config.build_settings['FRAMEWORK_SEARCH_PATHS'].delete_if { |path| path.include?('Flutter') }
+        end
+      end
+    end
+  end
 end
