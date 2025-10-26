@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 class ShareChannel {
-  static const MethodChannel _channel = MethodChannel('com.example.recipeArchive/share');
+  static const MethodChannel _channel = MethodChannel('com.recipearchive/share');
 
   static Future<Map<String, String>?> checkForSharedUrl() async {
     try {
