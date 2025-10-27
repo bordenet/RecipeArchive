@@ -10,7 +10,7 @@
 #          necessary dependencies.
 #
 # USAGE:
-#   ./scripts/ios-setup.sh [OPTIONS]
+#   ./scripts/ios/ios-setup.sh [OPTIONS]
 #
 #   OPTIONS:
 #     -h, --help              Show this help message
@@ -33,7 +33,7 @@
 #   - macOS 12+ for optimal compatibility
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
+#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
 #   - This script should be run once before starting iOS development.
 #   - It may ask for your password to install CocoaPods or configure Xcode.
 #   - For iPad on Mac support, ensure you have macOS 12+ and Apple Silicon.
@@ -56,7 +56,7 @@ show_help() {
     echo "Sets up the complete iOS development environment for RecipeArchive."
     echo ""
     echo "USAGE:"
-    echo "  ./scripts/ios-setup.sh [OPTIONS]"
+    echo "  ./scripts/ios/ios-setup.sh [OPTIONS]"
     echo ""
     echo "OPTIONS:"
     echo "  -h, --help              Show this help message"
@@ -73,10 +73,10 @@ show_help() {
     echo "  auto                  Auto-detect best available device (default)"
     echo ""
     echo "EXAMPLES:"
-    echo "  ./scripts/ios-setup.sh                    # Auto-detect device"
-    echo "  ./scripts/ios-setup.sh -d iphone16e       # Target iPhone 16e"
-    echo "  ./scripts/ios-setup.sh -d ipadmac -v      # iPad on Mac with verbose"
-    echo "  ./scripts/ios-setup.sh --skip-xcode       # Skip Xcode config for CI"
+    echo "  ./scripts/ios/ios-setup.sh                    # Auto-detect device"
+    echo "  ./scripts/ios/ios-setup.sh -d iphone16e       # Target iPhone 16e"
+    echo "  ./scripts/ios/ios-setup.sh -d ipadmac -v      # iPad on Mac with verbose"
+    echo "  ./scripts/ios/ios-setup.sh --skip-xcode       # Skip Xcode config for CI"
     echo ""
     echo "DEPENDENCIES:"
     echo "  - Flutter SDK (3.10+)"
@@ -84,7 +84,7 @@ show_help() {
     echo "  - CocoaPods (1.11+)"
     echo "  - macOS 12+ for optimal compatibility"
     echo ""
-    echo "For more help: ./scripts/ios-help.sh"
+    echo "For more help: ./scripts/ios/ios-help.sh"
 }
 
 # Parse command line arguments
@@ -315,13 +315,6 @@ fi
 print_success "iOS setup complete!"
 echo ""
 echo "🚀 Next steps:"
-if [ -n "$DEVICE_UDID" ]; then
-    echo "1. Run: flutter run -d \"$DEVICE_UDID\"        # Launch app on selected device"
-    echo "2. Run: ./scripts/ios-simulator.sh            # Alternative launcher"
-else
-    echo "1. Run: ./scripts/ios-simulator.sh            # Launch app in available simulator"
-fi
-echo "3. Run: ./scripts/ios-build.sh               # Build iOS app"
-echo "4. Run: open ios/Runner.xcworkspace           # Open in Xcode"
+echo "Run the main build and deploy script: ./scripts/ios-build-and-deploy.sh"
 echo ""
-echo "📚 For more options, see: ./scripts/ios-help.sh"
+echo "📚 For more options, see: ./scripts/ios/ios-help.sh"
