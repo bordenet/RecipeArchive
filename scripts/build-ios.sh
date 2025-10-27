@@ -314,7 +314,10 @@ if [ -n "$DERIVED_DATA_DIR" ]; then
 fi
 
 export SWIFT_VERSION=5
-xcodebuild archive \
+    COMPILER_INDEX_STORE_ENABLE=NO
+
+# Capture xcodebuild output for later filtering
+XCODEBUILD_OUTPUT=$(xcodebuild archive \
     -workspace "$IOS_DIR/Runner.xcworkspace" \
     -scheme Runner \
     -configuration "$BUILD_CONFIG" \
@@ -323,9 +326,12 @@ xcodebuild archive \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
     SUPPORTS_MACCATALYST=NO \
-    ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=\$(inherited) \
-    SWIFT_VERSION=\$(inherited) \
-    COMPILER_INDEX_STORE_ENABLE=NO
+    'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=$(inherited)' \
+    'SWIFT_VERSION=$(inherited)' \
+    COMPILER_INDEX_STORE_ENABLE=NO 2>&1)
+
+# Filter and print xcodebuild output
+echo "$XCODEBUILD_OUTPUT" | grep -v "^$" | grep -E "(Building|Compiling|Linking|Generating|Creating|Processing|✓)" || true
 
 if [ -d "$RUNNER_ARCHIVE" ]; then
     echo -e "  ${GREEN}✓ Runner.app built successfully (Universal Binary)${NC}"
