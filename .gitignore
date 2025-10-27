@@ -148,24 +148,49 @@ recipe_archive/build/
 aws-backend/functions/flutter-console-diagnostics/
 aws-backend/functions/flutter-console-diagnostics/*
 
-# Swift / iOS
+# Xcode user data (machine-specific)
+xcuserdata/
+*.xcuserstate
+
+# Xcode project files that should be tracked
+!*.xcodeproj/
+!*.xcworkspace/
+!*.xcassets/
+
+# Build outputs and intermediate files
 DerivedData/
-#*.xcuserstate
-#*.xcworkspace
-#*.xcodeproj
+build/
+
+# Xcode project user-specific or workspace state files
 *.pbxuser
 *.mode1v3
 *.mode2v3
 *.perspectivev3
+*.xccheckout
 *.moved-aside
-#*.xcassets
-*.swiftpm
+*.xcscmblueprint
+*.xcuserstate
+
+# CocoaPods - ignore Pods folder but track Podfile and Podfile.lock
+Pods/
+!Podfile
+!Podfile.lock
+
+# Swift Package Manager artifacts
+.build/
+.swiftpm/
+
+# Playgrounds
 *.playground
 *.playgroundbook
+
+# Archives and debug symbols
 *.ipa
 *.dSYM
-Pods/
-Podfile.lock
+
+# Other
+.idea/
+*.hmap
 
 # Development Tools
 .vscode/
