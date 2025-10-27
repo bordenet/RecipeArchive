@@ -94,6 +94,10 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
   - Extension reports errors to S3 but no monitoring
   - No CloudWatch alarms for parsing failures
   - No dashboard for error trends
+  - Implementation plan available: Add CloudWatch metrics to diagnostics and background-normalizer Lambdas, deploy monitoring stack with alarms and dashboard
+  - Key metrics needed: ParsingFailures by ErrorType/Domain, RecipeQuality distribution, GarbageRecipes count
+  - Alarms needed: HighParsingFailures (>10 in 10min), GarbageRecipes (>5 in 15min), Lambda errors
+  - Files to modify: diagnostics/main.go, background-normalizer/main.go, create monitoring-stack.ts
 
 - [ ] **Silent failure modes everywhere**
   - Functions return success even when producing garbage
