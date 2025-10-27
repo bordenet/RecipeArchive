@@ -11,6 +11,7 @@ type NormalizationMessage struct {
 	RecipeID string `json:"recipeId"`
 	UserID   string `json:"userId"`
 	Action   string `json:"action"`
+	URL      string `json:"url"`
 }
 
 // FlexInt handles both string and int types for flexible JSON unmarshaling

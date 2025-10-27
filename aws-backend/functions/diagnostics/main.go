@@ -13,11 +13,14 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 )
 
 var s3Client *s3.Client
+var cwClient *cloudwatch.Client
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.Background())
@@ -26,6 +29,7 @@ func init() {
 		return
 	}
 	s3Client = s3.NewFromConfig(cfg)
+	cwClient = cloudwatch.NewFromConfig(cfg)
 }
 
 // DiagnosticError represents a single error from extensions
@@ -180,6 +184,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			}
 		}
 		processedCount++
+		publishMetric(ctx, "ParsingFailures", 1.0, diagnosticData.ErrorType, diagnosticData.URL)
 	}
 
 	// Prepare response
@@ -203,6 +208,37 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		Headers:    headers,
 		Body:       string(responseBody),
 	}, nil
+}
+
+func publishMetric(ctx context.Context, metricName string, value float64, errorType string, url string) {
+	domain := extractDomain(url)
+
+	_, err := cwClient.PutMetricData(ctx, &cloudwatch.PutMetricDataInput{
+		Namespace: aws.String("RecipeArchive/Diagnostics"),
+		MetricData: []types.MetricDatum{
+			{
+				MetricName: aws.String(metricName),
+				Value:      aws.Float64(value),
+				Unit:       types.StandardUnitCount,
+				Timestamp:  aws.Time(time.Now()),
+				Dimensions: []types.Dimension{
+					{Name: aws.String("ErrorType"), Value: aws.String(errorType)},
+					{Name: aws.String("Domain"), Value: aws.String(domain)},
+				},
+			},
+		},
+	})
+	if err != nil {
+		fmt.Printf("⚠️ Failed to publish metric: %v\n", err)
+	}
+}
+
+func extractDomain(url string) string {
+	url = strings.ReplaceAll(url, "https://", "")
+	url = strings.ReplaceAll(url, "http://", "")
+	parts := strings.Split(url, "/")
+	domain := strings.ReplaceAll(parts[0], "www.", "")
+	return domain
 }
 
 func main() {
