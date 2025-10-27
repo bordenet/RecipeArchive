@@ -369,6 +369,12 @@ if timed_confirm "Set up iOS development environment?"; then
         print_info "Installing CocoaPods with modern Ruby..."
         /opt/homebrew/opt/ruby/bin/gem install cocoapods
         print_success "CocoaPods installed"
+        
+        # Verify 'pod' command is now available
+        if ! command -v pod &> /dev/null; then
+            print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal or check your shell profile."
+            exit 1
+        fi
       else
         print_warning "Skipping CocoaPods installation. iOS development may not work correctly."
       fi
