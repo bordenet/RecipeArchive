@@ -76,45 +76,90 @@ get_device_udid() {
     case $device_name in
         ipad-pro-m2)
             udid=$(xcrun simctl list devices | grep -E "iPad Pro.*M2" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad Pro" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         ipad-mac)
             udid=$(xcrun simctl list devices | grep -E "iPad.*Pro" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         iphone)
-            udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr-d '()')
+            udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
             ;;
         ipad-a16)
             udid=$(xcrun simctl list devices | grep -E "iPad \(A16\)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         ipad-air-11-m3)
             udid=$(xcrun simctl list devices | grep -E "iPad Air 11-inch \(M3\)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad Air" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         ipad-air-13-m3)
             udid=$(xcrun simctl list devices | grep -E "iPad Air 13-inch \(M3\)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad Air" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         ipad-pro-11-m4)
             udid=$(xcrun simctl list devices | grep -E "iPad Pro 11-inch \(M4\)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad Pro" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         ipad-pro-13-m4)
             udid=$(xcrun simctl list devices | grep -E "iPad Pro 13-inch \(M4\)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad Pro" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         ipad-mini-a17)
             udid=$(xcrun simctl list devices | grep -E "iPad mini \(A17 Pro\)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPad mini" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         iphone-16e)
             udid=$(xcrun simctl list devices | grep -E "iPhone 16e" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         iphone-17)
             udid=$(xcrun simctl list devices | grep -E "iPhone 17" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         iphone-17-pro)
             udid=$(xcrun simctl list devices | grep -E "iPhone 17 Pro" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone 17" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         iphone-17-pro-max)
             udid=$(xcrun simctl list devices | grep -E "iPhone 17 Pro Max" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone 17" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         iphone-air)
             udid=$(xcrun simctl list devices | grep -E "iPhone Air" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            if [ -z "$udid" ]; then
+                udid=$(xcrun simctl list devices | grep -E "iPhone" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+            fi
             ;;
         auto)
             udid=$(xcrun simctl list devices | grep -E "iPhone (17.*Pro Max|17.*Pro|17[^M]*[^a]$|15.*Pro|15[^M]*[^a]$)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
