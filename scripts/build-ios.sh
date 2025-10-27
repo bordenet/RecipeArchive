@@ -54,12 +54,12 @@ ${GREEN}Examples:${NC}
     $0 --debug -c
 
 ${GREEN}Output:${NC}
-    - Runner.app (Recipe Archive main app)
-    - RecipeArchive.appex (Share Extension)
-    - Builds for both iPhone and iPad targets
+    - Runner.app (Universal binary: iPhone + iPad)
+    - RecipeArchive.appex (Share Extension, embedded)
+    - Single archive supports both device types
 
 ${GREEN}Location:${NC}
-    Builds are created in: $BUILD_DIR
+    Archive created in: $BUILD_DIR/archives/
 
 EOF
     exit 1
@@ -294,61 +294,43 @@ echo -e "${BLUE}Building Xcode archives...${NC}"
 # Array to store output paths
 declare -a OUTPUT_PATHS
 
-# Build Runner (main app) for iPhone
-echo -e "${CYAN}Building Runner for iPhone...${NC}"
-RUNNER_IPHONE_ARCHIVE="$ARCHIVE_DIR/Runner-iPhone.xcarchive"
+# Build universal Runner app (supports both iPhone and iPad)
+echo -e "${CYAN}Building Runner.app (Universal: iPhone + iPad)...${NC}"
+RUNNER_ARCHIVE="$ARCHIVE_DIR/Runner.xcarchive"
 xcodebuild archive \
     -workspace "$IOS_DIR/Runner.xcworkspace" \
     -scheme Runner \
     -configuration "$BUILD_CONFIG" \
     -destination 'generic/platform=iOS' \
-    -archivePath "$RUNNER_IPHONE_ARCHIVE" \
+    -archivePath "$RUNNER_ARCHIVE" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
+    SUPPORTS_MACCATALYST=NO \
     | grep -v "^$" | grep -E "(Building|Compiling|Linking|Generating|Creating|Processing|✓)" || true
 
-if [ -d "$RUNNER_IPHONE_ARCHIVE" ]; then
-    echo -e "  ${GREEN}✓ Runner.app for iPhone built successfully${NC}"
-    RUNNER_APP_PATH="$RUNNER_IPHONE_ARCHIVE/Products/Applications/Runner.app"
+if [ -d "$RUNNER_ARCHIVE" ]; then
+    echo -e "  ${GREEN}✓ Runner.app built successfully (Universal Binary)${NC}"
+    RUNNER_APP_PATH="$RUNNER_ARCHIVE/Products/Applications/Runner.app"
     if [ -d "$RUNNER_APP_PATH" ]; then
         OUTPUT_PATHS+=("$RUNNER_APP_PATH")
+
+        # Get supported devices from Info.plist
+        SUPPORTED_DEVICES=$(/usr/libexec/PlistBuddy -c "Print :UIDeviceFamily" "$RUNNER_APP_PATH/Info.plist" 2>/dev/null | grep -E "^    [0-9]" | tr -d ' ')
+        if echo "$SUPPORTED_DEVICES" | grep -q "1"; then
+            echo -e "  ${CYAN}  ├─ iPhone support: enabled${NC}"
+        fi
+        if echo "$SUPPORTED_DEVICES" | grep -q "2"; then
+            echo -e "  ${CYAN}  └─ iPad support: enabled${NC}"
+        fi
     fi
     # Check for embedded RecipeArchive extension
     EXTENSION_PATH="$RUNNER_APP_PATH/PlugIns/RecipeArchive.appex"
     if [ -d "$EXTENSION_PATH" ]; then
         OUTPUT_PATHS+=("$EXTENSION_PATH")
+        echo -e "  ${CYAN}  └─ RecipeArchive.appex embedded${NC}"
     fi
 else
-    error_exit "Failed to build Runner.app for iPhone"
-fi
-echo ""
-
-# Build Runner (main app) for iPad
-echo -e "${CYAN}Building Runner for iPad...${NC}"
-RUNNER_IPAD_ARCHIVE="$ARCHIVE_DIR/Runner-iPad.xcarchive"
-xcodebuild archive \
-    -workspace "$IOS_DIR/Runner.xcworkspace" \
-    -scheme Runner \
-    -configuration "$BUILD_CONFIG" \
-    -destination 'generic/platform=iOS' \
-    -archivePath "$RUNNER_IPAD_ARCHIVE" \
-    CODE_SIGNING_ALLOWED=NO \
-    CODE_SIGNING_REQUIRED=NO \
-    | grep -v "^$" | grep -E "(Building|Compiling|Linking|Generating|Creating|Processing|✓)" || true
-
-if [ -d "$RUNNER_IPAD_ARCHIVE" ]; then
-    echo -e "  ${GREEN}✓ Runner.app for iPad built successfully${NC}"
-    RUNNER_APP_PATH="$RUNNER_IPAD_ARCHIVE/Products/Applications/Runner.app"
-    if [ -d "$RUNNER_APP_PATH" ]; then
-        OUTPUT_PATHS+=("$RUNNER_APP_PATH")
-    fi
-    # Check for embedded RecipeArchive extension
-    EXTENSION_PATH="$RUNNER_APP_PATH/PlugIns/RecipeArchive.appex"
-    if [ -d "$EXTENSION_PATH" ]; then
-        OUTPUT_PATHS+=("$EXTENSION_PATH")
-    fi
-else
-    error_exit "Failed to build Runner.app for iPad"
+    error_exit "Failed to build Runner.app"
 fi
 echo ""
 
@@ -386,16 +368,17 @@ for path in "${OUTPUT_PATHS[@]}"; do
 done
 
 # Print archive locations
-echo -e "${BLUE}Archive Locations:${NC}"
-echo -e "  ${CYAN}$RUNNER_IPHONE_ARCHIVE${NC}"
-echo -e "  ${CYAN}$RUNNER_IPAD_ARCHIVE${NC}"
+echo -e "${BLUE}Archive Location:${NC}"
+echo -e "  ${CYAN}$RUNNER_ARCHIVE${NC}"
 echo ""
 
 # Deployment notes
 echo -e "${YELLOW}Deployment Notes:${NC}"
+echo -e "  • Universal binary supports both iPhone and iPad"
 echo -e "  • To install on device: Use Xcode's Devices and Simulators window"
-echo -e "  • Archives can be found in: $ARCHIVE_DIR"
+echo -e "  • Or drag .app to device in Xcode's Devices window"
 echo -e "  • For App Store: Export IPA using Xcode Organizer"
+echo -e "  • Archive location: $ARCHIVE_DIR"
 echo ""
 
 # Success exit
