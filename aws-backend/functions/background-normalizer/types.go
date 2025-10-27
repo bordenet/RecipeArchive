@@ -74,6 +74,7 @@ type Recipe struct {
 	CookTimeMinutes      FlexInt         `json:"cookTimeMinutes,omitempty"`
 	Tags                 []string        `json:"tags,omitempty"`
 	SearchMetadata       *SearchMetadata `json:"searchMetadata,omitempty"`
+	WebArchiveHTML       *string         `json:"webArchiveHtml,omitempty"` // HTML from mobile share or web extension
 	CreatedAt            string          `json:"createdAt"`
 	UpdatedAt            string          `json:"updatedAt"`
 	IsDeleted            bool            `json:"isDeleted"`
