@@ -9,13 +9,13 @@
 #          debug, and profile the app.
 #
 # USAGE:
-#   ./scripts/ios-xcode.sh
+#   ./scripts/ios/ios-xcode.sh
 #
 # DEPENDENCIES:
 #   - Xcode
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
+#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
 #   - After running, you can select a simulator and run the app from within Xcode.
 #
 #==============================================================================

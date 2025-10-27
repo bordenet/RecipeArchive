@@ -9,7 +9,7 @@
 #          and configurations (debug or release).
 #
 # USAGE:
-#   ./scripts/ios-build.sh [options]
+#   ./scripts/ios/ios-build.sh [options]
 #
 # OPTIONS:
 #   --release     Build release version (default: debug)
@@ -24,7 +24,7 @@
 #   - Xcode and Command Line Tools
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
+#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
 #   - For device builds, ensure you have a valid Apple Developer account and
 #     code signing is properly configured in Xcode.
 #
@@ -177,19 +177,12 @@ if [ $? -eq 0 ]; then
 
     echo ""
     echo "🚀 Next steps:"
-    if [ "$TARGET" = "simulator" ]; then
-        echo "1. Run: ./scripts/ios-run.sh                  # Launch in simulator"
-        echo "2. Run: open ios/Runner.xcworkspace           # Open in Xcode"
-    else
-        echo "1. Open: ios/Runner.xcworkspace               # Open in Xcode"
-        echo "2. Connect your iOS device"
-        echo "3. Select your device in Xcode and run"
-    fi
+    echo "Run the main build and deploy script: ./scripts/ios-build-and-deploy.sh"
 else
     print_error "iOS build failed!"
     echo ""
     echo "Common solutions:"
-    echo "1. Run: ./scripts/ios-setup.sh                   # Ensure setup is complete"
+    echo "1. Run: ./scripts/ios/ios-setup.sh                   # Ensure setup is complete"
     echo "2. Check that Xcode is properly installed"
     echo "3. For device builds, check code signing settings"
     echo "4. Try opening ios/Runner.xcworkspace in Xcode"

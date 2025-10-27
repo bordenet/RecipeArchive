@@ -9,7 +9,7 @@
 #          finds and boots a simulator instance.
 #
 # USAGE:
-#   ./scripts/ios-run.sh
+#   ./scripts/ios/ios-run.sh
 #
 # DEPENDENCIES:
 #   - Flutter SDK
@@ -17,7 +17,8 @@
 #   - An installed iOS Simulator
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
+#   - This is a legacy script. It is recommended to use the main build and deploy script:
+#     ./scripts/ios-build-and-deploy.sh
 #   - If no simulator is running, it will attempt to start one.
 #   - If multiple simulators are available, it will try to pick one.
 #

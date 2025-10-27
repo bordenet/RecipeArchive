@@ -9,7 +9,7 @@
 #          and provides options for a deep clean.
 #
 # USAGE:
-#   ./scripts/ios-clean.sh [options]
+#   ./scripts/ios/ios-clean.sh [options]
 #
 # OPTIONS:
 #   --deep      Deep clean (includes CocoaPods, derived data)
@@ -21,7 +21,7 @@
 #   - CocoaPods
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
+#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
 #   - The `--deep` option is useful for resolving persistent build issues.
 #
 #==============================================================================
@@ -134,44 +134,86 @@ if [ -d "ios" ]; then
             print_success "Pods directory removed"
         fi
 
-        print_status "Reinstalling CocoaPods..."
-        pod install --repo-update
-        print_success "CocoaPods reinstalled"
+                print_status "Reinstalling CocoaPods..."
 
-        cd ..
-    fi
-fi
+                flutter pub get
 
-# Deep clean if requested
-if [ "$DEEP_CLEAN" = true ]; then
-    print_status "Performing deep clean..."
+                pod install --repo-update
 
-    # Clean Xcode derived data
-    if [ -d "~/Library/Developer/Xcode/DerivedData" ]; then
-        print_status "Cleaning Xcode derived data..."
-        rm -rf ~/Library/Developer/Xcode/DerivedData/*
-        print_success "Xcode derived data cleaned"
-    fi
+                print_success "CocoaPods reinstalled"
 
-    # Clean Flutter pub cache for this project
-    print_status "Cleaning Flutter pub cache..."
-    flutter pub deps --json > /dev/null 2>&1 || true
-    print_success "Flutter pub cache cleaned"
-fi
+        
 
-# Reinstall Flutter dependencies
-print_status "Reinstalling Flutter dependencies..."
-flutter pub get
-print_success "Flutter dependencies reinstalled"
+                cd ..
 
-print_success "iOS clean completed!"
+            fi
 
-echo ""
-echo "🚀 Next steps:"
-echo "1. Run: ./scripts/ios-setup.sh                  # Ensure setup is complete"
-echo "2. Run: ./scripts/ios-run.sh                    # Test the app"
-echo ""
-echo "💡 If you're still having issues:"
-echo "1. Try: ./scripts/ios-clean.sh --deep           # Deep clean everything"
-echo "2. Run: flutter doctor -v                       # Check Flutter setup"
-echo "3. Restart Xcode and your terminal"
+        fi
+
+        
+
+        # Deep clean if requested
+
+        if [ "$DEEP_CLEAN" = true ]; then
+
+            print_status "Performing deep clean..."
+
+        
+
+            # Clean Xcode derived data
+
+            if [ -d "~/Library/Developer/Xcode/DerivedData" ]; then
+
+                print_status "Cleaning Xcode derived data..."
+
+                rm -rf ~/Library/Developer/Xcode/DerivedData/*
+
+                print_success "Xcode derived data cleaned"
+
+            fi
+
+        
+
+            # Clean Flutter pub cache for this project
+
+            print_status "Cleaning Flutter pub cache..."
+
+            flutter pub deps --json > /dev/null 2>&1 || true
+
+            print_success "Flutter pub cache cleaned"
+
+        fi
+
+        
+
+        # Reinstall Flutter dependencies
+
+        print_status "Reinstalling Flutter dependencies..."
+
+        flutter pub get
+
+        print_success "Flutter dependencies reinstalled"
+
+        
+
+        print_success "iOS clean completed!"
+
+        
+
+        echo ""
+
+        echo "🚀 Next steps:"
+
+        echo "Run the main build and deploy script: ./scripts/ios-build-and-deploy.sh"
+
+        echo ""
+
+        echo "💡 If you're still having issues:"
+
+        echo "1. Try: ./scripts/ios/ios-clean.sh --deep           # Deep clean everything"
+
+        echo "2. Run: flutter doctor -v                       # Check Flutter setup"
+
+        echo "3. Restart Xcode and your terminal"
+
+        
