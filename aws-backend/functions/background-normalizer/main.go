@@ -6,20 +6,27 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
+
+var cwClient *cloudwatch.Client
 
 // Background normalizer processes SQS messages to normalize recipes
 func handler(ctx context.Context, event events.SQSEvent) error {
 	fmt.Println("background-normalizer invoked")
 	fmt.Printf("🔧 Background normalizer received %d messages\n", len(event.Records))
 
-	// Initialize S3 client
-	fmt.Println("Initializing S3 client")
+	// Initialize S3 and CloudWatch clients
+	fmt.Println("Initializing clients")
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Printf("❌ Failed to load AWS config: %v", err)
@@ -27,6 +34,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 	}
 
 	s3Client := s3.NewFromConfig(cfg)
+	cwClient = cloudwatch.NewFromConfig(cfg)
 	bucketName := os.Getenv("S3_STORAGE_BUCKET")
 
 	if bucketName == "" {
@@ -96,14 +104,72 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 		fmt.Println("Recipe saved to S3")
 
 		fmt.Printf("✅ Content-normalizer processed recipe %s with enhanced metadata\n", message.RecipeID)
+
+		// After normalization, check quality
+		ingredientCount := len(recipe.Ingredients)
+		instructionCount := len(recipe.Instructions)
+
+		// Publish quality metrics
+		publishMetric(ctx, "RecipeQuality", 1.0, map[string]string{
+			"Quality": getQualityLevel(ingredientCount, instructionCount),
+			"Source":  extractDomain(recipe.SourceURL),
+		})
+
+		if ingredientCount == 0 && instructionCount == 0 {
+			// This is GARBAGE - log ERROR not INFO
+			log.Printf("ERROR: Recipe has 0 ingredients and 0 instructions: %s", message.URL)
+			publishMetric(ctx, "GarbageRecipes", 1.0, map[string]string{
+				"Source": extractDomain(message.URL),
+			})
+		}
 	}
 
 	return nil
 }
 
+func publishMetric(ctx context.Context, metricName string, value float64, dimensions map[string]string) {
+	var dims []types.Dimension
+	for name, val := range dimensions {
+		dims = append(dims, types.Dimension{Name: aws.String(name), Value: aws.String(val)})
+	}
 
+	_, err := cwClient.PutMetricData(ctx, &cloudwatch.PutMetricDataInput{
+		Namespace: aws.String("RecipeArchive/Normalizer"),
+		MetricData: []types.MetricDatum{
+			{
+				MetricName: aws.String(metricName),
+				Value:      aws.Float64(value),
+				Unit:       types.StandardUnitCount,
+				Timestamp:  aws.Time(time.Now()),
+				Dimensions: dims,
+			},
+		},
+	})
+	if err != nil {
+		fmt.Printf("⚠️ Failed to publish metric: %v\n", err)
+	}
+}
 
+func extractDomain(url string) string {
+	url = strings.ReplaceAll(url, "https://", "")
+	url = strings.ReplaceAll(url, "http://", "")
+	parts := strings.Split(url, "/")
+	domain := strings.ReplaceAll(parts[0], "www.", "")
+	return domain
+}
 
+func getQualityLevel(ingredients, instructions int) string {
+	if ingredients == 0 && instructions == 0 {
+		return "GARBAGE"
+	}
+	if ingredients == 0 || instructions == 0 {
+		return "POOR"
+	}
+	if ingredients < 3 || instructions < 3 {
+		return "LOW"
+	}
+	return "GOOD"
+}
 
 
 
