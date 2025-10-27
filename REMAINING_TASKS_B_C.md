@@ -1,14 +1,235 @@
-# Remaining Tasks: Backend Validation (B) and End-to-End Testing (C)
+# Remaining Tasks: Backend Validation (B), End-to-End Testing (C), Mobile HTML Parsing (M)
 
 ## Context
 
 This document captures the remaining work after completing:
 - ✅ **Task A**: iOS Share Extension debug logging cleanup (COMPLETE)
 - ✅ **Task D**: Monitoring & Alerting implementation (COMPLETE - Lambda metrics implemented, CDK stack ready to deploy)
+- ✅ **iOS Mobile Share**: Platform integration complete (iOS ↔ Flutter ↔ Backend)
 
-**Tasks remaining**: B (Backend Validation) → C (End-to-End Testing)
+**Tasks remaining**:
+- **M (Mobile HTML Parsing)**: HIGH PRIORITY - Enable backend to use provided HTML (1-2 hours)
+- **B (Backend Validation)**: Prevent garbage data from persisting (2-3 hours)
+- **C (End-to-End Testing)**: Parser validation suite (3-4 hours)
 
-**Source**: PROJECT_STATUS.md critical issues
+**Source**: PROJECT_STATUS.md critical issues, MOBILE_SHARE_HTML_PASSTHROUGH.md
+
+---
+
+## Task M: Mobile HTML Parsing (HIGHEST PRIORITY)
+
+### Priority: CRITICAL
+### Estimated Time: 1-2 hours
+### Impact: Enables paywalled site support and completes iOS mobile share workflow
+
+### Current Problem
+
+**✅ iOS Share Extension works perfectly**:
+- Extracts both URL and HTML from Safari
+- Saves to App Group as JSON
+- Flutter receives and sends to backend
+- Backend stores HTML in S3
+
+**❌ Backend doesn't use the provided HTML**:
+- `background-normalizer` Lambda receives recipe with `webArchiveHtml` field
+- Detects placeholder recipe correctly
+- Calls `parseRecipeFromURL()` to extract content
+- **BUT**: `parseRecipeFromURL()` re-fetches the URL instead of using provided HTML
+- Fails for paywalled sites (NYTimes Cooking, WSJ, etc.)
+- Wastes time/bandwidth re-fetching content we already have
+
+### Implementation Plan
+
+#### File 1: Modify `url_parser.go`
+
+**Location**: `/aws-backend/functions/background-normalizer/url_parser.go`
+
+**Change function signature** (line 40):
+```go
+// Before:
+func parseRecipeFromURL(ctx context.Context, url string) (*Recipe, error) {
+
+// After:
+func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (*Recipe, error) {
+```
+
+**Add HTML handling logic** (after line 40):
+```go
+func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (*Recipe, error) {
+    fmt.Printf("🌐 Parsing recipe from URL: %s\n", url)
+
+    var doc *html.Node
+    var err error
+
+    // Use provided HTML if available (mobile share or web extension)
+    if providedHTML != nil && len(*providedHTML) > 0 {
+        fmt.Printf("✅ Using provided HTML (%d characters) - skipping URL fetch\n", len(*providedHTML))
+        doc, err = html.Parse(strings.NewReader(*providedHTML))
+        if err != nil {
+            return nil, fmt.Errorf("failed to parse provided HTML: %w", err)
+        }
+    } else {
+        // Fallback: Fetch HTML from URL (existing code path)
+        fmt.Printf("📡 No HTML provided - fetching from URL\n")
+
+        // Create HTTP request with timeout
+        client := &http.Client{Timeout: 30 * time.Second}
+        req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+        if err != nil {
+            return nil, fmt.Errorf("failed to create request: %w", err)
+        }
+
+        // Set user agent to avoid bot detection
+        req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+        req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+
+        resp, err := client.Do(req)
+        if err != nil {
+            return nil, fmt.Errorf("failed to fetch URL: %w", err)
+        }
+        defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK {
+            return nil, fmt.Errorf("HTTP error: %d %s", resp.StatusCode, resp.Status)
+        }
+
+        // Parse HTML
+        doc, err = html.Parse(resp.Body)
+        if err != nil {
+            return nil, fmt.Errorf("failed to parse HTML: %w", err)
+        }
+    }
+
+    // Continue with existing parsing logic (JSON-LD, microdata, site-specific)
+    recipe := &Recipe{SourceURL: url}
+
+    // ... rest of existing function unchanged ...
+```
+
+#### File 2: Update `openai_operations.go`
+
+**Location**: `/aws-backend/functions/background-normalizer/openai_operations.go`
+
+**Find the placeholder recipe detection** (around line 65):
+```go
+// Check if this is a placeholder recipe that needs URL parsing first
+if isPlaceholderRecipe(recipe) {
+    fmt.Printf("🔍 Detected placeholder recipe, parsing URL: %s\n", recipe.SourceURL)
+    parsedRecipe, err := parseRecipeFromURL(ctx, recipe.SourceURL)
+```
+
+**Update to pass HTML when available**:
+```go
+// Check if this is a placeholder recipe that needs URL parsing first
+if isPlaceholderRecipe(recipe) {
+    fmt.Printf("🔍 Detected placeholder recipe, parsing content\n")
+
+    // Check if we have webArchiveHtml from mobile share or web extension
+    var htmlPtr *string
+    if recipe.WebArchiveHTML != nil && len(*recipe.WebArchiveHTML) > 0 {
+        htmlPtr = recipe.WebArchiveHTML
+        fmt.Printf("✅ Using provided HTML from client (%d characters)\n", len(*recipe.WebArchiveHTML))
+    } else {
+        fmt.Printf("📡 No HTML provided - will fetch from URL\n")
+    }
+
+    parsedRecipe, err := parseRecipeFromURL(ctx, recipe.SourceURL, htmlPtr)
+    if err != nil {
+        fmt.Printf("⚠️ Failed to parse content, proceeding with placeholder values: %v\n", err)
+    } else {
+        // Use parsed content but preserve ID, UserID, and other metadata
+        parsedRecipe.ID = recipe.ID
+        parsedRecipe.UserID = recipe.UserID
+        parsedRecipe.CreatedAt = recipe.CreatedAt
+        parsedRecipe.UpdatedAt = recipe.UpdatedAt
+        parsedRecipe.Version = recipe.Version
+        recipe = parsedRecipe
+        fmt.Printf("✅ Successfully parsed recipe: %s\n", recipe.Title)
+    }
+}
+```
+
+#### File 3: Verify Recipe struct
+
+**Location**: `/aws-backend/functions/background-normalizer/types.go`
+
+**Ensure the Recipe struct has WebArchiveHTML field**:
+```go
+type Recipe struct {
+    // ... other fields ...
+    WebArchiveHTML *string `json:"webArchiveHtml,omitempty"`
+    // ... other fields ...
+}
+```
+
+If missing, add it. If present, no changes needed.
+
+### Testing Plan
+
+#### Local Testing (Before Deployment)
+```bash
+cd aws-backend/functions/background-normalizer
+go build -o bootstrap *.go
+
+# Should compile successfully with no errors
+```
+
+#### Integration Testing (After Deployment)
+1. Share recipe from Safari on iPhone/iPad
+2. Check CloudWatch logs for background-normalizer
+3. Should see: `✅ Using provided HTML from client (XXXXX characters)`
+4. Should NOT see HTTP fetch for that URL
+5. Recipe should normalize with full ingredients/instructions
+6. Compare to web extension result - should be identical
+
+### Files to Modify
+
+1. `/aws-backend/functions/background-normalizer/url_parser.go` - Add HTML parameter
+2. `/aws-backend/functions/background-normalizer/openai_operations.go` - Pass HTML to parser
+3. `/aws-backend/functions/background-normalizer/types.go` - Verify WebArchiveHTML field exists
+
+### Success Criteria
+
+✅ **Code Changes**:
+- [ ] `parseRecipeFromURL()` accepts `providedHTML *string` parameter
+- [ ] Uses provided HTML when available
+- [ ] Falls back to URL fetch when HTML not provided
+- [ ] Logging indicates which path taken
+
+✅ **Build Validation**:
+- [ ] Go code compiles without errors
+- [ ] All existing tests pass
+- [ ] No breaking changes to existing callers
+
+✅ **End-to-End Test**:
+- [ ] Share paywalled NYTimes Cooking recipe from iOS Safari
+- [ ] Recipe appears in app with full content
+- [ ] CloudWatch shows "Using provided HTML from client"
+- [ ] Result matches web extension output
+
+### Deployment
+
+```bash
+# From repository root
+./scripts/deploy-lambda.sh background-normalizer
+
+# Or deploy all
+./scripts/deploy-lambda.sh --all
+```
+
+### Impact
+
+**Enables**:
+- ✅ Paywalled site support (NYTimes Cooking, WSJ, etc.)
+- ✅ Faster processing (no unnecessary HTTP requests)
+- ✅ Accurate content (exactly what user saw)
+- ✅ Mobile share parity with web extensions
+- ✅ Complete end-to-end iOS → Backend → App workflow
+
+**Blocks**:
+- Full mobile recipe sharing functionality
+- Paywalled recipe extraction from mobile
 
 ---
 
