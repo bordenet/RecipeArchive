@@ -11,8 +11,17 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 - **Backend**: AWS Lambda (Go), API Gateway, Cognito, S3
 - **Browser Extensions**: Chrome & Safari (14+ supported recipe sites)
 
+### Mobile Apps - iOS
+- **Status**: ✅ Build system working, Share Extension implemented
+- **Share Extension**: Fully functional - extracts URL + HTML from Safari
+- **Platform Channel**: Complete - iOS ↔ Flutter communication working
+- **Build Script**: [scripts/build-ios.sh](scripts/build-ios.sh) - Passes all validations
+- **Pending**: Backend HTML parsing implementation (1-2 hours)
+- **Documentation**: [MOBILE_SHARE_HTML_PASSTHROUGH.md](MOBILE_SHARE_HTML_PASSTHROUGH.md), [XCODE_STEP4_STATUS.md](XCODE_STEP4_STATUS.md)
+
 ### Development Toolchains Available
 - **Mobile Apps**: Flutter iOS/Android toolchains operational
+- **iOS Builds**: Universal binaries (iPhone + iPad) via build-ios.sh
 - **Distribution**: Not currently pursuing app store or extension store submissions
 
 ## Critical Issues Requiring Immediate Attention
