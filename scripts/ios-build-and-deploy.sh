@@ -183,12 +183,12 @@ print_success "Clean script completed."
 
 print_status "Step 2: Running build script..."
 if [[ "$TARGET" == "simulator" ]]; then
-    if ! "$IOS_SCRIPT_DIR/ios-build.sh" --simulator --config "$CONFIG"; then
+    if ! "$IOS_SCRIPT_DIR/ios-build.sh" --simulator --"$CONFIG"; then
         print_error "Build script failed. Aborting."
         exit 1
     fi
 else
-    if ! "$IOS_SCRIPT_DIR/ios-build.sh" --device --config "$CONFIG"; then
+    if ! "$IOS_SCRIPT_DIR/ios-build.sh" --device --"$CONFIG"; then
         print_error "Build script failed. Aborting."
         exit 1
     fi
