@@ -63,10 +63,20 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 
 	// Check if this is a placeholder recipe that needs URL parsing first
 	if isPlaceholderRecipe(recipe) {
-		fmt.Printf("🔍 Detected placeholder recipe, parsing URL: %s\n", recipe.SourceURL)
-		parsedRecipe, err := parseRecipeFromURL(ctx, recipe.SourceURL)
+		fmt.Printf("🔍 Detected placeholder recipe, parsing content\n")
+
+		// Check if we have webArchiveHtml from mobile share or web extension
+		var htmlPtr *string
+		if recipe.WebArchiveHTML != nil && len(*recipe.WebArchiveHTML) > 0 {
+			htmlPtr = recipe.WebArchiveHTML
+			fmt.Printf("✅ Using provided HTML from client (%d characters)\n", len(*recipe.WebArchiveHTML))
+		} else {
+			fmt.Printf("📡 No HTML provided - will fetch from URL: %s\n", recipe.SourceURL)
+		}
+
+		parsedRecipe, err := parseRecipeFromURL(ctx, recipe.SourceURL, htmlPtr)
 		if err != nil {
-			fmt.Printf("⚠️ Failed to parse URL, proceeding with placeholder values: %v\n", err)
+			fmt.Printf("⚠️ Failed to parse content, proceeding with placeholder values: %v\n", err)
 		} else {
 			// Use parsed content but preserve ID, UserID, and other metadata
 			parsedRecipe.ID = recipe.ID

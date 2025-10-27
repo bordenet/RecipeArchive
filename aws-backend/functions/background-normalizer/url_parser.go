@@ -37,38 +37,54 @@ func isPlaceholderRecipe(recipe *Recipe) bool {
 }
 
 // parseRecipeFromURL extracts recipe data from a URL using multiple parsing strategies
-func parseRecipeFromURL(ctx context.Context, url string) (*Recipe, error) {
-	fmt.Printf("🌐 Fetching recipe from URL: %s\n", url)
+// If providedHTML is supplied, it will be used instead of fetching the URL
+func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (*Recipe, error) {
+	fmt.Printf("🌐 Parsing recipe from URL: %s\n", url)
 
-	// Create HTTP request with timeout
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
+	var doc *html.Node
+	var err error
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
+	// Use provided HTML if available (mobile share or web extension)
+	if providedHTML != nil && len(*providedHTML) > 0 {
+		fmt.Printf("✅ Using provided HTML (%d characters) - skipping URL fetch\n", len(*providedHTML))
+		doc, err = html.Parse(strings.NewReader(*providedHTML))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse provided HTML: %w", err)
+		}
+	} else {
+		// Fallback: Fetch HTML from URL (existing code path)
+		fmt.Printf("📡 No HTML provided - fetching from URL\n")
 
-	// Set user agent to avoid bot detection
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+		// Create HTTP request with timeout
+		client := &http.Client{
+			Timeout: 30 * time.Second,
+		}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch URL: %w", err)
-	}
-	defer resp.Body.Close()
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP error: %d %s", resp.StatusCode, resp.Status)
-	}
+		// Set user agent to avoid bot detection
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+		req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+		req.Header.Set("Accept-Language", "en-US,en;q=0.5")
 
-	// Parse HTML
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTML: %w", err)
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch URL: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("HTTP error: %d %s", resp.StatusCode, resp.Status)
+		}
+
+		// Parse HTML
+		doc, err = html.Parse(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTML: %w", err)
+		}
 	}
 
 	recipe := &Recipe{
