@@ -121,6 +121,31 @@ if [ -z "$BUILD_CONFIG" ]; then
     error_exit "Build configuration required: use --release or --debug"
 fi
 
+# Extract current version from pubspec.yaml
+PUBSPEC="$FLUTTER_DIR/pubspec.yaml"
+CURRENT_VERSION=""
+if [ -f "$PUBSPEC" ]; then
+    CURRENT_VERSION=$(grep "^version:" "$PUBSPEC" | awk '{print $2}')
+fi
+
+# Determine final version that will be built
+FINAL_VERSION=""
+if [ -n "$VERSION" ]; then
+    # User specified version - extract or default build number
+    if [ -n "$CURRENT_VERSION" ]; then
+        BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+        if [ -z "$BUILD_NUMBER" ]; then
+            BUILD_NUMBER="1"
+        fi
+    else
+        BUILD_NUMBER="1"
+    fi
+    FINAL_VERSION="$VERSION+$BUILD_NUMBER"
+else
+    # Using existing version
+    FINAL_VERSION="$CURRENT_VERSION"
+fi
+
 # Print banner
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗"
 echo -e "║            iOS Build Script - RecipeArchive v1.0.0             ║"
@@ -128,10 +153,10 @@ echo -e "╚══════════════════════�
 echo ""
 echo -e "${BLUE}Configuration:${NC}"
 echo -e "  Build Type:    ${GREEN}$BUILD_CONFIG${NC}"
-if [ -n "$VERSION" ]; then
-    echo -e "  Version:       ${GREEN}$VERSION${NC}"
+if [ -n "$FINAL_VERSION" ]; then
+    echo -e "  Build Version: ${GREEN}$FINAL_VERSION${NC}"
 else
-    echo -e "  Version:       ${YELLOW}Not specified (using existing)${NC}"
+    echo -e "  Build Version: ${YELLOW}Unknown (pubspec.yaml not found)${NC}"
 fi
 if [ "$CLEAN_BUILD" = true ]; then
     echo -e "  Clean Build:   ${GREEN}Yes${NC}"
@@ -334,8 +359,8 @@ echo -e "╚══════════════════════�
 echo ""
 echo -e "${BLUE}Build Summary:${NC}"
 echo -e "  Configuration:  ${GREEN}$BUILD_CONFIG${NC}"
-if [ -n "$VERSION" ]; then
-    echo -e "  Version:        ${GREEN}$VERSION${NC}"
+if [ -n "$FINAL_VERSION" ]; then
+    echo -e "  Build Version:  ${GREEN}$FINAL_VERSION${NC}"
 fi
 echo -e "  Build Time:     ${CYAN}${MINUTES}m ${SECONDS}s${NC}"
 echo -e "  Archives:       ${CYAN}${#OUTPUT_PATHS[@]} artifacts${NC}"
