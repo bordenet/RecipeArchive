@@ -1391,7 +1391,7 @@ run_ios_validation() {
         print_header "IOS VALIDATION"
         print_step "Running iOS Build and Deploy"
         add_test
-        if ./scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target "iPhone 17 Pro"; then
+        if ./scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target "iphone-17-pro"; then
             print_test_success
         else
             print_test_error
