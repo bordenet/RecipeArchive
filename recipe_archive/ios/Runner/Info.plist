@@ -28,7 +28,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.example.recipeArchive</string>
+			<string>com.recipeArchive.RecipeArchive</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>recipearchive</string>
