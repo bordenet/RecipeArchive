@@ -52,6 +52,32 @@ Browser extensions contain hardcoded AWS infrastructure references. New adopters
 
 iOS/Android toolchain available
 
+### iOS Production Builds
+
+For device deployment and releases, use the production build script:
+
+```bash
+# Release build with version
+./scripts/build-ios.sh --release --version 1.0.1
+
+# Debug build with version
+./scripts/build-ios.sh --debug --version 1.0.1
+
+# Clean build (removes CocoaPods cache)
+./scripts/build-ios.sh --release --version 1.0.1 --clean
+
+# Short form
+./scripts/build-ios.sh -r -v 1.0.1 -c
+```
+
+The script:
+- Builds both Runner (main app) and RecipeArchive (Share Extension)
+- Creates archives for iPhone and iPad
+- Updates version in pubspec.yaml and Info.plist files
+- Validates environment (Xcode, Flutter, CocoaPods)
+- Provides detailed output and build summary
+- Archives stored in `recipe_archive/ios/build/archives/`
+
 ## Security & Validation
 
 ### Image Security Architecture

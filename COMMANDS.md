@@ -38,6 +38,9 @@
 | iOS Build | `./scripts/ios-build.sh` |
 | iOS Help | `./scripts/ios-help.sh` |
 | iOS Clean | `./scripts/ios-clean.sh` |
+| **iOS Production Build (Release)** | `./scripts/build-ios.sh --release --version 1.0.1` |
+| **iOS Production Build (Debug)** | `./scripts/build-ios.sh --debug --version 1.0.1` |
+| iOS Build Help | `./scripts/build-ios.sh --help` |
 
 ## Mobile App Commands
 
