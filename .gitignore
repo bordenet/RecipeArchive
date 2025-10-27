@@ -150,15 +150,15 @@ aws-backend/functions/flutter-console-diagnostics/*
 
 # Swift / iOS
 DerivedData/
-*.xcuserstate
-*.xcworkspace
-*.xcodeproj
+#*.xcuserstate
+#*.xcworkspace
+#*.xcodeproj
 *.pbxuser
 *.mode1v3
 *.mode2v3
 *.perspectivev3
 *.moved-aside
-*.xcassets
+#*.xcassets
 *.swiftpm
 *.playground
 *.playgroundbook

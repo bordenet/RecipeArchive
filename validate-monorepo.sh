@@ -118,10 +118,12 @@ should_run() {
 declare -A TEST_TIERS
 TEST_TIERS[p1]="prerequisites dependencies_critical builds_core security_always linting_always quality_gate tests_integration"
 TEST_TIERS[med]="${TEST_TIERS[p1]} builds_extended quality_basic"
-TEST_TIERS[all]="${TEST_TIERS[med]} tests_comprehensive quality_extended extensions_full aws_infrastructure"
+TEST_TIers[all]="${TEST_TIERS[med]} tests_comprehensive quality_extended extensions_full aws_infrastructure ios"
 TEST_TIERS[infrastructure]="prerequisites aws_infrastructure"
+TEST_TIERS[ios]="ios"
 
 # Parse command line arguments
+RUN_IOS=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     --p1)
@@ -134,6 +136,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --all)
       VALIDATION_TIER="all"
+      RUN_IOS=true
       shift
       ;;
     --infrastructure)
@@ -142,6 +145,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --mobile)
       VALIDATION_TIER="mobile"
+      shift
+      ;;
+    --ios)
+      RUN_IOS=true
       shift
       ;;
     --help|-h)
@@ -1379,6 +1386,20 @@ validate_deployment_infrastructure() {
     track_section_completion
 }
 
+run_ios_validation() {
+    if [ "$RUN_IOS" = true ]; then
+        print_header "IOS VALIDATION"
+        print_step "Running iOS Build and Deploy"
+        add_test
+        if ./scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target "iPhone 17 Pro"; then
+            print_test_success
+        else
+            print_test_error
+            echo "    iOS validation failed."
+        fi
+    fi
+}
+
 # FIXED: Accurate summary with correct test counting
 show_summary() {
     echo
@@ -1485,7 +1506,9 @@ main() {
     # Run the Go validator with the mapped arguments
     echo -e "${BLUE}Running Go validator...${NC}"
     # Execute the Go validator with mapped arguments
-    exec tools/monorepo-validator-go/monorepo-validator-go $GO_ARGS
+    tools/monorepo-validator-go/monorepo-validator-go $GO_ARGS
+
+    run_ios_validation
 }
 
 # Handle interruption
