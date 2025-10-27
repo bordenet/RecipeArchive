@@ -277,6 +277,15 @@ echo ""
 # Install/update CocoaPods dependencies
 echo -e "${BLUE}Installing CocoaPods dependencies...${NC}"
 cd "$IOS_DIR"
+
+# Ensure Podfile includes required xcconfig inheritance
+if ! grep -q "use_frameworks!" "Podfile"; then
+  echo "use_frameworks!" >> Podfile
+fi
+if ! grep -q "use_modular_headers!" "Podfile"; then
+  echo "use_modular_headers!" >> Podfile
+fi
+
 pod install --repo-update
 echo -e "  ✓ CocoaPods dependencies installed"
 echo ""
@@ -284,7 +293,7 @@ echo ""
 # Build Flutter assets
 echo -e "${BLUE}Building Flutter assets...${NC}"
 cd "$FLUTTER_DIR"
-flutter build ios --$BUILD_CONFIG --no-codesign
+flutter build ios --$(echo $BUILD_CONFIG | tr '[:upper:]' '[:lower:]') --no-codesign
 echo -e "  ✓ Flutter assets built"
 echo ""
 
@@ -297,6 +306,14 @@ declare -a OUTPUT_PATHS
 # Build universal Runner app (supports both iPhone and iPad)
 echo -e "${CYAN}Building Runner.app (Universal: iPhone + iPad)...${NC}"
 RUNNER_ARCHIVE="$ARCHIVE_DIR/Runner.xcarchive"
+# Purge stale DerivedData to avoid cached extension builds
+DERIVED_DATA_DIR=$(xcodebuild -workspace "$IOS_DIR/Runner.xcworkspace" -scheme Runner -showBuildSettings | grep -m 1 "BUILT_PRODUCTS_DIR" | awk '{print $3}' | sed 's|/Build/Products.*||')
+if [ -n "$DERIVED_DATA_DIR" ]; then
+    echo -e "${BLUE}Clearing DerivedData at $DERIVED_DATA_DIR${NC}"
+    rm -rf "$DERIVED_DATA_DIR"
+fi
+
+export SWIFT_VERSION=5
 xcodebuild archive \
     -workspace "$IOS_DIR/Runner.xcworkspace" \
     -scheme Runner \
@@ -306,7 +323,9 @@ xcodebuild archive \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
     SUPPORTS_MACCATALYST=NO \
-    | grep -v "^$" | grep -E "(Building|Compiling|Linking|Generating|Creating|Processing|✓)" || true
+    ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=\$(inherited) \
+    SWIFT_VERSION=\$(inherited) \
+    COMPILER_INDEX_STORE_ENABLE=NO
 
 if [ -d "$RUNNER_ARCHIVE" ]; then
     echo -e "  ${GREEN}✓ Runner.app built successfully (Universal Binary)${NC}"
@@ -331,6 +350,16 @@ if [ -d "$RUNNER_ARCHIVE" ]; then
     fi
 else
     error_exit "Failed to build Runner.app"
+fi
+
+# Verify Share Extension embedding
+echo -e "${BLUE}Verifying embedded RecipeArchive extension...${NC}"
+if [ ! -d "$EXTENSION_PATH" ]; then
+    echo -e "${RED}ERROR:${NC} RecipeArchive.appex not found in Runner.app"
+    echo -e "       Verify that the RecipeArchive target is included in Runner › Embed App Extensions build phase."
+    exit 1
+else
+    echo -e "  ${GREEN}✓ RecipeArchive.appex verified embedded${NC}"
 fi
 echo ""
 
