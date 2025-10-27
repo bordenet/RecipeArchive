@@ -59,6 +59,14 @@
 | `./scripts/validate-api-gateway.sh` | Standalone validation script |
 | `./scripts/validate-api-gateway.sh --fix` | Validate and fix in one command |
 
+## Monitoring & CloudWatch
+
+| Task | Command |
+| --- | --- |
+| Deploy Monitoring Stack | `cd aws-backend/infrastructure && npx cdk deploy RecipeArchive-Monitoring` |
+| View CloudWatch Dashboard | Navigate to CloudWatch console → Dashboards → RecipeArchive-Production |
+| Test Alarm Triggers | See monitoring implementation plan for test procedures |
+
 ## Other Useful Scripts
 
 | Task | Command |
