@@ -267,6 +267,13 @@ fi
 
 mkdir -p "$ARCHIVE_DIR"
 
+# Get Flutter dependencies (required before CocoaPods)
+echo -e "${BLUE}Getting Flutter dependencies...${NC}"
+cd "$FLUTTER_DIR"
+flutter pub get
+echo -e "  ✓ Flutter dependencies fetched"
+echo ""
+
 # Install/update CocoaPods dependencies
 echo -e "${BLUE}Installing CocoaPods dependencies...${NC}"
 cd "$IOS_DIR"
@@ -277,7 +284,6 @@ echo ""
 # Build Flutter assets
 echo -e "${BLUE}Building Flutter assets...${NC}"
 cd "$FLUTTER_DIR"
-flutter pub get
 flutter build ios --$BUILD_CONFIG --no-codesign
 echo -e "  ✓ Flutter assets built"
 echo ""
