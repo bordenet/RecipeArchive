@@ -16,7 +16,7 @@
    - May be related to Safari Web Extension build configuration
 
 3. **Android Scripts Migration**
-   - Move `./scripts/android-*.sh` to `./scripts/android/` directory
+   - Move `./scripts/android-*.sh` to `./scripts/android/` directory except for a top-level clean-and-build script like we did for iOS
    - Update all references
 
 4. **Android Share Extension** - Not started
