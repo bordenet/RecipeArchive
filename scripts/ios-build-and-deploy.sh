@@ -256,17 +256,6 @@ if [[ "$TARGET" == "simulator" ]]; then
     SIMULATOR_PID=$!
     print_status "Simulator launched in background with PID: $SIMULATOR_PID"
 
-    # Wait for 2 minutes (120 seconds)
-    SECONDS=0
-    while ps -p $SIMULATOR_PID > /dev/null && [ $SECONDS -lt 120 ]; do
-        sleep 1
-    done
-
-    if ps -p $SIMULATOR_PID > /dev/null; then
-        print_status "Timeout reached. Simulator is still running in the background."
-    else
-        print_success "Simulator process finished."
-    fi
     print_success "App launch process initiated on simulator."
 else
     print_status "To deploy to a device, please open Xcode and select your device."

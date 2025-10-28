@@ -123,11 +123,7 @@ cd "$PROJECT_ROOT"
 print_status "Project root: $PROJECT_ROOT"
 
 # Navigate to Flutter project directory
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
-else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
-fi
+FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
 
 if [ ! -f "$FLUTTER_DIR/pubspec.yaml" ]; then
     print_error "Cannot find Flutter project. Expected pubspec.yaml in $FLUTTER_DIR"

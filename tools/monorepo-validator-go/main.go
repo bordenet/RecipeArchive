@@ -304,6 +304,7 @@ func getMediumValidations() []ValidationTask {
 func getMobileValidations() []ValidationTask {
 	return []ValidationTask{
 		{"Mobile App Validation", runMobileTests, false},
+		{"iOS Build & Deploy Validation", runIOSValidation, false},
 	}
 }
 

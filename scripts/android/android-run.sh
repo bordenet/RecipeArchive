@@ -66,11 +66,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
-else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
-fi
+FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
 
 cd "$FLUTTER_DIR"
 

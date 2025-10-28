@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 
 #==============================================================================
-# Android Clean Script
+# Android Build Script
 #==============================================================================
-# NAME: android-clean.sh
+# NAME: android-build.sh
 #
-# PURPOSE: Cleans Android build artifacts.
+# PURPOSE: Builds the RecipeArchive Android app.
 #
 # USAGE:
-#   ./scripts/android-clean.sh [options]
+#   ./scripts/android-build.sh [options]
 #
 # OPTIONS:
-#   --deep    Cleans the Gradle cache in addition to the default clean.
-#   --help    Shows this help message.
+#   --release     Build a release version (default: debug).
+#   --apk         Build an APK (default).
+#   --appbundle   Build an App Bundle.
+#   --help        Shows this help message.
 #
 # DEPENDENCIES:
 #   - Flutter SDK
@@ -23,7 +25,7 @@
 #==============================================================================
 set -e
 
-echo "🤖 Android Clean Script"
+echo "🤖 Android Build Script"
 echo "======================"
 
 # Color codes for output
@@ -43,20 +45,31 @@ print_success() {
 }
 
 # Parse command line arguments
-DEEP_CLEAN=false
+BUILD_TYPE="debug"
+BUILD_FORMAT="apk"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --deep)
-            DEEP_CLEAN=true
+        --release)
+            BUILD_TYPE="release"
+            shift
+            ;;
+        --apk)
+            BUILD_FORMAT="apk"
+            shift
+            ;;
+        --appbundle)
+            BUILD_FORMAT="appbundle"
             shift
             ;;
         --help)
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
-            echo "  --deep    Cleans the Gradle cache in addition to the default clean."
-            echo "  --help    Shows this help message."
+            echo "  --release     Build a release version (default: debug)."
+            echo "  --apk         Build an APK (default)."
+            echo "  --appbundle   Build an App Bundle."
+            echo "  --help        Shows this help message."
             exit 0
             ;;
         *)
@@ -71,26 +84,17 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
-else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
-fi
+FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
 
 cd "$FLUTTER_DIR"
 
-# Flutter clean
-print_status "Running flutter clean..."
-flutter clean
-print_success "Flutter clean complete."
+# Build the app
+print_status "Building Android app ($BUILD_TYPE, $BUILD_FORMAT)..."
 
-# Deep clean
-if [ "$DEEP_CLEAN" = true ]; then
-    print_status "Performing deep clean..."
-    cd android
-    ./gradlew clean
-    cd ..
-    print_success "Gradle clean complete."
+if [ "$BUILD_FORMAT" == "apk" ]; then
+    flutter build apk --$BUILD_TYPE
+else
+    flutter build appbundle --$BUILD_TYPE
 fi
 
-print_success "Android clean complete!"
+print_success "Android build complete!"
