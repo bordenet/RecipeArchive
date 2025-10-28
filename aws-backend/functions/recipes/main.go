@@ -833,18 +833,14 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	}
 
 	// Validate image URL if provided (must be from our S3 bucket)
+	// SECURITY: External image URLs are stripped per architecture doc
+	if recipeData.MainPhotoURL != nil {
+		fmt.Printf("🔍 Validating image URL: %s\n", *recipeData.MainPhotoURL)
+	}
 	if err := validateImageURL(recipeData.MainPhotoURL); err != nil {
-		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":      "VALIDATION_ERROR",
-				"message":   fmt.Sprintf("Invalid image URL: %s", err.Error()),
-				"timestamp": time.Now().UTC(),
-			},
-		})
-		if responseErr != nil {
-			return events.APIGatewayProxyResponse{}, responseErr
-		}
-		return response, nil
+		fmt.Printf("⚠️ Image URL validation failed, stripping external URL: %s\n", err.Error())
+		// Strip invalid image URL instead of rejecting entire recipe
+		recipeData.MainPhotoURL = nil
 	}
 
 	// Check for existing recipe with same source URL (de-duplication)
