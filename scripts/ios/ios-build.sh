@@ -154,34 +154,34 @@ flutter pub get
 # Build based on target and type
 if [ "$TARGET" = "simulator" ]; then
     if [ "$BUILD_TYPE" = "release" ]; then
-        print_status "Building iOS release for simulator..."
-        flutter build ios --release --simulator --scheme "$SCHEME"
+        print_status "Building iOS release for simulator with scheme '$SCHEME'..."
+        xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -configuration "$(echo $BUILD_TYPE | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')" -sdk iphonesimulator build
     elif [ "$BUILD_TYPE" = "profile" ]; then
-        print_status "Building iOS profile for simulator..."
-        flutter build ios --profile --simulator --scheme "$SCHEME"
+        print_status "Building iOS profile for simulator with scheme '$SCHEME'..."
+        xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -configuration "$(echo $BUILD_TYPE | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')" -sdk iphonesimulator build
     else
-        print_status "Building iOS debug for simulator..."
-        flutter build ios --debug --simulator --scheme "$SCHEME"
+        print_status "Building iOS debug for simulator with scheme '$SCHEME'..."
+        xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -configuration "$(echo $BUILD_TYPE | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')" -sdk iphonesimulator build
     fi
 else
     # Building for device
     if [ "$BUILD_TYPE" = "release" ]; then
-        print_status "Building iOS release for device..."
+        print_status "Building iOS release for device with scheme '$SCHEME'..."
         print_warning "Device builds require code signing. Make sure you have:"
         print_warning "1. Apple Developer Account"
         print_warning "2. Provisioning profiles configured"
         print_warning "3. Code signing certificates installed"
-        flutter build ios --release --scheme "$SCHEME"
+        xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -configuration "$(echo $BUILD_TYPE | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')" -sdk iphoneos build
     elif [ "$BUILD_TYPE" = "profile" ]; then
-        print_status "Building iOS profile for device..."
+        print_status "Building iOS profile for device with scheme '$SCHEME'..."
         print_warning "Device builds require code signing. Make sure you have:"
         print_warning "1. Apple Developer Account"
         print_warning "2. Provisioning profiles configured"
         print_warning "3. Code signing certificates installed"
-        flutter build ios --profile --scheme "$SCHEME"
+        xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -configuration "$(echo $BUILD_TYPE | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')" -sdk iphoneos build
     else
-        print_status "Building iOS debug for device..."
-        flutter build ios --debug --scheme "$SCHEME"
+        print_status "Building iOS debug for device with scheme '$SCHEME'..."
+        xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -configuration "$(echo $BUILD_TYPE | awk '{print toupper(substr($0,1,1))tolower(substr($0,2))}')" -sdk iphoneos build
     fi
 fi
 
@@ -190,9 +190,9 @@ if [ $? -eq 0 ]; then
 
     # Show build output location
     if [ "$TARGET" = "simulator" ]; then
-        BUILD_PATH="build/ios/iphonesimulator/Runner.app"
+        BUILD_PATH="build/Build/Products/$BUILD_TYPE-iphonesimulator/Runner.app"
     else
-        BUILD_PATH="build/ios/iphoneos/Runner.app"
+        BUILD_PATH="build/Build/Products/$BUILD_TYPE-iphoneos/Runner.app"
     fi
 
     if [ -d "$BUILD_PATH" ]; then
