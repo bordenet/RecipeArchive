@@ -19,9 +19,21 @@
       <img src="./docs/img/Desktop_Details.png" alt="v1.0 desktop website details view" width="560px" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
       <div style="font-size: 0.9em;">Desktop Details View</div>
     </td>
-    <td style="text-align: left; vertical-align: top;">
-      <img src="./docs/img/WebExtensionSample.png" alt="Web Extension - Chrome" width="362px" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-      <div style="font-size: 0.9em;">Web Extension</div>
+    <td>
+      <table style="width:100%; border-collapse: collapse;">
+      <tr>
+        <td style="text-align: left; vertical-align: top;">
+          <img src="./docs/img/WebExtensionSample.png" alt="Web Extension - Chrome" width="362px" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
+          <div style="font-size: 0.9em;">Web Extension</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: left; vertical-align: top; padding-top: 64px;">
+          <img src="./docs/img/iOS_Native_Sharing.png" alt="Web Extension - Chrome" width="362px" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
+          <div style="font-size: 0.9em;">iOS Native Sharing</div>
+        </td>
+      </tr>
+      </table>
     </td>
   </tr>
 </table>
@@ -41,12 +53,27 @@
 <details>
   <summary>Mobile Features</summary>
 
+- **📤 iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
 - **🔒 Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
 - **🎯 Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
 - **🍎 iOS Development**: Complete toolchain with Xcode integration and simulator management
 - **🤖 Android Development**: Full emulator management and APK build system
 - **🔍 Search**: Full-text search across all saved recipes with feature parity to web client
 - **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow
+
+### iOS Share Extension in Action
+
+<img src="./docs/img/iOS_ShareExtension.png" alt="iOS Share Extension - Share recipes from Safari browser" width="45%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
+
+**Native iOS Integration**: Share any recipe from Safari mobile directly to the RecipeArchive app. The backend automatically fetches and parses the recipe HTML, extracts ingredients and instructions, downloads and stores the recipe image in S3, and normalizes the content with OpenAI.
+
+**How it works:**
+1. Browse recipe in Safari on iPhone/iPad
+2. Tap the Share button → Select "RecipeArchive"
+3. App opens and processes the URL automatically
+4. Recipe appears in your collection with full content and images
+
+No manual copying, no desktop workflow required—just native iOS sharing!
 </details>
 <details>
   <summary>Screenshots -- Native Apps</summary>
