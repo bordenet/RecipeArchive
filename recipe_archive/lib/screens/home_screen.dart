@@ -128,6 +128,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final url = sharedData['url']!;
       final html = sharedData['html'];
 
+      debugPrint('DEBUG _checkForSharedUrl: URL = $url');
+      debugPrint('DEBUG _checkForSharedUrl: Has HTML = ${html != null}');
+      if (html != null) {
+        debugPrint('DEBUG _checkForSharedUrl: HTML length = ${html.length}');
+        debugPrint('DEBUG _checkForSharedUrl: HTML preview = ${html.substring(0, html.length > 200 ? 200 : html.length)}');
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(html != null
@@ -141,48 +148,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _processSharedRecipe(String url, {String? html}) async {
-    final recipeService = ref.read(recipeServiceProvider);
-    final uri = Uri.parse(url);
-    final domain = uri.host.replaceAll('www.', '');
+    try {
+      final recipeService = ref.read(recipeServiceProvider);
+      final authService = ref.read(authServiceProvider);
+      final uri = Uri.parse(url);
+      final domain = uri.host.replaceAll('www.', '');
 
-    // Build recipe data with optional HTML
-    final recipeData = {
-      'sourceUrl': url,
-      'title': 'Recipe from $domain',
-      'ingredients': [
-        {'text': html != null
-          ? '🔄 Processing HTML content...'
-          : '📱 Shared from mobile - Full parsing coming soon!'}
-      ],
-      'instructions': [
-        {'stepNumber': 1, 'text': html != null
-          ? 'Recipe is being processed by the backend'
-          : 'Open the source URL to view the recipe'}
-      ],
-    };
+      // DEBUG: Log authentication state
+      debugPrint('DEBUG: Processing shared recipe from $url');
+      debugPrint('DEBUG: Auth user: ${authService.currentUser?.email ?? "NOT AUTHENTICATED"}');
+      debugPrint('DEBUG: Has token: ${authService.currentUser?.idToken.isNotEmpty ?? false}');
 
-    // Include HTML if available
-    if (html != null) {
-      recipeData['webArchiveHtml'] = html;
-    }
+      // Build recipe data with optional HTML
+      final recipeData = {
+        'id': '', // Will be set by backend
+        'sourceUrl': url,
+        'title': 'Recipe from $domain',
+        'ingredients': [
+          {'text': html != null
+            ? '🔄 Processing HTML content...'
+            : '📱 Shared from mobile - Full parsing coming soon!'}
+        ],
+        'instructions': [
+          {'stepNumber': 1, 'text': html != null
+            ? 'Recipe is being processed by the backend'
+            : 'Open the source URL to view the recipe'}
+        ],
+      };
 
-    final response = await recipeService.saveRecipe(Recipe.fromJson(recipeData));
+      // Include HTML if available
+      if (html != null) {
+        recipeData['webArchiveHtml'] = html;
+      }
 
-    if (mounted) {
-      ref.invalidate(paginatedRecipesProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(html != null
-              ? 'Recipe saved! Backend will process HTML content.'
-              : 'Recipe bookmarked! Use browser extension for full parsing.'),
-          action: SnackBarAction(
-            label: 'View',
-            onPressed: () {
-              Navigator.pushNamed(context, '/recipe-detail', arguments: response.id);
-            },
+      debugPrint('DEBUG: Calling saveRecipe...');
+      final response = await recipeService.saveRecipe(Recipe.fromJson(recipeData));
+      debugPrint('DEBUG: Recipe saved successfully with ID: ${response.id}');
+
+      if (mounted) {
+        ref.invalidate(paginatedRecipesProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(html != null
+                ? 'Recipe saved! Backend will process HTML content.'
+                : 'Recipe bookmarked! Use browser extension for full parsing.'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                Navigator.pushNamed(context, '/recipe-detail', arguments: response.id);
+              },
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('ERROR: Failed to save shared recipe: $e');
+      debugPrint('ERROR: Stack trace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save recipe: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 

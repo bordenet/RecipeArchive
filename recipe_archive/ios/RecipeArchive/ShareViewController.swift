@@ -56,6 +56,15 @@ class ShareViewController: UIViewController {
         var extractedHTML: String?
         let dispatchGroup = DispatchGroup()
 
+        // DEBUG: Log all available type identifiers
+        print("DEBUG ShareViewController: Starting content extraction")
+        for item in extensionItems {
+            guard let attachments = item.attachments else { continue }
+            for attachment in attachments {
+                print("DEBUG ShareViewController: Available type identifiers: \(attachment.registeredTypeIdentifiers)")
+            }
+        }
+
         // Extract URL and HTML from shared content
         for item in extensionItems {
             guard let attachments = item.attachments else { continue }

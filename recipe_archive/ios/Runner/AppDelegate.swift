@@ -26,7 +26,34 @@ import UIKit
       }
     }
 
+    // Listen for notifications from Safari Web Extension
+    setupWebExtensionListener()
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Setup listener for Safari Web Extension notifications
+  private func setupWebExtensionListener() {
+    let notificationName = CFNotificationName("com.recipearchive.newRecipe" as CFString)
+
+    CFNotificationCenterAddObserver(
+      CFNotificationCenterGetDarwinNotifyCenter(),
+      Unmanaged.passUnretained(self).toOpaque(),
+      { (center, observer, name, object, userInfo) in
+        guard let observer = observer else { return }
+        let appDelegate = Unmanaged<AppDelegate>.fromOpaque(observer).takeUnretainedValue()
+        appDelegate.handleWebExtensionNotification()
+      },
+      notificationName.rawValue,
+      nil,
+      .deliverImmediately
+    )
+  }
+
+  // Handle notification from Web Extension
+  @objc private func handleWebExtensionNotification() {
+    print("DEBUG AppDelegate: Received Web Extension notification")
+    notifyFlutterOfSharedUrl()
   }
 
   // Handle custom URL scheme (recipearchive://)
