@@ -23,8 +23,15 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
+    "roots": [
+      "<rootDir>",
+      "<rootDir>/.."
+    ],
     "testMatch": [
-      "**/*.test.js"
+      "<rootDir>/../**/*.test.js"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/"
     ],
     "collectCoverageFrom": [
       "**/*.js",
