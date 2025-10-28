@@ -15,6 +15,9 @@
 #==============================================================================
 set -e
 
+START_TIME=$(date +%s)
+
+
 # --- Configuration ---
 TARGET="simulator"
 CONFIG="debug"
@@ -249,14 +252,38 @@ if [[ "$TARGET" == "simulator" ]]; then
     fi
     print_status "Found simulator with UDID: $UDID"
     print_status "Launching simulator..."
-    if ! "$IOS_SCRIPT_DIR/ios-simulator.sh" "$UDID"; then
-        print_error "Failed to launch simulator."
-        exit 1
+    "$IOS_SCRIPT_DIR/ios-simulator.sh" "$UDID" &
+    SIMULATOR_PID=$!
+    print_status "Simulator launched in background with PID: $SIMULATOR_PID"
+
+    # Wait for 2 minutes (120 seconds)
+    SECONDS=0
+    while ps -p $SIMULATOR_PID > /dev/null && [ $SECONDS -lt 120 ]; do
+        sleep 1
+    done
+
+    if ps -p $SIMULATOR_PID > /dev/null; then
+        print_status "Timeout reached. Simulator is still running in the background."
+    else
+        print_success "Simulator process finished."
     fi
-    print_success "App launched on simulator."
+    print_success "App launch process initiated on simulator."
 else
     print_status "To deploy to a device, please open Xcode and select your device."
-    "$IOS_SCRIPT_DIR/ios-xcode.sh"
+    "$IOS_SCRIPT_DIR/ios-xcode.sh" &
+    XCODE_PID=$!
+    print_status "Xcode launched in background with PID: $XCODE_PID"
+
+    SECONDS=0
+    while ps -p $XCODE_PID > /dev/null && [ $SECONDS -lt 120 ]; do
+        sleep 1
+    done
+
+    if ps -p $XCODE_PID > /dev/null; then
+        print_status "Timeout reached. Xcode is still running in the background."
+    else
+        print_success "Xcode process finished."
+    fi
 fi
 
 print_status "Resetting Runner.xcodeproj/project.pbxproj to clean state"
@@ -265,3 +292,8 @@ git checkout -- recipe_archive/ios/Runner.xcodeproj/project.pbxproj
 
 
 print_success "All steps completed successfully."
+
+END_TIME=$(date +%s)
+ELAPSED_TIME=$((END_TIME - START_TIME))
+
+print_status "Total execution time: ${ELAPSED_TIME} seconds."

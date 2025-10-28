@@ -98,7 +98,7 @@ print_status "Starting iOS clean process..."
 
 # Flutter clean
 print_status "Running Flutter clean..."
-flutter clean
+flutter clean > /dev/null
 print_success "Flutter clean completed"
 
 # Clean iOS build directory
@@ -136,9 +136,9 @@ if [ -d "ios" ]; then
 
                 print_status "Reinstalling CocoaPods..."
 
-                flutter pub get
+    flutter pub get > /dev/null
 
-                pod install --repo-update
+                pod install --repo-update > /dev/null
 
                 print_success "CocoaPods reinstalled"
 
@@ -190,7 +190,7 @@ if [ -d "ios" ]; then
 
         print_status "Reinstalling Flutter dependencies..."
 
-        flutter pub get
+        flutter pub get > /dev/null
 
         print_success "Flutter dependencies reinstalled"
 
