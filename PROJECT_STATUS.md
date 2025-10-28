@@ -99,18 +99,19 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
   - Content hashing insufficient (based on counts only)
   - Consider: DynamoDB cache with TTL or disable caching entirely
 
-- [ ] **No diagnostic aggregation or alerting**
-  - Extension reports errors to S3 but no monitoring
-  - No CloudWatch alarms for parsing failures
-  - No dashboard for error trends
-  - Implementation plan available: Add CloudWatch metrics to diagnostics and background-normalizer Lambdas, deploy monitoring stack with alarms and dashboard
-  - Key metrics needed: ParsingFailures by ErrorType/Domain, RecipeQuality distribution, GarbageRecipes count
-  - Alarms needed: HighParsingFailures (>10 in 10min), GarbageRecipes (>5 in 15min), Lambda errors
-  - Files to modify: diagnostics/main.go, background-normalizer/main.go, create monitoring-stack.ts
+- [x] **No diagnostic aggregation or alerting**
+  - Status: FIXED - CloudWatch metrics and alarms configured
+  - Background normalizer publishes RecipeQuality and GarbageRecipes metrics
+  - monitoring-stack.ts defines alarms and dashboard
+  - Alarms: HighParsingFailures, GarbageRecipes, LambdaErrors
+  - Dashboard tracks quality distribution (GOOD/LOW/POOR/GARBAGE)
+  - Deploy with: cd aws-backend/infrastructure && cdk deploy RecipeArchive-Monitoring
 
-- [ ] **Silent failure modes everywhere**
-  - Functions return success even when producing garbage
-  - No distinction between "processed successfully" and "processed broken data successfully"
+- [x] **Silent failure modes everywhere**
+  - Status: FIXED - Clear ERROR/WARN logging for failures
+  - Backend rejects garbage recipes with 400 Bad Request
+  - Normalizer logs ERROR for garbage, skips OpenAI processing
+  - Quality metrics published to CloudWatch for visibility
 
 ## New Adopter Support
 
