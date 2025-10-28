@@ -542,6 +542,9 @@ class RecipeService {
     }
 
     try {
+      // ignore: avoid_print
+      print('DEBUG RecipeService: Saving recipe to: $apiUrl/recipes');
+
       final response = await http.post(
         Uri.parse('$apiUrl/recipes'),
         headers: {
@@ -551,12 +554,40 @@ class RecipeService {
         body: json.encode(recipe.toJson()),
       );
 
+      // ignore: avoid_print
+      print('DEBUG RecipeService: Response status: ${response.statusCode}');
+
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return Recipe.fromJson(json.decode(response.body));
+        try {
+          // ignore: avoid_print
+          print('DEBUG RecipeService: Response body: ${response.body}');
+          final responseData = json.decode(response.body);
+
+          // Backend wraps response in {"message": "...", "recipe": {...}}
+          // Extract the recipe object if present
+          final recipeData = responseData['recipe'] ?? responseData;
+
+          // ignore: avoid_print
+          print('DEBUG RecipeService: Decoded JSON, calling Recipe.fromJson');
+          return Recipe.fromJson(recipeData);
+        } catch (parseError, stackTrace) {
+          // ignore: avoid_print
+          print('ERROR RecipeService: Failed to parse recipe response: $parseError');
+          // ignore: avoid_print
+          print('ERROR RecipeService: Raw response body: ${response.body}');
+          // ignore: avoid_print
+          print('ERROR RecipeService: Stack trace: $stackTrace');
+          throw Exception('Failed to parse recipe response: $parseError');
+        }
       } else {
-        throw Exception('Failed to save recipe: HTTP ${response.statusCode}');
+        // ignore: avoid_print
+        print('ERROR RecipeService: Save failed: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to save recipe: HTTP ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
+      if (e is Exception && e.toString().contains('Failed to parse')) {
+        rethrow;
+      }
       throw Exception('Network error while saving recipe: $e');
     }
   }

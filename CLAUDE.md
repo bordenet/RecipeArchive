@@ -52,6 +52,32 @@ Browser extensions contain hardcoded AWS infrastructure references. New adopters
 
 iOS/Android toolchain available
 
+### iOS Recipe Sharing Architecture
+
+**IMPORTANT**: iOS Safari Share Sheet only provides URLs, not HTML content. This prevents capturing recipes from paywalled sites.
+
+**Solution**: Safari Web Extension (iOS 15+)
+- Runs JavaScript in page context (has access to authenticated session)
+- Extracts full HTML from rendered page
+- Saves to App Group container
+- Flutter app reads HTML and sends to backend
+- Works with paywalled content (user already logged in)
+
+**Setup**: See [XCODE_WEB_EXTENSION_SETUP.md](XCODE_WEB_EXTENSION_SETUP.md) for step-by-step Xcode instructions
+
+**⚠️ Important**: Xcode overwrites files when creating the extension target. After creating the target in Xcode, run `./scripts/restore-web-extension-files.sh` to restore our implementation.
+
+**Architecture Flow**:
+```
+Safari (user logged in) → Web Extension extracts HTML →
+App Group storage → CFNotification → Flutter app → Backend parses
+```
+
+**Files**:
+- `recipe_archive/ios/RecipeExtension/` - Safari Web Extension
+- `recipe_archive/ios/RecipeArchive/` - Share Extension (legacy, URL only)
+- `recipe_archive/ios/Runner/AppDelegate.swift` - Listens for Web Extension notifications
+
 ### iOS Production Builds
 
 For device deployment and releases, use the production build script:
