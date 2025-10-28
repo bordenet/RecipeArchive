@@ -252,6 +252,9 @@ func convertJSONLDToRecipe(jsonLD map[string]interface{}) *models.CreateRecipeRe
 	// Extract image URL
 	if imageURL := extractImageURL(jsonLD["image"]); imageURL != "" {
 		recipe.MainPhotoURL = &imageURL
+		fmt.Printf("🖼️ Extracted image URL: %s\n", imageURL)
+	} else {
+		fmt.Printf("⚠️ No image URL found in JSON-LD\n")
 	}
 
 	// Extract times
