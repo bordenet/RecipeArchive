@@ -4,7 +4,6 @@ import '../services/paginated_recipe_service.dart';
 import '../services/auth_service.dart';
 import '../services/share_channel.dart';
 import '../services/recipe_service.dart';
-import '../models/recipe.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/onboarding_content.dart';
 import '../utils/platform_detection.dart';
@@ -180,8 +179,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         debugPrint('DEBUG: Including HTML in recipe submission (${html.length} bytes)');
       }
 
-      debugPrint('DEBUG: Calling saveRecipe...');
-      final response = await recipeService.saveRecipe(Recipe.fromJson(recipeData));
+      debugPrint('DEBUG: Calling saveRecipeRaw to preserve webArchiveHtml...');
+      final response = await recipeService.saveRecipeRaw(recipeData);
       debugPrint('DEBUG: Recipe saved successfully with ID: ${response.id}');
 
       if (mounted) {
