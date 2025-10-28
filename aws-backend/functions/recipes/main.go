@@ -862,8 +862,9 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		}
 	}
 
-	// BEST-EFFORT HTML FETCHING
+	// BEST-EFFORT HTML FETCHING & PARSING
 	// If HTML is not provided (Chrome/Firefox via Share Extension), attempt to fetch it
+	var htmlContent string
 	if recipeData.WebArchiveHTML == nil || *recipeData.WebArchiveHTML == "" {
 		fmt.Printf("📡 [BEST-EFFORT] No HTML provided, attempting to fetch from %s\n", sourceURL)
 
@@ -876,14 +877,61 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			// Update title to indicate bookmark status
 			domain := getDomainFromURL(sourceURL)
 			recipeData.Title = fmt.Sprintf("🔖 Bookmarked: %s", domain)
+			// Don't parse HTML - just save as bookmark
 		} else {
 			// Successfully fetched HTML
 			fmt.Printf("✅ [BEST-EFFORT] HTML fetched successfully (%d bytes)\n", len(html))
+			htmlContent = html
 			recipeData.WebArchiveHTML = &html
 		}
 	} else {
 		// HTML was provided (Safari Web Extension premium path)
 		fmt.Printf("🌟 [PREMIUM] HTML provided by client (%d bytes) - Safari Web Extension path\n", len(*recipeData.WebArchiveHTML))
+		htmlContent = *recipeData.WebArchiveHTML
+	}
+
+	// PARSE HTML TO EXTRACT RECIPE DATA
+	// If we have HTML content and recipe is missing ingredients/instructions, parse it
+	if htmlContent != "" && (len(recipeData.Ingredients) == 0 || len(recipeData.Instructions) == 0) {
+		fmt.Printf("🔍 Attempting to parse HTML for recipe data...\n")
+		parsedRecipe, err := parseHTMLToRecipe(htmlContent, sourceURL)
+		if err != nil {
+			fmt.Printf("⚠️ HTML parsing failed: %v\n", err)
+			fmt.Printf("📝 Continuing with existing recipe data (may be incomplete)\n")
+		} else {
+			// Merge parsed data with existing data (existing data takes precedence if present)
+			if recipeData.Title == "" || strings.HasPrefix(recipeData.Title, "🔖") {
+				recipeData.Title = parsedRecipe.Title
+			}
+			if len(recipeData.Ingredients) == 0 {
+				recipeData.Ingredients = parsedRecipe.Ingredients
+			}
+			if len(recipeData.Instructions) == 0 {
+				recipeData.Instructions = parsedRecipe.Instructions
+			}
+			if recipeData.Description == nil && parsedRecipe.Description != nil {
+				recipeData.Description = parsedRecipe.Description
+			}
+			if recipeData.MainPhotoURL == nil && parsedRecipe.MainPhotoURL != nil {
+				recipeData.MainPhotoURL = parsedRecipe.MainPhotoURL
+			}
+			if recipeData.PrepTimeMinutes == nil && parsedRecipe.PrepTimeMinutes != nil {
+				recipeData.PrepTimeMinutes = parsedRecipe.PrepTimeMinutes
+			}
+			if recipeData.CookTimeMinutes == nil && parsedRecipe.CookTimeMinutes != nil {
+				recipeData.CookTimeMinutes = parsedRecipe.CookTimeMinutes
+			}
+			if recipeData.TotalTimeMinutes == nil && parsedRecipe.TotalTimeMinutes != nil {
+				recipeData.TotalTimeMinutes = parsedRecipe.TotalTimeMinutes
+			}
+			if recipeData.Servings == nil && parsedRecipe.Servings != nil {
+				recipeData.Servings = parsedRecipe.Servings
+			}
+
+			fmt.Printf("✅ HTML parsing successful - merged data into recipe\n")
+			fmt.Printf("📊 Recipe data: %d ingredients, %d instructions\n",
+				len(recipeData.Ingredients), len(recipeData.Instructions))
+		}
 	}
 
 	if existingRecipe != nil {
