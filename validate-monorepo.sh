@@ -569,6 +569,24 @@ run_meaningful_tests() {
         print_test_error
         echo "    Extension integration tests failed - parser bundle issues"
     fi
+
+    print_step "TypeScript extension unit tests"
+    add_test
+    if npm run test:unit > /dev/null 2>&1; then
+        print_test_success
+    else
+        print_test_error
+        echo "    TypeScript unit tests failed - rerun with: npm run test:unit"
+    fi
+
+    print_step "Chrome/Safari extension tests"
+    add_test
+    if npm run test:extensions > /dev/null 2>&1; then
+        print_test_success
+    else
+        print_test_error
+        echo "    Extension tests failed - rerun with: npm run test:extensions"
+    fi
     
     # Multi-tenant invitation flow tests - comprehensive AWS integration validation
     print_step "Multi-tenant invitation flow tests"

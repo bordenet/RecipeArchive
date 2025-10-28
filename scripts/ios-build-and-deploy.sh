@@ -222,8 +222,20 @@ if [[ "$TARGET" == "simulator" ]]; then
     print_status "Device Target: $DEVICE_TARGET"
 fi
 
+print_status "Step 0: Fixing Xcode 16 CocoaPods compatibility..."
+# Xcode 16 sets objectVersion to 70, which CocoaPods doesn't support yet
+# Change it to 60 to ensure compatibility
+PBXPROJ_FILE="recipe_archive/ios/Runner.xcodeproj/project.pbxproj"
+if grep -q "objectVersion = 70;" "$PBXPROJ_FILE"; then
+    print_status "Detected objectVersion 70, downgrading to 60 for CocoaPods compatibility..."
+    sed -i '' 's/objectVersion = 70;/objectVersion = 60;/g' "$PBXPROJ_FILE"
+    print_success "Fixed objectVersion for CocoaPods compatibility."
+else
+    print_status "objectVersion is compatible with CocoaPods."
+fi
+
 print_status "Step 1: Running clean script..."
-if ! "$IOS_SCRIPT_DIR/ios-clean.sh" --deep; then
+if ! "$IOS_SCRIPT_DIR/ios-clean.sh"; then
     print_error "Clean script failed. Aborting."
     exit 1
 fi

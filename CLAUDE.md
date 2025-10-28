@@ -97,6 +97,8 @@ App Group storage → CFNotification → Flutter app → Backend parses
 
 ### iOS Production Builds
 
+**⚠️ Xcode 16 Compatibility Issue**: Xcode 16 sets `objectVersion = 70` in project.pbxproj, which CocoaPods doesn't support yet. The build script automatically downgrades this to `objectVersion = 60` for compatibility. If you encounter manual CocoaPods errors with "object version 70", the script handles this automatically - no manual intervention needed.
+
 For device deployment and releases, use the production build script:
 
 ```bash

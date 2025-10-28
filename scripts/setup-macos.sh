@@ -235,7 +235,13 @@ else
 fi
 
 # Android Development Setup
-if timed_confirm "Set up Android development environment?"; then
+android_setup_needed=false
+if [ ! -d "/Applications/Android Studio.app" ] || ! command -v sdkmanager &> /dev/null; then
+  android_setup_needed=true
+fi
+
+if [ "$android_setup_needed" = true ]; then
+  if timed_confirm "Set up Android development environment?"; then
   print_info "Setting up Android development..."
   
   # Install Android Studio
@@ -311,12 +317,21 @@ EOF
   print_info "1. Open Android Studio (first launch will complete SDK setup)"
   print_info "2. Follow setup wizard if prompted"
   print_info "3. Install additional SDK components as needed"
+  else
+    print_warning "Skipping Android setup - Android development will not be available"
+  fi
 else
-  print_warning "Skipping Android setup - Android development will not be available"
+  print_success "Android development environment already configured"
 fi
 
 # iOS Development Setup
-if timed_confirm "Set up iOS development environment?"; then
+ios_setup_needed=false
+if [ ! -d "/Applications/Xcode.app" ] || ! command -v pod &> /dev/null; then
+  ios_setup_needed=true
+fi
+
+if [ "$ios_setup_needed" = true ]; then
+  if timed_confirm "Set up iOS development environment?"; then
   print_info "Setting up iOS development..."
   
   # Check if Xcode is installed
@@ -391,8 +406,11 @@ if timed_confirm "Set up iOS development environment?"; then
     print_info "3. Add your Apple ID"
     print_info "4. Select your development team"
   fi
+  else
+    print_warning "Skipping iOS setup - iOS development will not be available"
+  fi
 else
-  print_warning "Skipping iOS setup - iOS development will not be available"
+  print_success "iOS development environment already configured"
 fi
 
 # Java Development Kit (required for Android)
@@ -809,8 +827,8 @@ if [ -d "/Applications/Claude.app" ]; then
   # Install MCP servers globally
   print_info "Installing MCP servers for development workflow..."
 
-  # Install core MCP servers with timeout
-  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
+  # Install core MCP servers with timeout (including Xcode MCP for iOS development)
+  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework xcode-mcp --force || print_warning "MCP server installation timed out or failed"
 
   print_success "MCP servers installation completed"
 
@@ -870,6 +888,13 @@ if [ -d "/Applications/Claude.app" ]; then
       "command": "npx",
       "args": ["-y", "browser-mcp"],
       "env": {}
+    },
+    "xcode-mcp": {
+      "command": "npx",
+      "args": ["-y", "xcode-mcp"],
+      "env": {
+        "XCODE_DEVELOPER_PATH": "/Applications/Xcode.app/Contents/Developer"
+      }
     }
   }
 }
@@ -893,6 +918,7 @@ EOF
     echo "  ✅ NPM Commands MCP - Package management automation"
     echo "  ✅ Jest MCP - Testing framework integration"
     echo "  ✅ Browser MCP - Browser automation for web development"
+    echo "  ✅ Xcode MCP - iOS/macOS development and build tools"
 
     print_warning "IMPORTANT: Add your GitHub Personal Access Token to the configuration:"
     print_info "1. Generate token at: https://github.com/settings/personal-access-tokens"
@@ -910,7 +936,7 @@ else
 
   # Install MCP servers anyway for when Claude Desktop is installed
   print_info "Installing MCP servers globally..."
-  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
+  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework xcode-mcp --force || print_warning "MCP server installation timed out or failed"
   print_success "MCP servers installation completed"
 
   print_info "To complete MCP setup after installing Claude Desktop:"
@@ -1038,12 +1064,21 @@ if command -v claude &> /dev/null; then
     print_success "Flutter MCP server already configured"
   fi
 
+  # Add Xcode MCP server
+  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "xcode"; then
+    print_info "Adding Xcode MCP server..."
+    timeout 30 claude mcp add xcode npx xcode-mcp --scope user 2>/dev/null || print_warning "Xcode MCP server setup failed"
+  else
+    print_success "Xcode MCP server already configured"
+  fi
+
   print_success "Claude Code MCP servers configured"
   print_info "Configured MCP servers for Claude Code:"
   echo "  ✅ GitHub - Repository operations and issue management"
   echo "  ✅ Filesystem - Project file operations"
   echo "  ✅ ESLint - Code quality and linting"
   echo "  ✅ Flutter - Dart/Flutter development tools"
+  echo "  ✅ Xcode - iOS/macOS development and build tools"
 
   print_warning "IMPORTANT: Set up GitHub authentication:"
   print_info "1. Generate a GitHub Personal Access Token"
@@ -1058,6 +1093,7 @@ else
   print_info "4. Run: claude mcp add filesystem npx @modelcontextprotocol/server-filesystem \$(pwd) --scope user"
   print_info "5. Run: claude mcp add eslint npx @eslint/mcp --scope user"
   print_info "6. Run: claude mcp add flutter npx flutter-mcp --scope user"
+  print_info "7. Run: claude mcp add xcode npx xcode-mcp --scope user"
 fi
 
 # Final setup summary and manual steps

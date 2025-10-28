@@ -119,7 +119,7 @@ case "$BUILD_TYPE" in
         SCHEME="Runner-Release"
         ;;
     profile)
-        SCHEME="Runner-Profile"
+        SCHEME="Runner-Release"  # Use release scheme for profile builds
         ;;
 esac
 
@@ -145,6 +145,19 @@ print_status "Building iOS app..."
 print_status "Target: $TARGET"
 print_status "Build type: $BUILD_TYPE"
 print_status "Scheme: $SCHEME"
+
+# Ensure CocoaPods is properly set up
+if [ ! -d "ios/Pods" ] || [ ! -f "ios/Podfile.lock" ]; then
+    print_warning "CocoaPods dependencies missing. Installing..."
+    flutter pub get > /dev/null 2>&1
+
+    (cd ios && pod install > /dev/null 2>&1) || {
+        print_error "CocoaPods installation failed."
+        print_warning "If you see 'object version 70' errors, the build script handles this automatically."
+        print_warning "Try running: ./scripts/ios-build-and-deploy.sh"
+        exit 1
+    }
+fi
 
 # Clean previous builds
 # print_status "Cleaning previous builds..."

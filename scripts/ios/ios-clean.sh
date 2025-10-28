@@ -118,102 +118,76 @@ if [ -d "ios" ]; then
         print_success "iOS build artifacts removed"
     fi
 
-    # Clean CocoaPods if requested
-    if [ "$RESET_PODS" = true ]; then
-        print_status "Resetting CocoaPods..."
+    # Always reinstall CocoaPods after flutter clean (which removes Manifest.lock)
+    # This ensures the sandbox stays in sync with Podfile.lock
+    if true; then
+        print_status "Setting up CocoaPods..."
 
         cd ios
 
-        if [ -f "Podfile.lock" ]; then
-            rm Podfile.lock
-            print_success "Podfile.lock removed"
-        fi
-
-        if [ -d "Pods" ]; then
-            rm -rf Pods
-            print_success "Pods directory removed"
-        fi
-
-                print_status "Reinstalling CocoaPods..."
-
-    flutter pub get > /dev/null
-
-                pod install --repo-update > /dev/null
-
-                print_success "CocoaPods reinstalled"
-
-        
-
-                cd ..
-
+        # Remove existing files if reset requested
+        if [ "$RESET_PODS" = true ]; then
+            if [ -f "Podfile.lock" ]; then
+                rm Podfile.lock
+                print_success "Podfile.lock removed"
             fi
 
-        fi
-
-        
-
-        # Deep clean if requested
-
-        if [ "$DEEP_CLEAN" = true ]; then
-
-            print_status "Performing deep clean..."
-
-        
-
-            # Clean Xcode derived data
-
-            if [ -d "~/Library/Developer/Xcode/DerivedData" ]; then
-
-                print_status "Cleaning Xcode derived data..."
-
-                rm -rf ~/Library/Developer/Xcode/DerivedData/*
-
-                print_success "Xcode derived data cleaned"
-
+            if [ -d "Pods" ]; then
+                rm -rf Pods
+                print_success "Pods directory removed"
             fi
-
-        
-
-            # Clean Flutter pub cache for this project
-
-            print_status "Cleaning Flutter pub cache..."
-
-            flutter pub deps --json > /dev/null 2>&1 || true
-
-            print_success "Flutter pub cache cleaned"
-
         fi
 
-        
-
-        # Reinstall Flutter dependencies
-
-        print_status "Reinstalling Flutter dependencies..."
-
+        print_status "Installing CocoaPods dependencies..."
         flutter pub get > /dev/null
 
-        print_success "Flutter dependencies reinstalled"
+        # Try CocoaPods installation with fallback for Xcode 16 compatibility
+        if ! pod install --repo-update > /dev/null 2>&1; then
+            print_warning "Standard pod install failed, trying with compatibility fixes..."
+            # Clean up and try again without repo update
+            rm -rf Pods Podfile.lock > /dev/null 2>&1
+            pod install > /dev/null 2>&1 || {
+                print_warning "CocoaPods installation failed - this is likely due to Xcode 16 compatibility"
+                print_warning "You may need to manually run 'cd recipe_archive/ios && pod install' after setup"
+                cd ..
+                return 0
+            }
+        fi
+        print_success "CocoaPods installed successfully"
 
-        
+        cd ..
+    fi
+fi
 
-        print_success "iOS clean completed!"
+# Deep clean if requested
+if [ "$DEEP_CLEAN" = true ]; then
+    print_status "Performing deep clean..."
 
-        
+    # Clean Xcode derived data
+    if [ -d "$HOME/Library/Developer/Xcode/DerivedData" ]; then
+        print_status "Cleaning Xcode derived data..."
+        rm -rf "$HOME/Library/Developer/Xcode/DerivedData"/*
+        print_success "Xcode derived data cleaned"
+    fi
 
-        echo ""
+    # Clean Flutter pub cache for this project
+    print_status "Cleaning Flutter pub cache..."
+    flutter pub deps --json > /dev/null 2>&1 || true
+    print_success "Flutter pub cache cleaned"
+fi
 
-        echo "🚀 Next steps:"
+# Reinstall Flutter dependencies
+print_status "Reinstalling Flutter dependencies..."
+flutter pub get > /dev/null
+print_success "Flutter dependencies reinstalled"
 
-        echo "Run the main build and deploy script: ./scripts/ios-build-and-deploy.sh"
+print_success "iOS clean completed!"
 
-        echo ""
-
-        echo "💡 If you're still having issues:"
-
-        echo "1. Try: ./scripts/ios/ios-clean.sh --deep           # Deep clean everything"
-
-        echo "2. Run: flutter doctor -v                       # Check Flutter setup"
-
-        echo "3. Restart Xcode and your terminal"
-
-        
+echo ""
+echo "🚀 Next steps:"
+echo "Run the main build and deploy script: ./scripts/ios-build-and-deploy.sh"
+echo ""
+echo "💡 If you're still having issues:"
+echo "1. Try: ./scripts/ios/ios-clean.sh --deep           # Deep clean everything"
+echo "2. Run: flutter doctor -v                       # Check Flutter setup"
+echo "3. Restart Xcode and your terminal"
