@@ -11,17 +11,15 @@
    - Follow `XCODE_WEB_EXTENSION_SETUP.md` for configuration
    - Run `./scripts/restore-web-extension-files.sh` after Xcode creates target
 
-2. **iOS Build Script** - Fix simulator deployment failure
-   - `scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target iphone-17-pro` fails
-   - May be related to Safari Web Extension build configuration
+2. **iOS Build** - ✅ FIXED (commit a0531a1)
+   - Removed duplicate Web Extension files from root level
+   - Build now succeeds: `xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner-Debug -sdk iphonesimulator build`
+   - Ready for deployment testing
 
-3. **Android Scripts Migration**
-   - Move `./scripts/android-*.sh` to `./scripts/android/` directory except for a top-level clean-and-build script like we did for iOS
-   - Update all references
-
-4. **Android Share Extension** - Not started
+3. **Android Share Extension** - Not started
    - Backend HTML parsing ready (`aws-backend/functions/recipes/parser.go`)
    - Implement Android Share Extension to use backend parser
+   - Scripts structure in `scripts/android/` ready
 
 Review PROJECT_STATUS.md for additional critical issues.
 
