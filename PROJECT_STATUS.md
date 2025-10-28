@@ -53,20 +53,20 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
   - Reports failures to diagnostics endpoint for offline analysis
   - Shows clear error messages to users instead of submitting garbage
 
-- [ ] **Backend recipe submission has zero validation**
-  - Accepts recipes with empty arrays
-  - No content quality checks
-  - Broken recipes persist to S3
+- [x] **Backend recipe submission has zero validation**
+  - Status: FIXED - Recipes Lambda rejects 0/0 content
+  - Exception: Empty recipes with HTML allowed for backend parsing
+  - Returns 400 Bad Request with clear error messages
 
-- [ ] **Background normalizer blindly processes garbage**
-  - No validation before OpenAI call
-  - Cache returns poisoned results for broken recipes
-  - Logs show "✅ success" when recipes have 0 ingredients/0 instructions
+- [x] **Background normalizer blindly processes garbage**
+  - Status: FIXED - Pre-normalization validation before OpenAI
+  - Skips garbage recipes (0/0) entirely with ERROR logging
+  - Publishes CloudWatch metrics for quality tracking
 
-- [ ] **CloudWatch logs provide false success indicators**
-  - "✅ success" messages everywhere despite broken recipes
-  - No error-level logging for quality failures
-  - Impossible to distinguish real problems from successful processing
+- [x] **CloudWatch logs provide false success indicators**
+  - Status: FIXED - ERROR logs for garbage, WARN for poor quality
+  - Quality levels: GARBAGE/POOR/LOW/GOOD
+  - Clear distinction between success and processing broken data
 
 - [x] **Cache poisoning persists broken normalizations**
   - Status: FIXED - Cache completely disabled as of 2025-10-06
@@ -81,15 +81,15 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
   - No regression testing for known-good recipes
   - Breakage discovered by users, not tests
 
-- [ ] **Recipes Lambda needs validation**
-  - Must reject recipes with `len(ingredients) == 0 && len(instructions) == 0`
-  - Must validate content quality beyond presence
-  - Should return 400 Bad Request for invalid submissions
+- [x] **Recipes Lambda needs validation**
+  - Status: FIXED - Rejects recipes with 0 ingredients AND 0 instructions
+  - Exception for HTML-provided recipes (backend parsing)
+  - Returns 400 Bad Request for invalid submissions
 
-- [ ] **Background normalizer needs defensive validation**
-  - Reject recipes from S3 if both ingredients and instructions are empty
-  - Log ERROR level (not INFO) for broken recipes
-  - Do not report success for recipes with no content
+- [x] **Background normalizer needs defensive validation**
+  - Status: FIXED - Validates quality before OpenAI normalization
+  - Logs ERROR for garbage recipes (0/0)
+  - Publishes quality metrics to CloudWatch
 
 ### Architectural Issues
 
