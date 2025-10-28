@@ -186,12 +186,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       debugPrint('DEBUG: Recipe saved successfully with ID: ${response.id}');
 
       if (mounted) {
+        // Invalidate and explicitly reload recipes to ensure they display
         ref.invalidate(paginatedRecipesProvider);
+        // Force reload to prevent showing OnboardingContent
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(paginatedRecipesProvider.notifier).loadInitialRecipes();
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(html != null
-                ? 'Recipe saved! Backend will process HTML content.'
-                : 'Recipe bookmarked! Use browser extension for full parsing.'),
+            content: const Text('Recipe saved! Processing...'),
             action: SnackBarAction(
               label: 'View',
               onPressed: () {
