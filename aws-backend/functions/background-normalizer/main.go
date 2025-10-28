@@ -67,6 +67,34 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 		}
 		fmt.Println("Recipe retrieved from S3")
 
+		// CRITICAL: Validate recipe quality before OpenAI normalization
+		ingredientCount := len(recipe.Ingredients)
+		instructionCount := len(recipe.Instructions)
+
+		if ingredientCount == 0 && instructionCount == 0 {
+			// This is GARBAGE - reject normalization and log ERROR
+			log.Printf("❌ ERROR: Refusing to normalize garbage recipe with 0 ingredients AND 0 instructions: %s (URL: %s)", message.RecipeID, recipe.SourceURL)
+			publishMetric(ctx, "GarbageRecipes", 1.0, map[string]string{
+				"Source": extractDomain(recipe.SourceURL),
+				"Stage":  "PreNormalization",
+			})
+			publishMetric(ctx, "RecipeQuality", 1.0, map[string]string{
+				"Quality": "GARBAGE",
+				"Source":  extractDomain(recipe.SourceURL),
+			})
+			continue // Skip this recipe entirely
+		}
+
+		// Warn about low-quality recipes but proceed with normalization
+		if ingredientCount == 0 || instructionCount == 0 {
+			log.Printf("⚠️ WARN: Recipe has incomplete content (%d ingredients, %d instructions): %s",
+				ingredientCount, instructionCount, message.RecipeID)
+			publishMetric(ctx, "RecipeQuality", 1.0, map[string]string{
+				"Quality": "POOR",
+				"Source":  extractDomain(recipe.SourceURL),
+			})
+		}
+
 		// Always normalize the recipe with OpenAI, preserving cookingMethods structure
 		fmt.Println("Normalizing recipe with OpenAI (preserving cookingMethods)")
 		normalizedRecipe, err := normalizeRecipeWithOpenAI(ctx, recipe)
@@ -105,11 +133,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 
 		fmt.Printf("✅ Content-normalizer processed recipe %s with enhanced metadata\n", message.RecipeID)
 
-		// After normalization, check quality
-		ingredientCount := len(recipe.Ingredients)
-		instructionCount := len(recipe.Instructions)
-
-		// Publish quality metrics
+		// Publish quality metrics after normalization (reuse variables from above)
 		publishMetric(ctx, "RecipeQuality", 1.0, map[string]string{
 			"Quality": getQualityLevel(ingredientCount, instructionCount),
 			"Source":  extractDomain(recipe.SourceURL),
