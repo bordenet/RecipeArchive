@@ -508,7 +508,8 @@ func downloadAndUploadImage(ctx context.Context, imageURL string, userID string,
 		ext = ".gif"
 	}
 
-	s3Key := fmt.Sprintf("recipes/%s/%s/main-photo%s", userID, recipeID, ext)
+	// Use same path structure as image-upload Lambda: recipe-images/{recipeID}/recipes/{filename}
+	s3Key := fmt.Sprintf("recipe-images/%s/recipes/main-photo%s", recipeID, ext)
 
 	// Upload to S3
 	_, err = s3Client.PutObject(ctx, &s3.PutObjectInput{
