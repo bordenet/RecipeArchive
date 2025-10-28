@@ -73,6 +73,10 @@ while [[ $# -gt 0 ]]; do
             BUILD_TYPE="debug"
             shift
             ;;
+        --profile)
+            BUILD_TYPE="profile"
+            shift
+            ;;
         --device)
             TARGET="device"
             shift
@@ -90,6 +94,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --release     Build release version (default: debug)"
             echo "  --debug       Build debug version"
+            echo "  --profile     Build profile version"
             echo "  --device      Build for physical device"
             echo "  --simulator   Build for simulator (default)"
             echo "  --xcode       Open Xcode after build"
@@ -103,6 +108,20 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Determine the scheme based on build type
+SCHEME="Runner"
+case "$BUILD_TYPE" in
+    debug)
+        SCHEME="Runner-Debug"
+        ;;
+    release)
+        SCHEME="Runner-Release"
+        ;;
+    profile)
+        SCHEME="Runner-Profile"
+        ;;
+esac
 
 # Navigate to Flutter project
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -125,6 +144,7 @@ fi
 print_status "Building iOS app..."
 print_status "Target: $TARGET"
 print_status "Build type: $BUILD_TYPE"
+print_status "Scheme: $SCHEME"
 
 # Clean previous builds
 print_status "Cleaning previous builds..."
@@ -135,10 +155,13 @@ flutter pub get
 if [ "$TARGET" = "simulator" ]; then
     if [ "$BUILD_TYPE" = "release" ]; then
         print_status "Building iOS release for simulator..."
-        flutter build ios --release --simulator
+        flutter build ios --release --simulator --scheme "$SCHEME"
+    elif [ "$BUILD_TYPE" = "profile" ]; then
+        print_status "Building iOS profile for simulator..."
+        flutter build ios --profile --simulator --scheme "$SCHEME"
     else
         print_status "Building iOS debug for simulator..."
-        flutter build ios --debug --simulator
+        flutter build ios --debug --simulator --scheme "$SCHEME"
     fi
 else
     # Building for device
@@ -148,10 +171,17 @@ else
         print_warning "1. Apple Developer Account"
         print_warning "2. Provisioning profiles configured"
         print_warning "3. Code signing certificates installed"
-        flutter build ios --release
+        flutter build ios --release --scheme "$SCHEME"
+    elif [ "$BUILD_TYPE" = "profile" ]; then
+        print_status "Building iOS profile for device..."
+        print_warning "Device builds require code signing. Make sure you have:"
+        print_warning "1. Apple Developer Account"
+        print_warning "2. Provisioning profiles configured"
+        print_warning "3. Code signing certificates installed"
+        flutter build ios --profile --scheme "$SCHEME"
     else
         print_status "Building iOS debug for device..."
-        flutter build ios --debug
+        flutter build ios --debug --scheme "$SCHEME"
     fi
 fi
 

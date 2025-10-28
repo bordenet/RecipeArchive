@@ -18,7 +18,7 @@ set -e
 # --- Configuration ---
 TARGET="simulator"
 CONFIG="debug"
-DEVICE_TARGET="auto"
+DEVICE_TARGET="iphone-16e"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 IOS_SCRIPT_DIR="$SCRIPT_DIR/ios"
 
@@ -47,7 +47,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  --target <target>       Deployment target. Options: simulator, device (default: simulator)"
-    echo "  --config <config>       Build configuration. Options: debug, release (default: debug)"
+    echo "  --config <config>       Build configuration. Options: debug, release, profile (default: debug)"
     echo "  --device-target <name>  The name of the simulator to target."
     echo "  --help                  Show this help"
     echo ""
@@ -205,7 +205,7 @@ if [[ "$TARGET" != "simulator" && "$TARGET" != "device" ]]; then
     exit 1
 fi
 
-if [[ "$CONFIG" != "debug" && "$CONFIG" != "release" ]]; then
+if [[ "$CONFIG" != "debug" && "$CONFIG" != "release" && "$CONFIG" != "profile" ]]; then
     print_error "Invalid config: $CONFIG"
     show_help
     exit 1
