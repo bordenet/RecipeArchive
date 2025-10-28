@@ -35,6 +35,13 @@
 			remoteGlobalIDString = C97573612EB0648F00766A95;
 			remoteInfo = RecipeExtension;
 		};
+		C9C8D8682EB0686300FD3796 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97573612EB0648F00766A95;
+			remoteInfo = RecipeExtension;
+		};
 		C9EC1FB42EADD38D002405C3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
@@ -280,6 +287,7 @@
 			dependencies = (
 				C9EC1FB52EADD38D002405C3 /* PBXTargetDependency */,
 				C97573792EB0648F00766A95 /* PBXTargetDependency */,
+				C9C8D8692EB0686300FD3796 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -575,6 +583,11 @@
 			isa = PBXTargetDependency;
 			target = C97573612EB0648F00766A95 /* RecipeExtension */;
 			targetProxy = C97573782EB0648F00766A95 /* PBXContainerItemProxy */;
+		};
+		C9C8D8692EB0686300FD3796 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97573612EB0648F00766A95 /* RecipeExtension */;
+			targetProxy = C9C8D8682EB0686300FD3796 /* PBXContainerItemProxy */;
 		};
 		C9EC1FB52EADD38D002405C3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1035,6 +1048,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecipeExtension/RecipeExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 49Y2W8527A;
@@ -1044,7 +1058,7 @@
 				INFOPLIST_FILE = RecipeExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RecipeExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1080,6 +1094,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecipeExtension/RecipeExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 49Y2W8527A;
@@ -1089,7 +1104,7 @@
 				INFOPLIST_FILE = RecipeExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RecipeExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1122,6 +1137,7 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = RecipeExtension/RecipeExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 49Y2W8527A;
@@ -1131,7 +1147,7 @@
 				INFOPLIST_FILE = RecipeExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = RecipeExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
