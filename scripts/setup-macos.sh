@@ -709,10 +709,14 @@ EOF
       print_success "Lambda function packages already built"
     fi
 
-    # Verify CDK setup
-    if timed_confirm "Verify AWS CDK setup by synthesizing CloudFormation templates?" 10 "Y"; then
-      print_info "Synthesizing CDK templates..."
-      npm run synth || print_warning "CDK synthesis failed - check AWS credentials and configuration"
+    # Only verify CDK setup if Lambda functions are built
+    if [ -d "../functions/dist" ] && [ -n "$(ls -A ../functions/dist 2>/dev/null)" ]; then
+      if timed_confirm "Verify AWS CDK setup by synthesizing CloudFormation templates?" 10 "N"; then
+        print_info "Synthesizing CDK templates..."
+        npm run synth || print_warning "CDK synthesis failed - check AWS credentials and configuration"
+      fi
+    else
+      print_info "Skipping CDK synthesis verification (Lambda functions not built yet)"
     fi
   fi
 
@@ -740,10 +744,15 @@ if [ -d "extensions/chrome" ]; then
     timeout 180 npm install
     print_success "Chrome extension dependencies installed"
 
-    # Run tests to verify setup
-    if timed_confirm "Run Chrome extension tests to verify setup?" 10 "Y"; then
-      npm test || print_warning "Some tests may have failed - check configuration"
-      npm run lint || print_warning "Linting issues found - run 'npm run lint:fix' to resolve"
+    # Run linting (Chrome extension uses Jest tests in ../tests/safari directory)
+    if timed_confirm "Run Chrome extension linting?" 10 "N"; then
+      # Run linting but suppress warnings about ignored files
+      lint_output=$(npm run lint 2>&1)
+      if echo "$lint_output" | grep -vE "(File ignored|--no-warn-ignored)" | grep -q "error"; then
+        print_warning "Linting errors found - run 'npm run lint' to see details"
+      else
+        print_success "Chrome extension linting passed"
+      fi
     fi
   fi
   
@@ -787,6 +796,31 @@ if [ -d "extensions/safari" ]; then
   cd - > /dev/null
 else
   print_warning "Safari extension directory not found - skipping Safari setup"
+fi
+
+# Run extension unit tests (located in extensions/tests/safari)
+if [ -d "extensions/tests/safari" ]; then
+  print_info "Running extension unit tests..."
+  cd extensions/tests/safari
+
+  # Install test dependencies if needed
+  if [ -f "package.json" ] && [ ! -d "node_modules" ]; then
+    print_info "Installing test dependencies..."
+    timeout 180 npm install > /dev/null 2>&1
+  fi
+
+  # Run the actual extension tests
+  if timed_confirm "Run extension parser and integration tests?" 10 "Y"; then
+    if npm test 2>&1 | tee /tmp/extension-tests.log; then
+      print_success "Extension tests passed"
+    else
+      print_warning "Some extension tests failed - check /tmp/extension-tests.log for details"
+    fi
+  fi
+
+  cd - > /dev/null
+else
+  print_warning "Extension test directory not found - skipping extension tests"
 fi
 
 # Run cross-platform compatibility test
