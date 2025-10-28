@@ -316,6 +316,7 @@ func getAllValidations() []ValidationTask {
 		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true},
 		ValidationTask{"Check Frontend Status", checkFrontendStatus, true},
 		ValidationTask{"Mobile App Validation", runMobileTests, true},
+		ValidationTask{"iOS Build & Deploy Validation", runIOSValidation, false}, // Sequential, takes time
 		ValidationTask{"AWS Infrastructure Tests", runAwsInfrastructureTests, true},
 		ValidationTask{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, true},
 		ValidationTask{"Validate Extension Downloads", validateExtensionDownloads, true},

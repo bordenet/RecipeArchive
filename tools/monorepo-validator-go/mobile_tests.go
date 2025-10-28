@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -43,4 +44,38 @@ func runMobileTests(projectRoot string) bool {
 	}
 
 	return scriptsFound >= 2
+}
+
+// runIOSValidation performs iOS build and deploy validation
+func runIOSValidation(projectRoot string) bool {
+	fmt.Println("\n=== iOS BUILD & DEPLOY VALIDATION ===")
+
+	// Check for iOS build script
+	iosBuildScript := filepath.Join(projectRoot, "scripts/ios-build-and-deploy.sh")
+	if _, err := os.Stat(iosBuildScript); os.IsNotExist(err) {
+		fmt.Printf("  iOS build script: ✗ (not found at %s)\n", iosBuildScript)
+		return false
+	}
+
+	// Run iOS build and deploy validation
+	fmt.Printf("  Running iOS build and deploy to simulator...\n")
+	output, err := runCommand(
+		projectRoot,
+		iosBuildScript,
+		"--target", "simulator",
+		"--config", "debug",
+		"--device-target", "iphone-17-pro",
+	)
+
+	if err != nil {
+		fmt.Printf("  iOS build and deploy: ✗\n")
+		fmt.Printf("  Error: %v\n", err)
+		if output != "" {
+			fmt.Printf("  Output: %s\n", output)
+		}
+		return false
+	}
+
+	fmt.Printf("  iOS build and deploy: ✓\n")
+	return true
 }
