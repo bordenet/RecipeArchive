@@ -158,26 +158,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       debugPrint('DEBUG: Auth user: ${authService.currentUser?.email ?? "NOT AUTHENTICATED"}');
       debugPrint('DEBUG: Has token: ${authService.currentUser?.idToken.isNotEmpty ?? false}');
 
-      // Build recipe data with optional HTML
+      // Build recipe data with empty arrays
       final recipeData = {
         'id': '', // Will be set by backend
         'sourceUrl': url,
         'title': 'Recipe from $domain',
-        // CRITICAL: Send empty arrays when HTML is present to trigger backend parsing
-        // Backend will parse HTML and extract real ingredients/instructions
-        'ingredients': html != null ? [] : [
-          {'text': '📱 Shared from mobile - Full parsing coming soon!'}
-        ],
-        'instructions': html != null ? [] : [
-          {'stepNumber': 1, 'text': 'Open the source URL to view the recipe'}
-        ],
+        // CRITICAL: Always send empty arrays for iOS Share Extension
+        // Backend will fetch HTML and parse it to extract ingredients/instructions
+        // iOS Safari doesn't provide HTML through Share Extension API
+        'ingredients': [],
+        'instructions': [],
       };
-
-      // Include HTML if available - backend will parse it
-      if (html != null) {
-        recipeData['webArchiveHtml'] = html;
-        debugPrint('DEBUG: Including HTML in recipe submission (${html.length} bytes)');
-      }
 
       debugPrint('DEBUG: Calling saveRecipeRaw to preserve webArchiveHtml...');
       final response = await recipeService.saveRecipeRaw(recipeData);
