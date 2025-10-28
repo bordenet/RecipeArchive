@@ -106,10 +106,7 @@ start_emulator() {
     # Start the emulator in the background
     emulator -avd "$EMULATOR_NAME" > /dev/null 2>&1 &
     
-    # Wait for it to boot
-    print_status "Waiting for emulator to boot..."
-    adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'
-    print_success "Emulator is booted and ready."
+    print_success "Emulator is starting in the background."
 }
 
 stop_emulator() {

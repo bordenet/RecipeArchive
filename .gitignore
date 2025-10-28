@@ -97,6 +97,8 @@ aws-backend/functions/bin/
 aws-backend/functions/dist/
 
 # Go tools build artifacts
+flutter-error-analysis
+flutter-error-analysis/*
 tools/analyze-flutter-errors/analyze-flutter-errors
 tools/analyze-flutter-errors/analyze-flutter-errors.exe
 tools/cmd/recipe-cli/recipe-cli
