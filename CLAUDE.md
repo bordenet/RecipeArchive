@@ -4,6 +4,45 @@
 
 **v1.0.0 Production**: https://d1jcaphz4458q7.cloudfront.net
 
+## CRITICAL ACTIVE WORK
+
+### Backend HTML Parsing - ✅ COMPLETE & DEPLOYED
+**Status**: Comprehensive HTML parsing implemented in Go backend matching TypeScript parser capabilities
+**Deployed**: `RecipeArchive-dev-RecipesFunction` (10.9 MB) - 2025-10-28
+
+**What Works**:
+- JSON-LD extraction with full quirk handling (@graph, arrays, nested structures)
+- HTML entity decoding (&#8211; dashes, &#39; quotes, all named entities)
+- Control character cleaning (ASCII 0-31) for malformed JSON-LD
+- ISO 8601 duration parsing (PT30M → 30 minutes)
+- Multi-format instruction parsing (string, array, HowToStep objects)
+- Image URL extraction (string, array, object formats)
+- DOM fallback parsing when JSON-LD unavailable
+- Merges parsed data with client-provided data
+
+**Files**: `aws-backend/functions/recipes/parser.go`, `main.go` (lines 865-935)
+
+### Outstanding Critical Issues
+
+1. **Flutter App Not Loading Recipes After Share** - URGENT
+   - **Problem**: After sharing recipe from browser, app shows first-user-experience page instead of existing recipes
+   - **Impact**: User must manually tap reload to see recipes
+   - **Location**: `recipe_archive/lib/screens/home_screen.dart` line 87+ (initState, _checkForSharedUrl)
+   - **Investigation Needed**: Check if recipe list refresh is triggered after share handling
+
+2. **Safari Web Extension Not Configured** - BLOCKS PREMIUM PATH
+   - **Problem**: Extension code exists but needs manual Xcode setup
+   - **Status**: Xcode configuration not completed
+   - **Guide**: See `XCODE_WEB_EXTENSION_SETUP.md` for step-by-step instructions
+   - **Impact**: Safari users cannot capture HTML from paywalled sites
+   - **Files**: `recipe_archive/ios/RecipeExtension/` (all files present)
+
+3. **Android Share Extension** - NOT STARTED
+   - **Requirement**: Implement same backend HTML parsing flow for Android
+   - **Goal**: Eliminate bookmarks entirely - parse all recipes on backend
+   - **Priority**: After iOS issues resolved and tested
+   - **Reference**: `scripts/android/` structure mirrors iOS
+
 **CRITICAL**: Review PROJECT_STATUS.md for list of critical issues requiring immediate attention.
 
 ALWAYS review COMMANDS.md to find project-specific tools, including tools for diagnostic error harvesting, tracing, and deployments. DO NOT "wing it" with direct S3 access, direct lambda deployments, etc.
