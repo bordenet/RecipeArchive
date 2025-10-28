@@ -1,6 +1,6 @@
 module github.com/bordenet/recipe-archive/recipes
 
-go 1.22
+go 1.24.0
 
 require (
 	github.com/aws/aws-lambda-go v1.41.0
@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.1
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.5
 	github.com/google/uuid v1.6.0
+	golang.org/x/net v0.46.0
 	recipe-archive/db v0.0.0
 	recipe-archive/models v0.0.0
 	recipe-archive/utils v0.0.0
