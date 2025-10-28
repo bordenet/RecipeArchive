@@ -795,14 +795,17 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 	// CRITICAL: Reject garbage recipes with no content
 	// Check if BOTH ingredients and instructions are empty - this indicates parsing failure
-	// EXCEPTION: Allow empty content if HTML is provided (backend will parse it)
+	// EXCEPTION 1: Allow empty content if HTML is provided (backend will parse it)
+	// EXCEPTION 2: Allow empty content if sourceURL is valid (backend will fetch and parse HTML)
 	hasHTML := recipeData.WebArchiveHTML != nil && *recipeData.WebArchiveHTML != ""
-	if len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 && !hasHTML {
-		fmt.Printf("❌ ERROR: Rejected recipe submission with 0 ingredients AND 0 instructions from %s\n", recipeData.SourceURL)
+	hasValidURL := recipeData.SourceURL != "" && (strings.HasPrefix(recipeData.SourceURL, "http://") || strings.HasPrefix(recipeData.SourceURL, "https://"))
+
+	if len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 && !hasHTML && !hasValidURL {
+		fmt.Printf("❌ ERROR: Rejected recipe submission with 0 ingredients AND 0 instructions and no HTML/URL from %s\n", recipeData.SourceURL)
 		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "VALIDATION_ERROR",
-				"message":   "Recipe must have at least one ingredient or one instruction, OR provide HTML for parsing.",
+				"message":   "Recipe must have at least one ingredient or one instruction, OR provide HTML for parsing, OR provide a valid source URL.",
 				"details":   "This usually indicates a parsing failure. Please ensure the recipe content is properly formatted.",
 				"timestamp": time.Now().UTC(),
 			},
@@ -815,6 +818,10 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 	if hasHTML && len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 {
 		fmt.Printf("📄 INFO: Empty recipe with HTML provided - will attempt backend parsing from %s\n", recipeData.SourceURL)
+	}
+
+	if !hasHTML && hasValidURL && len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 {
+		fmt.Printf("🌐 INFO: Empty recipe with valid URL - will fetch and parse HTML from %s\n", recipeData.SourceURL)
 	}
 
 	// Warn about incomplete recipes but allow them (bookmarks or partial data)
