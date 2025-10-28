@@ -419,8 +419,8 @@ func sanitizeText(text string) string {
 	// Normalize whitespace
 	normalized := regexp.MustCompile(`\s+`).ReplaceAllString(decoded, " ")
 
-	// Remove zero-width characters
-	cleaned := regexp.MustCompile(`[\u200B-\u200D\uFEFF]`).ReplaceAllString(normalized, "")
+	// Remove zero-width characters (using hex notation for Unicode in Go regex)
+	cleaned := regexp.MustCompile(`[\x{200B}-\x{200D}\x{FEFF}]`).ReplaceAllString(normalized, "")
 
 	return strings.TrimSpace(cleaned)
 }
