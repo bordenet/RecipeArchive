@@ -911,7 +911,9 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			fmt.Printf("📝 Continuing with existing recipe data (may be incomplete)\n")
 		} else {
 			// Merge parsed data with existing data (existing data takes precedence if present)
-			if recipeData.Title == "" || strings.HasPrefix(recipeData.Title, "🔖") {
+			// Update title if it's empty, a bookmark, or a placeholder from iOS
+			isPlaceholder := strings.HasPrefix(recipeData.Title, "Recipe from ") || strings.HasPrefix(recipeData.Title, "🔖")
+			if recipeData.Title == "" || isPlaceholder {
 				recipeData.Title = parsedRecipe.Title
 			}
 			if len(recipeData.Ingredients) == 0 {
