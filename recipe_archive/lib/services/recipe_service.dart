@@ -534,6 +534,63 @@ class RecipeService {
     }
   }
 
+  // Save new recipe with raw JSON data (preserves custom fields like webArchiveHtml)
+  Future<Recipe> saveRecipeRaw(Map<String, dynamic> recipeData) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      // ignore: avoid_print
+      print('DEBUG RecipeService: Saving recipe (raw) to: $apiUrl/recipes');
+
+      final response = await http.post(
+        Uri.parse('$apiUrl/recipes'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${user.idToken}',
+        },
+        body: json.encode(recipeData),
+      );
+
+      // ignore: avoid_print
+      print('DEBUG RecipeService: Response status: ${response.statusCode}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        try {
+          // ignore: avoid_print
+          print('DEBUG RecipeService: Response body: ${response.body}');
+          final responseData = json.decode(response.body);
+
+          // Backend wraps response in {"message": "...", "recipe": {...}}
+          final savedRecipeData = responseData['recipe'] ?? responseData;
+
+          // ignore: avoid_print
+          print('DEBUG RecipeService: Decoded JSON, calling Recipe.fromJson');
+          return Recipe.fromJson(savedRecipeData);
+        } catch (parseError, stackTrace) {
+          // ignore: avoid_print
+          print('ERROR RecipeService: Failed to parse recipe response: $parseError');
+          // ignore: avoid_print
+          print('ERROR RecipeService: Raw response body: ${response.body}');
+          // ignore: avoid_print
+          print('ERROR RecipeService: Stack trace: $stackTrace');
+          throw Exception('Failed to parse recipe response: $parseError');
+        }
+      } else {
+        // ignore: avoid_print
+        print('ERROR RecipeService: Save failed: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to save recipe: HTTP ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      if (e is Exception && e.toString().contains('Failed to parse')) {
+        rethrow;
+      }
+      throw Exception('Network error while saving recipe: $e');
+    }
+  }
+
   // Save new recipe
   Future<Recipe> saveRecipe(Recipe recipe) async {
     final user = _authService.currentUser;
