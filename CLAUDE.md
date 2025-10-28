@@ -4,60 +4,26 @@
 
 **v1.0.0 Production**: https://d1jcaphz4458q7.cloudfront.net
 
-## CRITICAL ACTIVE WORK
+## Outstanding Work
 
-### Backend HTML Parsing - ✅ COMPLETE & DEPLOYED
-**Status**: Comprehensive HTML parsing implemented in Go backend matching TypeScript parser capabilities
-**Deployed**: `RecipeArchive-dev-RecipesFunction` (10.9 MB) - 2025-10-28
+1. **Safari Web Extension Configuration** - Xcode manual setup required
+   - Code complete in `recipe_archive/ios/RecipeExtension/`
+   - Follow `XCODE_WEB_EXTENSION_SETUP.md` for configuration
+   - Run `./scripts/restore-web-extension-files.sh` after Xcode creates target
 
-**What Works**:
-- JSON-LD extraction with full quirk handling (@graph, arrays, nested structures)
-- HTML entity decoding (&#8211; dashes, &#39; quotes, all named entities)
-- Control character cleaning (ASCII 0-31) for malformed JSON-LD
-- ISO 8601 duration parsing (PT30M → 30 minutes)
-- Multi-format instruction parsing (string, array, HowToStep objects)
-- Image URL extraction (string, array, object formats)
-- DOM fallback parsing when JSON-LD unavailable
-- Merges parsed data with client-provided data
+2. **iOS Build Script** - Fix simulator deployment failure
+   - `scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target iphone-17-pro` fails
+   - May be related to Safari Web Extension build configuration
 
-**Files**: `aws-backend/functions/recipes/parser.go`, `main.go` (lines 865-935)
+3. **Android Scripts Migration**
+   - Move `./scripts/android-*.sh` to `./scripts/android/` directory
+   - Update all references
 
-### Outstanding Critical Issues
+4. **Android Share Extension** - Not started
+   - Backend HTML parsing ready (`aws-backend/functions/recipes/parser.go`)
+   - Implement Android Share Extension to use backend parser
 
-1. **Flutter App Not Loading Recipes After Share** - ✅ FIXED
-   - **Problem**: After sharing recipe from browser, app showed first-user-experience page instead of existing recipes
-   - **Root Cause**: `ref.invalidate()` didn't trigger reload when `recipes.isEmpty`. Race condition in `autoLoadRecipesProvider`
-   - **Solution**: Explicitly call `loadInitialRecipes()` in postFrameCallback after saving shared recipe
-   - **Fixed In**: `recipe_archive/lib/screens/home_screen.dart` lines 189-194 (commit a17fa49)
-   - **Status**: Committed and pushed - ready for testing
-
-2. **Safari Web Extension Not Configured** - BLOCKS PREMIUM PATH
-   - **Problem**: Extension code exists but needs manual Xcode setup
-   - **Status**: Xcode configuration not completed
-   - **Guide**: See `XCODE_WEB_EXTENSION_SETUP.md` for step-by-step instructions
-   - **Impact**: Safari users cannot capture HTML from paywalled sites
-   - **Files**: `recipe_archive/ios/RecipeExtension/` (all files present)
-
-3. **iOS Build Script Failing** - NEEDS FIX
-   - **Problem**: `scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target iphone-17-pro` currently fails
-   - **Impact**: Cannot deploy to iPhone 17 Pro simulator
-   - **Investigation Needed**: Check error output and Xcode build logs
-   - **Related**: May be related to Safari Web Extension build issues
-
-4. **Android Scripts Need Reorganization** - TODO
-   - **Current**: `./scripts/android-*.sh` files at root level
-   - **Desired**: Move to `./scripts/android/` directory structure
-   - **Requirements**: Update all references to these scripts
-   - **Status**: Structure created, old scripts need migration
-   - **Reference**: Follow iOS pattern (`scripts/ios/` structure)
-
-5. **Android Share Extension** - NOT STARTED
-   - **Requirement**: Implement same backend HTML parsing flow for Android
-   - **Goal**: Eliminate bookmarks entirely - parse all recipes on backend
-   - **Priority**: After iOS issues resolved and tested
-   - **Reference**: `scripts/android/` structure already created
-
-**CRITICAL**: Review PROJECT_STATUS.md for list of critical issues requiring immediate attention.
+Review PROJECT_STATUS.md for additional critical issues.
 
 ALWAYS review COMMANDS.md to find project-specific tools, including tools for diagnostic error harvesting, tracing, and deployments. DO NOT "wing it" with direct S3 access, direct lambda deployments, etc.
 
