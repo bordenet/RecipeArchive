@@ -164,21 +164,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'id': '', // Will be set by backend
         'sourceUrl': url,
         'title': 'Recipe from $domain',
-        'ingredients': [
-          {'text': html != null
-            ? '🔄 Processing HTML content...'
-            : '📱 Shared from mobile - Full parsing coming soon!'}
+        // CRITICAL: Send empty arrays when HTML is present to trigger backend parsing
+        // Backend will parse HTML and extract real ingredients/instructions
+        'ingredients': html != null ? [] : [
+          {'text': '📱 Shared from mobile - Full parsing coming soon!'}
         ],
-        'instructions': [
-          {'stepNumber': 1, 'text': html != null
-            ? 'Recipe is being processed by the backend'
-            : 'Open the source URL to view the recipe'}
+        'instructions': html != null ? [] : [
+          {'stepNumber': 1, 'text': 'Open the source URL to view the recipe'}
         ],
       };
 
-      // Include HTML if available
+      // Include HTML if available - backend will parse it
       if (html != null) {
         recipeData['webArchiveHtml'] = html;
+        debugPrint('DEBUG: Including HTML in recipe submission (${html.length} bytes)');
       }
 
       debugPrint('DEBUG: Calling saveRecipe...');

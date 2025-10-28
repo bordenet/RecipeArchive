@@ -793,11 +793,17 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
-	if len(recipeData.Ingredients) == 0 {
+	// CRITICAL: Reject garbage recipes with no content
+	// Check if BOTH ingredients and instructions are empty - this indicates parsing failure
+	// EXCEPTION: Allow empty content if HTML is provided (backend will parse it)
+	hasHTML := recipeData.WebArchiveHTML != nil && *recipeData.WebArchiveHTML != ""
+	if len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 && !hasHTML {
+		fmt.Printf("❌ ERROR: Rejected recipe submission with 0 ingredients AND 0 instructions from %s\n", recipeData.SourceURL)
 		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "VALIDATION_ERROR",
-				"message":   "At least one ingredient is required",
+				"message":   "Recipe must have at least one ingredient or one instruction, OR provide HTML for parsing.",
+				"details":   "This usually indicates a parsing failure. Please ensure the recipe content is properly formatted.",
 				"timestamp": time.Now().UTC(),
 			},
 		})
@@ -807,18 +813,16 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		return response, nil
 	}
 
+	if hasHTML && len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 {
+		fmt.Printf("📄 INFO: Empty recipe with HTML provided - will attempt backend parsing from %s\n", recipeData.SourceURL)
+	}
+
+	// Warn about incomplete recipes but allow them (bookmarks or partial data)
+	if len(recipeData.Ingredients) == 0 {
+		fmt.Printf("⚠️ WARN: Recipe has 0 ingredients (may be bookmark): %s\n", recipeData.SourceURL)
+	}
 	if len(recipeData.Instructions) == 0 {
-		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":      "VALIDATION_ERROR",
-				"message":   "At least one instruction is required",
-				"timestamp": time.Now().UTC(),
-			},
-		})
-		if responseErr != nil {
-			return events.APIGatewayProxyResponse{}, responseErr
-		}
-		return response, nil
+		fmt.Printf("⚠️ WARN: Recipe has 0 instructions (may be bookmark): %s\n", recipeData.SourceURL)
 	}
 
 	// Validate image URL if provided (must be from our S3 bucket)

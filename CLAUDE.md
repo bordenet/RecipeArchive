@@ -19,7 +19,8 @@
 3. **Android Share Extension** - Not started
    - Backend HTML parsing ready (`aws-backend/functions/recipes/parser.go`)
    - Implement Android Share Extension to use backend parser
-   - Scripts structure in `scripts/android/` ready
+   - Scripts structure in `scripts/android/` are NOT ready because we still have android-build.sh, android-clean.sh, android-emulator.sh, android-help.sh, android-setup.sh, and android-studio.sh still residing in the ./scripts/ directory instead of being moved to scripts/android/
+   - Follow similar architecture to iOS Share Extension
 
 Review PROJECT_STATUS.md for additional critical issues.
 
