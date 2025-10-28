@@ -463,6 +463,69 @@ func validateImageURL(imageURL *string) error {
 	return nil
 }
 
+// downloadAndUploadImage downloads an external image and uploads it to S3
+func downloadAndUploadImage(ctx context.Context, imageURL string, userID string, recipeID string) (string, error) {
+	// Download image with timeout
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := client.Get(imageURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to download image: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("image download failed with status: %d", resp.StatusCode)
+	}
+
+	// Read image data with size limit (10MB)
+	maxSize := int64(10 * 1024 * 1024)
+	imageData, err := io.ReadAll(io.LimitReader(resp.Body, maxSize))
+	if err != nil {
+		return "", fmt.Errorf("failed to read image data: %w", err)
+	}
+
+	// Detect content type
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = http.DetectContentType(imageData)
+	}
+
+	// Validate it's an image
+	if !strings.HasPrefix(contentType, "image/") {
+		return "", fmt.Errorf("URL does not point to an image (content-type: %s)", contentType)
+	}
+
+	// Generate S3 key: recipes/USER_ID/RECIPE_ID/main-photo.EXT
+	ext := ".jpg" // default
+	if strings.Contains(contentType, "png") {
+		ext = ".png"
+	} else if strings.Contains(contentType, "webp") {
+		ext = ".webp"
+	} else if strings.Contains(contentType, "gif") {
+		ext = ".gif"
+	}
+
+	s3Key := fmt.Sprintf("recipes/%s/%s/main-photo%s", userID, recipeID, ext)
+
+	// Upload to S3
+	_, err = s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(bucketName),
+		Key:         aws.String(s3Key),
+		Body:        bytes.NewReader(imageData),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload image to S3: %w", err)
+	}
+
+	// Return S3 URL
+	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucketName, s3Key)
+	return s3URL, nil
+}
+
 // handleGetRecipes handles GET requests for recipes (list or single)
 func handleGetRecipes(ctx context.Context, request events.APIGatewayProxyRequest, userID string) (events.APIGatewayProxyResponse, error) {
 	// Check if this is a request for a specific recipe
@@ -832,15 +895,30 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		fmt.Printf("⚠️ WARN: Recipe has 0 instructions (may be bookmark): %s\n", recipeData.SourceURL)
 	}
 
-	// Validate image URL if provided (must be from our S3 bucket)
-	// SECURITY: External image URLs are stripped per architecture doc
-	if recipeData.MainPhotoURL != nil {
-		fmt.Printf("🔍 Validating image URL: %s\n", *recipeData.MainPhotoURL)
-	}
-	if err := validateImageURL(recipeData.MainPhotoURL); err != nil {
-		fmt.Printf("⚠️ Image URL validation failed, stripping external URL: %s\n", err.Error())
-		// Strip invalid image URL instead of rejecting entire recipe
-		recipeData.MainPhotoURL = nil
+	// Handle image URL - download external images and upload to S3
+	// Generate recipe ID early if we need it for image upload
+	var tempRecipeID string
+	if recipeData.MainPhotoURL != nil && *recipeData.MainPhotoURL != "" {
+		imageURL := *recipeData.MainPhotoURL
+		fmt.Printf("🔍 Processing image URL: %s\n", imageURL)
+
+		// Check if it's already an S3 URL
+		if err := validateImageURL(recipeData.MainPhotoURL); err != nil {
+			// External URL - download and upload to S3
+			// Generate temporary ID for image path (will be used as actual recipe ID later)
+			tempRecipeID = uuid.New().String()
+			fmt.Printf("📥 Downloading external image from: %s\n", imageURL)
+			s3URL, downloadErr := downloadAndUploadImage(ctx, imageURL, userID, tempRecipeID)
+			if downloadErr != nil {
+				fmt.Printf("⚠️ Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
+				recipeData.MainPhotoURL = nil
+			} else {
+				fmt.Printf("✅ Image uploaded to S3: %s\n", s3URL)
+				recipeData.MainPhotoURL = &s3URL
+			}
+		} else {
+			fmt.Printf("✅ Image URL is already from S3, keeping as-is\n")
+		}
 	}
 
 	// Check for existing recipe with same source URL (de-duplication)
@@ -1015,8 +1093,13 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 	// Create the recipe object with raw data - normalization will happen asynchronously
 	now := time.Now().UTC()
+	// Use tempRecipeID if we generated one for image upload, otherwise generate new UUID
+	recipeID := tempRecipeID
+	if recipeID == "" {
+		recipeID = uuid.New().String()
+	}
 	recipe := models.Recipe{
-		ID:               uuid.New().String(),
+		ID:               recipeID,
 		UserID:           userID,
 		Title:            strings.TrimSpace(recipeData.Title), // Raw title (will be normalized async)
 		Ingredients:      recipeData.Ingredients,              // Raw ingredients
