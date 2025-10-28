@@ -24,11 +24,12 @@
 
 ### Outstanding Critical Issues
 
-1. **Flutter App Not Loading Recipes After Share** - URGENT
-   - **Problem**: After sharing recipe from browser, app shows first-user-experience page instead of existing recipes
-   - **Impact**: User must manually tap reload to see recipes
-   - **Location**: `recipe_archive/lib/screens/home_screen.dart` line 87+ (initState, _checkForSharedUrl)
-   - **Investigation Needed**: Check if recipe list refresh is triggered after share handling
+1. **Flutter App Not Loading Recipes After Share** - ✅ FIXED
+   - **Problem**: After sharing recipe from browser, app showed first-user-experience page instead of existing recipes
+   - **Root Cause**: `ref.invalidate()` didn't trigger reload when `recipes.isEmpty`. Race condition in `autoLoadRecipesProvider`
+   - **Solution**: Explicitly call `loadInitialRecipes()` in postFrameCallback after saving shared recipe
+   - **Fixed In**: `recipe_archive/lib/screens/home_screen.dart` lines 189-194 (commit a17fa49)
+   - **Status**: Committed and pushed - ready for testing
 
 2. **Safari Web Extension Not Configured** - BLOCKS PREMIUM PATH
    - **Problem**: Extension code exists but needs manual Xcode setup
@@ -37,11 +38,24 @@
    - **Impact**: Safari users cannot capture HTML from paywalled sites
    - **Files**: `recipe_archive/ios/RecipeExtension/` (all files present)
 
-3. **Android Share Extension** - NOT STARTED
+3. **iOS Build Script Failing** - NEEDS FIX
+   - **Problem**: `scripts/ios-build-and-deploy.sh --target simulator --config debug --device-target iphone-17-pro` currently fails
+   - **Impact**: Cannot deploy to iPhone 17 Pro simulator
+   - **Investigation Needed**: Check error output and Xcode build logs
+   - **Related**: May be related to Safari Web Extension build issues
+
+4. **Android Scripts Need Reorganization** - TODO
+   - **Current**: `./scripts/android-*.sh` files at root level
+   - **Desired**: Move to `./scripts/android/` directory structure
+   - **Requirements**: Update all references to these scripts
+   - **Status**: Structure created, old scripts need migration
+   - **Reference**: Follow iOS pattern (`scripts/ios/` structure)
+
+5. **Android Share Extension** - NOT STARTED
    - **Requirement**: Implement same backend HTML parsing flow for Android
    - **Goal**: Eliminate bookmarks entirely - parse all recipes on backend
    - **Priority**: After iOS issues resolved and tested
-   - **Reference**: `scripts/android/` structure mirrors iOS
+   - **Reference**: `scripts/android/` structure already created
 
 **CRITICAL**: Review PROJECT_STATUS.md for list of critical issues requiring immediate attention.
 
