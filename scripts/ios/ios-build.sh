@@ -150,6 +150,7 @@ print_status "Scheme: $SCHEME"
 print_status "Cleaning previous builds..."
 flutter clean
 flutter pub get
+(cd ios && pod install)
 
 # Build based on target and type
 if [ "$TARGET" = "simulator" ]; then
