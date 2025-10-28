@@ -539,15 +539,25 @@ fi
 # Install browser automation tools
 print_info "Setting up browser automation and testing tools..."
 
-if timed_confirm "Install/update Playwright browsers? (~500MB download)" 10 "Y"; then
-  print_info "Installing Playwright browsers..."
-  if npx playwright install; then
-    print_success "Playwright browsers installed"
-  else
-    print_error "Playwright browser installation failed. Please run 'npx playwright install' manually."
-  fi
+# Check if Playwright browsers are already installed
+playwright_browsers_installed=false
+if [ -d "$HOME/Library/Caches/ms-playwright" ] && [ -n "$(ls -A "$HOME/Library/Caches/ms-playwright" 2>/dev/null)" ]; then
+  playwright_browsers_installed=true
+fi
+
+if [ "$playwright_browsers_installed" = true ]; then
+  print_success "Playwright browsers already installed"
 else
-  print_warning "Skipping Playwright browser installation. Browser automation tests will not work."
+  if timed_confirm "Install Playwright browsers? (~500MB download)" 10 "N"; then
+    print_info "Installing Playwright browsers..."
+    if npx playwright install; then
+      print_success "Playwright browsers installed"
+    else
+      print_error "Playwright browser installation failed. Please run 'npx playwright install' manually."
+    fi
+  else
+    print_warning "Skipping Playwright browser installation. Browser automation tests will not work."
+  fi
 fi
 
 # Install Jest testing framework globally (for compatibility)
@@ -866,8 +876,16 @@ if [ -d "/Applications/Claude.app" ]; then
 
   print_success "MCP servers installation completed"
 
+  # Check if Claude Desktop MCP configuration already exists
+  mcp_already_configured=false
+  if [ -f "$CLAUDE_CONFIG_FILE" ] && grep -q "mcpServers" "$CLAUDE_CONFIG_FILE" 2>/dev/null; then
+    mcp_already_configured=true
+  fi
+
   # Create or update Claude Desktop configuration
-  if timed_confirm "Configure Claude Desktop MCP servers automatically?" 10 "Y"; then
+  if [ "$mcp_already_configured" = true ]; then
+    print_success "Claude Desktop MCP servers already configured"
+  elif timed_confirm "Configure Claude Desktop MCP servers automatically?" 10 "N"; then
     print_info "Creating Claude Desktop MCP configuration..."
 
     # Load AWS credentials from .env if available
