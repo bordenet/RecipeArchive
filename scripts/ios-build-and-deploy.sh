@@ -259,4 +259,9 @@ else
     "$IOS_SCRIPT_DIR/ios-xcode.sh"
 fi
 
+print_status "Resetting Runner.xcodeproj/project.pbxproj to clean state"
+git reset HEAD recipe_archive/ios/Runner.xcodeproj/project.pbxproj
+git checkout -- recipe_archive/ios/Runner.xcodeproj/project.pbxproj
+
+
 print_success "All steps completed successfully."

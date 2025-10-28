@@ -376,6 +376,7 @@ if timed_confirm "Set up iOS development environment?"; then
             exit 1
         fi
       else
+        brew install cocoapods
         print_warning "Skipping CocoaPods installation. iOS development may not work correctly."
       fi
     else
