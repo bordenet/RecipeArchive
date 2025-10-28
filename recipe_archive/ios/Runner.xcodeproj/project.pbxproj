@@ -16,7 +16,7 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		C9227A352EADB54300C9E8CC /* RecipeArchive.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		C97573492EB05F6000766A95 /* RecipeExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C97573312EB05F6000766A95 /* RecipeExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C975737A2EB0648F00766A95 /* RecipeExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C97573622EB0648F00766A95 /* RecipeExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F29F911E5148F90C530DDE76 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63A1D59B4A9E6608AE4795E5 /* Pods_RunnerTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -28,11 +28,11 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
-		C97573472EB05F6000766A95 /* PBXContainerItemProxy */ = {
+		C97573782EB0648F00766A95 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C97573302EB05F6000766A95;
+			remoteGlobalIDString = C97573612EB0648F00766A95;
 			remoteInfo = RecipeExtension;
 		};
 		C9EC1FB42EADD38D002405C3 /* PBXContainerItemProxy */ = {
@@ -61,7 +61,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				C97573492EB05F6000766A95 /* RecipeExtension.appex in Embed Foundation Extensions */,
+				C975737A2EB0648F00766A95 /* RecipeExtension.appex in Embed Foundation Extensions */,
 				C9227A352EADB54300C9E8CC /* RecipeArchive.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -94,7 +94,7 @@
 		B4EFD378CDD239A151DC733D /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecipeArchive.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9227A3D2EADB81D00C9E8CC /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
-		C97573312EB05F6000766A95 /* RecipeExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecipeExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97573622EB0648F00766A95 /* RecipeExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecipeExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9795B0F2EAEACDF002A2AD4 /* RunnerDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerDebug.entitlements; sourceTree = "<group>"; };
 		DFE3C9A770643CF6D3E3917D /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -107,10 +107,18 @@
 			);
 			target = C9227A2A2EADB54300C9E8CC /* RecipeArchive */;
 		};
+		C975737B2EB0648F00766A95 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C97573612EB0648F00766A95 /* RecipeExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C9227A2C2EADB54300C9E8CC /* RecipeArchive */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C9227A3A2EADB54300C9E8CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = RecipeArchive; sourceTree = "<group>"; };
+		C97573632EB0648F00766A95 /* RecipeExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C975737B2EB0648F00766A95 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (Resources/_locales, Resources/images, ); path = RecipeExtension; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,7 +145,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C975732E2EB05F6000766A95 /* Frameworks */ = {
+		C975735F2EB0648F00766A95 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -181,6 +189,7 @@
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
 				C9227A2C2EADB54300C9E8CC /* RecipeArchive */,
+				C97573632EB0648F00766A95 /* RecipeExtension */,
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				D73AC50215EB3565BC4CB6FB /* Pods */,
@@ -194,7 +203,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */,
-				C97573312EB05F6000766A95 /* RecipeExtension.appex */,
+				C97573622EB0648F00766A95 /* RecipeExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -270,7 +279,7 @@
 			);
 			dependencies = (
 				C9EC1FB52EADD38D002405C3 /* PBXTargetDependency */,
-				C97573482EB05F6000766A95 /* PBXTargetDependency */,
+				C97573792EB0648F00766A95 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -297,23 +306,26 @@
 			productReference = C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		C97573302EB05F6000766A95 /* RecipeExtension */ = {
+		C97573612EB0648F00766A95 /* RecipeExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C975734E2EB05F6000766A95 /* Build configuration list for PBXNativeTarget "RecipeExtension" */;
+			buildConfigurationList = C975737C2EB0648F00766A95 /* Build configuration list for PBXNativeTarget "RecipeExtension" */;
 			buildPhases = (
-				C975732D2EB05F6000766A95 /* Sources */,
-				C975732E2EB05F6000766A95 /* Frameworks */,
-				C975732F2EB05F6000766A95 /* Resources */,
+				C975735E2EB0648F00766A95 /* Sources */,
+				C975735F2EB0648F00766A95 /* Frameworks */,
+				C97573602EB0648F00766A95 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				C97573632EB0648F00766A95 /* RecipeExtension */,
+			);
 			name = RecipeExtension;
 			packageProductDependencies = (
 			);
 			productName = RecipeExtension;
-			productReference = C97573312EB05F6000766A95 /* RecipeExtension.appex */;
+			productReference = C97573622EB0648F00766A95 /* RecipeExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -338,7 +350,7 @@
 					C9227A2A2EADB54300C9E8CC = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
-					C97573302EB05F6000766A95 = {
+					C97573612EB0648F00766A95 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
@@ -359,7 +371,7 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				C9227A2A2EADB54300C9E8CC /* RecipeArchive */,
-				C97573302EB05F6000766A95 /* RecipeExtension */,
+				C97573612EB0648F00766A95 /* RecipeExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -390,7 +402,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C975732F2EB05F6000766A95 /* Resources */ = {
+		C97573602EB0648F00766A95 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -544,7 +556,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C975732D2EB05F6000766A95 /* Sources */ = {
+		C975735E2EB0648F00766A95 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -559,10 +571,10 @@
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
 		};
-		C97573482EB05F6000766A95 /* PBXTargetDependency */ = {
+		C97573792EB0648F00766A95 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C97573302EB05F6000766A95 /* RecipeExtension */;
-			targetProxy = C97573472EB05F6000766A95 /* PBXContainerItemProxy */;
+			target = C97573612EB0648F00766A95 /* RecipeExtension */;
+			targetProxy = C97573782EB0648F00766A95 /* PBXContainerItemProxy */;
 		};
 		C9EC1FB52EADD38D002405C3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1015,7 +1027,7 @@
 			};
 			name = Profile;
 		};
-		C975734A2EB05F6000766A95 /* Debug */ = {
+		C975737D2EB0648F00766A95 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -1060,7 +1072,7 @@
 			};
 			name = Debug;
 		};
-		C975734B2EB05F6000766A95 /* Release */ = {
+		C975737E2EB0648F00766A95 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -1102,7 +1114,7 @@
 			};
 			name = Release;
 		};
-		C975734C2EB05F6000766A95 /* Profile */ = {
+		C975737F2EB0648F00766A95 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -1187,12 +1199,12 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C975734E2EB05F6000766A95 /* Build configuration list for PBXNativeTarget "RecipeExtension" */ = {
+		C975737C2EB0648F00766A95 /* Build configuration list for PBXNativeTarget "RecipeExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C975734A2EB05F6000766A95 /* Debug */,
-				C975734B2EB05F6000766A95 /* Release */,
-				C975734C2EB05F6000766A95 /* Profile */,
+				C975737D2EB0648F00766A95 /* Debug */,
+				C975737E2EB0648F00766A95 /* Release */,
+				C975737F2EB0648F00766A95 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
