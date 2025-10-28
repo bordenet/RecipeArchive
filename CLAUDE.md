@@ -11,16 +11,16 @@
    - Follow `XCODE_WEB_EXTENSION_SETUP.md` for configuration
    - Run `./scripts/restore-web-extension-files.sh` after Xcode creates target
 
-2. **iOS Build** - ✅ FIXED (commit a0531a1)
-   - Removed duplicate Web Extension files from root level
-   - Build now succeeds: `xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner-Debug -sdk iphonesimulator build`
-   - Ready for deployment testing
+2. **iOS Share Extension** - Functional, needs testing
+   - iOS Share Extension extracts URL + HTML from Safari
+   - Flutter app sends empty arrays with HTML to backend
+   - Backend parses HTML and extracts ingredients/instructions
+   - Background normalizer validates quality before OpenAI
 
 3. **Android Share Extension** - Not started
    - Backend HTML parsing ready (`aws-backend/functions/recipes/parser.go`)
    - Implement Android Share Extension to use backend parser
-   - ✅ Android scripts organized in `scripts/android/` directory
-   - Available scripts: build.sh, clean.sh, run.sh, setup.sh, emulator.sh, help.sh, studio.sh, build-and-deploy.sh
+   - Android scripts available in `scripts/android/` directory
 
 Review PROJECT_STATUS.md for additional critical issues.
 
