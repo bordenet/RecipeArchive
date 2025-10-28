@@ -12,11 +12,12 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 - **Browser Extensions**: Chrome & Safari (14+ supported recipe sites)
 
 ### Mobile Apps - iOS
-- **Status**: ✅ Build system working, Share Extension implemented
-- **Share Extension**: Fully functional - extracts URL + HTML from Safari
-- **Platform Channel**: Complete - iOS ↔ Flutter communication working
+- **Status**: ✅ Complete end-to-end workflow operational
+- **Share Extension**: Fully functional - shares URL from Safari to app
+- **Backend Processing**: Automatic HTML fetch, parse, and image download to S3
+- **Image Handling**: External images downloaded and uploaded to S3 automatically
 - **Build Script**: [scripts/build-ios.sh](scripts/build-ios.sh) - Passes all validations
-- **Pending**: Backend HTML parsing implementation (1-2 hours)
+- **Path**: `recipe-images/{recipeID}/recipes/main-photo.{ext}`
 - **Documentation**: [MOBILE_SHARE_HTML_PASSTHROUGH.md](MOBILE_SHARE_HTML_PASSTHROUGH.md), [XCODE_STEP4_STATUS.md](XCODE_STEP4_STATUS.md)
 
 ### Development Toolchains Available

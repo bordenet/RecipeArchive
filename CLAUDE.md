@@ -11,11 +11,10 @@
    - Follow `XCODE_WEB_EXTENSION_SETUP.md` for configuration
    - Run `./scripts/restore-web-extension-files.sh` after Xcode creates target
 
-2. **iOS Share Extension** - Functional, needs testing
-   - iOS Share Extension extracts URL + HTML from Safari
-   - Flutter app sends empty arrays with HTML to backend
-   - Backend parses HTML and extracts ingredients/instructions
-   - Background normalizer validates quality before OpenAI
+2. **iOS Share Extension** - Complete and functional
+   - Share from Safari → Backend fetches HTML → Parses recipe → Downloads images to S3
+   - Images stored at `recipe-images/{recipeID}/recipes/main-photo.{ext}`
+   - Works end-to-end with automatic image handling
 
 3. **Android Share Extension** - Not started
    - Backend HTML parsing ready (`aws-backend/functions/recipes/parser.go`)
@@ -125,14 +124,11 @@ The script:
 ## Security & Validation
 
 ### Image Security Architecture
-- Extensions upload images directly to S3 only
-- Backend validates S3-only image URLs, external URLs rejected for security
-- Never implement server-side image fetching
-
-### CORS Issue Handling
-- When CORS blocks image downloads, report via diagnostics
-- Use diagnostic reporting to identify domains needing CORS rule updates
-- Do not fall back to server-side downloads
+- Backend automatically downloads external recipe images and uploads to S3
+- Images stored at `recipe-images/{recipeID}/recipes/main-photo.{ext}`
+- S3 bucket policy allows public read for `recipe-images/*` path
+- Image downloads have 10s timeout and 10MB size limit
+- Manual uploads from extensions go directly to S3
 
 ### Storage Architecture
 - All data storage uses S3, no DynamoDB in production
