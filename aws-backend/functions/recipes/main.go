@@ -1068,6 +1068,8 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			var webArchiveImageData *models.WebArchiveImage
 			if recipeData.WebArchiveImages != nil && len(*recipeData.WebArchiveImages) > 0 {
 				fmt.Printf("📦 Checking %d Web Archive images for match...\n", len(*recipeData.WebArchiveImages))
+
+				// Try exact URL match first
 				for _, img := range *recipeData.WebArchiveImages {
 					if img.URL == imageURL {
 						webArchiveImageData = &img
@@ -1076,13 +1078,44 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 					}
 				}
 
-				// If no exact match found, use FIRST Web Archive image anyway
-				// (URLs often differ due to CDN variations, query params, etc.)
+				// If no exact match, select BEST image (largest, skip icons/logos)
 				if webArchiveImageData == nil {
-					webArchiveImageData = &(*recipeData.WebArchiveImages)[0]
-					fmt.Printf("⚙️ No exact URL match - using first Web Archive image (CDN/query param variation)\n")
-					fmt.Printf("   Parsed URL:  %s\n", imageURL)
-					fmt.Printf("   Archive URL: %s\n", webArchiveImageData.URL)
+					fmt.Printf("⚙️ No exact URL match - selecting best Web Archive image\n")
+
+					var largestImage *models.WebArchiveImage
+					var largestSize int
+
+					for i, img := range *recipeData.WebArchiveImages {
+						// Skip tiny images (likely icons/logos)
+						dataSize := len(img.Data)
+						if dataSize < 5000 { // Skip images < 5KB (too small for recipe photos)
+							fmt.Printf("   Skipping image %d: too small (%d bytes)\n", i+1, dataSize)
+							continue
+						}
+
+						// Prefer JPG/WEBP over PNG (recipe photos are usually JPG)
+						mimeType := strings.ToLower(img.MimeType)
+						isPNG := strings.Contains(mimeType, "png")
+
+						// Track largest image
+						if largestImage == nil || dataSize > largestSize {
+							// If both are same type or current is JPG/WEBP, use larger
+							if !isPNG || largestImage == nil {
+								largestImage = &(*recipeData.WebArchiveImages)[i]
+								largestSize = dataSize
+								fmt.Printf("   Image %d: %s (%d bytes) - current best\n", i+1, img.MimeType, dataSize)
+							}
+						}
+					}
+
+					if largestImage != nil {
+						webArchiveImageData = largestImage
+						fmt.Printf("✅ Selected largest image (%d bytes, %s)\n", largestSize, webArchiveImageData.MimeType)
+						fmt.Printf("   Parsed URL:  %s\n", imageURL)
+						fmt.Printf("   Archive URL: %s\n", webArchiveImageData.URL)
+					} else {
+						fmt.Printf("⚠️ No suitable images found (all too small)\n")
+					}
 				}
 			}
 
