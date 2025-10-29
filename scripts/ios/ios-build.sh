@@ -116,10 +116,10 @@ case "$BUILD_TYPE" in
         SCHEME="Runner-Debug"
         ;;
     release)
-        SCHEME="Runner-Release"
+        SCHEME="Runner"
         ;;
     profile)
-        SCHEME="Runner-Release"  # Use release scheme for profile builds
+        SCHEME="Runner"  # Use release scheme for profile builds
         ;;
 esac
 

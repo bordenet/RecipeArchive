@@ -94,6 +94,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (mounted) {
         final url = sharedData['url']!;
         final html = sharedData['html'];
+        final images = sharedData['images'] as List?;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -103,7 +104,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-        _processSharedRecipe(url, html: html);
+        _processSharedRecipe(url, html: html, images: images);
       }
     });
 
@@ -126,12 +127,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (sharedData != null && mounted) {
       final url = sharedData['url']!;
       final html = sharedData['html'];
+      final images = sharedData['images'] as List?;
 
       debugPrint('DEBUG _checkForSharedUrl: URL = $url');
       debugPrint('DEBUG _checkForSharedUrl: Has HTML = ${html != null}');
       if (html != null) {
         debugPrint('DEBUG _checkForSharedUrl: HTML length = ${html.length}');
         debugPrint('DEBUG _checkForSharedUrl: HTML preview = ${html.substring(0, html.length > 200 ? 200 : html.length)}');
+      }
+      if (images != null) {
+        debugPrint('DEBUG _checkForSharedUrl: Has ${images.length} images from Web Archive');
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -142,11 +147,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
-      await _processSharedRecipe(url, html: html);
+      await _processSharedRecipe(url, html: html, images: images);
     }
   }
 
-  Future<void> _processSharedRecipe(String url, {String? html}) async {
+  Future<void> _processSharedRecipe(String url, {String? html, List? images}) async {
     try {
       final recipeService = ref.read(recipeServiceProvider);
       final authService = ref.read(authServiceProvider);
@@ -168,11 +173,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'instructions': [],
         // Include HTML if provided (from Web Archive or Safari Web Extension)
         if (html != null && html.isNotEmpty) 'webArchiveHtml': html,
+        // Include images if provided (from Web Archive)
+        if (images != null && images.isNotEmpty) 'webArchiveImages': images,
       };
-      
+
       debugPrint('DEBUG: Recipe data includes HTML: ${html != null && html.isNotEmpty}');
       if (html != null && html.isNotEmpty) {
         debugPrint('DEBUG: HTML length being sent to backend: ${html.length} chars');
+      }
+      if (images != null && images.isNotEmpty) {
+        debugPrint('DEBUG: Sending ${images.length} images from Web Archive to backend');
       }
 
       debugPrint('DEBUG: Calling saveRecipeRaw to preserve webArchiveHtml...');

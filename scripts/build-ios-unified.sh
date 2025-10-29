@@ -185,6 +185,13 @@ done
 # Convert config to Xcode format
 XCODE_CONFIG="$(echo "${CONFIG}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')"
 
+# Determine the scheme based on the configuration
+if [ "$XCODE_CONFIG" = "Debug" ]; then
+    SCHEME="Runner-Debug"
+else
+    SCHEME="Runner"
+fi
+
 # Banner
 print_header "iOS Build - RecipeArchive"
 echo -e "${BLUE}Mode:${NC}          ${GREEN}$MODE${NC}"
@@ -256,13 +263,13 @@ if [ "$MODE" = "dev" ]; then
     cd ios
     xcodebuild \
         -workspace Runner.xcworkspace \
-        -scheme Runner \
+        -scheme "$SCHEME" \
         -configuration "$XCODE_CONFIG" \
         -sdk "$SDK" \
         build \
         | grep -E "Building|Compiling|Linking|✓|Build succeeded" || true
 
-    BUILD_EXIT_CODE=$?
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}
     cd ..
 
     if [ $BUILD_EXIT_CODE -eq 0 ]; then
@@ -270,7 +277,7 @@ if [ "$MODE" = "dev" ]; then
 
         # Find the .app (Xcode places it in DerivedData)
         # Get DerivedData path from xcodebuild
-        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
+        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
 
         if [ "$TARGET" = "simulator" ]; then
             APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphonesimulator/Runner.app"
@@ -339,14 +346,14 @@ else
 
     xcodebuild \
         -workspace Runner.xcworkspace \
-        -scheme Runner \
+        -scheme "$SCHEME" \
         -configuration "$XCODE_CONFIG" \
         -sdk "$SDK" \
         -allowProvisioningUpdates \
         build \
         | grep -E "Building|Compiling|Linking|✓|Build succeeded" || true
 
-    BUILD_EXIT_CODE=$?
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}
     cd ..
 
     if [ $BUILD_EXIT_CODE -eq 0 ]; then
@@ -354,7 +361,7 @@ else
 
         # Find the .app (Xcode places it in DerivedData)
         # Get DerivedData path from xcodebuild
-        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
+        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
         APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphoneos/Runner.app"
 
         if [ -d "$APP_PATH" ]; then
