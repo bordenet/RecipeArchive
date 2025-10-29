@@ -116,6 +116,68 @@ class ShareViewController: UIViewController {
                     }
                 }
 
+                // Extract Web Archive (contains both URL and HTML)
+                if attachment.hasItemConformingToTypeIdentifier("com.apple.webarchive") {
+                    dispatchGroup.enter()
+                    attachment.loadItem(forTypeIdentifier: "com.apple.webarchive", options: nil) { (item, error) in
+                        defer { dispatchGroup.leave() }
+
+                        guard error == nil else {
+                            print("DEBUG ShareViewController: Error loading webarchive: \(String(describing: error))")
+                            return
+                        }
+
+                        if let url = item as? URL {
+                            // Web Archive saved as file
+                            do {
+                                let data = try Data(contentsOf: url)
+                                if let archive = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                                    // Extract URL from WebMainResource
+                                    if let mainResource = archive["WebMainResource"] as? [String: Any],
+                                       let urlString = mainResource["WebResourceURL"] as? String,
+                                       let webURL = URL(string: urlString) {
+                                        if extractedURL == nil {
+                                            extractedURL = webURL
+                                            print("DEBUG ShareViewController: Extracted URL from webarchive: \(urlString)")
+                                        }
+                                    }
+                                    
+                                    // Extract HTML from WebMainResource
+                                    if let mainResource = archive["WebMainResource"] as? [String: Any],
+                                       let htmlData = mainResource["WebResourceData"] as? Data,
+                                       let html = String(data: htmlData, encoding: .utf8) {
+                                        extractedHTML = html
+                                        print("DEBUG ShareViewController: Extracted HTML from webarchive (\(html.count) chars)")
+                                    }
+                                }
+                            } catch {
+                                print("DEBUG ShareViewController: Error reading webarchive file: \(error)")
+                            }
+                        } else if let data = item as? Data {
+                            // Web Archive as data
+                            if let archive = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                                // Extract URL from WebMainResource
+                                if let mainResource = archive["WebMainResource"] as? [String: Any],
+                                   let urlString = mainResource["WebResourceURL"] as? String,
+                                   let webURL = URL(string: urlString) {
+                                    if extractedURL == nil {
+                                        extractedURL = webURL
+                                        print("DEBUG ShareViewController: Extracted URL from webarchive: \(urlString)")
+                                    }
+                                }
+                                
+                                // Extract HTML from WebMainResource
+                                if let mainResource = archive["WebMainResource"] as? [String: Any],
+                                   let htmlData = mainResource["WebResourceData"] as? Data,
+                                   let html = String(data: htmlData, encoding: .utf8) {
+                                    extractedHTML = html
+                                    print("DEBUG ShareViewController: Extracted HTML from webarchive (\(html.count) chars)")
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Extract HTML (for full recipe content, including paywalled sites)
                 if attachment.hasItemConformingToTypeIdentifier("public.html") {
                     dispatchGroup.enter()
