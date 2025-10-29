@@ -57,23 +57,28 @@ async function saveRecipe() {
 
 // Save data to App Group storage (shared with native app)
 async function saveToAppGroup(data) {
-  // Use browser.storage.local as bridge
-  // Native code will read this via NSUserDefaults App Group
-  await browser.storage.local.set({
-    'recipeData': {
+  // Send message to background script, which forwards to native handler
+  const response = await browser.runtime.sendMessage({
+    action: 'saveToNative',
+    data: {
       url: data.url,
       title: data.title,
       html: data.html,
-      recipeSchema: data.recipeSchema,
-      timestamp: data.timestamp
+      recipeSchema: data.recipeSchema
     }
   });
 
-  console.log('Saved to browser storage');
+  if (!response || !response.success) {
+    throw new Error(response?.error || 'Failed to save to native app');
+  }
+
+  console.log('Saved to App Group via native handler');
 }
 
 // Notify native app via custom URL scheme
 async function notifyNativeApp(data) {
+  // Native handler already posted CFNotification, so this is redundant
+  // But we'll keep it as a backup mechanism
   try {
     // Create custom URL with encoded data
     const params = new URLSearchParams({
@@ -83,14 +88,11 @@ async function notifyNativeApp(data) {
 
     const url = `recipearchive://recipe?${params.toString()}`;
 
-    // Open URL to trigger native app
-    // Safari will handle this and launch the app
-    await browser.tabs.create({ url: url });
-
-    console.log('Notified native app');
+    // Note: This may open a new tab in Safari, which is not ideal
+    // The CFNotification from native handler is the primary mechanism
+    console.log('URL scheme available if needed:', url);
   } catch (error) {
-    console.warn('Could not notify native app:', error);
-    // Non-fatal - native app will poll storage
+    console.warn('Could not create URL scheme:', error);
   }
 }
 
