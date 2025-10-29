@@ -1071,9 +1071,18 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 				for _, img := range *recipeData.WebArchiveImages {
 					if img.URL == imageURL {
 						webArchiveImageData = &img
-						fmt.Printf("✅ Found matching image in Web Archive: %s\n", imageURL)
+						fmt.Printf("✅ Found exact URL match in Web Archive: %s\n", imageURL)
 						break
 					}
+				}
+
+				// If no exact match found, use FIRST Web Archive image anyway
+				// (URLs often differ due to CDN variations, query params, etc.)
+				if webArchiveImageData == nil {
+					webArchiveImageData = &(*recipeData.WebArchiveImages)[0]
+					fmt.Printf("⚙️ No exact URL match - using first Web Archive image (CDN/query param variation)\n")
+					fmt.Printf("   Parsed URL:  %s\n", imageURL)
+					fmt.Printf("   Archive URL: %s\n", webArchiveImageData.URL)
 				}
 			}
 
@@ -1092,8 +1101,8 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 					recipeData.MainPhotoURL = &s3URL
 				}
 			} else {
-				// Fallback: Download from external URL
-				fmt.Printf("📥 Downloading external image from: %s\n", imageURL)
+				// Fallback: Download from external URL (only if no Web Archive images available)
+				fmt.Printf("📥 No Web Archive images - downloading external image from: %s\n", imageURL)
 				s3URL, downloadErr := downloadAndUploadImage(ctx, imageURL, userID, tempRecipeID)
 				if downloadErr != nil {
 					fmt.Printf("⚠️ Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
