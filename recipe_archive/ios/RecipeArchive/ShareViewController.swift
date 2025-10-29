@@ -6,10 +6,13 @@
 //
 
 import UIKit
+import WebKit
+@_exported import Shared // Import our shared framework // This makes WebViewContentLoader available
 
 class ShareViewController: UIViewController {
 
     private var hasCompleted = false
+    private var contentLoader: WebViewContentLoader?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -198,6 +201,16 @@ class ShareViewController: UIViewController {
     }
 
     private func saveToAppGroup(url: URL, html: String?, images: [[String: Any]]) {
+        // If no HTML content was shared directly, try to load it via WKWebView
+        if html == nil {
+            let contentLoader = WebViewContentLoader(url: url) { [weak self] loadedHtml in
+                self?.saveToAppGroup(url: url, html: loadedHtml, images: images)
+            }
+            // Store the loader as a property to prevent deallocation
+            self.contentLoader = contentLoader
+            return
+        }
+
         guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.recipearchive.shared") else {
             return
         }
