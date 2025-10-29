@@ -95,33 +95,40 @@ App Group storage → CFNotification → Flutter app → Backend parses
 - `recipe_archive/ios/RecipeArchive/` - Share Extension (legacy, URL only)
 - `recipe_archive/ios/Runner/AppDelegate.swift` - Listens for Web Extension notifications
 
-### iOS Production Builds
+### iOS Builds - Unified Script
 
-**⚠️ Xcode 16 Compatibility Issue**: Xcode 16 sets `objectVersion = 70` in project.pbxproj, which CocoaPods doesn't support yet. The build script automatically downgrades this to `objectVersion = 60` for compatibility. If you encounter manual CocoaPods errors with "object version 70", the script handles this automatically - no manual intervention needed.
+**All iOS builds now use a single unified script**: `./scripts/build-ios-unified.sh`
 
-For device deployment and releases, use the production build script:
-
+**Development Builds** (fast iteration, simulator):
 ```bash
-# Release build with version
-./scripts/build-ios.sh --release --version 1.0.1
+# Quick build and run on simulator
+./scripts/build-ios-unified.sh --dev --run
 
-# Debug build with version
-./scripts/build-ios.sh --debug --version 1.0.1
+# Release build for simulator testing
+./scripts/build-ios-unified.sh --dev --simulator --release
 
-# Clean build (removes CocoaPods cache)
-./scripts/build-ios.sh --release --version 1.0.1 --clean
-
-# Short form
-./scripts/build-ios.sh -r -v 1.0.1 -c
+# Clean build
+./scripts/build-ios-unified.sh --dev --clean --run
 ```
 
-The script:
-- Builds both Runner (main app) and RecipeArchive (Share Extension)
-- Creates archives for iPhone and iPad
-- Updates version in pubspec.yaml and Info.plist files
-- Validates environment (Xcode, Flutter, CocoaPods)
-- Provides detailed output and build summary
-- Archives stored in `recipe_archive/ios/build/archives/`
+**Production Builds** (App Store, TestFlight, device installs):
+```bash
+# Release archive with version
+./scripts/build-ios-unified.sh --prod --device --release --version 1.0.1
+
+# Creates .xcarchive at: recipe_archive/ios/build/archives/Runner.xcarchive
+# Export IPA via Xcode Organizer for distribution
+```
+
+**Key Features**:
+- Always uses Flutter build pipeline first (`flutter build ios`)
+- Always uses "Runner" scheme with standard Xcode configurations
+- Automatic Share Extension embedding verification
+- Auto-resets project.pbxproj after build to avoid git noise
+- Dev mode: Fast `xcodebuild build` → .app
+- Prod mode: `xcodebuild archive` → .xcarchive
+
+**⚠️ Xcode 16 Compatibility**: Script auto-downgrades `objectVersion 70` → `60` for CocoaPods compatibility.
 
 ## Security & Validation
 

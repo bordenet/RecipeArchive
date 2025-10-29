@@ -50,21 +50,22 @@ func runMobileTests(projectRoot string) bool {
 func runIOSValidation(projectRoot string) bool {
 	fmt.Println("\n=== iOS BUILD & DEPLOY VALIDATION ===")
 
-	// Check for iOS build script
-	iosBuildScript := filepath.Join(projectRoot, "scripts/ios-build-and-deploy.sh")
+	// Check for unified iOS build script
+	iosBuildScript := filepath.Join(projectRoot, "scripts/build-ios-unified.sh")
 	if _, err := os.Stat(iosBuildScript); os.IsNotExist(err) {
 		fmt.Printf("  iOS build script: ✗ (not found at %s)\n", iosBuildScript)
 		return false
 	}
 
-	// Run iOS build and deploy validation
-	fmt.Printf("  Running iOS build and deploy to simulator...\n")
+	// Run iOS build validation using unified script (dev mode with auto-run)
+	fmt.Printf("  Running iOS dev build and deploy to simulator...\n")
 	output, err := runCommand(
 		projectRoot,
 		iosBuildScript,
-		"--target", "simulator",
-		"--config", "debug",
-		"--device-target", "iphone-17-pro",
+		"--dev",
+		"--simulator",
+		"--debug",
+		"--run",
 	)
 
 	if err != nil {
