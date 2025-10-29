@@ -384,7 +384,7 @@ if [ "$ios_setup_needed" = true ]; then
         print_info "Installing CocoaPods with modern Ruby..."
         /opt/homebrew/opt/ruby/bin/gem install cocoapods
         print_success "CocoaPods installed"
-        
+
         # Verify 'pod' command is now available
         if ! command -v pod &> /dev/null; then
             print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal or check your shell profile."
@@ -397,7 +397,20 @@ if [ "$ios_setup_needed" = true ]; then
     else
       print_success "CocoaPods already installed"
     fi
-    
+
+    # Install SwiftLint for code quality
+    if ! command -v swiftlint &> /dev/null; then
+      if timed_confirm "Install SwiftLint for Swift code quality checks?"; then
+        print_info "Installing SwiftLint..."
+        brew install swiftlint
+        print_success "SwiftLint installed: $(swiftlint version)"
+      else
+        print_warning "Skipping SwiftLint installation. Swift linting will not be available."
+      fi
+    else
+      print_success "SwiftLint already installed: $(swiftlint version)"
+    fi
+
     # Set up iOS development team (will be configured in .env)
     print_info "iOS development environment ready"
     print_warning "MANUAL STEP: Configure Apple Developer account in Xcode"
