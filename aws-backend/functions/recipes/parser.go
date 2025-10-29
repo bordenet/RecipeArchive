@@ -589,6 +589,11 @@ func extractFromDOM(htmlContent string, sourceURL string) (*models.CreateRecipeR
 		})
 	}
 
+	// Extract image URL
+	if imgURL := extractRecipeImage(doc); imgURL != "" {
+		recipe.MainPhotoURL = &imgURL
+	}
+
 	if recipe.Title == "" || (len(recipe.Ingredients) == 0 && len(recipe.Instructions) == 0) {
 		return nil, fmt.Errorf("insufficient recipe data extracted from DOM")
 	}
@@ -709,4 +714,58 @@ func getNodeText(n *html.Node) string {
 		text += getNodeText(c)
 	}
 	return text
+}
+
+// extractRecipeImage finds the first suitable recipe image
+func extractRecipeImage(doc *html.Node) string {
+	var imageURL string
+	recipeKeywords := []string{"recipe", "wp-post-image", "featured", "main"}
+
+	var findImg func(*html.Node)
+	findImg = func(n *html.Node) {
+		if imageURL != "" {
+			return // Already found an image
+		}
+
+		if n.Type == html.ElementNode && n.Data == "img" {
+			// Check if image is in a recipe-related container
+			isRecipeImage := false
+			var src string
+
+			// Get the src attribute
+			for _, attr := range n.Attr {
+				if attr.Key == "src" {
+					src = attr.Val
+				}
+				// Check if img has recipe-related class
+				if attr.Key == "class" {
+					lowerVal := strings.ToLower(attr.Val)
+					for _, keyword := range recipeKeywords {
+						if strings.Contains(lowerVal, keyword) {
+							isRecipeImage = true
+							break
+						}
+					}
+				}
+			}
+
+			// Also check parent containers
+			if !isRecipeImage {
+				isRecipeImage = hasRecipeClass(n.Parent, recipeKeywords)
+			}
+
+			// If it's a recipe image and has a valid src, use it
+			if isRecipeImage && src != "" && !strings.Contains(src, "gravatar") && !strings.Contains(src, "icon") {
+				imageURL = src
+				return
+			}
+		}
+
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			findImg(c)
+		}
+	}
+
+	findImg(doc)
+	return imageURL
 }
