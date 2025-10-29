@@ -203,8 +203,19 @@ class ShareViewController: UIViewController {
     private func saveToAppGroup(url: URL, html: String?, images: [[String: Any]]) {
         // If no HTML content was shared directly, try to load it via WKWebView
         if html == nil {
-            let contentLoader = WebViewContentLoader(url: url) { [weak self] loadedHtml in
-                self?.saveToAppGroup(url: url, html: loadedHtml, images: images)
+            let contentLoader = WebViewContentLoader(url: url) { [weak self] loadedHtml, imageData in
+                var allImages = images
+                if let imageData = imageData {
+                    // Convert image data to the expected format
+                    for (imageUrl, data) in imageData {
+                        allImages.append([
+                            "url": imageUrl,
+                            "data": data,
+                            "mimeType": self?.inferMimeType(from: imageUrl) ?? "image/jpeg"
+                        ])
+                    }
+                }
+                self?.saveToAppGroup(url: url, html: loadedHtml, images: allImages)
             }
             // Store the loader as a property to prevent deallocation
             self.contentLoader = contentLoader
@@ -262,6 +273,20 @@ class ShareViewController: UIViewController {
         guard !hasCompleted else { return }
         hasCompleted = true
         extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+    }
+
+    private func inferMimeType(from url: String) -> String {
+        let lowercasedURL = url.lowercased()
+        if lowercasedURL.hasSuffix(".jpg") || lowercasedURL.hasSuffix(".jpeg") {
+            return "image/jpeg"
+        } else if lowercasedURL.hasSuffix(".png") {
+            return "image/png"
+        } else if lowercasedURL.hasSuffix(".gif") {
+            return "image/gif"
+        } else if lowercasedURL.hasSuffix(".webp") {
+            return "image/webp"
+        }
+        return "image/jpeg" // default to JPEG if unknown
     }
 
     private func showErrorAndDismiss(message: String) {

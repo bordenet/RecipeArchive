@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -120,14 +120,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C9227A3A2EADB54300C9E8CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		C9227A3A2EADB54300C9E8CC /* Exceptions for "RecipeArchive" folder in "RecipeArchive" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = C9227A2A2EADB54300C9E8CC /* RecipeArchive */;
 		};
-		C975737B2EB0648F00766A95 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		C975737B2EB0648F00766A95 /* Exceptions for "RecipeExtension" folder in "RecipeExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -137,9 +137,43 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C9227A2C2EADB54300C9E8CC /* RecipeArchive */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C9227A3A2EADB54300C9E8CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = RecipeArchive; sourceTree = "<group>"; };
-		C97489B52EB2ADF1002C776F /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
-		C97573632EB0648F00766A95 /* RecipeExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C975737B2EB0648F00766A95 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (Resources/_locales, Resources/images, ); path = RecipeExtension; sourceTree = "<group>"; };
+		C9227A2C2EADB54300C9E8CC /* RecipeArchive */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C9227A3A2EADB54300C9E8CC /* Exceptions for "RecipeArchive" folder in "RecipeArchive" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = RecipeArchive;
+			sourceTree = "<group>";
+		};
+		C97489B52EB2ADF1002C776F /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		C97573632EB0648F00766A95 /* RecipeExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C975737B2EB0648F00766A95 /* Exceptions for "RecipeExtension" folder in "RecipeExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+				Resources/_locales,
+				Resources/images,
+			);
+			path = RecipeExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -368,8 +402,6 @@
 				C97489B52EB2ADF1002C776F /* Shared */,
 			);
 			name = Shared;
-			packageProductDependencies = (
-			);
 			productName = Shared;
 			productReference = C97489B42EB2ADF0002C776F /* Shared.framework */;
 			productType = "com.apple.product-type.framework";
@@ -572,13 +604,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -593,13 +621,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
