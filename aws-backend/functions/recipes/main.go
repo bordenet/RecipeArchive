@@ -1066,19 +1066,25 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		}
 
 		// Queue async normalization job for updated recipe (don't fail if queueing fails)
-		if err := queueRecipeNormalization(ctx, userID, updatedRecipe.ID); err != nil {
-			fmt.Printf("⚠️ Failed to queue normalization for updated recipe %s: %v\n", updatedRecipe.ID, err)
-			// Fallback: Apply basic normalization immediately
-			if normalizedRecipe, err := applyBasicNormalization(updatedRecipe); err == nil {
-				if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
-					fmt.Printf("✅ Applied fallback normalization for updated recipe %s\n", updatedRecipe.ID)
-					updatedRecipe = normalizedRecipe
+		// Skip normalization for bookmarks (0 ingredients AND 0 instructions)
+		hasContent := len(updatedRecipe.Ingredients) > 0 || len(updatedRecipe.Instructions) > 0
+		if hasContent {
+			if err := queueRecipeNormalization(ctx, userID, updatedRecipe.ID); err != nil {
+				fmt.Printf("⚠️ Failed to queue normalization for updated recipe %s: %v\n", updatedRecipe.ID, err)
+				// Fallback: Apply basic normalization immediately
+				if normalizedRecipe, err := applyBasicNormalization(updatedRecipe); err == nil {
+					if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
+						fmt.Printf("✅ Applied fallback normalization for updated recipe %s\n", updatedRecipe.ID)
+						updatedRecipe = normalizedRecipe
+					} else {
+						fmt.Printf("⚠️ Failed to save normalized updated recipe: %v\n", err)
+					}
 				} else {
-					fmt.Printf("⚠️ Failed to save normalized updated recipe: %v\n", err)
+					fmt.Printf("⚠️ Fallback normalization failed for update: %v\n", err)
 				}
-			} else {
-				fmt.Printf("⚠️ Fallback normalization failed for update: %v\n", err)
 			}
+		} else {
+			fmt.Printf("⏭️  Skipping normalization for bookmark (0 ingredients, 0 instructions)\n")
 		}
 
 		// Return the updated recipe
@@ -1139,19 +1145,25 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	}
 
 	// Queue async normalization job (don't fail if queueing fails)
-	if err := queueRecipeNormalization(ctx, userID, recipe.ID); err != nil {
-		fmt.Printf("⚠️ Failed to queue normalization for recipe %s: %v\n", recipe.ID, err)
-		// Fallback: Apply basic normalization immediately
-		if normalizedRecipe, err := applyBasicNormalization(recipe); err == nil {
-			if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
-				fmt.Printf("✅ Applied fallback normalization for recipe %s\n", recipe.ID)
-				recipe = normalizedRecipe
+	// Skip normalization for bookmarks (0 ingredients AND 0 instructions)
+	hasContent := len(recipe.Ingredients) > 0 || len(recipe.Instructions) > 0
+	if hasContent {
+		if err := queueRecipeNormalization(ctx, userID, recipe.ID); err != nil {
+			fmt.Printf("⚠️ Failed to queue normalization for recipe %s: %v\n", recipe.ID, err)
+			// Fallback: Apply basic normalization immediately
+			if normalizedRecipe, err := applyBasicNormalization(recipe); err == nil {
+				if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
+					fmt.Printf("✅ Applied fallback normalization for recipe %s\n", recipe.ID)
+					recipe = normalizedRecipe
+				} else {
+					fmt.Printf("⚠️ Failed to save normalized recipe: %v\n", err)
+				}
 			} else {
-				fmt.Printf("⚠️ Failed to save normalized recipe: %v\n", err)
+				fmt.Printf("⚠️ Fallback normalization failed: %v\n", err)
 			}
-		} else {
-			fmt.Printf("⚠️ Fallback normalization failed: %v\n", err)
 		}
+	} else {
+		fmt.Printf("⏭️  Skipping normalization for bookmark (0 ingredients, 0 instructions)\n")
 	}
 
 	response, responseErr := utils.NewAPIResponse(http.StatusCreated, map[string]interface{}{
