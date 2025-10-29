@@ -268,15 +268,36 @@ if [ "$MODE" = "dev" ]; then
     if [ $BUILD_EXIT_CODE -eq 0 ]; then
         print_success "Build complete"
 
-        # Find the .app (Xcode build output location)
+        # Find the .app (Xcode places it in DerivedData)
+        # Get DerivedData path from xcodebuild
+        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
+
         if [ "$TARGET" = "simulator" ]; then
-            APP_PATH="build/Build/Products/$XCODE_CONFIG-iphonesimulator/Runner.app"
+            APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphonesimulator/Runner.app"
         else
-            APP_PATH="build/Build/Products/$XCODE_CONFIG-iphoneos/Runner.app"
+            APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphoneos/Runner.app"
         fi
 
         if [ -d "$APP_PATH" ]; then
             print_success "App location: $APP_PATH"
+
+            # Create symlink in builds directory organized by build type
+            BUILD_TYPE_LOWER=$(echo "$XCODE_CONFIG" | tr '[:upper:]' '[:lower:]')
+            BUILDS_DIR="ios/builds/$BUILD_TYPE_LOWER"
+            mkdir -p "$BUILDS_DIR"
+
+            if [ "$TARGET" = "simulator" ]; then
+                SYMLINK_NAME="$BUILDS_DIR/Runner.app"
+            else
+                SYMLINK_NAME="$BUILDS_DIR/Runner.app"
+            fi
+
+            # Remove old symlink if it exists
+            rm -f "$SYMLINK_NAME"
+
+            # Create new symlink
+            ln -s "$APP_PATH" "$SYMLINK_NAME"
+            print_success "Symlink created: $SYMLINK_NAME"
 
             # Auto-run if requested
             if [ "$RUN_AFTER" = true ] && [ "$TARGET" = "simulator" ]; then
@@ -331,19 +352,42 @@ else
     if [ $BUILD_EXIT_CODE -eq 0 ]; then
         print_success "Build complete"
 
-        # Find the .app (Xcode build output location)
-        APP_PATH="build/Build/Products/$XCODE_CONFIG-iphoneos/Runner.app"
+        # Find the .app (Xcode places it in DerivedData)
+        # Get DerivedData path from xcodebuild
+        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
+        APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphoneos/Runner.app"
 
         if [ -d "$APP_PATH" ]; then
             print_success "App location: $APP_PATH"
 
-            # Verify Share Extension is embedded
-            EXTENSION_PATH="$APP_PATH/PlugIns/RecipeArchive.appex"
-            if [ -d "$EXTENSION_PATH" ]; then
+            # Verify extensions are embedded
+            SHARE_EXT_PATH="$APP_PATH/PlugIns/RecipeArchive.appex"
+            WEB_EXT_PATH="$APP_PATH/PlugIns/RecipeExtension.appex"
+
+            if [ -d "$SHARE_EXT_PATH" ]; then
                 print_success "Share Extension verified: RecipeArchive.appex"
             else
                 print_error "WARNING: Share Extension not found"
             fi
+
+            if [ -d "$WEB_EXT_PATH" ]; then
+                print_success "Safari Web Extension verified: RecipeExtension.appex"
+            else
+                print_error "WARNING: Safari Web Extension not found"
+            fi
+
+            # Create symlink in builds directory organized by build type
+            BUILD_TYPE_LOWER=$(echo "$XCODE_CONFIG" | tr '[:upper:]' '[:lower:]')
+            BUILDS_DIR="ios/builds/$BUILD_TYPE_LOWER"
+            mkdir -p "$BUILDS_DIR"
+            SYMLINK_NAME="$BUILDS_DIR/Runner.app"
+
+            # Remove old symlink if it exists
+            rm -f "$SYMLINK_NAME"
+
+            # Create new symlink
+            ln -s "$APP_PATH" "$SYMLINK_NAME"
+            print_success "Symlink created: $SYMLINK_NAME"
 
             # Show size
             SIZE=$(du -sh "$APP_PATH" | cut -f1)
