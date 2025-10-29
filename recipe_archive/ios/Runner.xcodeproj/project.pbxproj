@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -16,6 +16,10 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		C9227A352EADB54300C9E8CC /* RecipeArchive.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C97489BC2EB2ADF1002C776F /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C97489B42EB2ADF0002C776F /* Shared.framework */; };
+		C97489BD2EB2ADF1002C776F /* Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C97489B42EB2ADF0002C776F /* Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C97489C72EB2AEF5002C776F /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C97489B42EB2ADF0002C776F /* Shared.framework */; };
+		C97489C82EB2AF40002C776F /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C97489B42EB2ADF0002C776F /* Shared.framework */; };
 		C975737A2EB0648F00766A95 /* RecipeExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C97573622EB0648F00766A95 /* RecipeExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F29F911E5148F90C530DDE76 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63A1D59B4A9E6608AE4795E5 /* Pods_RunnerTests.framework */; };
 /* End PBXBuildFile section */
@@ -27,6 +31,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
+		};
+		C97489BA2EB2ADF1002C776F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97489B32EB2ADF0002C776F;
+			remoteInfo = Shared;
 		};
 		C97573782EB0648F00766A95 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -58,6 +69,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				C97489BD2EB2ADF1002C776F /* Shared.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -102,6 +114,7 @@
 		B4EFD378CDD239A151DC733D /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecipeArchive.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9227A3D2EADB81D00C9E8CC /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		C97489B42EB2ADF0002C776F /* Shared.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Shared.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C97573622EB0648F00766A95 /* RecipeExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecipeExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9795B0F2EAEACDF002A2AD4 /* RunnerDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RunnerDebug.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -125,6 +138,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C9227A2C2EADB54300C9E8CC /* RecipeArchive */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C9227A3A2EADB54300C9E8CC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = RecipeArchive; sourceTree = "<group>"; };
+		C97489B52EB2ADF1002C776F /* Shared */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Shared; sourceTree = "<group>"; };
 		C97573632EB0648F00766A95 /* RecipeExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C975737B2EB0648F00766A95 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (Resources/_locales, Resources/images, ); path = RecipeExtension; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -142,10 +156,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				64197061F260D46651D92FEA /* Pods_Runner.framework in Frameworks */,
+				C97489BC2EB2ADF1002C776F /* Shared.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C9227A282EADB54300C9E8CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C97489C82EB2AF40002C776F /* Shared.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97489B12EB2ADF0002C776F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -156,6 +179,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C97489C72EB2AEF5002C776F /* Shared.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,6 +221,7 @@
 				97C146F01CF9000F007C117D /* Runner */,
 				C9227A2C2EADB54300C9E8CC /* RecipeArchive */,
 				C97573632EB0648F00766A95 /* RecipeExtension */,
+				C97489B52EB2ADF1002C776F /* Shared */,
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				D73AC50215EB3565BC4CB6FB /* Pods */,
@@ -211,6 +236,7 @@
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */,
 				C97573622EB0648F00766A95 /* RecipeExtension.appex */,
+				C97489B42EB2ADF0002C776F /* Shared.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -246,6 +272,16 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		C97489AF2EB2ADF0002C776F /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		331C8080294A63A400263BE5 /* RunnerTests */ = {
@@ -288,6 +324,7 @@
 				C9EC1FB52EADD38D002405C3 /* PBXTargetDependency */,
 				C97573792EB0648F00766A95 /* PBXTargetDependency */,
 				C9C8D8692EB0686300FD3796 /* PBXTargetDependency */,
+				C97489BB2EB2ADF1002C776F /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -313,6 +350,29 @@
 			productName = RecipeArchive;
 			productReference = C9227A2B2EADB54300C9E8CC /* RecipeArchive.appex */;
 			productType = "com.apple.product-type.app-extension";
+		};
+		C97489B32EB2ADF0002C776F /* Shared */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C97489C12EB2ADF1002C776F /* Build configuration list for PBXNativeTarget "Shared" */;
+			buildPhases = (
+				C97489AF2EB2ADF0002C776F /* Headers */,
+				C97489B02EB2ADF0002C776F /* Sources */,
+				C97489B12EB2ADF0002C776F /* Frameworks */,
+				C97489B22EB2ADF0002C776F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C97489B52EB2ADF1002C776F /* Shared */,
+			);
+			name = Shared;
+			packageProductDependencies = (
+			);
+			productName = Shared;
+			productReference = C97489B42EB2ADF0002C776F /* Shared.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		C97573612EB0648F00766A95 /* RecipeExtension */ = {
 			isa = PBXNativeTarget;
@@ -356,6 +416,9 @@
 					C9227A2A2EADB54300C9E8CC = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
+					C97489B32EB2ADF0002C776F = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 					C97573612EB0648F00766A95 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
@@ -378,6 +441,7 @@
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				C9227A2A2EADB54300C9E8CC /* RecipeArchive */,
 				C97573612EB0648F00766A95 /* RecipeExtension */,
+				C97489B32EB2ADF0002C776F /* Shared */,
 			);
 		};
 /* End PBXProject section */
@@ -402,6 +466,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C9227A292EADB54300C9E8CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97489B22EB2ADF0002C776F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -562,6 +633,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C97489B02EB2ADF0002C776F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C975735E2EB0648F00766A95 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -576,6 +654,11 @@
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		C97489BB2EB2ADF1002C776F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97489B32EB2ADF0002C776F /* Shared */;
+			targetProxy = C97489BA2EB2ADF1002C776F /* PBXContainerItemProxy */;
 		};
 		C97573792EB0648F00766A95 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1039,6 +1122,153 @@
 			};
 			name = Profile;
 		};
+		C97489BE2EB2ADF1002C776F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 49Y2W8527A;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recipearchive.Shared;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_MODULE = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		C97489BF2EB2ADF1002C776F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 49Y2W8527A;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recipearchive.Shared;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_MODULE = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		C97489C02EB2ADF1002C776F /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 49Y2W8527A;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.recipearchive.Shared;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_MODULE = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Profile;
+		};
 		C975737D2EB0648F00766A95 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1210,6 +1440,16 @@
 				C9227A372EADB54300C9E8CC /* Debug */,
 				C9227A382EADB54300C9E8CC /* Release */,
 				C9227A392EADB54300C9E8CC /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C97489C12EB2ADF1002C776F /* Build configuration list for PBXNativeTarget "Shared" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C97489BE2EB2ADF1002C776F /* Debug */,
+				C97489BF2EB2ADF1002C776F /* Release */,
+				C97489C02EB2ADF1002C776F /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

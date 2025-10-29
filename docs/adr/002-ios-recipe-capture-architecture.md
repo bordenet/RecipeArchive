@@ -61,7 +61,48 @@ Flutter app → Backend API (with HTML) → S3 storage
 - ❌ Requires iOS 15+ (App Extension with native messaging)
 - ❌ Manual Xcode configuration required (see [XCODE_WEB_EXTENSION_SETUP.md](../../XCODE_WEB_EXTENSION_SETUP.md))
 
-### Tier 2: Web Archive Sharing (Offline Path) ✅ **Implemented**
+### Tier 2: WKWebView Proxy (Premium Path) ✅ **Implemented**
+
+**Availability**: iOS 13+, All browsers
+**Access Level**: Full page HTML (rendered with JavaScript)
+**Use Case**: Dynamic content, authenticated sessions without Safari
+
+**Architecture**:
+```
+User shares URL → Share Extension → WKWebView loads URL →
+JavaScript extracts rendered HTML → App Group storage →
+Flutter app → Backend API (with HTML) → S3 storage
+```
+
+**Implementation** ([WebViewContentLoader.swift](../../recipe_archive/ios/Runner/WebViewContentLoader.swift)):
+```swift
+// Create off-screen web view
+let config = WKWebViewConfiguration()
+config.websiteDataStore = .nonPersistent()
+webView = WKWebView(frame: .zero, configuration: config)
+
+// Extract HTML after page loads
+webView.evaluateJavaScript("document.documentElement.outerHTML") { result, error in
+    if let html = result as? String {
+        // Save HTML to App Group
+        completion(html)
+    }
+}
+```
+
+**Advantages**:
+- ✅ Works in all browsers
+- ✅ Captures dynamically loaded content
+- ✅ Supports JavaScript-rendered pages
+- ✅ Works with some authenticated content
+
+**Limitations**:
+- ❌ No access to Web Archive images
+- ❌ Requires full page load
+- ❌ 30-second timeout limit
+- ❌ Higher memory usage
+
+### Tier 3: Web Archive Sharing (Offline Path) ✅ **Implemented**
 
 **Availability**: iOS 13+, Safari only
 **Access Level**: Full page HTML + all embedded resources (images, CSS, JS)
@@ -121,7 +162,7 @@ if attachment.hasItemConformingToTypeIdentifier("com.apple.webarchive") {
 - ❌ Manual user action (save page as Web Archive first)
 - ❌ Large file sizes (includes all page resources)
 
-### Tier 3: Standard Share Extension (Fallback Path) ✅ **Implemented**
+### Tier 4: Standard Share Extension (Fallback Path) ✅ **Implemented**
 
 **Availability**: iOS 13+, All browsers
 **Access Level**: URL only
