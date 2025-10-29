@@ -1046,6 +1046,18 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	// Handle image URL - upload from Web Archive or download external images
 	// This must happen AFTER HTML parsing so recipeData.MainPhotoURL is populated from parsed data
 	var tempRecipeID string
+
+	// FIRST: Check if we have Web Archive images (from iOS Share Extension)
+	// If MainPhotoURL is null but we have Web Archive images, use the first one
+	if (recipeData.MainPhotoURL == nil || *recipeData.MainPhotoURL == "") &&
+		recipeData.WebArchiveImages != nil && len(*recipeData.WebArchiveImages) > 0 {
+		fmt.Printf("📦 MainPhotoURL is null, but found %d Web Archive images - using first image\n", len(*recipeData.WebArchiveImages))
+		firstImage := (*recipeData.WebArchiveImages)[0]
+		imageURL := firstImage.URL
+		recipeData.MainPhotoURL = &imageURL
+		fmt.Printf("✅ Set MainPhotoURL from Web Archive: %s\n", imageURL)
+	}
+
 	if recipeData.MainPhotoURL != nil && *recipeData.MainPhotoURL != "" {
 		imageURL := *recipeData.MainPhotoURL
 		fmt.Printf("🔍 Processing image URL: %s\n", imageURL)
