@@ -260,8 +260,8 @@ class ShareViewController: UIViewController {
         // User must manually switch back to the app
         // The app will detect the shared URL via applicationWillEnterForeground
         let alert = UIAlertController(
-            title: "Recipe Saved",
-            message: "Switch back to RecipeArchive to parse this recipe",
+            title: "Recipe Queued",
+            message: "Recipe added to queue. Share more recipes, then open RecipeArchive to process all.",
             preferredStyle: .alert
         )
 
@@ -284,15 +284,19 @@ class ShareViewController: UIViewController {
             return
         }
 
-        // Ensure container directory exists
-        try? FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true, attributes: nil)
+        // Create queue directory for multiple recipes
+        let queueURL = containerURL.appendingPathComponent("recipe_queue")
+        try? FileManager.default.createDirectory(at: queueURL, withIntermediateDirectories: true, attributes: nil)
 
-        // Use file-based sharing for macOS Catalyst reliability
-        let fileURL = containerURL.appendingPathComponent("shared_recipe.json")
+        // Generate unique filename using timestamp and UUID
+        let timestamp = Date().timeIntervalSince1970
+        let uuid = UUID().uuidString.prefix(8)
+        let filename = "recipe_\(Int(timestamp))_\(uuid).json"
+        let fileURL = queueURL.appendingPathComponent(filename)
 
         var payload: [String: Any] = [
             "url": url.absoluteString,
-            "timestamp": Date().timeIntervalSince1970
+            "timestamp": timestamp
         ]
         if let html = html {
             payload["html"] = html
@@ -322,8 +326,13 @@ class ShareViewController: UIViewController {
             return
         }
 
-        // Write directly without atomic option to avoid temp file issues on Catalyst
-        try? data.write(to: fileURL, options: [])
+        // Write to queue (each recipe gets its own file)
+        do {
+            try data.write(to: fileURL, options: [.atomic])
+            print("DEBUG ShareViewController: Queued recipe to \(filename)")
+        } catch {
+            print("ERROR ShareViewController: Failed to queue recipe: \(error)")
+        }
     }
 
 

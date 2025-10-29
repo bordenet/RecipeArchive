@@ -87,28 +87,49 @@ import UIKit
         return nil
     }
 
-    // Read from file (more reliable for Catalyst than UserDefaults)
-    let fileURL = containerURL.appendingPathComponent("shared_recipe.json")
+    // Check queue directory for multiple recipes
+    let queueURL = containerURL.appendingPathComponent("recipe_queue")
 
-    guard FileManager.default.fileExists(atPath: fileURL.path) else {
+    // Get all queued recipe files sorted by timestamp (oldest first)
+    guard let files = try? FileManager.default.contentsOfDirectory(at: queueURL, includingPropertiesForKeys: [.creationDateKey], options: .skipsHiddenFiles) else {
         return nil
     }
 
+    let recipeFiles = files.filter { $0.pathExtension == "json" }
+        .sorted { (url1, url2) -> Bool in
+            let date1 = (try? url1.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date.distantPast
+            let date2 = (try? url2.resourceValues(forKeys: [.creationDateKey]))?.creationDate ?? Date.distantPast
+            return date1 < date2
+        }
+
+    guard let firstFile = recipeFiles.first else {
+        return nil
+    }
+
+    print("DEBUG AppDelegate: Processing queued recipe: \(firstFile.lastPathComponent)")
+    print("DEBUG AppDelegate: \(recipeFiles.count) recipe(s) in queue")
+
     do {
-        let data = try Data(contentsOf: fileURL)
+        let data = try Data(contentsOf: firstFile)
         guard let payload = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
               let urlString = payload["url"] as? String else {
+            // Invalid file, remove it
+            try? FileManager.default.removeItem(at: firstFile)
             return nil
         }
 
-        // Create JSON payload for Flutter
+        // Create JSON payload for Flutter (include images if present)
         var resultPayload: [String: Any] = ["url": urlString]
         if let html = payload["html"] as? String {
             resultPayload["html"] = html
         }
+        if let images = payload["images"] as? [[String: Any]] {
+            resultPayload["images"] = images
+        }
 
         // Delete the file after reading
-        try? FileManager.default.removeItem(at: fileURL)
+        try? FileManager.default.removeItem(at: firstFile)
+        print("DEBUG AppDelegate: Removed processed recipe from queue. \(recipeFiles.count - 1) remaining")
 
         // Return JSON string
         if let jsonData = try? JSONSerialization.data(withJSONObject: resultPayload, options: []),
@@ -116,6 +137,9 @@ import UIKit
             return jsonString
         }
     } catch {
+        print("ERROR AppDelegate: Failed to process queued recipe: \(error)")
+        // Remove corrupted file
+        try? FileManager.default.removeItem(at: firstFile)
         return nil
     }
 
