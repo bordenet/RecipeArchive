@@ -208,6 +208,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         );
+
+        // Check for more queued recipes after a brief delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _checkForSharedUrl();
+        });
       }
     } catch (e, stackTrace) {
       debugPrint('ERROR: Failed to save shared recipe: $e');
