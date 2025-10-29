@@ -57,6 +57,22 @@ func runIOSValidation(projectRoot string) bool {
 		return false
 	}
 
+	// Run SwiftLint validation on iOS codebase
+	fmt.Printf("  Running SwiftLint on iOS codebase...\n")
+	if checkCommand("swiftlint") {
+		iosPath := filepath.Join(projectRoot, "recipe_archive/ios")
+		_, err := runCommand(iosPath, "swiftlint")
+		if err != nil {
+			fmt.Printf("  SwiftLint: ✗ (linting issues found)\n")
+			fmt.Printf("  Run 'cd recipe_archive/ios && swiftlint' for details\n")
+			return false
+		}
+		fmt.Printf("  SwiftLint: ✓\n")
+	} else {
+		fmt.Printf("  SwiftLint: ⚠ (not installed, skipping)\n")
+		fmt.Printf("  Install with: brew install swiftlint\n")
+	}
+
 	// Run iOS build validation using unified script (dev mode with auto-run)
 	fmt.Printf("  Running iOS dev build and deploy to simulator...\n")
 	output, err := runCommand(
