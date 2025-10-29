@@ -74,8 +74,8 @@ func fetchHTMLFromURL(ctx context.Context, urlStr string) (string, error) {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set user agent to identify ourselves
-	req.Header.Set("User-Agent", "RecipeArchive/1.0 (+https://github.com/yourusername/recip)")
+	// Set user agent to impersonate Chrome desktop browser (bypasses paywalls/bot detection)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
 	// Make the request
 	resp, err := client.Do(req)
