@@ -50,15 +50,25 @@ func parseHTMLToRecipe(htmlContent string, sourceURL string) (*models.CreateReci
 		}
 	}
 
-	// Fallback to DOM parsing
+	// Fallback to DOM parsing (less reliable - requires both ingredients AND instructions)
 	fmt.Printf("⚠️ JSON-LD extraction failed or incomplete, trying DOM parsing\n")
 	recipe, err = extractFromDOM(htmlContent, sourceURL)
 	if err == nil && recipe != nil {
-		if len(recipe.Ingredients) > 0 || len(recipe.Instructions) > 0 {
+		// DOM parsing is unreliable (grabs all <li> elements), so require BOTH ingredients AND instructions
+		// This prevents false positives from blog homepages/listings with random <li> elements
+		if len(recipe.Ingredients) > 0 && len(recipe.Instructions) > 0 {
+			// Additional validation: reject if we have too many items (likely scraped a whole page)
+			if len(recipe.Ingredients) > 50 || len(recipe.Instructions) > 50 {
+				fmt.Printf("⚠️ DOM extraction found suspiciously many items (%d ingredients, %d instructions) - likely not a recipe page\n",
+					len(recipe.Ingredients), len(recipe.Instructions))
+				return nil, fmt.Errorf("DOM parsing found too many items - page may be a blog homepage or listing")
+			}
 			fmt.Printf("✅ DOM extraction successful: %s (%d ingredients, %d instructions)\n",
 				recipe.Title, len(recipe.Ingredients), len(recipe.Instructions))
 			return recipe, nil
 		}
+		fmt.Printf("⚠️ DOM extraction incomplete: %d ingredients, %d instructions (need both)\n",
+			len(recipe.Ingredients), len(recipe.Instructions))
 	}
 
 	return nil, fmt.Errorf("no recipe data could be extracted from HTML")
@@ -614,19 +624,42 @@ func extractTitle(doc *html.Node) string {
 	return title
 }
 
+// hasRecipeClass checks if a node or its ancestors have recipe-related class names
+func hasRecipeClass(n *html.Node, keywords []string) bool {
+	for n != nil {
+		if n.Type == html.ElementNode {
+			for _, attr := range n.Attr {
+				if attr.Key == "class" || attr.Key == "id" {
+					lowerVal := strings.ToLower(attr.Val)
+					for _, keyword := range keywords {
+						if strings.Contains(lowerVal, keyword) {
+							return true
+						}
+					}
+				}
+			}
+		}
+		n = n.Parent
+	}
+	return false
+}
+
 // extractListItems extracts ingredients from list items
 func extractListItems(doc *html.Node, selectors []string) []models.Ingredient {
 	var ingredients []models.Ingredient
-	// This is a simplified version - full implementation would use a CSS selector library
-	// For now, just extract any <li> elements as ingredients
+	// Look for <li> elements that are children of recipe-related containers
+	recipeKeywords := []string{"ingredient", "recipe"}
 	var findLi func(*html.Node)
 	findLi = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "li" {
-			text := getNodeText(n)
-			if text != "" && len(text) > 2 {
-				ingredients = append(ingredients, models.Ingredient{
-					Text: sanitizeText(text),
-				})
+			// Only extract if this <li> is within a recipe-related container
+			if hasRecipeClass(n.Parent, recipeKeywords) {
+				text := getNodeText(n)
+				if text != "" && len(text) > 2 && len(text) < 500 { // Reject very long text (likely not an ingredient)
+					ingredients = append(ingredients, models.Ingredient{
+						Text: sanitizeText(text),
+					})
+				}
 			}
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -640,10 +673,19 @@ func extractListItems(doc *html.Node, selectors []string) []models.Ingredient {
 // extractListItemsText extracts text from list items
 func extractListItemsText(doc *html.Node, selectors []string) []string {
 	var texts []string
-	// Simplified - extract any <li> elements
+	// Look for <li> elements that are children of instruction-related containers
+	instructionKeywords := []string{"instruction", "direction", "step", "method", "recipe"}
 	var findLi func(*html.Node)
 	findLi = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "li" {
+			// Only extract if this <li> is within an instruction-related container
+			if !hasRecipeClass(n.Parent, instructionKeywords) {
+				// Skip this <li>
+				for c := n.FirstChild; c != nil; c = c.NextSibling {
+					findLi(c)
+				}
+				return
+			}
 			text := getNodeText(n)
 			if text != "" && len(text) > 5 {
 				texts = append(texts, sanitizeText(text))
