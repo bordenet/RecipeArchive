@@ -230,16 +230,10 @@ if [ "$CLEAN" = true ]; then
     print_success "Clean complete"
 fi
 
-# Step 1: Flutter build (always do this first)
-print_status "Running Flutter build pipeline..."
+# Step 1: Get Flutter dependencies
+print_status "Getting Flutter dependencies..."
 flutter pub get
-
-if [ "$TARGET" = "simulator" ]; then
-    flutter build ios --$CONFIG --simulator --no-codesign
-else
-    flutter build ios --$CONFIG --no-codesign
-fi
-print_success "Flutter build complete"
+print_success "Dependencies fetched"
 
 # Step 2: Install CocoaPods dependencies
 print_status "Installing CocoaPods dependencies..."
@@ -248,8 +242,9 @@ pod install --repo-update
 cd ..
 print_success "CocoaPods dependencies installed"
 
-# Step 3: Xcode build
+# Step 3: Xcode build (Xcode will compile Flutter framework via build phases)
 print_header "Xcode Build"
+print_status "Note: Xcode will compile Flutter framework automatically via build scripts"
 
 if [ "$MODE" = "dev" ]; then
     # Development mode: Quick build
@@ -273,11 +268,11 @@ if [ "$MODE" = "dev" ]; then
     if [ $BUILD_EXIT_CODE -eq 0 ]; then
         print_success "Build complete"
 
-        # Find the .app
+        # Find the .app (Xcode build output location)
         if [ "$TARGET" = "simulator" ]; then
-            APP_PATH="build/ios/iphonesimulator/Runner.app"
+            APP_PATH="build/Build/Products/$XCODE_CONFIG-iphonesimulator/Runner.app"
         else
-            APP_PATH="build/ios/iphoneos/Runner.app"
+            APP_PATH="build/Build/Products/$XCODE_CONFIG-iphoneos/Runner.app"
         fi
 
         if [ -d "$APP_PATH" ]; then
@@ -336,8 +331,8 @@ else
     if [ $BUILD_EXIT_CODE -eq 0 ]; then
         print_success "Build complete"
 
-        # Find the .app
-        APP_PATH="build/ios/iphoneos/Runner.app"
+        # Find the .app (Xcode build output location)
+        APP_PATH="build/Build/Products/$XCODE_CONFIG-iphoneos/Runner.app"
 
         if [ -d "$APP_PATH" ]; then
             print_success "App location: $APP_PATH"

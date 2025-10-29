@@ -120,13 +120,19 @@ App Group storage → CFNotification → Flutter app → Backend parses
 # Export IPA via Xcode Organizer for distribution
 ```
 
+**Critical Architecture Decision**:
+- **NEVER use `flutter build ios` command** - it gets confused by multiple Xcode schemes
+- **ALWAYS use Xcode's build system directly** via `xcodebuild`
+- Xcode's build phases call Flutter's compilation scripts automatically
+- This approach avoids scheme ambiguity and is more reliable
+
 **Key Features**:
-- Always uses Flutter build pipeline first (`flutter build ios`)
-- Always uses "Runner" scheme with standard Xcode configurations
+- Uses Xcode build system (NOT Flutter build command)
+- Uses "Runner" scheme with standard Xcode configurations (Debug, Release, Profile)
 - Automatic Share Extension embedding verification
 - Auto-resets project.pbxproj after build to avoid git noise
 - Dev mode: Fast `xcodebuild build` → .app
-- Prod mode: `xcodebuild archive` → .xcarchive
+- Prod mode: `xcodebuild build` with `-allowProvisioningUpdates` → .app (signed)
 
 **⚠️ Xcode 16 Compatibility**: Script auto-downgrades `objectVersion 70` → `60` for CocoaPods compatibility.
 
