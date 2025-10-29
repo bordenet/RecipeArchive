@@ -35,20 +35,25 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Save recipe data to native app via App Group
 async function saveToNativeApp(data) {
   try {
-    // Store in browser.storage.local (bridged to native app)
-    await browser.storage.local.set({
-      'pendingRecipe': {
-        url: data.url,
-        html: data.html,
-        title: data.title,
-        timestamp: Date.now()
-      }
+    // Send message to native handler (SafariWebExtensionHandler.swift)
+    const response = await browser.runtime.sendNativeMessage({
+      action: 'saveRecipe',
+      url: data.url,
+      html: data.html,
+      title: data.title,
+      recipeSchema: data.recipeSchema,
+      timestamp: Date.now()
     });
 
-    console.log('Recipe data saved to storage');
-    return { status: 'saved' };
+    console.log('Recipe data sent to native handler:', response);
+    
+    if (!response || !response.success) {
+      throw new Error(response?.error || 'Native handler failed');
+    }
+
+    return response;
   } catch (error) {
-    console.error('Failed to save recipe data:', error);
+    console.error('Failed to send to native handler:', error);
     throw error;
   }
 }
