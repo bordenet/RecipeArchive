@@ -104,10 +104,18 @@ type CreateRecipeRequest struct {
 	Servings                *int          `json:"servings,omitempty" validate:"omitempty,min=1"`
 	Yield                   *string       `json:"yield,omitempty" validate:"omitempty,max=100"`
 	Categories              []string      `json:"categories,omitempty"`
-	Description             *string       `json:"description,omitempty"`
-	Reviews                 *string       `json:"reviews,omitempty"`
-	Nutrition               *string       `json:"nutrition,omitempty"`
-	WebArchiveHTML          *string       `json:"webArchiveHtml,omitempty"`
+	Description             *string             `json:"description,omitempty"`
+	Reviews                 *string             `json:"reviews,omitempty"`
+	Nutrition               *string             `json:"nutrition,omitempty"`
+	WebArchiveHTML          *string             `json:"webArchiveHtml,omitempty"`
+	WebArchiveImages        *[]WebArchiveImage `json:"webArchiveImages,omitempty"`
+}
+
+// WebArchiveImage represents an image extracted from a Web Archive
+type WebArchiveImage struct {
+	URL      string `json:"url"`      // Original image URL
+	Data     string `json:"data"`     // Base64-encoded image data
+	MimeType string `json:"mimeType"` // Image MIME type (image/jpeg, image/png, etc.)
 }
 
 // UpdateRecipeRequest represents the payload for updating a recipe

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -527,6 +528,52 @@ func downloadAndUploadImage(ctx context.Context, imageURL string, userID string,
 	return s3URL, nil
 }
 
+// uploadWebArchiveImage uploads an image from Web Archive base64 data to S3
+func uploadWebArchiveImage(ctx context.Context, webArchiveImage *models.WebArchiveImage, userID string, recipeID string) (string, error) {
+	// Decode base64 image data
+	imageData, err := base64.StdEncoding.DecodeString(webArchiveImage.Data)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode base64 image data: %w", err)
+	}
+
+	// Validate size (10MB limit)
+	maxSize := 10 * 1024 * 1024
+	if len(imageData) > maxSize {
+		return "", fmt.Errorf("image too large: %d bytes (max: %d)", len(imageData), maxSize)
+	}
+
+	// Determine file extension from MIME type
+	ext := ".jpg" // default
+	contentType := webArchiveImage.MimeType
+	if strings.Contains(contentType, "png") {
+		ext = ".png"
+	} else if strings.Contains(contentType, "webp") {
+		ext = ".webp"
+	} else if strings.Contains(contentType, "gif") {
+		ext = ".gif"
+	} else if strings.Contains(contentType, "jpeg") || strings.Contains(contentType, "jpg") {
+		ext = ".jpg"
+	}
+
+	// Use same path structure as image-upload Lambda: recipe-images/{recipeID}/recipes/{filename}
+	s3Key := fmt.Sprintf("recipe-images/%s/recipes/main-photo%s", recipeID, ext)
+
+	// Upload to S3
+	_, err = s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(bucketName),
+		Key:         aws.String(s3Key),
+		Body:        bytes.NewReader(imageData),
+		ContentType: aws.String(contentType),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload Web Archive image to S3: %w", err)
+	}
+
+	// Return S3 URL
+	s3URL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucketName, s3Key)
+	return s3URL, nil
+}
+
 // handleGetRecipes handles GET requests for recipes (list or single)
 func handleGetRecipes(ctx context.Context, request events.APIGatewayProxyRequest, userID string) (events.APIGatewayProxyResponse, error) {
 	// Check if this is a request for a specific recipe
@@ -996,7 +1043,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		}
 	}
 
-	// Handle image URL - download external images and upload to S3
+	// Handle image URL - upload from Web Archive or download external images
 	// This must happen AFTER HTML parsing so recipeData.MainPhotoURL is populated from parsed data
 	var tempRecipeID string
 	if recipeData.MainPhotoURL != nil && *recipeData.MainPhotoURL != "" {
@@ -1005,17 +1052,44 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 		// Check if it's already an S3 URL
 		if err := validateImageURL(recipeData.MainPhotoURL); err != nil {
-			// External URL - download and upload to S3
+			// External URL - check if we have it in Web Archive images first
+			var webArchiveImageData *models.WebArchiveImage
+			if recipeData.WebArchiveImages != nil && len(*recipeData.WebArchiveImages) > 0 {
+				fmt.Printf("📦 Checking %d Web Archive images for match...\n", len(*recipeData.WebArchiveImages))
+				for _, img := range *recipeData.WebArchiveImages {
+					if img.URL == imageURL {
+						webArchiveImageData = &img
+						fmt.Printf("✅ Found matching image in Web Archive: %s\n", imageURL)
+						break
+					}
+				}
+			}
+
 			// Generate temporary ID for image path (will be used as actual recipe ID later)
 			tempRecipeID = uuid.New().String()
-			fmt.Printf("📥 Downloading external image from: %s\n", imageURL)
-			s3URL, downloadErr := downloadAndUploadImage(ctx, imageURL, userID, tempRecipeID)
-			if downloadErr != nil {
-				fmt.Printf("⚠️ Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
-				recipeData.MainPhotoURL = nil
+
+			if webArchiveImageData != nil {
+				// Upload from Web Archive data (avoids CDN restrictions)
+				fmt.Printf("📤 Uploading image from Web Archive data (%s)\n", webArchiveImageData.MimeType)
+				s3URL, uploadErr := uploadWebArchiveImage(ctx, webArchiveImageData, userID, tempRecipeID)
+				if uploadErr != nil {
+					fmt.Printf("⚠️ Web Archive image upload failed: %s - recipe will save without image\n", uploadErr.Error())
+					recipeData.MainPhotoURL = nil
+				} else {
+					fmt.Printf("✅ Image uploaded to S3 from Web Archive: %s\n", s3URL)
+					recipeData.MainPhotoURL = &s3URL
+				}
 			} else {
-				fmt.Printf("✅ Image uploaded to S3: %s\n", s3URL)
-				recipeData.MainPhotoURL = &s3URL
+				// Fallback: Download from external URL
+				fmt.Printf("📥 Downloading external image from: %s\n", imageURL)
+				s3URL, downloadErr := downloadAndUploadImage(ctx, imageURL, userID, tempRecipeID)
+				if downloadErr != nil {
+					fmt.Printf("⚠️ Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
+					recipeData.MainPhotoURL = nil
+				} else {
+					fmt.Printf("✅ Image uploaded to S3: %s\n", s3URL)
+					recipeData.MainPhotoURL = &s3URL
+				}
 			}
 		} else {
 			fmt.Printf("✅ Image URL is already from S3, keeping as-is\n")

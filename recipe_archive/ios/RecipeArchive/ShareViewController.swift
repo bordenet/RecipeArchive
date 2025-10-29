@@ -54,6 +54,7 @@ class ShareViewController: UIViewController {
 
         var extractedURL: URL?
         var extractedHTML: String?
+        var webArchiveImages: [[String: Any]] = [] // Array of {url, data, mimeType}
         let dispatchGroup = DispatchGroup()
 
         // DEBUG: Log all available type identifiers
@@ -149,6 +150,24 @@ class ShareViewController: UIViewController {
                                         extractedHTML = html
                                         print("DEBUG ShareViewController: Extracted HTML from webarchive (\(html.count) chars)")
                                     }
+
+                                    // Extract images from WebSubresources
+                                    if let subresources = archive["WebSubresources"] as? [[String: Any]] {
+                                        print("DEBUG ShareViewController: Found \(subresources.count) subresources in webarchive")
+                                        for resource in subresources {
+                                            if let mimeType = resource["WebResourceMIMEType"] as? String,
+                                               mimeType.hasPrefix("image/"),
+                                               let resourceURL = resource["WebResourceURL"] as? String,
+                                               let resourceData = resource["WebResourceData"] as? Data {
+                                                webArchiveImages.append([
+                                                    "url": resourceURL,
+                                                    "data": resourceData,
+                                                    "mimeType": mimeType
+                                                ])
+                                                print("DEBUG ShareViewController: Extracted image: \(resourceURL) (\(resourceData.count) bytes)")
+                                            }
+                                        }
+                                    }
                                 }
                             } catch {
                                 print("DEBUG ShareViewController: Error reading webarchive file: \(error)")
@@ -172,6 +191,24 @@ class ShareViewController: UIViewController {
                                    let html = String(data: htmlData, encoding: .utf8) {
                                     extractedHTML = html
                                     print("DEBUG ShareViewController: Extracted HTML from webarchive (\(html.count) chars)")
+                                }
+
+                                // Extract images from WebSubresources
+                                if let subresources = archive["WebSubresources"] as? [[String: Any]] {
+                                    print("DEBUG ShareViewController: Found \(subresources.count) subresources in webarchive")
+                                    for resource in subresources {
+                                        if let mimeType = resource["WebResourceMIMEType"] as? String,
+                                           mimeType.hasPrefix("image/"),
+                                           let resourceURL = resource["WebResourceURL"] as? String,
+                                           let resourceData = resource["WebResourceData"] as? Data {
+                                            webArchiveImages.append([
+                                                "url": resourceURL,
+                                                "data": resourceData,
+                                                "mimeType": mimeType
+                                            ])
+                                            print("DEBUG ShareViewController: Extracted image: \(resourceURL) (\(resourceData.count) bytes)")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -212,8 +249,8 @@ class ShareViewController: UIViewController {
                 return
             }
 
-            // Save both URL and HTML to App Group
-            self.saveToAppGroup(url: url, html: extractedHTML)
+            // Save both URL, HTML, and images to App Group
+            self.saveToAppGroup(url: url, html: extractedHTML, images: webArchiveImages)
             self.showSuccessAndDismiss(url: url)
         }
     }
@@ -242,7 +279,7 @@ class ShareViewController: UIViewController {
         return scheme == "http" || scheme == "https"
     }
 
-    private func saveToAppGroup(url: URL, html: String?) {
+    private func saveToAppGroup(url: URL, html: String?, images: [[String: Any]]) {
         guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.recipearchive.shared") else {
             return
         }
@@ -259,6 +296,25 @@ class ShareViewController: UIViewController {
         ]
         if let html = html {
             payload["html"] = html
+        }
+
+        // Include images if any were extracted from Web Archive
+        if !images.isEmpty {
+            // Convert images array to JSON-serializable format
+            var serializableImages: [[String: Any]] = []
+            for image in images {
+                if let imageURL = image["url"] as? String,
+                   let imageData = image["data"] as? Data,
+                   let mimeType = image["mimeType"] as? String {
+                    serializableImages.append([
+                        "url": imageURL,
+                        "data": imageData.base64EncodedString(), // Convert to base64 for JSON
+                        "mimeType": mimeType
+                    ])
+                }
+            }
+            payload["images"] = serializableImages
+            print("DEBUG ShareViewController: Saving \(serializableImages.count) images to App Group")
         }
 
         // Serialize JSON and write to file
