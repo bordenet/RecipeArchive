@@ -11,13 +11,9 @@ class ShareViewController: UIViewController {
 
     private var hasCompleted = false
 
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
-        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        setupAndProcess()
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .clear
         setupAndProcess()
     }
 
@@ -35,194 +31,77 @@ class ShareViewController: UIViewController {
         }
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Make view transparent while processing
-        view.backgroundColor = .clear
-    }
-
     private func processSharedContent() {
-        handleSharedContent()
-    }
-
-    private func handleSharedContent() {
         guard let extensionItems = extensionContext?.inputItems as? [NSExtensionItem] else {
             showErrorAndDismiss(message: "No content to share")
             return
         }
 
+        extractContent(from: extensionItems) { [weak self] url, html, images in
+            guard let self = self, !self.hasCompleted else { return }
+
+            guard let url = url else {
+                self.showErrorAndDismiss(message: "No URL found. Please share a web page.")
+                return
+            }
+
+            guard self.isValidWebURL(url) else {
+                self.showErrorAndDismiss(message: "Invalid URL. Please share a web page (http:// or https://)")
+                return
+            }
+
+            self.saveToAppGroup(url: url, html: html, images: images)
+            self.showSuccessAndDismiss(url: url)
+        }
+    }
+
+    private func extractContent(from extensionItems: [NSExtensionItem], completion: @escaping (URL?, String?, [[String: Any]]) -> Void) {
         var extractedURL: URL?
         var extractedHTML: String?
-        var webArchiveImages: [[String: Any]] = [] // Array of {url, data, mimeType}
+        var webArchiveImages: [[String: Any]] = []
         let dispatchGroup = DispatchGroup()
 
-        // DEBUG: Log all available type identifiers
-        print("DEBUG ShareViewController: Starting content extraction")
-        for item in extensionItems {
-            guard let attachments = item.attachments else { continue }
-            for attachment in attachments {
-                print("DEBUG ShareViewController: Available type identifiers: \(attachment.registeredTypeIdentifiers)")
-            }
-        }
-
-        // Extract URL and HTML from shared content
         for item in extensionItems {
             guard let attachments = item.attachments else { continue }
 
             for attachment in attachments {
-                // Extract URL - try multiple type identifiers (iPad/Mac may use different ones)
+                // Extract URL
                 let urlTypes = ["public.url", "public.file-url", "public.text", "public.plain-text"]
-                for urlType in urlTypes {
-                    if attachment.hasItemConformingToTypeIdentifier(urlType) {
-                        dispatchGroup.enter()
-
-                        // Specify we expect a URL class (fixes macOS Catalyst issue)
-                        let options: [AnyHashable: Any] = [NSItemProviderPreferredImageSizeKey: NSValue(cgSize: CGSize.zero)]
-
-                        attachment.loadItem(forTypeIdentifier: urlType, options: options, completionHandler: { (item, error) in
-                            defer { dispatchGroup.leave() }
-
-                            guard error == nil, let item = item else { return }
-
-                            if let url = item as? URL {
-                                if extractedURL == nil {
-                                    extractedURL = url
-                                }
-                            } else if let nsurl = item as? NSURL {
-                                if extractedURL == nil {
-                                    extractedURL = nsurl as URL
-                                }
-                            } else if let urlString = item as? String {
-                                if extractedURL == nil, let url = URL(string: urlString), url.scheme == "http" || url.scheme == "https" {
-                                    extractedURL = url
-                                }
-                            } else if let data = item as? Data {
-                                if let urlString = String(data: data, encoding: .utf8) {
-                                    if extractedURL == nil, let url = URL(string: urlString), url.scheme == "http" || url.scheme == "https" {
-                                        extractedURL = url
-                                    }
-                                }
-                            } else {
-                                // Try converting to string as last resort
-                                if let description = (item as? CustomStringConvertible)?.description,
-                                   let url = URL(string: description),
-                                   url.scheme == "http" || url.scheme == "https" {
-                                    if extractedURL == nil {
-                                        extractedURL = url
-                                    }
-                                }
+                for urlType in urlTypes where attachment.hasItemConformingToTypeIdentifier(urlType) {
+                    dispatchGroup.enter()
+                    attachment.loadItem(forTypeIdentifier: urlType, options: nil) { item, _ in
+                        defer { dispatchGroup.leave() }
+                        if let url = self.url(from: item) {
+                            if extractedURL == nil {
+                                extractedURL = url
                             }
-                        })
+                        }
                     }
                 }
 
-                // Extract Web Archive (contains both URL and HTML)
+                // Extract Web Archive
                 if attachment.hasItemConformingToTypeIdentifier("com.apple.webarchive") {
                     dispatchGroup.enter()
-                    attachment.loadItem(forTypeIdentifier: "com.apple.webarchive", options: nil) { (item, error) in
+                    attachment.loadItem(forTypeIdentifier: "com.apple.webarchive", options: nil) { item, error in
                         defer { dispatchGroup.leave() }
-
-                        guard error == nil else {
-                            print("DEBUG ShareViewController: Error loading webarchive: \(String(describing: error))")
-                            return
-                        }
-
-                        if let url = item as? URL {
-                            // Web Archive saved as file
-                            do {
-                                let data = try Data(contentsOf: url)
-                                if let archive = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
-                                    // Extract URL from WebMainResource
-                                    if let mainResource = archive["WebMainResource"] as? [String: Any],
-                                       let urlString = mainResource["WebResourceURL"] as? String,
-                                       let webURL = URL(string: urlString) {
-                                        if extractedURL == nil {
-                                            extractedURL = webURL
-                                            print("DEBUG ShareViewController: Extracted URL from webarchive: \(urlString)")
-                                        }
-                                    }
-                                    
-                                    // Extract HTML from WebMainResource
-                                    if let mainResource = archive["WebMainResource"] as? [String: Any],
-                                       let htmlData = mainResource["WebResourceData"] as? Data,
-                                       let html = String(data: htmlData, encoding: .utf8) {
-                                        extractedHTML = html
-                                        print("DEBUG ShareViewController: Extracted HTML from webarchive (\(html.count) chars)")
-                                    }
-
-                                    // Extract images from WebSubresources
-                                    if let subresources = archive["WebSubresources"] as? [[String: Any]] {
-                                        print("DEBUG ShareViewController: Found \(subresources.count) subresources in webarchive")
-                                        for resource in subresources {
-                                            if let mimeType = resource["WebResourceMIMEType"] as? String,
-                                               mimeType.hasPrefix("image/"),
-                                               let resourceURL = resource["WebResourceURL"] as? String,
-                                               let resourceData = resource["WebResourceData"] as? Data {
-                                                webArchiveImages.append([
-                                                    "url": resourceURL,
-                                                    "data": resourceData,
-                                                    "mimeType": mimeType
-                                                ])
-                                                print("DEBUG ShareViewController: Extracted image: \(resourceURL) (\(resourceData.count) bytes)")
-                                            }
-                                        }
-                                    }
-                                }
-                            } catch {
-                                print("DEBUG ShareViewController: Error reading webarchive file: \(error)")
+                        guard error == nil, let item = item else { return }
+                        self.processWebArchive(item: item) { url, html, images in
+                            if extractedURL == nil {
+                                extractedURL = url
                             }
-                        } else if let data = item as? Data {
-                            // Web Archive as data
-                            if let archive = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
-                                // Extract URL from WebMainResource
-                                if let mainResource = archive["WebMainResource"] as? [String: Any],
-                                   let urlString = mainResource["WebResourceURL"] as? String,
-                                   let webURL = URL(string: urlString) {
-                                    if extractedURL == nil {
-                                        extractedURL = webURL
-                                        print("DEBUG ShareViewController: Extracted URL from webarchive: \(urlString)")
-                                    }
-                                }
-                                
-                                // Extract HTML from WebMainResource
-                                if let mainResource = archive["WebMainResource"] as? [String: Any],
-                                   let htmlData = mainResource["WebResourceData"] as? Data,
-                                   let html = String(data: htmlData, encoding: .utf8) {
-                                    extractedHTML = html
-                                    print("DEBUG ShareViewController: Extracted HTML from webarchive (\(html.count) chars)")
-                                }
-
-                                // Extract images from WebSubresources
-                                if let subresources = archive["WebSubresources"] as? [[String: Any]] {
-                                    print("DEBUG ShareViewController: Found \(subresources.count) subresources in webarchive")
-                                    for resource in subresources {
-                                        if let mimeType = resource["WebResourceMIMEType"] as? String,
-                                           mimeType.hasPrefix("image/"),
-                                           let resourceURL = resource["WebResourceURL"] as? String,
-                                           let resourceData = resource["WebResourceData"] as? Data {
-                                            webArchiveImages.append([
-                                                "url": resourceURL,
-                                                "data": resourceData,
-                                                "mimeType": mimeType
-                                            ])
-                                            print("DEBUG ShareViewController: Extracted image: \(resourceURL) (\(resourceData.count) bytes)")
-                                        }
-                                    }
-                                }
+                            if extractedHTML == nil {
+                                extractedHTML = html
                             }
+                            webArchiveImages.append(contentsOf: images)
                         }
                     }
                 }
 
-                // Extract HTML (for full recipe content, including paywalled sites)
+                // Extract HTML
                 if attachment.hasItemConformingToTypeIdentifier("public.html") {
                     dispatchGroup.enter()
-                    attachment.loadItem(forTypeIdentifier: "public.html", options: nil) { (item, error) in
+                    attachment.loadItem(forTypeIdentifier: "public.html", options: nil) { item, _ in
                         defer { dispatchGroup.leave() }
-
-                        guard error == nil else { return }
-
                         if let data = item as? Data, let html = String(data: data, encoding: .utf8) {
                             extractedHTML = html
                         } else if let html = item as? String {
@@ -233,32 +112,73 @@ class ShareViewController: UIViewController {
             }
         }
 
-        // Wait for all extractions to complete
-        dispatchGroup.notify(queue: .main) { [weak self] in
-            guard let self = self, !self.hasCompleted else { return }
-
-            // Must have at least a URL
-            guard let url = extractedURL else {
-                self.showErrorAndDismiss(message: "No URL found. Please share a web page.")
-                return
-            }
-
-            // Validate URL
-            guard self.isValidWebURL(url) else {
-                self.showErrorAndDismiss(message: "Invalid URL. Please share a web page (http:// or https://)")
-                return
-            }
-
-            // Save both URL, HTML, and images to App Group
-            self.saveToAppGroup(url: url, html: extractedHTML, images: webArchiveImages)
-            self.showSuccessAndDismiss(url: url)
+        dispatchGroup.notify(queue: .main) {
+            completion(extractedURL, extractedHTML, webArchiveImages)
         }
     }
 
+    private func url(from item: Any?) -> URL? {
+        if let url = item as? URL {
+            return url
+        }
+        if let nsurl = item as? NSURL {
+            return nsurl as URL
+        }
+        if let urlString = item as? String, let url = URL(string: urlString), isValidWebURL(url) {
+            return url
+        }
+        if let data = item as? Data, let urlString = String(data: data, encoding: .utf8), let url = URL(string: urlString), isValidWebURL(url) {
+            return url
+        }
+        if let description = (item as? CustomStringConvertible)?.description, let url = URL(string: description), isValidWebURL(url) {
+            return url
+        }
+        return nil
+    }
+
+    private func processWebArchive(item: Any, completion: @escaping (URL?, String?, [[String: Any]]) -> Void) {
+        var extractedURL: URL?
+        var extractedHTML: String?
+        var webArchiveImages: [[String: Any]] = []
+
+        let processArchiveData: (Data) -> Void = { data in
+            guard let archive = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { return }
+
+            if let mainResource = archive["WebMainResource"] as? [String: Any] {
+                if let urlString = mainResource["WebResourceURL"] as? String, let webURL = URL(string: urlString) {
+                    extractedURL = webURL
+                }
+                if let htmlData = mainResource["WebResourceData"] as? Data, let html = String(data: htmlData, encoding: .utf8) {
+                    extractedHTML = html
+                }
+            }
+
+            if let subresources = archive["WebSubresources"] as? [[String: Any]] {
+                for resource in subresources {
+                    if let mimeType = resource["WebResourceMIMEType"] as? String,
+                       mimeType.hasPrefix("image/"),
+                       let resourceURL = resource["WebResourceURL"] as? String,
+                       let resourceData = resource["WebResourceData"] as? Data {
+                        webArchiveImages.append([
+                            "url": resourceURL,
+                            "data": resourceData,
+                            "mimeType": mimeType
+                        ])
+                    }
+                }
+            }
+        }
+
+        if let url = item as? URL, let data = try? Data(contentsOf: url) {
+            processArchiveData(data)
+        } else if let data = item as? Data {
+            processArchiveData(data)
+        }
+
+        completion(extractedURL, extractedHTML, webArchiveImages)
+    }
+
     private func showSuccessAndDismiss(url: URL) {
-        // Share Extensions cannot open their container app directly
-        // User must manually switch back to the app
-        // The app will detect the shared URL via applicationWillEnterForeground
         let alert = UIAlertController(
             title: "Recipe Queued",
             message: "Recipe added to queue. Share more recipes, then open RecipeArchive to process all.",
@@ -273,9 +193,7 @@ class ShareViewController: UIViewController {
     }
 
     private func isValidWebURL(_ url: URL) -> Bool {
-        guard let scheme = url.scheme?.lowercased() else {
-            return false
-        }
+        guard let scheme = url.scheme?.lowercased() else { return false }
         return scheme == "http" || scheme == "https"
     }
 
@@ -284,11 +202,9 @@ class ShareViewController: UIViewController {
             return
         }
 
-        // Create queue directory for multiple recipes
         let queueURL = containerURL.appendingPathComponent("recipe_queue")
         try? FileManager.default.createDirectory(at: queueURL, withIntermediateDirectories: true, attributes: nil)
 
-        // Generate unique filename using timestamp and UUID
         let timestamp = Date().timeIntervalSince1970
         let uuid = UUID().uuidString.prefix(8)
         let filename = "recipe_\(Int(timestamp))_\(uuid).json"
@@ -302,9 +218,7 @@ class ShareViewController: UIViewController {
             payload["html"] = html
         }
 
-        // Include images if any were extracted from Web Archive
         if !images.isEmpty {
-            // Convert images array to JSON-serializable format
             var serializableImages: [[String: Any]] = []
             for image in images {
                 if let imageURL = image["url"] as? String,
@@ -312,29 +226,24 @@ class ShareViewController: UIViewController {
                    let mimeType = image["mimeType"] as? String {
                     serializableImages.append([
                         "url": imageURL,
-                        "data": imageData.base64EncodedString(), // Convert to base64 for JSON
+                        "data": imageData.base64EncodedString(),
                         "mimeType": mimeType
                     ])
                 }
             }
             payload["images"] = serializableImages
-            print("DEBUG ShareViewController: Saving \(serializableImages.count) images to App Group")
         }
 
-        // Serialize JSON and write to file
         guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
             return
         }
 
-        // Write to queue (each recipe gets its own file)
         do {
             try data.write(to: fileURL, options: [.atomic])
-            print("DEBUG ShareViewController: Queued recipe to \(filename)")
         } catch {
             print("ERROR ShareViewController: Failed to queue recipe: \(error)")
         }
     }
-
 
     private func dismissExtension() {
         guard !hasCompleted else { return }

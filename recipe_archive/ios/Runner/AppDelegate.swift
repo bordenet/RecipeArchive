@@ -39,7 +39,7 @@ import UIKit
     CFNotificationCenterAddObserver(
       CFNotificationCenterGetDarwinNotifyCenter(),
       Unmanaged.passUnretained(self).toOpaque(),
-      { (center, observer, name, object, userInfo) in
+      { (_, observer, _, _, _) in
         guard let observer = observer else { return }
         let appDelegate = Unmanaged<AppDelegate>.fromOpaque(observer).takeUnretainedValue()
         appDelegate.handleWebExtensionNotification()
@@ -60,7 +60,7 @@ import UIKit
   override func application(
     _ app: UIApplication,
     open url: URL,
-    options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
     // When opened via share extension with recipearchive:// scheme
     notifyFlutterOfSharedUrl()
