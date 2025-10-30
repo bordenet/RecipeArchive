@@ -20,7 +20,8 @@
       "Bash(npx playwright:*)",
       "Read(//Users/matt/Library/Caches/ms-playwright/**)",
       "Bash(bash:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []
