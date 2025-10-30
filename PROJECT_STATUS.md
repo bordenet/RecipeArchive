@@ -21,53 +21,7 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 
 ## Critical Issues Requiring Immediate Attention
 
-### Parser Quality Problems
-- [x] **Overly broad CSS selectors extract navigation menu items as recipe ingredients**
-  - Status: FIXED in v0.7.0 - tested and verified working
-  - Removed selectors `ul li, .entry-content ul li` from ingredient/instruction parsing
-  - Root cause identified: Selectors matched everything on page including navigation
-
-- [x] **Duplicate parser directories causing confusion**
-  - Status: FIXED - `/parsers/src/` deleted (13 files removed)
-  - Only `/parsers/sites/` remains as single source of truth
-  - No more confusion about which files are used by build
-
-- [x] **Old narrative-style recipes (2013 era) fail to parse**
-  - Status: FIXED - paragraph-based parsing implemented and tested
-  - Extracts ingredients from newline-separated paragraphs
-  - Extracts instructions from narrative text using cooking verb patterns
-  - Verified working with smittenkitchen.com 2013 recipe
-
 ### Error Reporting Failures
-
-**Complete lack of error detection and reporting at every layer:**
-
-- [x] **Browser Extension validation too permissive**
-  - Status: FIXED in v0.7.0
-  - Now returns error status for empty recipe extractions
-  - Reports failures to diagnostics endpoint for offline analysis
-  - Shows clear error messages to users instead of submitting garbage
-
-- [x] **Backend recipe submission has zero validation**
-  - Status: FIXED - Recipes Lambda rejects 0/0 content
-  - Exception: Empty recipes with HTML allowed for backend parsing
-  - Returns 400 Bad Request with clear error messages
-
-- [x] **Background normalizer blindly processes garbage**
-  - Status: FIXED - Pre-normalization validation before OpenAI
-  - Skips garbage recipes (0/0) entirely with ERROR logging
-  - Publishes CloudWatch metrics for quality tracking
-
-- [x] **CloudWatch logs provide false success indicators**
-  - Status: FIXED - ERROR logs for garbage, WARN for poor quality
-  - Quality levels: GARBAGE/POOR/LOW/GOOD
-  - Clear distinction between success and processing broken data
-
-- [x] **Cache poisoning persists broken normalizations**
-  - Status: FIXED - Cache completely disabled as of 2025-10-06
-  - Lambda now always calls OpenAI for fresh normalization
-  - No more poisoned results persisting across re-ingestions
-  - Note: Architectural review still needed for proper caching strategy
 
 ### Validation Gaps
 
@@ -76,16 +30,6 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
   - No regression testing for known-good recipes
   - Breakage discovered by users, not tests
 
-- [x] **Recipes Lambda needs validation**
-  - Status: FIXED - Rejects recipes with 0 ingredients AND 0 instructions
-  - Exception for HTML-provided recipes (backend parsing)
-  - Returns 400 Bad Request for invalid submissions
-
-- [x] **Background normalizer needs defensive validation**
-  - Status: FIXED - Validates quality before OpenAI normalization
-  - Logs ERROR for garbage recipes (0/0)
-  - Publishes quality metrics to CloudWatch
-
 ### Architectural Issues
 
 - [ ] **In-memory Lambda cache is unreliable**
@@ -93,20 +37,6 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
   - No cache invalidation strategy
   - Content hashing insufficient (based on counts only)
   - Consider: DynamoDB cache with TTL or disable caching entirely
-
-- [x] **No diagnostic aggregation or alerting**
-  - Status: FIXED - CloudWatch metrics and alarms configured
-  - Background normalizer publishes RecipeQuality and GarbageRecipes metrics
-  - monitoring-stack.ts defines alarms and dashboard
-  - Alarms: HighParsingFailures, GarbageRecipes, LambdaErrors
-  - Dashboard tracks quality distribution (GOOD/LOW/POOR/GARBAGE)
-  - Deploy with: cd aws-backend/infrastructure && cdk deploy RecipeArchive-Monitoring
-
-- [x] **Silent failure modes everywhere**
-  - Status: FIXED - Clear ERROR/WARN logging for failures
-  - Backend rejects garbage recipes with 400 Bad Request
-  - Normalizer logs ERROR for garbage, skips OpenAI processing
-  - Quality metrics published to CloudWatch for visibility
 
 ## New Adopter Support
 
