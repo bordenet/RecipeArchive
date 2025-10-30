@@ -322,6 +322,31 @@ EOF
   fi
 else
   print_success "Android development environment already configured"
+
+  # Update Android SDK components
+  if command -v sdkmanager &> /dev/null; then
+    if timed_confirm "Update Android SDK components?"; then
+      print_info "Updating Android SDK components..."
+
+      # Set up environment for sdkmanager
+      ANDROID_HOME="$HOME/Library/Android/sdk"
+      export ANDROID_HOME
+      export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+      # Update SDK manager itself
+      timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
+
+      # Update platform-tools, build-tools, and latest platform
+      print_info "Updating platform-tools and build-tools..."
+      timeout 180 sdkmanager "platform-tools" "build-tools;36.1.0" "platforms;android-36" 2>&1 | grep -v "=" || true
+
+      # Update emulator
+      print_info "Updating Android emulator..."
+      timeout 120 sdkmanager "emulator" 2>&1 | grep -v "=" || true
+
+      print_success "Android SDK components updated"
+    fi
+  fi
 fi
 
 # iOS Development Setup

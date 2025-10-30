@@ -2,6 +2,17 @@
 
 **Production**: https://d1jcaphz4458q7.cloudfront.net
 
+## CRITICAL: Git Workflow Policy
+
+**NEVER run `git add`, `git commit`, or `git push` commands yourself.**
+
+When work is complete:
+1. **Show the user what commands to run** - provide the exact git commands as copyable text
+2. **Let the user execute them** - they want to learn and save Claude Pro tokens
+3. **Do NOT stage files or create commits** - the user will do this themselves
+
+This has been requested SIX times. Follow this policy WITHOUT EXCEPTION.
+
 ## Outstanding Work
 
 **Android Recipe Capture** - 4-week implementation plan

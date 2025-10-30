@@ -308,10 +308,20 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
     CONFIG_LOWER=$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')
 
     if [ "$FORMAT" = "apk" ]; then
-        OUTPUT_FILE="$BUILD_DIR/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+        # Try both possible APK locations (Gradle can put them in different places)
+        OUTPUT_FILE="$FLUTTER_DIR/build/app/outputs/flutter-apk/app-$CONFIG_LOWER.apk"
+        if [ ! -f "$OUTPUT_FILE" ]; then
+            OUTPUT_FILE="$FLUTTER_DIR/build/app/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+        fi
+        if [ ! -f "$OUTPUT_FILE" ]; then
+            OUTPUT_FILE="$BUILD_DIR/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+        fi
         OUTPUT_NAME="app-$CONFIG_LOWER.apk"
     else
-        OUTPUT_FILE="$BUILD_DIR/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+        OUTPUT_FILE="$FLUTTER_DIR/build/app/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+        if [ ! -f "$OUTPUT_FILE" ]; then
+            OUTPUT_FILE="$BUILD_DIR/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+        fi
         OUTPUT_NAME="app-${CONFIG_LOWER}-release.aab"
     fi
 
