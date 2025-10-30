@@ -11,17 +11,7 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 - **Backend**: AWS Lambda (Go), API Gateway, Cognito, S3
 - **Browser Extensions**: Chrome & Safari (14+ supported recipe sites)
 
-### Mobile Apps
-- **iOS**: ✅ Production ready - WKWebView HTML+image extraction fully operational
-  - Three-tier capture: WKWebView proxy, Web Archive, URL-only fallback
-  - Client-side image download bypasses CDN restrictions
-  - Unified build: `./scripts/build-ios.sh`
-  - See [ADR 002](docs/adr/002-ios-recipe-capture-architecture.md)
-- **Android**: ⚠️ Not implemented - requires Share Extension with WebView bridge
-
 ## Critical Issues Requiring Immediate Attention
-
-### Error Reporting Failures
 
 ### Validation Gaps
 
@@ -32,7 +22,7 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 
 ### Architectural Issues
 
-- [ ] **In-memory Lambda cache is unreliable**
+- [ ] **Unreliable In-memory Lambda cache**
   - Persists across Lambda container reuse
   - No cache invalidation strategy
   - Content hashing insufficient (based on counts only)
