@@ -118,7 +118,7 @@ iOS/Android toolchain available
 - **Build scripts**: Automatically sync `.env` from root before every build
 - **NEVER commit**: `recipe_archive/.env` must stay in `.gitignore`
 
-Both `android-build.sh` and `ios-build.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
+Both `scripts/android/build.sh` and `scripts/ios/build.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
 
 ### Development Conventions - CRITICAL
 
@@ -197,27 +197,27 @@ These conventions ensure consistent, maintainable, production-grade automation a
 
 ### Android Builds
 
-**All Android builds use**: [`./scripts/android-build.sh`](scripts/android-build.sh)
+**All Android builds use**: [`./scripts/android/build.sh`](scripts/android/build.sh)
 
 **Development Builds** (fast iteration, emulator):
 ```bash
 # Quick build and run on emulator
-./scripts/android-build.sh --dev --run
+./scripts/android/build.sh --dev --run
 
 # Release build for emulator testing
-./scripts/android-build.sh --dev --emulator --release
+./scripts/android/build.sh --dev --emulator --release
 
 # Clean build
-./scripts/android-build.sh --dev --clean --run
+./scripts/android/build.sh --dev --clean --run
 ```
 
 **Production Builds** (Play Store, signed APK/AAB):
 ```bash
 # Production release APK with version
-./scripts/android-build.sh --prod --device --release --version 1.0.1
+./scripts/android/build.sh --prod --device --release --version 1.0.1
 
 # Production App Bundle (AAB) for Play Store
-./scripts/android-build.sh --prod --device --release --version 1.0.1 --appbundle
+./scripts/android/build.sh --prod --device --release --version 1.0.1 --appbundle
 ```
 
 **Critical Architecture Decision**:
@@ -249,24 +249,24 @@ If Android Studio fails with "Cannot run program '/opt/homebrew/share/flutter/bi
 
 ### iOS Builds
 
-**All iOS builds use**: [`./scripts/ios-build.sh`](scripts/ios-build.sh)
+**All iOS builds use**: [`./scripts/ios/build.sh`](scripts/ios/build.sh)
 
 **Development Builds** (fast iteration, simulator):
 ```bash
 # Quick build and run on simulator
-./scripts/ios-build.sh --dev --run
+./scripts/ios/build.sh --dev --run
 
 # Release build for simulator testing
-./scripts/ios-build.sh --dev --simulator --release
+./scripts/ios/build.sh --dev --simulator --release
 
 # Clean build
-./scripts/ios-build.sh --dev --clean --run
+./scripts/ios/build.sh --dev --clean --run
 ```
 
 **Production Builds** (App Store, TestFlight, device installs):
 ```bash
 # Release archive with version
-./scripts/ios-build.sh --prod --device --release --version 1.0.1
+./scripts/ios/build.sh --prod --device --release --version 1.0.1
 
 # Creates .xcarchive at: recipe_archive/ios/build/archives/Runner.xcarchive
 # Export IPA via Xcode Organizer for distribution

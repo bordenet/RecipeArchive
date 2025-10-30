@@ -177,7 +177,7 @@ cd RecipeArchive && npm install
 ./scripts/deploy-aws-infrastructure.sh
 
 # 3. Deploy web application (3 minutes)
-./scripts/web-deploy.sh
+./scripts/web/deploy.sh
 
 # 4. Validate installation (1 minute)
 ./validate-monorepo.sh --all
@@ -198,13 +198,13 @@ cd RecipeArchive && npm install
 ./validate-monorepo.sh --mobile   # Mobile-only validation
 
 # Deployment
-./scripts/web-deploy.sh           # Deploy web app
+./scripts/web/deploy.sh           # Deploy web app
 ./scripts/deploy-lambda.sh --all  # Deploy all Lambda functions
 
 # Mobile Development
-./scripts/build-ios.sh --dev --run              # iOS development build
-./scripts/build-android.sh --dev --run          # Android development build
-./scripts/build-ios.sh --prod --release --version 1.0.1    # iOS production
+./scripts/ios/build.sh --dev --run              # iOS development build
+./scripts/android/build.sh --dev --run          # Android development build
+./scripts/ios/build.sh --prod --release --version 1.0.1    # iOS production
 ```
 
 **Complete command reference:** [COMMANDS.md](COMMANDS.md)

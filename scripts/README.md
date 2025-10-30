@@ -27,31 +27,41 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 - **`aws-deploy-lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
 - **`aws-deploy-multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality.
 - **`aws-deploy-secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers.
-- **`web-deploy.sh`**: Builds and deploys the Flutter web app to CloudFront via S3.
+- **`web/deploy.sh`**: Builds and deploys the Flutter web app to CloudFront via S3.
 - **`manage-api-routes.sh`**: Provides a centralized, automated, and repeatable way to manage API Gateway routes for the RecipeArchive project.
-- **`package-extensions.sh`**: Creates distribution packages for both Chrome and Safari extensions with semantic versioning.
+- **`extensions/package.sh`**: Creates distribution packages for both Chrome and Safari extensions with semantic versioning.
 - **`setup-aws-billing-controls.sh`**: Sets up monitoring to help you stay within AWS Free Tier limits.
 - **`validate-api-gateway.sh`**: Serves as a standalone validator for API Gateway integrations.
 
 ### Mobile Development (`.sh`)
 
-#### iOS Development Scripts
-- **`ios-setup.sh`**: Complete iOS development environment setup with device targeting (iPhone 16e, iPad on Mac, iPhone 17 Pro Max)
-- **`ios-simulator.sh`**: Automated iOS simulator launcher with device detection
-- **`ios-xcode.sh`**: Xcode project launcher with clear user instructions
-- **`ios-build.sh`**: Comprehensive build system (debug/release, simulator/device)
-- **`ios-help.sh`**: Complete iOS development guide and troubleshooting
-- **`ios-clean.sh`**: iOS environment cleanup and reset functionality
-- **`ios-run.sh`**: Legacy run script for iOS simulator
+#### iOS Development Scripts (`ios/`)
+- **`setup.sh`**: Complete iOS development environment setup with device targeting
+- **`simulator.sh`**: Automated iOS simulator launcher with device detection
+- **`xcode.sh`**: Xcode project launcher with clear user instructions
+- **`build.sh`**: Comprehensive build system (debug/release, simulator/device)
+- **`help.sh`**: Complete iOS development guide and troubleshooting
+- **`clean.sh`**: iOS environment cleanup and reset functionality
+- **`run.sh`**: Legacy run script for iOS simulator
 
-#### Android Development Scripts
-- **`android-setup.sh`**: Complete Android development environment setup with SDK validation
-- **`android-emulator.sh`**: Android Virtual Device (AVD) management - create, start, stop, list emulators
-- **`android-run.sh`**: Run RecipeArchive app on Android emulator
-- **`android-build.sh`**: Build Android APK files (debug/release configurations)
-- **`android-help.sh`**: Complete Android development guide and troubleshooting
-- **`android-clean.sh`**: Android environment cleanup and reset functionality
-- **`android-studio.sh`**: Android Studio project launcher
+#### Android Development Scripts (`android/`)
+- **`setup.sh`**: Complete Android development environment setup with SDK validation
+- **`emulator.sh`**: Android Virtual Device (AVD) management - create, start, stop, list emulators
+- **`run.sh`**: Run RecipeArchive app on Android emulator
+- **`build.sh`**: Build Android APK files (debug/release configurations)
+- **`help.sh`**: Complete Android development guide and troubleshooting
+- **`clean.sh`**: Android environment cleanup and reset functionality
+- **`studio.sh`**: Android Studio project launcher
+
+#### Web Development Scripts (`web/`)
+- **`deploy.sh`**: Build and deploy Flutter web app to CloudFront
+- **`deploy-quick.sh`**: Fast deployment (skip full build)
+- **`deploy-simple.sh`**: Simplified deployment workflow
+- **`start-dev.sh`**: Local development server
+- **`process-icons.sh`**: Icon processing utility
+
+#### Extension Scripts (`extensions/`)
+- **`package.sh`**: Package Chrome and Safari extensions for distribution
 
 ### Development & Maintenance (`.sh`)
 

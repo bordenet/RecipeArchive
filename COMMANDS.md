@@ -10,9 +10,9 @@
 | Validate Mobile | `./validate-monorepo.sh --mobile` |
 | Deploy All (AWS + Web) | `./scripts/aws-deploy-all.sh` |
 | Deploy Lambda Functions | `./scripts/aws-deploy-lambda.sh --all` |
-| Deploy Web App | `./scripts/web-deploy.sh` |
+| Deploy Web App | `./scripts/web/deploy.sh` |
 | Build Extensions | `npm run build:extensions` |
-| Package Extensions | `./scripts/package-extensions.sh` |
+| Package Extensions | `./scripts/extensions/package.sh` |
 | Security Scan | `npm run security:scan` |
 
 ## Essential Tools
@@ -33,10 +33,10 @@
 
 | Task | Command |
 | --- | --- |
-| iOS Build (Dev + Run) | `./scripts/ios-build.sh --dev --run` |
-| iOS Build (Production) | `./scripts/ios-build.sh --prod --device --release --version X.Y.Z` |
-| iOS Build (Clean) | `./scripts/ios-build.sh --dev --clean --run` |
-| iOS Build Help | `./scripts/ios-build.sh --help` |
+| iOS Build (Dev + Run) | `./scripts/ios/build.sh --dev --run` |
+| iOS Build (Production) | `./scripts/ios/build.sh --prod --device --release --version X.Y.Z` |
+| iOS Build (Clean) | `./scripts/ios/build.sh --dev --clean --run` |
+| iOS Build Help | `./scripts/ios/build.sh --help` |
 | iOS Setup | `./scripts/ios/setup.sh` |
 | iOS Simulator | `./scripts/ios/simulator.sh` |
 | iOS Xcode | `./scripts/ios/xcode.sh` |
@@ -48,11 +48,11 @@
 
 | Task | Command |
 | --- | --- |
-| Android Build (Dev + Run) | `./scripts/android-build.sh --dev --run` |
-| Android Build (Production APK) | `./scripts/android-build.sh --prod --device --release --version X.Y.Z` |
-| Android Build (Production AAB) | `./scripts/android-build.sh --prod --device --release --version X.Y.Z --appbundle` |
-| Android Build (Clean) | `./scripts/android-build.sh --dev --clean --run` |
-| Android Build Help | `./scripts/android-build.sh --help` |
+| Android Build (Dev + Run) | `./scripts/android/build.sh --dev --run` |
+| Android Build (Production APK) | `./scripts/android/build.sh --prod --device --release --version X.Y.Z` |
+| Android Build (Production AAB) | `./scripts/android/build.sh --prod --device --release --version X.Y.Z --appbundle` |
+| Android Build (Clean) | `./scripts/android/build.sh --dev --clean --run` |
+| Android Build Help | `./scripts/android/build.sh --help` |
 | Android Setup | `./scripts/android/setup.sh` |
 | Android Emulator | `./scripts/android/emulator.sh` |
 | Android Run | `./scripts/android/run.sh` |
