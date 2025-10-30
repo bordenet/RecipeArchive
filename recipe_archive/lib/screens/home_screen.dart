@@ -79,7 +79,8 @@ class SortingDropdown extends ConsumerWidget {
   }
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -136,10 +137,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       debugPrint('DEBUG _checkForSharedUrl: Has HTML = ${html != null}');
       if (html != null) {
         debugPrint('DEBUG _checkForSharedUrl: HTML length = ${html.length}');
-        debugPrint('DEBUG _checkForSharedUrl: HTML preview = ${html.substring(0, html.length > 200 ? 200 : html.length)}');
+        debugPrint(
+            'DEBUG _checkForSharedUrl: HTML preview = ${html.substring(0, html.length > 200 ? 200 : html.length)}');
       }
       if (images != null) {
-        debugPrint('DEBUG _checkForSharedUrl: Has ${images.length} images from Web Archive');
+        debugPrint(
+            'DEBUG _checkForSharedUrl: Has ${images.length} images from Web Archive');
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,7 +157,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     }
   }
 
-  Future<void> _processSharedRecipe(String url, {String? html, List? images}) async {
+  Future<void> _processSharedRecipe(String url,
+      {String? html, List? images}) async {
     try {
       final recipeService = ref.read(recipeServiceProvider);
       final authService = ref.read(authServiceProvider);
@@ -163,8 +167,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
       // DEBUG: Log authentication state
       debugPrint('DEBUG: Processing shared recipe from $url');
-      debugPrint('DEBUG: Auth user: ${authService.currentUser?.email ?? "NOT AUTHENTICATED"}');
-      debugPrint('DEBUG: Has token: ${authService.currentUser?.idToken.isNotEmpty ?? false}');
+      debugPrint(
+          'DEBUG: Auth user: ${authService.currentUser?.email ?? "NOT AUTHENTICATED"}');
+      debugPrint(
+          'DEBUG: Has token: ${authService.currentUser?.idToken.isNotEmpty ?? false}');
 
       // Build recipe data with HTML if available
       final recipeData = {
@@ -180,12 +186,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         if (images != null && images.isNotEmpty) 'webArchiveImages': images,
       };
 
-      debugPrint('DEBUG: Recipe data includes HTML: ${html != null && html.isNotEmpty}');
+      debugPrint(
+          'DEBUG: Recipe data includes HTML: ${html != null && html.isNotEmpty}');
       if (html != null && html.isNotEmpty) {
-        debugPrint('DEBUG: HTML length being sent to backend: ${html.length} chars');
+        debugPrint(
+            'DEBUG: HTML length being sent to backend: ${html.length} chars');
       }
       if (images != null && images.isNotEmpty) {
-        debugPrint('DEBUG: Sending ${images.length} images from Web Archive to backend');
+        debugPrint(
+            'DEBUG: Sending ${images.length} images from Web Archive to backend');
       }
 
       debugPrint('DEBUG: Calling saveRecipeRaw to preserve webArchiveHtml...');
@@ -206,7 +215,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             action: SnackBarAction(
               label: 'View',
               onPressed: () {
-                Navigator.pushNamed(context, '/recipe-detail', arguments: response.id);
+                // The `response` object from `saveRecipeRaw` is the recipe.
+                // We can use it directly without re-fetching.
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RecipeDetailScreen(recipe: response),
+                  ),
+                );
               },
             ),
           ),

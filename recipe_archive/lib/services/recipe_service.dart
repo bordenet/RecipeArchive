@@ -18,7 +18,7 @@ final recipesProvider = FutureProvider<List<Recipe>>((ref) async {
   if (authUser == null) {
     throw Exception('User not authenticated');
   }
-  
+
   final recipeService = ref.read(recipeServiceProvider);
   try {
     return await recipeService.getRecipes();
@@ -30,10 +30,12 @@ final recipesProvider = FutureProvider<List<Recipe>>((ref) async {
 
 class RecipeService {
   final AuthenticationService _authService;
-  
+
   RecipeService(this._authService);
-  
-  String get apiUrl => dotenv.env['API_BASE_URL'] ?? 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
+
+  String get apiUrl =>
+      dotenv.env['API_BASE_URL'] ??
+      'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
 
   // Get all recipes from API
   Future<List<Recipe>> getRecipes({
@@ -44,15 +46,16 @@ class RecipeService {
     if (user == null) {
       throw Exception('User not authenticated');
     }
-    
+
     // Connect to production API regardless of localhost - authentication handles CORS
-    
+
     final queryParams = <String, String>{};
     if (limit != null) queryParams['limit'] = limit.toString();
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
-    
-    final uri = Uri.parse('$apiUrl/recipes').replace(queryParameters: queryParams);
-    
+
+    final uri =
+        Uri.parse('$apiUrl/recipes').replace(queryParameters: queryParams);
+
     try {
       developer.log('Fetching recipes from: $uri', name: 'RecipeService');
       final response = await http.get(
@@ -62,41 +65,50 @@ class RecipeService {
           'Authorization': 'Bearer ${user.idToken}',
         },
       );
-      
-      developer.log('Recipe API response: ${response.statusCode}', name: 'RecipeService');
-      
+
+      developer.log('Recipe API response: ${response.statusCode}',
+          name: 'RecipeService');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> recipesJson = data['recipes'] ?? [];
-        developer.log('Loaded ${recipesJson.length} recipes from API', name: 'RecipeService');
-        
+        developer.log('Loaded ${recipesJson.length} recipes from API',
+            name: 'RecipeService');
+
         // Debug: Log first recipe's raw data
         if (recipesJson.isNotEmpty) {
           final firstRecipe = recipesJson.first;
-          developer.log('First recipe raw data: ${json.encode({
-            'id': firstRecipe['id'],
-            'title': firstRecipe['title'],
-            'servings': firstRecipe['servings'],
-            'totalTimeMinutes': firstRecipe['totalTimeMinutes'],
-            'prepTime': firstRecipe['prepTime'],
-          })}', name: 'RecipeService');
+          developer.log(
+              'First recipe raw data: ${json.encode({
+                    'id': firstRecipe['id'],
+                    'title': firstRecipe['title'],
+                    'servings': firstRecipe['servings'],
+                    'totalTimeMinutes': firstRecipe['totalTimeMinutes'],
+                    'prepTime': firstRecipe['prepTime'],
+                  })}',
+              name: 'RecipeService');
         }
-        
-        final recipes = recipesJson.map((json) => Recipe.fromJson(json)).toList();
-        
+
+        final recipes =
+            recipesJson.map((json) => Recipe.fromJson(json)).toList();
+
         // Debug: Log first parsed recipe
         if (recipes.isNotEmpty) {
           final firstParsed = recipes.first;
-          developer.log('First recipe parsed: id=${firstParsed.id}, servings=${firstParsed.servings}, cookingTime=${firstParsed.cookingTime}, prepTime=${firstParsed.prepTime}', name: 'RecipeService');
+          developer.log(
+              'First recipe parsed: id=${firstParsed.id}, servings=${firstParsed.servings}, cookingTime=${firstParsed.cookingTime}, prepTime=${firstParsed.prepTime}',
+              name: 'RecipeService');
         }
-        
+
         return recipes;
       } else {
-        developer.log('API error: ${response.statusCode} - ${response.body}', name: 'RecipeService', level: 1000);
+        developer.log('API error: ${response.statusCode} - ${response.body}',
+            name: 'RecipeService', level: 1000);
         throw Exception('Failed to load recipes: ${response.statusCode}');
       }
     } catch (e) {
-      developer.log('Network error: $e', name: 'RecipeService', error: e, level: 1000);
+      developer.log('Network error: $e',
+          name: 'RecipeService', error: e, level: 1000);
       throw Exception('Network error: $e');
     }
   }
@@ -514,7 +526,7 @@ class RecipeService {
     if (user == null) {
       throw Exception('User not authenticated');
     }
-    
+
     try {
       final response = await http.get(
         Uri.parse('$apiUrl/recipes/$id'),
@@ -523,14 +535,14 @@ class RecipeService {
           'Authorization': 'Bearer ${user.idToken}',
         },
       );
-      
+
       if (response.statusCode == 200) {
         return Recipe.fromJson(json.decode(response.body));
       } else {
         return null;
       }
     } catch (e) {
-      throw Exception('Failed to load recipe: $e');
+      throw Exception('Failed to load recipe (id: $id): $e');
     }
   }
 
@@ -571,7 +583,8 @@ class RecipeService {
           return Recipe.fromJson(savedRecipeData);
         } catch (parseError, stackTrace) {
           // ignore: avoid_print
-          print('ERROR RecipeService: Failed to parse recipe response: $parseError');
+          print(
+              'ERROR RecipeService: Failed to parse recipe response: $parseError');
           // ignore: avoid_print
           print('ERROR RecipeService: Raw response body: ${response.body}');
           // ignore: avoid_print
@@ -580,8 +593,10 @@ class RecipeService {
         }
       } else {
         // ignore: avoid_print
-        print('ERROR RecipeService: Save failed: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to save recipe: HTTP ${response.statusCode} - ${response.body}');
+        print(
+            'ERROR RecipeService: Save failed: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to save recipe: HTTP ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       if (e is Exception && e.toString().contains('Failed to parse')) {
@@ -629,7 +644,8 @@ class RecipeService {
           return Recipe.fromJson(recipeData);
         } catch (parseError, stackTrace) {
           // ignore: avoid_print
-          print('ERROR RecipeService: Failed to parse recipe response: $parseError');
+          print(
+              'ERROR RecipeService: Failed to parse recipe response: $parseError');
           // ignore: avoid_print
           print('ERROR RecipeService: Raw response body: ${response.body}');
           // ignore: avoid_print
@@ -638,8 +654,10 @@ class RecipeService {
         }
       } else {
         // ignore: avoid_print
-        print('ERROR RecipeService: Save failed: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to save recipe: HTTP ${response.statusCode} - ${response.body}');
+        print(
+            'ERROR RecipeService: Save failed: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to save recipe: HTTP ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       if (e is Exception && e.toString().contains('Failed to parse')) {
@@ -689,10 +707,9 @@ class RecipeService {
     }
 
     try {
-      final uri = Uri.parse('$apiUrl/recipes').replace(
-        queryParameters: {'category': category}
-      );
-      
+      final uri = Uri.parse('$apiUrl/recipes')
+          .replace(queryParameters: {'category': category});
+
       final response = await http.get(
         uri,
         headers: {
@@ -706,7 +723,8 @@ class RecipeService {
         final List<dynamic> recipesJson = data['recipes'] ?? [];
         return recipesJson.map((json) => Recipe.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load recipes by category: ${response.statusCode}');
+        throw Exception(
+            'Failed to load recipes by category: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network error: $e');
@@ -721,10 +739,9 @@ class RecipeService {
     }
 
     try {
-      final uri = Uri.parse('$apiUrl/recipes').replace(
-        queryParameters: {'favorites': 'true'}
-      );
-      
+      final uri = Uri.parse('$apiUrl/recipes')
+          .replace(queryParameters: {'favorites': 'true'});
+
       final response = await http.get(
         uri,
         headers: {
@@ -738,7 +755,8 @@ class RecipeService {
         final List<dynamic> recipesJson = data['recipes'] ?? [];
         return recipesJson.map((json) => Recipe.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load favorite recipes: ${response.statusCode}');
+        throw Exception(
+            'Failed to load favorite recipes: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network error: $e');
@@ -769,7 +787,8 @@ class RecipeService {
         final List<dynamic> recipesJson = data['recipes'] ?? [];
         return recipesJson.map((json) => Recipe.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to bulk update recipes: ${response.statusCode}');
+        throw Exception(
+            'Failed to bulk update recipes: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network error during bulk update: $e');
@@ -782,9 +801,9 @@ class RecipeService {
     if (user == null) {
       throw Exception('User not authenticated');
     }
-    
+
     // Connect to production API for deletion
-    
+
     try {
       final response = await http.delete(
         Uri.parse('$apiUrl/recipes/$id'),
@@ -793,7 +812,7 @@ class RecipeService {
           'Authorization': 'Bearer ${user.idToken}',
         },
       );
-      
+
       if (response.statusCode == 200 || response.statusCode == 204) {
         return;
       } else {
@@ -803,5 +822,4 @@ class RecipeService {
       throw Exception('Network error while deleting recipe: $e');
     }
   }
-
 }

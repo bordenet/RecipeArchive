@@ -89,6 +89,17 @@ if [[ "$CONFIG" != "debug" && "$CONFIG" != "release" && "$CONFIG" != "profile" ]
     exit 1
 fi
 
+# --- Dependency checks ---
+if ! command -v flutter &> /dev/null; then
+    print_error "Flutter SDK not found. Please make sure it's installed and in your PATH."
+    exit 1
+fi
+
+if [[ "$TARGET" == "device" ]] && ! command -v adb &> /dev/null; then
+    print_error "ADB not found. Please make sure Android SDK platform-tools are installed and in your PATH."
+    exit 1
+fi
+
 # --- Main execution ---
 print_status "Starting Android build and deploy process..."
 print_status "Target: $TARGET, Config: $CONFIG"
@@ -108,26 +119,32 @@ fi
 print_success "Build script completed."
 
 print_status "Step 3: Deploying..."
-if [[ "$TARGET" == "emulator" ]]; then
-    print_status "Launching emulator..."
-    "$ANDROID_SCRIPT_DIR/android-emulator.sh" &
-    EMULATOR_PID=$!
-    print_status "Emulator launched in background with PID: $EMULATOR_PID"
 
-    # Wait for 2 minutes (120 seconds)
-    SECONDS=0
-    while ps -p $EMULATOR_PID > /dev/null && [ $SECONDS -lt 120 ]; do
-        sleep 1
-    done
+cd "$SCRIPT_DIR/../recipe_archive"
 
-    if ps -p $EMULATOR_PID > /dev/null; then
-        print_status "Timeout reached. Emulator is still running in the background."
-    else
-        print_success "Emulator process finished."
+if [[ "$TARGET" == "device" ]]; then
+    print_status "Checking for connected devices..."
+    # The first line is "List of devices attached", so we skip it.
+    DEVICE_LIST=$(adb devices | tail -n +2 | cut -f1)
+    if [ -z "$DEVICE_LIST" ]; then
+        print_error "No connected devices found. Please connect a device and enable USB debugging."
+        exit 1
     fi
-    print_success "App launch process initiated on emulator."
-else
-    print_status "To deploy to a device, please connect your device and run 'flutter run'."
+
+    # If there are multiple devices, we'll just use the first one for now.
+    DEVICE_ID=$(echo "$DEVICE_LIST" | head -n1)
+    print_status "Found device: $DEVICE_ID"
+    print_status "Deploying to device..."
+    if ! flutter run -d "$DEVICE_ID" --"$CONFIG"; then
+        print_error "Failed to deploy to device. Aborting."
+        exit 1
+    fi
+else # emulator
+    print_status "Deploying to emulator..."
+    if ! flutter run --"$CONFIG"; then
+        print_error "Failed to deploy to emulator. Make sure an emulator is running."
+        exit 1
+    fi
 fi
 
 print_success "All steps completed successfully."
