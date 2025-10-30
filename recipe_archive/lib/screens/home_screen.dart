@@ -79,12 +79,15 @@ class SortingDropdown extends ConsumerWidget {
   }
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+
+    // Register lifecycle observer to detect app resume
+    WidgetsBinding.instance.addObserver(this);
 
     // Check for shared URLs from iOS Share Extension
     _checkForSharedUrl();
@@ -232,8 +235,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Check for shared recipes when app resumes from background
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('DEBUG: App resumed, checking for shared recipes');
+      _checkForSharedUrl();
+    }
   }
 
   @override

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:amazon_cognito_identity_dart_2/cognito.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,17 +20,17 @@ class AuthUser {
     required this.idToken,
   });
 
-  factory AuthUser.fromCognitoUser(CognitoUser cognitoUser, CognitoUserSession session) {
+  factory AuthUser.fromCognitoUser(
+      CognitoUser cognitoUser, CognitoUserSession session) {
     try {
       final idToken = session.getIdToken();
       final accessToken = session.getAccessToken();
-      
-      
+
       final payload = idToken.decodePayload();
       if (payload == null) {
         throw Exception('Failed to decode ID token payload');
       }
-      
+
       return AuthUser(
         id: payload['sub']?.toString() ?? '',
         email: payload['email']?.toString() ?? '',
@@ -47,20 +46,20 @@ class AuthUser {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'email': email,
-    'username': username,
-    'accessToken': accessToken,
-    'idToken': idToken,
-  };
+        'id': id,
+        'email': email,
+        'username': username,
+        'accessToken': accessToken,
+        'idToken': idToken,
+      };
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
-    id: json['id'] ?? '',
-    email: json['email'] ?? '',
-    username: json['username'],
-    accessToken: json['accessToken'] ?? '',
-    idToken: json['idToken'] ?? '',
-  );
+        id: json['id'] ?? '',
+        email: json['email'] ?? '',
+        username: json['username'],
+        accessToken: json['accessToken'] ?? '',
+        idToken: json['idToken'] ?? '',
+      );
 }
 
 // Authentication state
@@ -87,14 +86,18 @@ class AuthenticationService {
   void _initializeCognito() {
     try {
       // Use hardcoded values as fallback if .env not loaded
-      final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_rpBcEEhYK';
-      final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '7lm8mqr03s0m0fn17dnv373s4h';
-      
+      final userPoolId =
+          dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_rpBcEEhYK';
+      final clientId =
+          dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '7lm8mqr03s0m0fn17dnv373s4h';
+
       // ignore: avoid_print
-      print('Initializing Cognito with poolId: $userPoolId, clientId: $clientId');
-      
+      print(
+          'Initializing Cognito with poolId: $userPoolId, clientId: $clientId');
+
       if (userPoolId.isEmpty || clientId.isEmpty) {
-        throw Exception('Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId');
+        throw Exception(
+            'Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId');
       }
 
       _userPool = CognitoUserPool(userPoolId, clientId);
@@ -117,7 +120,8 @@ class AuthenticationService {
       // First try to restore from stored user data
       final storedUser = await _getStoredUser();
       // ignore: avoid_print
-      print('TELEMETRY [isAuthenticated] Stored user: ${storedUser?.email ?? "null"}');
+      print(
+          'TELEMETRY [isAuthenticated] Stored user: ${storedUser?.email ?? "null"}');
       if (storedUser != null) {
         _currentUser = storedUser;
         // Try to refresh the Cognito session if stored user exists
@@ -131,7 +135,8 @@ class AuthenticationService {
             print('TELEMETRY [isAuthenticated] Getting session...');
             final session = await cognitoUser.getSession();
             // ignore: avoid_print
-            print('TELEMETRY [isAuthenticated] Session valid: ${session?.isValid() ?? false}');
+            print(
+                'TELEMETRY [isAuthenticated] Session valid: ${session?.isValid() ?? false}');
             if (session != null && session.isValid()) {
               // Update with fresh session data
               _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
@@ -139,7 +144,8 @@ class AuthenticationService {
               if (currentUser != null) {
                 await _storeUser(currentUser);
                 // ignore: avoid_print
-                print('TELEMETRY [isAuthenticated] Returning true (refreshed session)');
+                print(
+                    'TELEMETRY [isAuthenticated] Returning true (refreshed session)');
                 return true;
               }
             }
@@ -148,7 +154,8 @@ class AuthenticationService {
           // Cognito session refresh failed, but we have stored user data
           // Keep the stored user for now - they may still be authenticated
           // ignore: avoid_print
-          print('TELEMETRY [isAuthenticated] Cognito session refresh failed, using stored user: $cognitoError');
+          print(
+              'TELEMETRY [isAuthenticated] Cognito session refresh failed, using stored user: $cognitoError');
           return true;
         }
       }
@@ -174,7 +181,8 @@ class AuthenticationService {
         } catch (sessionError) {
           // Session validation failed, clear invalid data
           // ignore: avoid_print
-          print('TELEMETRY [isAuthenticated] Session validation failed: $sessionError');
+          print(
+              'TELEMETRY [isAuthenticated] Session validation failed: $sessionError');
           await _clearStoredUser();
           _cognitoUser = null;
           _currentUser = null;
@@ -188,12 +196,14 @@ class AuthenticationService {
       }
       _cognitoUser = null;
       // ignore: avoid_print
-      print('TELEMETRY [isAuthenticated] Returning ${_currentUser != null} (currentUser exists: ${_currentUser != null})');
+      print(
+          'TELEMETRY [isAuthenticated] Returning ${_currentUser != null} (currentUser exists: ${_currentUser != null})');
       return _currentUser != null;
     } catch (e, stackTrace) {
       // On error, preserve stored user data if it exists
       // ignore: avoid_print
-      print('TELEMETRY [isAuthenticated] ERROR - Type: ${e.runtimeType}, Message: $e');
+      print(
+          'TELEMETRY [isAuthenticated] ERROR - Type: ${e.runtimeType}, Message: $e');
       // ignore: avoid_print
       print('TELEMETRY [isAuthenticated] Stack trace: $stackTrace');
       _cognitoUser = null;
@@ -228,7 +238,8 @@ class AuthenticationService {
       print('TELEMETRY [signIn] Calling authenticateUser...');
       final session = await cognitoUser.authenticateUser(authDetails);
       // ignore: avoid_print
-      print('TELEMETRY [signIn] Authentication completed, session valid: ${session?.isValid()}');
+      print(
+          'TELEMETRY [signIn] Authentication completed, session valid: ${session?.isValid()}');
 
       if (session == null || !session.isValid()) {
         throw Exception('Failed to authenticate user - invalid session');
@@ -250,12 +261,14 @@ class AuthenticationService {
       return currentUser;
     } catch (e, stackTrace) {
       // ignore: avoid_print
-      print('TELEMETRY [signIn] ERROR CAUGHT - Type: ${e.runtimeType}, Message: $e');
+      print(
+          'TELEMETRY [signIn] ERROR CAUGHT - Type: ${e.runtimeType}, Message: $e');
       // ignore: avoid_print
       print('TELEMETRY [signIn] Stack trace: $stackTrace');
       if (e is CognitoUserException) {
         // ignore: avoid_print
-        print('TELEMETRY [signIn] CognitoUserException - message: ${e.message}');
+        print(
+            'TELEMETRY [signIn] CognitoUserException - message: ${e.message}');
         final message = e.message ?? 'Authentication failed';
         if (message.contains('UserNotConfirmed')) {
           throw Exception('Please verify your email address before signing in');
@@ -270,7 +283,8 @@ class AuthenticationService {
         }
       }
       // ignore: avoid_print
-      print('TELEMETRY [signIn] Throwing generic exception with full error details');
+      print(
+          'TELEMETRY [signIn] Throwing generic exception with full error details');
       throw Exception('Sign in failed: ${e.toString()}');
     }
   }
@@ -280,9 +294,10 @@ class AuthenticationService {
     try {
       final userAttributes = [
         AttributeArg(name: 'email', value: email),
-        if (username != null) AttributeArg(name: 'preferred_username', value: username),
+        if (username != null)
+          AttributeArg(name: 'preferred_username', value: username),
       ];
-      
+
       await _userPool.signUp(email, password, userAttributes: userAttributes);
     } catch (e) {
       if (e is CognitoUserException) {
@@ -394,7 +409,8 @@ final authServiceProvider = Provider<AuthenticationService>((ref) {
   return AuthenticationService();
 });
 
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, AsyncValue<AuthUser?>>((ref) {
+final authStateProvider =
+    StateNotifierProvider<AuthStateNotifier, AsyncValue<AuthUser?>>((ref) {
   final authService = ref.read(authServiceProvider);
   return AuthStateNotifier(authService);
 });
