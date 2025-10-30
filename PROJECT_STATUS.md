@@ -95,22 +95,11 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 ✅ Serious Eats • Love & Lemons • Washington Post • Food & Wine • Damn Delicious
 ✅ Alexandra's Kitchen • Lemons and Zest • The Anthony Kitchen
 
-## Next: Implement Unified Build Outputs
+## Outstanding Work
 
-**Week 2 Completed:**
-- ✅ Scripts reorganized into platform directories
-- ✅ Documentation updated
-- ✅ Build system specification created
+**Unified Build Outputs:** Update build scripts to output to `./build/{platform}/{config}/` with semantic naming (see [docs/development/build-system.md](docs/development/build-system.md))
 
-**Remaining:** Update build scripts to output to `./build/{platform}/{config}/` with semantic naming
-
-See [docs/development/build-system.md](docs/development/build-system.md) for implementation spec
-
-## Future Work
-
-### Week 3: Health Checks & Operational Runbooks
-
-Create `./scripts/diagnose-health.sh` for component-level health validation and structured runbooks in `docs/runbooks/` for incident response (android-auth-failure, lambda-cache-invalidation, parser-regression-protocol, production-incident-response)
+**E2E Test Suite:** Implement automated parser regression testing (P0-1)
 
 ## New Adopter Quick Start
 

@@ -22,7 +22,9 @@
       "Bash(bash:*)",
       "Bash(pkill:*)",
       "Bash(awk:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(chmod:*)",
+      "Bash(/Users/matt/GitHub/RecipeArchive/scripts/diagnose-health.sh:*)"
     ],
     "deny": [],
     "ask": []
