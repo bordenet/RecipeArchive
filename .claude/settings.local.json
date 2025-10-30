@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/ios-build-and-deploy.sh:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(pod install:*)",
+      "Bash(../scripts/ios/ios-clean.sh:*)",
+      "Bash(flutter pub:*)",
+      "Bash(pod:*)",
+      "Bash(gem install:*)",
+      "Bash(git checkout:*)",
+      "Bash(tee:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(./scripts/setup-macos.sh)",
+      "Bash(npm test:*)",
+      "Bash(git restore:*)",
+      "Bash(killall:*)",
+      "Bash(npx playwright:*)",
+      "Read(//Users/matt/Library/Caches/ms-playwright/**)",
+      "Bash(bash:*)",
+      "Bash(pkill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
