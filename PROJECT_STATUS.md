@@ -15,7 +15,7 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 - **iOS**: ✅ Production ready - WKWebView HTML+image extraction fully operational
   - Three-tier capture: WKWebView proxy, Web Archive, URL-only fallback
   - Client-side image download bypasses CDN restrictions
-  - Unified build: `./scripts/build-ios-unified.sh`
+  - Unified build: `./scripts/build-ios.sh`
   - See [ADR 002](docs/adr/002-ios-recipe-capture-architecture.md)
 - **Android**: ⚠️ Not implemented - requires Share Extension with WebView bridge
 

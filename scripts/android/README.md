@@ -10,7 +10,7 @@ The fastest way to build and run the app:
 
 ```bash
 # From repository root
-./scripts/build-android-unified.sh --dev --run
+./scripts/build-android.sh --dev --run
 ```
 
 **What it does:**
@@ -35,27 +35,27 @@ If you prefer more control:
 
 ### Main Build Script
 
-**[../build-android-unified.sh](../build-android-unified.sh)** - Unified build script for all Android builds
+**[../build-android.sh](../build-android.sh)** - Build script for all Android builds
 
 **Development builds** (fast iteration):
 ```bash
 # Quick debug build and run
-./scripts/build-android-unified.sh --dev --run
+./scripts/build-android.sh --dev --run
 
 # Release build for performance testing
-./scripts/build-android-unified.sh --dev --emulator --release
+./scripts/build-android.sh --dev --emulator --release
 
 # Clean build
-./scripts/build-android-unified.sh --dev --clean --run
+./scripts/build-android.sh --dev --clean --run
 ```
 
 **Production builds** (Play Store):
 ```bash
 # Signed release APK
-./scripts/build-android-unified.sh --prod --device --release --version 1.0.1
+./scripts/build-android.sh --prod --device --release --version 1.0.1
 
 # App Bundle (AAB) for Play Store
-./scripts/build-android-unified.sh --prod --device --release --version 1.0.1 --appbundle
+./scripts/build-android.sh --prod --device --release --version 1.0.1 --appbundle
 ```
 
 **Features:**
@@ -97,12 +97,6 @@ If you prefer more control:
 Auto-starts emulator if not running, then launches the app using `flutter run`.
 
 ### Build Management
-
-**[android-build.sh](android-build.sh)** - Standalone build script
-
-```bash
-./scripts/android/android-build.sh [debug|release]
-```
 
 **[android-clean.sh](android-clean.sh)** - Clean build artifacts
 
@@ -188,22 +182,22 @@ This project uses Gradle directly (NOT `flutter build apk/appbundle`):
 ### Daily Development
 ```bash
 # First build of the day
-./scripts/build-android-unified.sh --dev --clean --run
+./scripts/build-android.sh --dev --clean --run
 
 # Subsequent iterations
-./scripts/build-android-unified.sh --dev --run
+./scripts/build-android.sh --dev --run
 ```
 
 ### Testing Performance
 ```bash
 # Release mode on emulator
-./scripts/build-android-unified.sh --dev --emulator --release --run
+./scripts/build-android.sh --dev --emulator --release --run
 ```
 
 ### Preparing for Play Store
 ```bash
 # Create signed App Bundle
-./scripts/build-android-unified.sh --prod --device --release --version 1.2.0 --appbundle
+./scripts/build-android.sh --prod --device --release --version 1.2.0 --appbundle
 
 # Output: recipe_archive/build/app/outputs/bundle/release/app-release.aab
 ```
@@ -211,7 +205,7 @@ This project uses Gradle directly (NOT `flutter build apk/appbundle`):
 ### Manual Installation
 ```bash
 # Build APK
-./scripts/build-android-unified.sh --dev --emulator --debug
+./scripts/build-android.sh --dev --emulator --debug
 
 # Start emulator if needed
 ./scripts/android/android-emulator.sh start
@@ -243,7 +237,7 @@ cat ~/Library/Logs/Android/emulator.log
 ./scripts/android/android-clean.sh
 
 # Rebuild
-./scripts/build-android-unified.sh --dev --clean --run
+./scripts/build-android.sh --dev --clean --run
 ```
 
 ### ADB connection issues

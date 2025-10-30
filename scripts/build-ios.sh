@@ -1,420 +1,449 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# build-ios.sh - iOS Production Build Script for RecipeArchive
-# Generates release-ready builds for iPhone and iPad devices
-# Includes both Runner (main app) and RecipeArchive (Share Extension)
+################################################################################
+# iOS Build Script for RecipeArchive
+################################################################################
+# PURPOSE: Single source of truth for all iOS builds
+#   - Development builds (fast, simulator-focused)
+#   - Production builds (archives for distribution)
+#
+# USAGE:
+#   Development (simulator):
+#     ./scripts/build-ios.sh --dev --simulator --debug
+#     ./scripts/build-ios.sh --dev --simulator --release
+#
+#   Production (archive):
+#     ./scripts/build-ios.sh --prod --device --release --version 1.0.1
+#
+#   Quick simulator build+run:
+#     ./scripts/build-ios.sh --dev --run
+#
+# PHILOSOPHY:
+#   - Always use Flutter's build pipeline first (flutter build ios)
+#   - Always use "Runner" scheme with standard Xcode configurations
+#   - Consistent workflow regardless of target
+#   - Clear separation between dev (fast iteration) and prod (distribution)
+################################################################################
 
-set -e  # Exit on error
+set -e
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Configuration
+# Defaults
+MODE=""              # dev or prod
+TARGET="simulator"   # simulator or device
+CONFIG="debug"       # debug, release, profile
+VERSION=""           # Optional version string
+RUN_AFTER=false      # Auto-launch after build
+CLEAN=false          # Clean before build
+
+# Paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-IOS_DIR="$PROJECT_ROOT/recipe_archive/ios"
 FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
+IOS_DIR="$FLUTTER_DIR/ios"
 BUILD_DIR="$IOS_DIR/build"
-ARCHIVE_DIR="$BUILD_DIR/archives"
 
-# Default values
-BUILD_CONFIG=""
-VERSION=""
-CLEAN_BUILD=false
-START_TIME=$(date +%s)
+# Helper functions
+print_header() {
+    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║  $1${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}\n"
+}
 
-# Usage function
+print_status() {
+    echo -e "${BLUE}▸ $1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}✗ $1${NC}" >&2
+}
+
+error_exit() {
+    print_error "$1"
+    exit 1
+}
+
+# Usage
 usage() {
     cat << EOF
-${CYAN}╔════════════════════════════════════════════════════════════════╗
-║               iOS Build Script - RecipeArchive                 ║
-╚════════════════════════════════════════════════════════════════╝${NC}
+${CYAN}iOS Build Script${NC}
 
 ${GREEN}Usage:${NC}
-    $0 --release [--version VERSION] [--clean]
-    $0 --debug [--version VERSION] [--clean]
-    $0 -r [-v VERSION] [-c]
-    $0 -d [-v VERSION] [-c]
+    # Development (fast iteration)
+    $0 --dev [--simulator|--device] [--debug|--release] [--run]
 
-${GREEN}Options:${NC}
-    -r, --release          Build for release (required if not debug)
-    -d, --debug            Build for debug (required if not release)
-    -v, --version VERSION  Set app version (e.g., 1.0.1)
-    -c, --clean            Clean build directories before building
-    -h, --help             Show this help message
+    # Production (distribution)
+    $0 --prod --device --release --version X.Y.Z
+
+${GREEN}Required:${NC}
+    --dev              Development mode (build for simulator)
+    --prod             Production mode (create archive)
+
+${GREEN}Optional:${NC}
+    --simulator        Build for simulator (default in dev mode)
+    --device           Build for physical device
+    --debug            Debug configuration (default)
+    --release          Release configuration
+    --profile          Profile configuration
+    --version X.Y.Z    Set version (prod mode only)
+    --run              Auto-launch after build (dev mode only)
+    --clean            Clean build (flutter clean + pod install)
 
 ${GREEN}Examples:${NC}
-    $0 --release --version 1.0.1
-    $0 -r -v 1.0.1 --clean
-    $0 --debug -c
+    # Quick dev build and run
+    $0 --dev --run
 
-${GREEN}Output:${NC}
-    - Runner.app (Universal binary: iPhone + iPad)
-    - RecipeArchive.appex (Share Extension, embedded)
-    - Single archive supports both device types
+    # Production release archive with version
+    $0 --prod --device --release --version 1.2.0
 
-${GREEN}Location:${NC}
-    Archive created in: $BUILD_DIR/archives/
+    # Clean release build for simulator testing
+    $0 --dev --simulator --release --clean
+
+${GREEN}Note:${NC}
+    - Dev mode: Fast builds using xcodebuild build
+    - Prod mode: Creates .xcarchive for distribution
+    - Always uses Flutter build pipeline first
+    - Always uses "Runner" scheme
 
 EOF
-    exit 1
+    exit 0
 }
 
-# Error handler
-error_exit() {
-    echo -e "${RED}ERROR: $1${NC}" >&2
-    exit 1
-}
-
-# Parse command line arguments
-if [ $# -eq 0 ]; then
-    usage
-fi
-
+# Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -r|--release)
-            if [ -n "$BUILD_CONFIG" ]; then
-                error_exit "Cannot specify both --release and --debug"
-            fi
-            BUILD_CONFIG="Release"
+        --dev)
+            [ -n "$MODE" ] && error_exit "Cannot specify both --dev and --prod"
+            MODE="dev"
             shift
             ;;
-        -d|--debug)
-            if [ -n "$BUILD_CONFIG" ]; then
-                error_exit "Cannot specify both --release and --debug"
-            fi
-            BUILD_CONFIG="Debug"
+        --prod)
+            [ -n "$MODE" ] && error_exit "Cannot specify both --dev and --prod"
+            MODE="prod"
             shift
             ;;
-        -v|--version)
+        --simulator)
+            TARGET="simulator"
+            shift
+            ;;
+        --device)
+            TARGET="device"
+            shift
+            ;;
+        --debug)
+            CONFIG="debug"
+            shift
+            ;;
+        --release)
+            CONFIG="release"
+            shift
+            ;;
+        --profile)
+            CONFIG="profile"
+            shift
+            ;;
+        --version)
             VERSION="$2"
-            if [ -z "$VERSION" ]; then
-                error_exit "Version string required after $1"
-            fi
-            # Validate version format (basic semver check)
-            if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                error_exit "Version must be in format X.Y.Z (e.g., 1.0.1)"
-            fi
+            [ -z "$VERSION" ] && error_exit "Version required after --version"
+            [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && error_exit "Version must be X.Y.Z format"
             shift 2
             ;;
-        -c|--clean)
-            CLEAN_BUILD=true
+        --run)
+            RUN_AFTER=true
             shift
             ;;
-        -h|--help)
+        --clean)
+            CLEAN=true
+            shift
+            ;;
+        --help|-h)
             usage
             ;;
         *)
-            error_exit "Unknown option: $1\nRun '$0 --help' for usage information"
+            error_exit "Unknown option: $1 (use --help)"
             ;;
     esac
 done
 
-# Validate required arguments
-if [ -z "$BUILD_CONFIG" ]; then
-    error_exit "Build configuration required: use --release or --debug"
+# Validate
+[ -z "$MODE" ] && error_exit "Must specify --dev or --prod"
+[ "$MODE" = "prod" ] && [ "$TARGET" = "simulator" ] && error_exit "Production builds require --device"
+[ "$MODE" = "dev" ] && [ -n "$VERSION" ] && error_exit "Version only applies to production builds"
+[ "$RUN_AFTER" = true ] && [ "$MODE" = "prod" ] && error_exit "--run only applies to dev builds"
+
+# Convert config to Xcode format
+XCODE_CONFIG="$(echo "${CONFIG}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')"
+
+# Determine the scheme based on the configuration
+if [ "$XCODE_CONFIG" = "Debug" ]; then
+    SCHEME="Runner-Debug"
+else
+    SCHEME="Runner"
 fi
 
-# Extract current version from pubspec.yaml
-PUBSPEC="$FLUTTER_DIR/pubspec.yaml"
-CURRENT_VERSION=""
-if [ -f "$PUBSPEC" ]; then
-    CURRENT_VERSION=$(grep "^version:" "$PUBSPEC" | awk '{print $2}')
-fi
-
-# Determine final version that will be built
-FINAL_VERSION=""
-if [ -n "$VERSION" ]; then
-    # User specified version - extract or default build number
-    if [ -n "$CURRENT_VERSION" ]; then
-        BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
-        if [ -z "$BUILD_NUMBER" ]; then
-            BUILD_NUMBER="1"
-        fi
-    else
-        BUILD_NUMBER="1"
-    fi
-    FINAL_VERSION="$VERSION+$BUILD_NUMBER"
-else
-    # Using existing version
-    FINAL_VERSION="$CURRENT_VERSION"
-fi
-
-# Print banner
-echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗"
-echo -e "║            iOS Build Script - RecipeArchive v1.0.0             ║"
-echo -e "╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${BLUE}Configuration:${NC}"
-echo -e "  Build Type:    ${GREEN}$BUILD_CONFIG${NC}"
-if [ -n "$FINAL_VERSION" ]; then
-    echo -e "  Build Version: ${GREEN}$FINAL_VERSION${NC}"
-else
-    echo -e "  Build Version: ${YELLOW}Unknown (pubspec.yaml not found)${NC}"
-fi
-if [ "$CLEAN_BUILD" = true ]; then
-    echo -e "  Clean Build:   ${GREEN}Yes${NC}"
-else
-    echo -e "  Clean Build:   ${YELLOW}No${NC}"
-fi
-echo -e "  Project Root:  $PROJECT_ROOT"
-echo -e "  iOS Directory: $IOS_DIR"
-echo ""
+# Banner
+print_header "iOS Build - RecipeArchive"
+echo -e "${BLUE}Mode:${NC}          ${GREEN}$MODE${NC}"
+echo -e "${BLUE}Target:${NC}        ${GREEN}$TARGET${NC}"
+echo -e "${BLUE}Configuration:${NC} ${GREEN}$XCODE_CONFIG${NC}"
+[ -n "$VERSION" ] && echo -e "${BLUE}Version:${NC}       ${GREEN}$VERSION${NC}"
 
 # Validate environment
-echo -e "${BLUE}Validating environment...${NC}"
+print_status "Validating environment..."
+command -v xcodebuild &>/dev/null || error_exit "xcodebuild not found. Install Xcode."
+command -v flutter &>/dev/null || error_exit "Flutter not found."
+command -v pod &>/dev/null || error_exit "CocoaPods not found. Run: sudo gem install cocoapods"
+print_success "Environment validated"
 
-# Check if Xcode is installed
-if ! command -v xcodebuild &> /dev/null; then
-    error_exit "xcodebuild not found. Please install Xcode and Xcode Command Line Tools"
+# Navigate to Flutter directory
+cd "$FLUTTER_DIR" || error_exit "Cannot access $FLUTTER_DIR"
+
+# Ensure .env file is copied from root (Flutter doesn't follow symlinks in assets)
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    print_status "Syncing .env file from repository root..."
+    cp "$PROJECT_ROOT/.env" .env
+    print_success ".env file synced"
 fi
-
-XCODE_VERSION=$(xcodebuild -version | head -n 1)
-echo -e "  ✓ Found: $XCODE_VERSION"
-
-# Check if Flutter is installed
-if ! command -v flutter &> /dev/null; then
-    error_exit "Flutter not found. Please install Flutter SDK"
-fi
-
-FLUTTER_VERSION=$(flutter --version | head -n 1)
-echo -e "  ✓ Found: $FLUTTER_VERSION"
-
-# Check if project exists
-if [ ! -d "$IOS_DIR" ]; then
-    error_exit "iOS project directory not found: $IOS_DIR"
-fi
-
-if [ ! -f "$IOS_DIR/Runner.xcodeproj/project.pbxproj" ]; then
-    error_exit "Xcode project not found: $IOS_DIR/Runner.xcodeproj"
-fi
-
-echo -e "  ✓ Xcode project found"
-
-# Check if CocoaPods is installed (needed for dependencies)
-if ! command -v pod &> /dev/null; then
-    error_exit "CocoaPods not found. Please install with: sudo gem install cocoapods"
-fi
-
-echo -e "  ✓ CocoaPods found"
-echo ""
 
 # Set version if specified
 if [ -n "$VERSION" ]; then
-    echo -e "${BLUE}Setting app version to $VERSION...${NC}"
+    print_status "Setting version to $VERSION..."
 
-    # Update pubspec.yaml version
-    PUBSPEC="$FLUTTER_DIR/pubspec.yaml"
-    if [ -f "$PUBSPEC" ]; then
-        # Extract current build number
-        CURRENT_VERSION=$(grep "^version:" "$PUBSPEC" | awk '{print $2}')
-        BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+    # Get current build number
+    CURRENT_VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}')
+    BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+    [ -z "$BUILD_NUMBER" ] && BUILD_NUMBER="1"
 
-        if [ -z "$BUILD_NUMBER" ]; then
-            BUILD_NUMBER="1"
-        fi
+    # Update pubspec.yaml
+    sed -i.bak "s/^version:.*/version: $VERSION+$BUILD_NUMBER/" pubspec.yaml
+    rm -f pubspec.yaml.bak
 
-        # Update version
-        sed -i.bak "s/^version:.*/version: $VERSION+$BUILD_NUMBER/" "$PUBSPEC"
-        rm -f "$PUBSPEC.bak"
+    # Update Info.plist files
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" ios/Runner/Info.plist 2>/dev/null || true
+    [ -f ios/RecipeArchive/Info.plist ] && /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" ios/RecipeArchive/Info.plist 2>/dev/null || true
 
-        echo -e "  ✓ Updated pubspec.yaml: $VERSION+$BUILD_NUMBER"
-    else
-        error_exit "pubspec.yaml not found at $PUBSPEC"
-    fi
-
-    # Update Info.plist for Runner
-    RUNNER_PLIST="$IOS_DIR/Runner/Info.plist"
-    if [ -f "$RUNNER_PLIST" ]; then
-        /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$RUNNER_PLIST" 2>/dev/null || true
-        echo -e "  ✓ Updated Runner Info.plist"
-    fi
-
-    # Update Info.plist for RecipeArchive extension
-    EXTENSION_PLIST="$IOS_DIR/RecipeArchive/Info.plist"
-    if [ -f "$EXTENSION_PLIST" ]; then
-        /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$EXTENSION_PLIST" 2>/dev/null || true
-        echo -e "  ✓ Updated RecipeArchive extension Info.plist"
-    fi
-    echo ""
+    print_success "Version set to $VERSION+$BUILD_NUMBER"
 fi
 
-# Clean previous builds if requested
-if [ "$CLEAN_BUILD" = true ]; then
-    echo -e "${BLUE}Cleaning build directories...${NC}"
-    cd "$FLUTTER_DIR"
-    flutter clean > /dev/null 2>&1
-    rm -rf "$BUILD_DIR"
-    rm -rf "$IOS_DIR/Pods"
-    rm -rf "$IOS_DIR/.symlinks"
-    rm -f "$IOS_DIR/Podfile.lock"
-    echo -e "  ✓ Cleaned Flutter build"
-    echo -e "  ✓ Removed CocoaPods cache"
-    echo -e "  ✓ Removed build directory"
-    echo ""
-else
-    echo -e "${BLUE}Preparing build directories...${NC}"
-    rm -rf "$BUILD_DIR"
-    echo -e "  ✓ Cleaned previous archives"
-    echo ""
+# Clean if requested
+if [ "$CLEAN" = true ]; then
+    print_status "Cleaning build..."
+    flutter clean
+    rm -rf ios/Pods ios/.symlinks ios/Podfile.lock
+    print_success "Clean complete"
 fi
 
-mkdir -p "$ARCHIVE_DIR"
-
-# Get Flutter dependencies (required before CocoaPods)
-echo -e "${BLUE}Getting Flutter dependencies...${NC}"
-cd "$FLUTTER_DIR"
+# Step 1: Get Flutter dependencies
+print_status "Getting Flutter dependencies..."
 flutter pub get
-echo -e "  ✓ Flutter dependencies fetched"
-echo ""
+print_success "Dependencies fetched"
 
-# Install/update CocoaPods dependencies
-echo -e "${BLUE}Installing CocoaPods dependencies...${NC}"
-cd "$IOS_DIR"
-
-# Ensure Podfile includes required xcconfig inheritance
-if ! grep -q "use_frameworks!" "Podfile"; then
-  echo "use_frameworks!" >> Podfile
-fi
-if ! grep -q "use_modular_headers!" "Podfile"; then
-  echo "use_modular_headers!" >> Podfile
-fi
-
+# Step 2: Install CocoaPods dependencies
+print_status "Installing CocoaPods dependencies..."
+cd ios
 pod install --repo-update
-echo -e "  ✓ CocoaPods dependencies installed"
-echo ""
+cd ..
+print_success "CocoaPods dependencies installed"
 
-# Build Flutter assets
-echo -e "${BLUE}Building Flutter assets...${NC}"
-cd "$FLUTTER_DIR"
-flutter build ios --$(echo $BUILD_CONFIG | tr '[:upper:]' '[:lower:]') --no-codesign
-echo -e "  ✓ Flutter assets built"
-echo ""
+# Step 3: Xcode build (Xcode will compile Flutter framework via build phases)
+print_header "Xcode Build"
+print_status "Note: Xcode will compile Flutter framework automatically via build scripts"
 
-# Create archives for both Runner and RecipeArchive
-echo -e "${BLUE}Building Xcode archives...${NC}"
+if [ "$MODE" = "dev" ]; then
+    # Development mode: Quick build
+    print_status "Building with xcodebuild..."
 
-# Array to store output paths
-declare -a OUTPUT_PATHS
+    SDK="iphonesimulator"
+    [ "$TARGET" = "device" ] && SDK="iphoneos"
 
-# Build universal Runner app (supports both iPhone and iPad)
-echo -e "${CYAN}Building Runner.app (Universal: iPhone + iPad)...${NC}"
-RUNNER_ARCHIVE="$ARCHIVE_DIR/Runner.xcarchive"
-# Purge stale DerivedData to avoid cached extension builds
-DERIVED_DATA_DIR=$(xcodebuild -workspace "$IOS_DIR/Runner.xcworkspace" -scheme Runner -showBuildSettings | grep -m 1 "BUILT_PRODUCTS_DIR" | awk '{print $3}' | sed 's|/Build/Products.*||')
-if [ -n "$DERIVED_DATA_DIR" ]; then
-    echo -e "${BLUE}Clearing DerivedData at $DERIVED_DATA_DIR${NC}"
-    rm -rf "$DERIVED_DATA_DIR"
-fi
+    cd ios
+    xcodebuild \
+        -workspace Runner.xcworkspace \
+        -scheme "$SCHEME" \
+        -configuration "$XCODE_CONFIG" \
+        -sdk "$SDK" \
+        build \
+        | grep -E "Building|Compiling|Linking|✓|Build succeeded" || true
 
-export SWIFT_VERSION=5
-    COMPILER_INDEX_STORE_ENABLE=NO
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}
+    cd ..
 
-# Capture xcodebuild output for later filtering
-XCODEBUILD_OUTPUT=$(xcodebuild archive \
-    -workspace "$IOS_DIR/Runner.xcworkspace" \
-    -scheme Runner \
-    -configuration "$BUILD_CONFIG" \
-    -destination 'generic/platform=iOS' \
-    -archivePath "$RUNNER_ARCHIVE" \
-    CODE_SIGNING_ALLOWED=NO \
-    CODE_SIGNING_REQUIRED=NO \
-    SUPPORTS_MACCATALYST=NO \
-    'ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=$(inherited)' \
-    'SWIFT_VERSION=$(inherited)' \
-    COMPILER_INDEX_STORE_ENABLE=NO 2>&1)
+    if [ $BUILD_EXIT_CODE -eq 0 ]; then
+        print_success "Build complete"
 
-# Filter and print xcodebuild output
-echo "$XCODEBUILD_OUTPUT" | grep -v "^$" | grep -E "(Building|Compiling|Linking|Generating|Creating|Processing|✓)" || true
+        # Find the .app (Xcode places it in DerivedData)
+        # Get DerivedData path from xcodebuild
+        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
 
-if [ -d "$RUNNER_ARCHIVE" ]; then
-    echo -e "  ${GREEN}✓ Runner.app built successfully (Universal Binary)${NC}"
-    RUNNER_APP_PATH="$RUNNER_ARCHIVE/Products/Applications/Runner.app"
-    if [ -d "$RUNNER_APP_PATH" ]; then
-        OUTPUT_PATHS+=("$RUNNER_APP_PATH")
-
-        # Get supported devices from Info.plist
-        SUPPORTED_DEVICES=$(/usr/libexec/PlistBuddy -c "Print :UIDeviceFamily" "$RUNNER_APP_PATH/Info.plist" 2>/dev/null | grep -E "^    [0-9]" | tr -d ' ')
-        if echo "$SUPPORTED_DEVICES" | grep -q "1"; then
-            echo -e "  ${CYAN}  ├─ iPhone support: enabled${NC}"
+        if [ "$TARGET" = "simulator" ]; then
+            APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphonesimulator/Runner.app"
+        else
+            APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphoneos/Runner.app"
         fi
-        if echo "$SUPPORTED_DEVICES" | grep -q "2"; then
-            echo -e "  ${CYAN}  └─ iPad support: enabled${NC}"
+
+        if [ -d "$APP_PATH" ]; then
+            print_success "App location: $APP_PATH"
+
+            # Create symlink in builds directory organized by build type
+            BUILD_TYPE_LOWER=$(echo "$XCODE_CONFIG" | tr '[:upper:]' '[:lower:]')
+            BUILDS_DIR="ios/builds/$BUILD_TYPE_LOWER"
+            mkdir -p "$BUILDS_DIR"
+
+            if [ "$TARGET" = "simulator" ]; then
+                SYMLINK_NAME="$BUILDS_DIR/Runner.app"
+            else
+                SYMLINK_NAME="$BUILDS_DIR/Runner.app"
+            fi
+
+            # Remove old symlink if it exists
+            rm -f "$SYMLINK_NAME"
+
+            # Create new symlink
+            ln -s "$APP_PATH" "$SYMLINK_NAME"
+            print_success "Symlink created: $SYMLINK_NAME"
+
+            # Auto-run if requested
+            if [ "$RUN_AFTER" = true ] && [ "$TARGET" = "simulator" ]; then
+                print_status "Launching simulator..."
+                # Find any available iPhone simulator
+                SIMULATOR_ID=$(xcrun simctl list devices available | grep -m 1 "iPhone" | grep -o '([A-F0-9\-]*)' | tr -d '()')
+
+                if [ -n "$SIMULATOR_ID" ]; then
+                    xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || true
+                    sleep 2
+                    xcrun simctl install "$SIMULATOR_ID" "$APP_PATH"
+                    BUNDLE_ID=$(plutil -extract CFBundleIdentifier raw "$APP_PATH/Info.plist")
+                    xcrun simctl launch "$SIMULATOR_ID" "$BUNDLE_ID"
+                    print_success "App launched on simulator"
+                else
+                    print_error "No simulator found"
+                fi
+            fi
+        else
+            error_exit "Build succeeded but .app not found"
         fi
+    else
+        error_exit "Build failed"
     fi
-    # Check for embedded RecipeArchive extension
-    EXTENSION_PATH="$RUNNER_APP_PATH/PlugIns/RecipeArchive.appex"
-    if [ -d "$EXTENSION_PATH" ]; then
-        OUTPUT_PATHS+=("$EXTENSION_PATH")
-        echo -e "  ${CYAN}  └─ RecipeArchive.appex embedded${NC}"
-    fi
+
 else
-    error_exit "Failed to build Runner.app"
-fi
+    # Production mode: Build for device with signing
+    print_status "Building for device (requires Apple Developer account)..."
 
-# Verify Share Extension embedding
-echo -e "${BLUE}Verifying embedded RecipeArchive extension...${NC}"
-if [ ! -d "$EXTENSION_PATH" ]; then
-    echo -e "${RED}ERROR:${NC} RecipeArchive.appex not found in Runner.app"
-    echo -e "       Verify that the RecipeArchive target is included in Runner › Embed App Extensions build phase."
-    exit 1
-else
-    echo -e "  ${GREEN}✓ RecipeArchive.appex verified embedded${NC}"
-fi
-echo ""
+    echo -e "${YELLOW}Note:${NC} This requires signing with your Apple ID"
+    echo -e "${YELLOW}      Free accounts work! Open Xcode → Preferences → Accounts to add your Apple ID${NC}\n"
 
-# Calculate build time
-END_TIME=$(date +%s)
-DURATION=$((END_TIME - START_TIME))
-MINUTES=$((DURATION / 60))
-SECONDS=$((DURATION % 60))
+    SDK="iphoneos"
 
-# Print summary
-echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗"
-echo -e "║                    BUILD COMPLETED                             ║"
-echo -e "╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${BLUE}Build Summary:${NC}"
-echo -e "  Configuration:  ${GREEN}$BUILD_CONFIG${NC}"
-if [ -n "$FINAL_VERSION" ]; then
-    echo -e "  Build Version:  ${GREEN}$FINAL_VERSION${NC}"
-fi
-echo -e "  Build Time:     ${CYAN}${MINUTES}m ${SECONDS}s${NC}"
-echo -e "  Archives:       ${CYAN}${#OUTPUT_PATHS[@]} artifacts${NC}"
-echo ""
-echo -e "${BLUE}Output Artifacts:${NC}"
+    cd ios
 
-# Print output paths
-for path in "${OUTPUT_PATHS[@]}"; do
-    if [ -e "$path" ]; then
-        SIZE=$(du -h "$path" | cut -f1)
-        FILENAME=$(basename "$path")
-        echo -e "  ${GREEN}✓${NC} $FILENAME"
-        echo -e "    ${CYAN}$path${NC}"
-        echo -e "    Size: $SIZE"
+    # First, try to build with automatic signing (best for free accounts)
+    print_status "Attempting build with automatic signing..."
+
+    xcodebuild \
+        -workspace Runner.xcworkspace \
+        -scheme "$SCHEME" \
+        -configuration "$XCODE_CONFIG" \
+        -sdk "$SDK" \
+        -allowProvisioningUpdates \
+        build \
+        | grep -E "Building|Compiling|Linking|✓|Build succeeded" || true
+
+    BUILD_EXIT_CODE=${PIPESTATUS[0]}
+    cd ..
+
+    if [ $BUILD_EXIT_CODE -eq 0 ]; then
+        print_success "Build complete"
+
+        # Find the .app (Xcode places it in DerivedData)
+        # Get DerivedData path from xcodebuild
+        DERIVED_DATA_PATH=$(xcodebuild -workspace ios/Runner.xcworkspace -scheme "$SCHEME" -showBuildSettings 2>/dev/null | grep " BUILD_DIR =" | awk '{print $3}')
+        APP_PATH="$DERIVED_DATA_PATH/$XCODE_CONFIG-iphoneos/Runner.app"
+
+        if [ -d "$APP_PATH" ]; then
+            print_success "App location: $APP_PATH"
+
+            # Verify extensions are embedded
+            SHARE_EXT_PATH="$APP_PATH/PlugIns/RecipeArchive.appex"
+            WEB_EXT_PATH="$APP_PATH/PlugIns/RecipeExtension.appex"
+
+            if [ -d "$SHARE_EXT_PATH" ]; then
+                print_success "Share Extension verified: RecipeArchive.appex"
+            else
+                print_error "WARNING: Share Extension not found"
+            fi
+
+            if [ -d "$WEB_EXT_PATH" ]; then
+                print_success "Safari Web Extension verified: RecipeExtension.appex"
+            else
+                print_error "WARNING: Safari Web Extension not found"
+            fi
+
+            # Create symlink in builds directory organized by build type
+            BUILD_TYPE_LOWER=$(echo "$XCODE_CONFIG" | tr '[:upper:]' '[:lower:]')
+            BUILDS_DIR="ios/builds/$BUILD_TYPE_LOWER"
+            mkdir -p "$BUILDS_DIR"
+            SYMLINK_NAME="$BUILDS_DIR/Runner.app"
+
+            # Remove old symlink if it exists
+            rm -f "$SYMLINK_NAME"
+
+            # Create new symlink
+            ln -s "$APP_PATH" "$SYMLINK_NAME"
+            print_success "Symlink created: $SYMLINK_NAME"
+
+            # Show size
+            SIZE=$(du -sh "$APP_PATH" | cut -f1)
+            echo -e "\n${BLUE}App Size:${NC} $SIZE"
+
+            # Check signing
+            print_status "Checking code signature..."
+            codesign -dv "$APP_PATH" 2>&1 | grep "Authority\|Identifier" || true
+
+            # Next steps
+            echo -e "\n${YELLOW}Next Steps:${NC}"
+            echo "  1. Connect your iPhone via USB"
+            echo "  2. Open Xcode: Window → Devices and Simulators"
+            echo "  3. Select your device"
+            echo "  4. Click '+' under Installed Apps"
+            echo "  5. Navigate to: $APP_PATH"
+            echo ""
+            echo "  ${CYAN}Or use Xcode to run directly:${NC}"
+            echo "  open -a Xcode ios/Runner.xcworkspace"
+            echo "  Then Product → Destination → Your Device → Run"
+        else
+            error_exit "Build succeeded but .app not found at $APP_PATH"
+        fi
+    else
+        print_error "Build failed - possible signing issues"
         echo ""
+        echo -e "${YELLOW}Common fixes:${NC}"
+        echo "  1. Open Xcode → Preferences → Accounts"
+        echo "  2. Add your Apple ID (free account works!)"
+        echo "  3. Open ios/Runner.xcworkspace in Xcode"
+        echo "  4. Select Runner target → Signing & Capabilities"
+        echo "  5. Check 'Automatically manage signing'"
+        echo "  6. Select your Team (your Apple ID)"
+        echo "  7. Do the same for RecipeArchive target"
+        echo ""
+        echo -e "${CYAN}Then run this script again or use Xcode directly${NC}"
+        exit 1
     fi
-done
+fi
 
-# Print archive locations
-echo -e "${BLUE}Archive Location:${NC}"
-echo -e "  ${CYAN}$RUNNER_ARCHIVE${NC}"
-echo ""
+# Reset project.pbxproj to avoid Flutter-generated changes
+print_status "Resetting project.pbxproj..."
+git checkout -- ios/Runner.xcodeproj/project.pbxproj 2>/dev/null || true
 
-# Deployment notes
-echo -e "${YELLOW}Deployment Notes:${NC}"
-echo -e "  • Universal binary supports both iPhone and iPad"
-echo -e "  • To install on device: Use Xcode's Devices and Simulators window"
-echo -e "  • Or drag .app to device in Xcode's Devices window"
-echo -e "  • For App Store: Export IPA using Xcode Organizer"
-echo -e "  • Archive location: $ARCHIVE_DIR"
-echo ""
-
-# Success exit
-exit 0
+print_header "Build Complete"

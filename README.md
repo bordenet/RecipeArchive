@@ -199,13 +199,11 @@ Once your AWS infrastructure is configured and `.env` is populated, set up your 
 ./scripts/android/android-run.sh               # Run app on Android emulator
 ./scripts/android/android-help.sh              # Basic Android development guide
 
-# Unified Build Scripts (iOS and Android)
-./scripts/build-ios-unified.sh       # Build the iOS app
-./scripts/build-android-unified.sh   # Build the Android app
-
-# Build and Deploy Scripts
-./scripts/ios-build-and-deploy.sh     # Build and deploy the iOS app
-./scripts/android-build-and-deploy.sh # Build and deploy the Android app
+# Build Scripts (iOS and Android)
+./scripts/build-ios.sh --dev --run         # Build and run iOS app on simulator
+./scripts/build-android.sh --dev --run     # Build and run Android app on emulator
+./scripts/build-ios.sh --prod --device --release --version X.Y.Z     # Production iOS build
+./scripts/build-android.sh --prod --device --release --version X.Y.Z # Production Android build
 
 # Validate mobile environment
 ./validate-monorepo.sh --mobile

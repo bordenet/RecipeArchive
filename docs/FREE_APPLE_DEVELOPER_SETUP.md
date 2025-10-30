@@ -82,7 +82,7 @@ Now the app will launch!
 ### Method 1: Use the Unified Script (Recommended)
 
 ```bash
-./scripts/build-ios-unified.sh --prod --device --release
+./scripts/build-ios.sh --prod --device --release
 ```
 
 This will:

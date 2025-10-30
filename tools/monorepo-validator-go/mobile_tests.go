@@ -51,7 +51,7 @@ func runIOSValidation(projectRoot string) bool {
 	fmt.Println("\n=== iOS BUILD & DEPLOY VALIDATION ===")
 
 	// Check for unified iOS build script
-	iosBuildScript := filepath.Join(projectRoot, "scripts/build-ios-unified.sh")
+	iosBuildScript := filepath.Join(projectRoot, "scripts/build-ios.sh")
 	if _, err := os.Stat(iosBuildScript); os.IsNotExist(err) {
 		fmt.Printf("  iOS build script: ✗ (not found at %s)\n", iosBuildScript)
 		return false
