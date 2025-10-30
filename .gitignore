@@ -45,6 +45,9 @@ terraform.tfstate.backup
 node_modules/
 dist/
 build/
+build/*
+builds/
+builds/*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -148,6 +151,7 @@ aws-backend/functions/invitation-manager-s3/invitation-manager-s3
 recipe_archive/.dart_tool/
 recipe_archive/build/
 recipe_archive/ios/builds/
+recipe_archive/android/builds/
 aws-backend/functions/flutter-console-diagnostics/
 aws-backend/functions/flutter-console-diagnostics/*
 
