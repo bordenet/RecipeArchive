@@ -12,11 +12,11 @@
 #   4. Uses dynamic function name discovery from AWS CLI
 #
 # USAGE:
-#   ./scripts/deploy-lambda.sh recipes                    # Deploy single function
-#   ./scripts/deploy-lambda.sh invitation-manager-s3     # Deploy invitation manager
-#   ./scripts/deploy-lambda.sh --all                     # Deploy all functions
-#   ./scripts/deploy-lambda.sh --list                    # List available functions
-#   ./scripts/deploy-lambda.sh --dry-run recipes         # Show what would be deployed
+#   ./scripts/aws-deploy-lambda.sh recipes                    # Deploy single function
+#   ./scripts/aws-deploy-lambda.sh invitation-manager-s3     # Deploy invitation manager
+#   ./scripts/aws-deploy-lambda.sh --all                     # Deploy all functions
+#   ./scripts/aws-deploy-lambda.sh --list                    # List available functions
+#   ./scripts/aws-deploy-lambda.sh --dry-run recipes         # Show what would be deployed
 #
 # REQUIREMENTS:
 #   - AWS CLI configured
@@ -180,10 +180,10 @@ print_usage() {
     echo "🚀 RecipeArchive Lambda Deployment Tool"
     echo ""
     echo "Usage:"
-    echo "  ./scripts/deploy-lambda.sh <function-name>  # Deploy specific function"
-    echo "  ./scripts/deploy-lambda.sh --all            # Deploy all functions"
-    echo "  ./scripts/deploy-lambda.sh --list           # List available functions"
-    echo "  ./scripts/deploy-lambda.sh --dry-run        # Show what would be deployed"
+    echo "  ./scripts/aws-deploy-lambda.sh <function-name>  # Deploy specific function"
+    echo "  ./scripts/aws-deploy-lambda.sh --all            # Deploy all functions"
+    echo "  ./scripts/aws-deploy-lambda.sh --list           # List available functions"
+    echo "  ./scripts/aws-deploy-lambda.sh --dry-run        # Show what would be deployed"
     echo ""
     echo "Available functions:"
     for func in $(get_available_functions);

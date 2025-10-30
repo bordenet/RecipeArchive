@@ -6,7 +6,7 @@
 # PURPOSE: Add missing admin/invitations endpoints to existing API Gateway
 #
 # USAGE:
-#   ./scripts/deploy-admin-endpoints.sh
+#   ./scripts/aws-deploy-admin-endpoints.sh
 #
 # REQUIREMENTS:
 #   - AWS CLI configured

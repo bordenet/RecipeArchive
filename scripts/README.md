@@ -23,10 +23,10 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 
 - **`build-lambda-packages.sh`**: Build all Lambda function packages for AWS CDK deployment
 - **`deploy-aws-infrastructure.sh`**: Guides you through the complete AWS setup process, including checking prerequisites, configuring credentials, creating the environment file, and deploying the CDK infrastructure.
-- **`deploy-all.sh`**: Deploy web app and all Lambda functions
-- **`deploy-lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
-- **`deploy-multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality.
-- **`deploy-secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers.
+- **`aws-deploy-all.sh`**: Deploy web app and all Lambda functions
+- **`aws-deploy-lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
+- **`aws-deploy-multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality.
+- **`aws-deploy-secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers.
 - **`web-deploy.sh`**: Builds and deploys the Flutter web app to CloudFront via S3.
 - **`manage-api-routes.sh`**: Provides a centralized, automated, and repeatable way to manage API Gateway routes for the RecipeArchive project.
 - **`package-extensions.sh`**: Creates distribution packages for both Chrome and Safari extensions with semantic versioning.
