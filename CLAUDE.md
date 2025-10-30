@@ -1,27 +1,16 @@
-# RecipeArchive Project Guide v1.0.0
+# RecipeArchive Project Guide
 
-## Current Status
-
-**v1.0.0 Production**: https://d1jcaphz4458q7.cloudfront.net
+**Production**: https://d1jcaphz4458q7.cloudfront.net
 
 ## Outstanding Work
 
-1. **Safari Web Extension Configuration** - Xcode manual setup required
-   - Code complete in `recipe_archive/ios/RecipeExtension/`
-   - Follow `XCODE_WEB_EXTENSION_SETUP.md` for configuration
-   - Run `./scripts/restore-web-extension-files.sh` after Xcode creates target
-
-2. **iOS Share Extension** - Complete and functional
-   - Share from Safari → Backend fetches HTML → Parses recipe → Downloads images to S3
-   - Images stored at `recipe-images/{recipeID}/recipes/main-photo.{ext}`
-   - Works end-to-end with automatic image handling
-
-3. **Android Share Extension** - Not started
-   - Backend HTML parsing ready (`aws-backend/functions/recipes/parser.go`)
-   - Implement Android Share Extension to use backend parser
-   - Android scripts available in `scripts/android/` directory
-
-Review PROJECT_STATUS.md for additional critical issues.
+**Android Recipe Capture** - 4-week implementation plan
+- See [ADR 003](docs/adr/003-android-recipe-capture-implementation.md) for complete execution plan
+- Phase 1: Share Intent Receiver + MethodChannel (Week 1)
+- Phase 2: WebView HTML Extraction + Image Download (Week 2)
+- Phase 3: Flutter Integration (Week 3)
+- Phase 4: Testing & Production Polish (Week 4)
+- Target: Full parity with iOS WKWebView implementation
 
 ALWAYS review COMMANDS.md to find project-specific tools, including tools for diagnostic error harvesting, tracing, and deployments. DO NOT "wing it" with direct S3 access, direct lambda deployments, etc.
 
@@ -69,31 +58,25 @@ Browser extensions contain hardcoded AWS infrastructure references. New adopters
 
 iOS/Android toolchain available
 
-### iOS Recipe Sharing Architecture
+### iOS Recipe Capture
 
-**IMPORTANT**: iOS Safari Share Sheet only provides URLs, not HTML content. This prevents capturing recipes from paywalled sites.
+**Architecture**: Three-tier approach (see [ADR 002](docs/adr/002-ios-recipe-capture-architecture.md))
+1. **WKWebView Proxy** (primary) - Loads page in background, extracts HTML + images
+2. **Web Archive** - Offline capture with embedded resources
+3. **URL-only** - Fallback for public content
 
-**Solution**: Safari Web Extension (iOS 15+)
-- Runs JavaScript in page context (has access to authenticated session)
-- Extracts full HTML from rendered page
-- Saves to App Group container
-- Flutter app reads HTML and sends to backend
-- Works with paywalled content (user already logged in)
-
-**Setup**: See [XCODE_WEB_EXTENSION_SETUP.md](XCODE_WEB_EXTENSION_SETUP.md) for step-by-step Xcode instructions
-
-**⚠️ Important**: Xcode overwrites files when creating the extension target. After creating the target in Xcode, run `./scripts/restore-web-extension-files.sh` to restore our implementation.
-
-**Architecture Flow**:
-```
-Safari (user logged in) → Web Extension extracts HTML →
-App Group storage → CFNotification → Flutter app → Backend parses
-```
+**Key Implementation**: [WebViewContentLoader.swift](recipe_archive/ios/Shared/WebViewContentLoader.swift)
+- Off-screen WKWebView loads URL with authenticated session
+- JavaScript extracts HTML + image URLs
+- URLSession downloads images (bypasses CDN restrictions)
+- Base64 encodes and saves to App Group
+- Flutter app processes via MethodChannel
 
 **Files**:
-- `recipe_archive/ios/RecipeExtension/` - Safari Web Extension
-- `recipe_archive/ios/RecipeArchive/` - Share Extension (legacy, URL only)
-- `recipe_archive/ios/Runner/AppDelegate.swift` - Listens for Web Extension notifications
+- `recipe_archive/ios/Shared/WebViewContentLoader.swift` - WKWebView loader
+- `recipe_archive/ios/RecipeArchive/ShareViewController.swift` - Share Extension entry point
+- `recipe_archive/ios/Runner/AppDelegate.swift` - Flutter integration
+- `recipe_archive/lib/services/share_channel.dart` - Dart bridge
 
 ### iOS Builds - Unified Script
 
