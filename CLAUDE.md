@@ -15,7 +15,47 @@ This has been requested SIX times. Follow this policy WITHOUT EXCEPTION.
 
 ## Outstanding Work
 
-**Android Recipe Capture** - 4-week implementation plan
+### CRITICAL: Android Cognito Authentication Failure
+
+**Status:** App broken on Android emulator - Authentication Error page on all login attempts
+
+**What Works:**
+- App launches successfully
+- Login screen displays properly
+- .env file IS correctly bundled in APK (verified with `unzip -l app-debug.apk | grep .env`)
+- Build scripts now auto-sync .env from root before every build
+- Emulator runs successfully (Medium_Phone_API_36.1 - ARM64)
+
+**What Fails:**
+- All login attempts (both admin and non-admin credentials) result in "Authentication Error page"
+- Issue started after fixing .env bundling (switched from symlink to real file copy)
+
+**Environment Configuration:**
+- Cognito credentials in `.env`: `COGNITO_USER_POOL_ID=us-west-2_rpBcEEhYK`, `COGNITO_APP_CLIENT_ID=7lm8mqr03s0m0fn17dnv373s4h`
+- Auth service loads from dotenv: [auth_service.dart:90-91](recipe_archive/lib/services/auth_service.dart#L90-L91)
+- Build scripts auto-sync .env: [build-android-unified.sh:238-243](scripts/build-android-unified.sh#L238-L243), [build-ios-unified.sh:212-217](scripts/build-ios-unified.sh#L212-L217)
+
+**Investigation Steps Needed:**
+1. Capture logcat output during fresh login attempt:
+   ```bash
+   ~/Library/Android/sdk/platform-tools/adb logcat -c
+   # User attempts login on emulator
+   ~/Library/Android/sdk/platform-tools/adb logcat -d | grep -i -E "flutter|cognito|auth|error|exception"
+   ```
+2. Check if dotenv is actually loading .env at runtime
+3. Verify Cognito User Pool configuration in AWS Console
+4. Compare with iOS implementation (which works correctly)
+5. Check for Android-specific Cognito SDK initialization issues
+
+**Recent Context:**
+- Session focused on fixing Android build errors (spawn helper, APK paths, cmdline-tools)
+- Successfully consolidated scripts from `recipe_archive/scripts/` to `./scripts/`
+- Fixed .env bundling issue (symlinks don't work with Flutter assets)
+- Added comprehensive documentation: [scripts/android/README.md](scripts/android/README.md), [scripts/ios/README.md](scripts/ios/README.md)
+
+---
+
+**Android Recipe Capture** - 4-week implementation plan (BLOCKED until Cognito fixed)
 - See [ADR 003](docs/adr/003-android-recipe-capture-implementation.md) for complete execution plan
 - Phase 1: Share Intent Receiver + MethodChannel (Week 1)
 - Phase 2: WebView HTML Extraction + Image Download (Week 2)

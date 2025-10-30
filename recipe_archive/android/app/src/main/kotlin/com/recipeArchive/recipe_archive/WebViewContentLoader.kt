@@ -86,11 +86,38 @@ class WebViewContentLoader(
             (function() {
                 let images = document.querySelectorAll('img');
                 let imageUrls = [];
+                let seenUrls = new Set();
+
                 images.forEach(img => {
-                    if (img.src && (img.width >= 200 || img.height >= 200)) {
-                        imageUrls.push(img.src);
+                    // Try multiple sources: src, data-src, data-lazy-src
+                    let imgUrl = img.src || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+
+                    if (imgUrl && imgUrl.startsWith('http')) {
+                        // Get natural dimensions if available, or use computed dimensions
+                        let width = img.naturalWidth || img.width || parseInt(img.style.width) || 0;
+                        let height = img.naturalHeight || img.height || parseInt(img.style.height) || 0;
+
+                        // Accept images that are likely to be content images
+                        // Either has decent dimensions OR no dimensions set (lazy-loaded)
+                        if ((width >= 200 || height >= 200 || (width === 0 && height === 0)) && !seenUrls.has(imgUrl)) {
+                            imageUrls.push(imgUrl);
+                            seenUrls.add(imgUrl);
+                        }
                     }
                 });
+
+                // If no images found yet, try meta tags (og:image, twitter:image)
+                if (imageUrls.length === 0) {
+                    let metaImage = document.querySelector('meta[property="og:image"]') ||
+                                   document.querySelector('meta[name="twitter:image"]');
+                    if (metaImage) {
+                        let content = metaImage.getAttribute('content');
+                        if (content && content.startsWith('http')) {
+                            imageUrls.push(content);
+                        }
+                    }
+                }
+
                 return JSON.stringify({
                     html: document.documentElement.outerHTML,
                     images: imageUrls
