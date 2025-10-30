@@ -21,7 +21,8 @@
       "Read(//Users/matt/Library/Caches/ms-playwright/**)",
       "Bash(bash:*)",
       "Bash(pkill:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []

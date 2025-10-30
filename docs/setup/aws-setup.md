@@ -177,7 +177,7 @@ This script will:
 npm run build:extensions
 
 # Package extensions for installation
-./scripts/package-extensions.sh
+./scripts/extensions/package.sh
 
 # Test everything works
 ./validate-monorepo.sh --all

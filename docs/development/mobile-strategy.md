@@ -105,21 +105,21 @@ Mobile apps display and organize recipes captured from all these sources.
 ### iOS Development
 ```bash
 # Complete iOS development setup
-./scripts/ios-setup.sh                     # Environment setup with device targeting
-./scripts/ios-setup.sh -d iphone16e        # Target iPhone 16e
-./scripts/ios-setup.sh -d ipadmac          # Target iPad on Mac
-./scripts/ios-simulator.sh                 # Launch app in simulator
-./scripts/ios-xcode.sh                     # Open in Xcode
-./scripts/ios-build.sh                     # Build iOS app
+./scripts/ios/setup.sh                     # Environment setup with device targeting
+./scripts/ios/setup.sh -d iphone16e        # Target iPhone 16e
+./scripts/ios/setup.sh -d ipadmac          # Target iPad on Mac
+./scripts/ios/simulator.sh                 # Launch app in simulator
+./scripts/ios/xcode.sh                     # Open in Xcode
+./scripts/ios/build.sh                     # Build iOS app
 ```
 
 ### Android Development
 ```bash
 # Complete Android development setup
-./scripts/android-setup.sh                 # Environment setup
-./scripts/android-emulator.sh start        # Start emulator
-./scripts/android-run.sh                   # Run app on emulator
-./scripts/android-build.sh                 # Build Android APK
+./scripts/android/setup.sh                 # Environment setup
+./scripts/android/emulator.sh start        # Start emulator
+./scripts/android/run.sh                   # Run app on emulator
+./scripts/android/build.sh                 # Build Android APK
 ```
 
 ### Mobile Validation
