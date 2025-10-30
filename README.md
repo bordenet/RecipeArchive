@@ -1,6 +1,10 @@
 # RecipeArchive v1.0.0
 
-**Save, normalize, search, and cook recipes—with instant links back to the original sources.** Simple browser extensions capture recipes. OpenAI-powered back-end does the heavy lifting of normalization. Dead simple UX makes it easy to scale yields, convert between metric and imperial units, and bypass the life stories and ad bombardment when it's time to cook. Feature parity exists across desktop browsers, iOS/iPadOS, and Android platforms, including native iOS and Android sharing support.
+**Production-ready recipe management system for personal use**
+
+Save, normalize, and search recipes with browser extensions, native mobile apps, and AWS serverless backend. Get started in 15 minutes with complete infrastructure automation.
+
+**Production Demo:** <https://d1jcaphz4458q7.cloudfront.net>
 
 <table style="width:100%; border-collapse: collapse;">
   <!-- Top row: Gallery image -->
@@ -39,7 +43,14 @@
 </table>
 
 
-**Production-ready cross-platform recipe management solution** - Complete system ready for new adopters to clone and deploy. Capture and organize recipes from 14+ supported websites with browser extensions, Flutter web/mobile apps, and cost-optimized AWS backend infrastructure.
+## Quick Links
+
+- **[Get Started in 15 Minutes →](docs/setup/GETTING_STARTED.md)** - Complete setup from zero to production
+- **[System Health Dashboard →](PROJECT_STATUS.md)** - SLOs, metrics, and known issues
+- **[Command Reference →](COMMANDS.md)** - Quick lookup for all commands
+- **[Development Guide →](CLAUDE.md)** - Conventions and best practices
+
+## Supported Recipe Sites (14)
 
 | Supported Sites |  |  |
 |-----------------|--|--|
@@ -123,138 +134,96 @@ No manual copying, no desktop workflow required—just native iOS sharing!
 - **☁️ Cloud Backend**: AWS Lambda functions with real-time sync and multi-tenant architecture
 </details>
 
-## 🚀 Quick Start
+## Key Features
 
-### Initial Setup (Required for all development)
+✅ **Multi-Platform Capture**
 
-**⚠️ IMPORTANT**: This project requires setting up YOUR OWN AWS infrastructure. The browser extensions contain hardcoded references to the original developer's AWS resources for distribution purposes, but new adopters must configure their own infrastructure.
+- Chrome & Safari browser extensions
+- iOS Share Extension (WKWebView-based)
+- Android Share Intent (planned)
+- Direct URL import in web/mobile apps
+
+✅ **Smart Recipe Processing**
+
+- OpenAI-powered normalization
+- Ingredient & instruction extraction
+- Metadata enrichment (prep time, servings, etc.)
+- Automatic image downloading and storage
+
+✅ **Cooking-Optimized UX**
+
+- Yield scaling (2x, 3x, ½x, etc.)
+- Unit conversion (metric ↔ imperial)
+- Screen wakelock for hands-free cooking
+- Clean, distraction-free recipe view
+
+✅ **Multi-Tenant Architecture**
+
+- Secure invitation system
+- Shared recipe collections
+- Per-tenant AWS Cognito authentication
+- S3-based storage with encryption
+
+## Quick Start
+
+**Complete setup guide:** [docs/setup/GETTING_STARTED.md](docs/setup/GETTING_STARTED.md)
 
 ```bash
+# 1. Clone and install
 git clone https://github.com/bordenet/RecipeArchive
-cd RecipeArchive
+cd RecipeArchive && npm install
 
-# Install dependencies
-npm install
+# 2. Deploy AWS infrastructure (8 minutes)
+./scripts/deploy-aws-infrastructure.sh
 
-# Configure environment variables with YOUR AWS infrastructure
-cp .env.example .env
-# Edit .env with your AWS credentials and infrastructure details
-
-# CRITICAL: Configure extensions to use YOUR AWS resources
-./scripts/setup-new-adopter-environment.sh
-```
-
-**CRITICAL STEPS**:
-
-1. **Deploy AWS Infrastructure**: Follow `docs/setup/aws-setup.md` to deploy your own AWS resources first
-2. **Configure .env**: Edit `.env` with your AWS infrastructure details (NOT the example values)
-3. **Run Setup Script**: `./scripts/setup-new-adopter-environment.sh` updates all browser extensions to use YOUR AWS resources instead of the original developer's
-
-### Development Environment Setup
-
-Once your AWS infrastructure is configured and `.env` is populated, set up your development environment:
-
-```bash
-# Install all development dependencies and build tools
-./scripts/setup-macos.sh
-
-# Validate everything is working (builds all components automatically)
-./validate-monorepo.sh --all
-```
-
-**What this does:**
-- Installs Node.js, Go, Flutter, AWS CLI, and other dependencies
-- Builds all Lambda functions and Go binaries
-- Compiles TypeScript and browser extensions
-- Validates mobile development environment
-- Runs comprehensive tests (17 validation modules)
-
-**Expected result:** All validations pass (17/17) with working development environment.
-
-### Web Development
-
-```bash
-# Run validation to ensure everything is set up correctly
-./validate-monorepo.sh --med
-
-# Deploy the web app to AWS S3 and CloudFront
+# 3. Deploy web application (3 minutes)
 ./scripts/web-deploy.sh
 
-# For full validation including mobile and infrastructure tests
+# 4. Validate installation (1 minute)
 ./validate-monorepo.sh --all
 ```
 
-### Mobile Development
+**Prerequisites:** macOS, AWS account, OpenAI API key
+
+**Cost:** ~$4-7/month for active personal use (AWS Free Tier available)
+
+## Development
+
+### Common Commands
 
 ```bash
-# iOS Development
-./scripts/ios/setup.sh                 # Setup iOS development environment
-./scripts/ios/simulator.sh             # Launch app in simulator (automated)
-./scripts/ios/xcode.sh                 # Open in Xcode (recommended for debugging)
-./scripts/ios/help.sh                  # Basic iOS development guide and troubleshooting
+# Validation
+./validate-monorepo.sh --all      # Full test suite (17 modules)
+./validate-monorepo.sh --p1       # Quick validation
+./validate-monorepo.sh --mobile   # Mobile-only validation
 
-# Android Development
-./scripts/android/setup.sh             # Setup Android development environment
-./scripts/android/emulator.sh start    # Start Android emulator
-./scripts/android/run.sh               # Run app on Android emulator
-./scripts/android/help.sh              # Basic Android development guide
+# Deployment
+./scripts/web-deploy.sh           # Deploy web app
+./scripts/deploy-lambda.sh --all  # Deploy all Lambda functions
 
-# Build Scripts (iOS and Android)
-./scripts/build-ios.sh --dev --run         # Build and run iOS app on simulator
-./scripts/build-android.sh --dev --run     # Build and run Android app on emulator
-./scripts/build-ios.sh --prod --device --release --version X.Y.Z     # Production iOS build
-./scripts/build-android.sh --prod --device --release --version X.Y.Z # Production Android build
-
-# Validate mobile environment
-./validate-monorepo.sh --mobile
+# Mobile Development
+./scripts/build-ios.sh --dev --run              # iOS development build
+./scripts/build-android.sh --dev --run          # Android development build
+./scripts/build-ios.sh --prod --release --version 1.0.1    # iOS production
 ```
 
-### Browser Extensions
+**Complete command reference:** [COMMANDS.md](COMMANDS.md)
 
-```bash
-npm run build:extensions      # Build Chrome/Safari extensions
-./scripts/package-extensions.sh  # Package for distribution
-```
+### Documentation
 
-**Prerequisites:** Node.js 18+, Go 1.19+, Flutter 3.10+, AWS CLI
+| Category | Document | Purpose |
+|----------|----------|---------|
+| **Setup** | [Getting Started](docs/setup/GETTING_STARTED.md) | 15-minute production deployment |
+| **Operations** | [System Health Dashboard](PROJECT_STATUS.md) | SLOs, metrics, known issues |
+| **Development** | [Project Guide](CLAUDE.md) | Conventions and best practices |
+| **Reference** | [Command Reference](COMMANDS.md) | Quick command lookup |
+| **API** | [API Specification](docs/api/api-specification.md) | Backend API reference |
+| **Mobile** | [Mobile Deployment](recipe_archive/MOBILE_DEPLOYMENT.md) | iOS/Android builds |
+| **Extensions** | [Browser Extensions](extensions/README.md) | Chrome/Safari development |
 
-### 🔐 Environment Configuration
+### Architecture
 
-This project uses a **single `.env` file** in the project root for all components:
-
-- **Main `.env`**: Contains all AWS credentials and infrastructure details
-- **Flutter app**: References `../.env` (the main project environment file)
-- **Extensions**: Use the main project environment variables
-- **GitHub Actions**: Creates temporary environment files during CI/CD
-
-**Security**: The `.env` file is git-ignored across all directories to prevent accidental commits of secrets.
-
-## 🛠️ Development
-
-```bash
-./validate-monorepo.sh --p1    # Quick validation
-./validate-monorepo.sh --all   # Full test suite
-./scripts/deploy-aws-infrastructure.sh        # Initialize AWS environment for application code
-./scripts/deploy-all.sh                   # Deploy web app and all Lambda functions
-```
-
-**Tech Stack:** Go (AWS Lambda), Flutter (web/mobile), TypeScript (extensions), AWS
-
-## 📚 Documentation
-
-### Platform-Specific Guides
-
-- [Mobile Deployment](recipe_archive/MOBILE_DEPLOYMENT.md) - Android/iOS build and distribution
-- [Browser Extensions](extensions/README.md) - Chrome/Safari extension development
-- [AWS Setup Guide](docs/setup/aws-setup.md) - Backend infrastructure setup
-
-### Development Resources
-
-- [Project Status](PROJECT_STATUS.md) - Complete project overview and achievements
-- [CLAUDE.md](CLAUDE.md) - Development history and project guide
-- [API Documentation](docs/api/api-specification.md) - Backend API reference
-- [Scripts Documentation](scripts/README.md) - Build and deployment automation
-- [View Complete Project Status](PROJECT_STATUS.md) - Project overview and milestones with todo list
+**Tech Stack:** Go (Lambda), Flutter (web/mobile), TypeScript (extensions), AWS (S3, Cognito, API Gateway)
 
 ## About the Developer
 
