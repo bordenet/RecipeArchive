@@ -22,8 +22,8 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 ### Deployment & Infrastructure (`.sh`)
 
 - **`build-lambda-packages.sh`**: Build all Lambda function packages for AWS CDK deployment
-- **`deploy-all.sh`**: Deploy both Flutter web app and all Lambda functions in one command
-- **`deploy-aws.sh`**: Guides you through the complete AWS setup process, including checking prerequisites, configuring credentials, creating the environment file, and deploying the CDK infrastructure.
+- **`deploy-aws-infrastructure.sh`**: Guides you through the complete AWS setup process, including checking prerequisites, configuring credentials, creating the environment file, and deploying the CDK infrastructure.
+- **`deploy-all.sh`**: Deploy web app and all Lambda functions
 - **`deploy-lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
 - **`deploy-multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality.
 - **`deploy-secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers.
