@@ -69,6 +69,17 @@ Browser extensions contain hardcoded AWS infrastructure references. New adopters
 
 iOS/Android toolchain available
 
+### CRITICAL: .env File Management
+
+**Flutter does NOT follow symlinks in asset bundles.**
+
+- **Root .env**: Keep the master `.env` at repository root (gitignored)
+- **Flutter .env**: Copy (NOT symlink) to `recipe_archive/.env` for builds
+- **Build scripts**: Automatically sync `.env` from root before every build
+- **NEVER commit**: `recipe_archive/.env` must stay in `.gitignore`
+
+Both `build-android-unified.sh` and `build-ios-unified.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
+
 ### Development Conventions - CRITICAL
 
 These conventions ensure consistent, maintainable, production-grade automation across the project:
