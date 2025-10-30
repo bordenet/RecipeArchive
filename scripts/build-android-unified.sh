@@ -235,6 +235,13 @@ print_success "Environment validated"
 # Navigate to Flutter directory
 cd "$FLUTTER_DIR" || error_exit "Cannot access $FLUTTER_DIR"
 
+# Ensure .env file is copied from root (Flutter doesn't follow symlinks in assets)
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    print_status "Syncing .env file from repository root..."
+    cp "$PROJECT_ROOT/.env" .env
+    print_success ".env file synced"
+fi
+
 # Set version if specified
 if [ -n "$VERSION" ]; then
     print_status "Setting version to $VERSION..."
