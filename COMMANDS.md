@@ -22,6 +22,8 @@
 | Content Analysis | `cd tools/content-ops && ./content-ops` |
 | Recipe ID Lookup | `cd tools/content-ops && ./content-ops -include-recipe-id "RECIPE TITLE"` |
 | Recipe Tracing | `cd tools/recipe-tracer && ./recipe-tracer -recipe RECIPE_ID` |
+| S3 Cleanup (Preview) | `cd tools/s3-cleanup && ./s3-cleanup` |
+| S3 Cleanup (Execute) | `cd tools/s3-cleanup && ./s3-cleanup --dry-run=false` |
 | Diagnostics Global Report | `cd tools/get-diagnostics && ./get-diagnostics` |
 | Diagnostic Harvest | `cd tools/get-diagnostics && ./get-diagnostics -all -since 7d` |
 | Extension Diagnostics | `cd tools/get-diagnostics && ./get-diagnostics -extensions -since 24h` |

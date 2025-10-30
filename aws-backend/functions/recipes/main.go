@@ -60,8 +60,24 @@ func init() {
 }
 
 // fetchHTMLFromURL attempts to fetch HTML content from a URL
-// This is used for best-effort recipe extraction when HTML is not provided by the client
-// (e.g., Chrome/Firefox browsers that can't extract HTML via Share Extension)
+//
+// SECURITY & USAGE NOTES:
+// This function is REQUIRED as a fallback for:
+// 1. Web app manual URL input - public (non-paywalled) recipes only
+// 2. Legacy URL-only share intents - DEPRECATED but still supported
+//
+// This is NOT used by:
+// - Browser extensions (Chrome/Safari) - extract HTML client-side via content scripts
+// - iOS app - WKWebView extracts HTML client-side with authenticated session
+// - Android app (FUTURE) - will use WebView to extract HTML client-side
+//
+// Limitations (BEST-EFFORT only):
+// - Paywalled sites (403/401) → saves as bookmark with 🔖 prefix
+// - Bot-protected sites → may return empty or error page
+// - JavaScript-rendered content → may return incomplete HTML
+//
+// Attack Surface: PUBLIC endpoint, rate-limited by API Gateway, no SSRF risk (URL validation enforced)
+// Future: Consider deprecating once all clients use client-side HTML extraction
 func fetchHTMLFromURL(ctx context.Context, urlStr string) (string, error) {
 	// Create HTTP client with timeout
 	client := &http.Client{
