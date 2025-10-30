@@ -24,7 +24,9 @@
       "Bash(awk:*)",
       "Bash(git mv:*)",
       "Bash(chmod:*)",
-      "Bash(/Users/matt/GitHub/RecipeArchive/scripts/diagnose-health.sh:*)"
+      "Bash(/Users/matt/GitHub/RecipeArchive/scripts/diagnose-health.sh:*)",
+      "Bash(./scripts/diagnose-health.sh:*)",
+      "Bash(./scripts/ios/build.sh:*)"
     ],
     "deny": [],
     "ask": []

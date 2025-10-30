@@ -97,9 +97,9 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 
 ## Outstanding Work
 
-**Unified Build Outputs:** Update build scripts to output to `./build/{platform}/{config}/` with semantic naming (see [docs/development/build-system.md](docs/development/build-system.md))
+**Android Build Outputs:** Update Android build script to match iOS unified output (iOS ✓)
 
-**E2E Test Suite:** Implement automated parser regression testing (P0-1)
+**E2E Test Suite:** Automated parser regression testing (P0-1)
 
 ## New Adopter Quick Start
 
