@@ -15,8 +15,19 @@ class ShareActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "ShareActivity onCreate")
+        handleIntent(intent)
+    }
 
-        Log.d(TAG, "ShareActivity started")
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        Log.d(TAG, "ShareActivity onNewIntent")
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        Log.d(TAG, "ShareActivity handleIntent - action: ${intent?.action}")
 
         if (intent?.action == Intent.ACTION_SEND) {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
