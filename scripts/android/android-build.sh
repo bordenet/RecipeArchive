@@ -11,7 +11,9 @@
 #   ./scripts/android-build.sh [options]
 #
 # OPTIONS:
-#   --release     Build a release version (default: debug).
+#   --debug       Build a debug version (default).
+#   --release     Build a release version.
+#   --profile     Build a profile version.
 #   --apk         Build an APK (default).
 #   --appbundle   Build an App Bundle.
 #   --help        Shows this help message.
@@ -50,8 +52,16 @@ BUILD_FORMAT="apk"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --debug)
+            BUILD_TYPE="debug"
+            shift
+            ;;
         --release)
             BUILD_TYPE="release"
+            shift
+            ;;
+        --profile)
+            BUILD_TYPE="profile"
             shift
             ;;
         --apk)
@@ -66,7 +76,9 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
-            echo "  --release     Build a release version (default: debug)."
+            echo "  --debug       Build a debug version (default)."
+            echo "  --release     Build a release version."
+            echo "  --profile     Build a profile version."
             echo "  --apk         Build an APK (default)."
             echo "  --appbundle   Build an App Bundle."
             echo "  --help        Shows this help message."
