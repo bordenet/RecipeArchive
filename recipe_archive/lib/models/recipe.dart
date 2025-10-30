@@ -273,6 +273,14 @@ class Recipe {
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
+    // Add robust handling for potentially null required fields
+    if (json['id'] == null) {
+      throw Exception('Recipe JSON from API is missing required "id" field.');
+    }
+    if (json['title'] == null) {
+      json['title'] = 'Untitled Recipe'; // Prevent crash if title is null
+    }
+
     // Handle nested searchMetadata structure from background normalizer
     Map<String, dynamic> processedJson = Map<String, dynamic>.from(json);
     
