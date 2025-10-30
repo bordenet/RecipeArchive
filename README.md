@@ -177,6 +177,9 @@ Once your AWS infrastructure is configured and `.env` is populated, set up your 
 # Run validation to ensure everything is set up correctly
 ./validate-monorepo.sh --med
 
+# Deploy the web app to AWS S3 and CloudFront
+./scripts/deploy-web-app.sh
+
 # For full validation including mobile and infrastructure tests
 ./validate-monorepo.sh --all
 ```
@@ -184,31 +187,28 @@ Once your AWS infrastructure is configured and `.env` is populated, set up your 
 ### Mobile Development
 
 ```bash
-# iOS Development (Complete with Device Targeting!)
-./scripts/ios-setup.sh                 # Setup iOS development environment
-./scripts/ios-setup.sh -d iphone16e    # Target iPhone 16e simulator
-./scripts/ios-setup.sh -d ipadmac      # Target iPad on Mac (designed for iPad)
-./scripts/ios-setup.sh -d iphone17max  # Target iPhone 17 Pro Max simulator
-./scripts/ios-setup.sh --help          # View all options and examples
-./scripts/ios-simulator.sh             # Launch app in simulator (automated)
-./scripts/ios-xcode.sh                 # Open in Xcode (recommended for debugging)
-./scripts/ios-help.sh                  # Complete iOS development guide and troubleshooting
+# iOS Development
+./scripts/ios/ios-setup.sh                 # Setup iOS development environment
+./scripts/ios/ios-simulator.sh             # Launch app in simulator (automated)
+./scripts/ios/ios-xcode.sh                 # Open in Xcode (recommended for debugging)
+./scripts/ios/ios-help.sh                  # Basic iOS development guide and troubleshooting
 
-# Android Development (Complete!)
-./scripts/android-setup.sh             # Setup Android development environment
-./scripts/android-emulator.sh start    # Start Android emulator
-./scripts/android-emulator.sh create   # Create new Android emulator
-./scripts/android-run.sh               # Run app on Android emulator
-./scripts/android-help.sh              # Complete Android development guide
+# Android Development
+./scripts/android/android-setup.sh             # Setup Android development environment
+./scripts/android/android-emulator.sh start    # Start Android emulator
+./scripts/android/android-run.sh               # Run app on Android emulator
+./scripts/android/android-help.sh              # Basic Android development guide
+
+# Unified Build Scripts (iOS and Android)
+./scripts/build-ios-unified.sh       # Build the iOS app
+./scripts/build-android-unified.sh   # Build the Android app
+
+# Build and Deploy Scripts
+./scripts/ios-build-and-deploy.sh     # Build and deploy the iOS app
+./scripts/android-build-and-deploy.sh # Build and deploy the Android app
 
 # Validate mobile environment
 ./validate-monorepo.sh --mobile
-
-cd recipe_archive
-# Build Android APK
-./scripts/build-mobile.sh android release
-# Build iOS app
-./scripts/build-mobile.sh ios release
 ```
 
 ### Browser Extensions
