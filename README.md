@@ -1,6 +1,6 @@
 # RecipeArchive v1.0.0
 
-**Save, normalize, search, and cook recipes—with instant links back to the original sources.** Simple browser extensions capture recipes. OpenAI-powered back-end does the heavy lifting of normalization. Dead simple UX makes it easy to scale yields, convert between metric and imperial units, and bypass the life stories and ad bombardment when it's time to cook.
+**Save, normalize, search, and cook recipes—with instant links back to the original sources.** Simple browser extensions capture recipes. OpenAI-powered back-end does the heavy lifting of normalization. Dead simple UX makes it easy to scale yields, convert between metric and imperial units, and bypass the life stories and ad bombardment when it's time to cook. Feature parity exists across desktop browsers, iOS/iPadOS, and Android platforms, including native iOS and Android sharing support.
 
 <table style="width:100%; border-collapse: collapse;">
   <!-- Top row: Gallery image -->
@@ -57,19 +57,19 @@
 - **🔒 Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
 - **🎯 Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
 - **🍎 iOS Development**: Complete toolchain with Xcode integration and simulator management
-- **🤖 Android Development**: Full emulator management and APK build system
+- **🤖 Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
 - **🔍 Search**: Full-text search across all saved recipes with feature parity to web client
-- **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow
+- **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. Native apps can be built from this project but are not yet available in respective app stores. Browser extensions are similarly not available in browser extension marketplaces. This is a homebrew project, where you get to build and deploy all by yourself. More fun that way. Probably not, but you can't beat the price.
 
 ### iOS Share Extension in Action
 
 <img src="./docs/img/iOS_ShareExtension.png" alt="iOS Share Extension - Share recipes from Safari browser" width="45%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
 
-**Native iOS Integration**: Share any recipe from Safari mobile directly to the RecipeArchive app. The backend automatically fetches and parses the recipe HTML, extracts ingredients and instructions, downloads and stores the recipe image in S3, and normalizes the content with OpenAI.
+**Native iOS Integration**: Share any recipe from Safari mobile directly to the RecipeArchive app. The backend automatically fetches and parses the recipe HTML, extracts ingredients and instructions, downloads and stores the recipe image in S3, and normalizes the content with OpenAI. Android behaves similarly.
 
 **How it works:**
-1. Browse recipe in Safari on iPhone/iPad
-2. Tap the Share button → Select "RecipeArchive"
+1. Browse recipe in a web browser of your choice on iPhone/iPad or Android
+2. Tap the platform-native Share button → Select "RecipeArchive"
 3. App opens and processes the URL automatically
 4. Recipe appears in your collection with full content and images
 
