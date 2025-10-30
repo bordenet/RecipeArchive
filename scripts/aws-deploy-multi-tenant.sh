@@ -7,7 +7,7 @@
 # This script deploys all components needed for multi-tenant functionality.
 #
 # USAGE:
-#   ./deploy-multi-tenant.sh [dev|prod]
+#   ./aws-deploy-multi-tenant.sh [dev|prod]
 #
 # DEPENDENCIES:
 #   - AWS CLI
@@ -98,8 +98,8 @@ echo ""
 # Step 3: Deploy Lambda Functions
 echo "🚀 Step 3: Deploying Lambda Functions..."
 
-./scripts/deploy-lambda.sh invitation-manager-s3
-./scripts/deploy-lambda.sh registration-handler
+./scripts/aws-deploy-lambda.sh invitation-manager-s3
+./scripts/aws-deploy-lambda.sh registration-handler
 
 echo "✅ Lambda functions deployed successfully"
 echo ""

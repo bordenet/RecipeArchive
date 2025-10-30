@@ -13,10 +13,10 @@
 #   5. Provides comprehensive deployment status and URLs
 #
 # USAGE:
-#   ./scripts/deploy-all.sh              # Deploy everything
-#   ./scripts/deploy-all.sh --backend-only     # Deploy only Lambda functions
-#   ./scripts/deploy-all.sh --frontend-only    # Deploy only Flutter web app
-#   ./scripts/deploy-all.sh --dry-run    # Show what would be deployed
+#   ./scripts/aws-deploy-all.sh              # Deploy everything
+#   ./scripts/aws-deploy-all.sh --backend-only     # Deploy only Lambda functions
+#   ./scripts/aws-deploy-all.sh --frontend-only    # Deploy only Flutter web app
+#   ./scripts/aws-deploy-all.sh --dry-run    # Show what would be deployed
 #
 # REQUIREMENTS:
 #   - AWS CLI configured
@@ -503,7 +503,7 @@ main() {
     if $DEPLOY_BACKEND;
     then
         log_header "Deploying Admin Endpoints"
-        if ./scripts/deploy-admin-endpoints.sh; then
+        if ./scripts/aws-deploy-admin-endpoints.sh; then
             log_success "✅ Admin endpoints deployed successfully"
         else
             log_warning "⚠️ Admin endpoints deployment failed. Check logs for details."
