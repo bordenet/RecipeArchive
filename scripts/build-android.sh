@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ################################################################################
-# Unified Android Build Script for RecipeArchive
+# Android Build Script for RecipeArchive
 ################################################################################
 # PURPOSE: Single source of truth for all Android builds
 #   - Development builds (fast, emulator-focused)
@@ -9,21 +9,21 @@
 #
 # USAGE:
 #   Development (emulator):
-#     ./scripts/build-android-unified.sh --dev --emulator --debug
-#     ./scripts/build-android-unified.sh --dev --emulator --release
+#     ./scripts/build-android.sh --dev --emulator --debug
+#     ./scripts/build-android.sh --dev --emulator --release
 #
 #   Production (signed APK/AAB):
-#     ./scripts/build-android-unified.sh --prod --device --release --version 1.0.1
+#     ./scripts/build-android.sh --prod --device --release --version 1.0.1
 #
 #   Quick emulator build+run:
-#     ./scripts/build-android-unified.sh --dev --run
+#     ./scripts/build-android.sh --dev --run
 #
 # PHILOSOPHY:
 #   - Always use Gradle build system directly (NOT flutter build)
 #   - Always use standard Gradle configurations (debug, release)
 #   - Consistent workflow regardless of target
 #   - Clear separation between dev (fast iteration) and prod (distribution)
-#   - Mirror iOS unified script patterns for consistency
+#   - Mirror iOS build script patterns for consistency
 ################################################################################
 
 set -e
@@ -83,7 +83,7 @@ error_exit() {
 # Usage
 usage() {
     cat << EOF
-${CYAN}Unified Android Build Script${NC}
+${CYAN}Android Build Script${NC}
 
 ${GREEN}Usage:${NC}
     # Development (fast iteration)

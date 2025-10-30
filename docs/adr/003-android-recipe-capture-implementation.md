@@ -322,7 +322,7 @@ static Future<Map<String, dynamic>?> checkForSharedUrl() async {
 - [ ] Performance benchmarks
 - [ ] Error telemetry integration
 - [ ] User-facing error messages
-- [ ] Build script: `./scripts/build-android-unified.sh`
+- [ ] Build script: `./scripts/build-android.sh`
 
 ## Alternative Approaches Considered
 

@@ -33,7 +33,7 @@ This has been requested SIX times. Follow this policy WITHOUT EXCEPTION.
 **Environment Configuration:**
 - Cognito credentials in `.env`: `COGNITO_USER_POOL_ID=us-west-2_rpBcEEhYK`, `COGNITO_APP_CLIENT_ID=7lm8mqr03s0m0fn17dnv373s4h`
 - Auth service loads from dotenv: [auth_service.dart:90-91](recipe_archive/lib/services/auth_service.dart#L90-L91)
-- Build scripts auto-sync .env: [build-android-unified.sh:238-243](scripts/build-android-unified.sh#L238-L243), [build-ios-unified.sh:212-217](scripts/build-ios-unified.sh#L212-L217)
+- Build scripts auto-sync .env: [build-android.sh:238-243](scripts/build-android.sh#L238-L243), [build-ios.sh:212-217](scripts/build-ios.sh#L212-L217)
 
 **Investigation Steps Needed:**
 1. Capture logcat output during fresh login attempt:
@@ -118,7 +118,7 @@ iOS/Android toolchain available
 - **Build scripts**: Automatically sync `.env` from root before every build
 - **NEVER commit**: `recipe_archive/.env` must stay in `.gitignore`
 
-Both `build-android-unified.sh` and `build-ios-unified.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
+Both `build-android.sh` and `build-ios.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
 
 ### Development Conventions - CRITICAL
 
@@ -159,7 +159,7 @@ These conventions ensure consistent, maintainable, production-grade automation a
 #### 4. Platform-Specific Patterns
 
 **iOS (Gold Standard)**:
-- Unified build script: [`build-ios-unified.sh`](scripts/build-ios-unified.sh)
+- Build script: [`build-ios.sh`](scripts/build-ios.sh)
 - Direct use of native build systems (Xcode, NOT `flutter build ios`)
 - Auto-reset mechanisms (project.pbxproj) to avoid git noise
 - Clear dev vs prod modes
@@ -168,7 +168,7 @@ These conventions ensure consistent, maintainable, production-grade automation a
 - Symlink organization in builds directory
 
 **Android (Target Parity)**:
-- Unified build script pattern (following iOS approach)
+- Build script pattern (following iOS approach)
 - Direct use of Gradle build system
 - Proper clean/build separation
 - Dev vs prod modes
@@ -197,27 +197,27 @@ These conventions ensure consistent, maintainable, production-grade automation a
 
 ### Android Builds - Unified Script
 
-**All Android builds now use a single unified script**: [`./scripts/build-android-unified.sh`](scripts/build-android-unified.sh)
+**All Android builds now use a single unified script**: [`./scripts/build-android.sh`](scripts/build-android.sh)
 
 **Development Builds** (fast iteration, emulator):
 ```bash
 # Quick build and run on emulator
-./scripts/build-android-unified.sh --dev --run
+./scripts/build-android.sh --dev --run
 
 # Release build for emulator testing
-./scripts/build-android-unified.sh --dev --emulator --release
+./scripts/build-android.sh --dev --emulator --release
 
 # Clean build
-./scripts/build-android-unified.sh --dev --clean --run
+./scripts/build-android.sh --dev --clean --run
 ```
 
 **Production Builds** (Play Store, signed APK/AAB):
 ```bash
 # Production release APK with version
-./scripts/build-android-unified.sh --prod --device --release --version 1.0.1
+./scripts/build-android.sh --prod --device --release --version 1.0.1
 
 # Production App Bundle (AAB) for Play Store
-./scripts/build-android-unified.sh --prod --device --release --version 1.0.1 --appbundle
+./scripts/build-android.sh --prod --device --release --version 1.0.1 --appbundle
 ```
 
 **Critical Architecture Decision**:
@@ -249,24 +249,24 @@ If Android Studio fails with "Cannot run program '/opt/homebrew/share/flutter/bi
 
 ### iOS Builds - Unified Script
 
-**All iOS builds now use a single unified script**: [`./scripts/build-ios-unified.sh`](scripts/build-ios-unified.sh)
+**All iOS builds now use a single unified script**: [`./scripts/build-ios.sh`](scripts/build-ios.sh)
 
 **Development Builds** (fast iteration, simulator):
 ```bash
 # Quick build and run on simulator
-./scripts/build-ios-unified.sh --dev --run
+./scripts/build-ios.sh --dev --run
 
 # Release build for simulator testing
-./scripts/build-ios-unified.sh --dev --simulator --release
+./scripts/build-ios.sh --dev --simulator --release
 
 # Clean build
-./scripts/build-ios-unified.sh --dev --clean --run
+./scripts/build-ios.sh --dev --clean --run
 ```
 
 **Production Builds** (App Store, TestFlight, device installs):
 ```bash
 # Release archive with version
-./scripts/build-ios-unified.sh --prod --device --release --version 1.0.1
+./scripts/build-ios.sh --prod --device --release --version 1.0.1
 
 # Creates .xcarchive at: recipe_archive/ios/build/archives/Runner.xcarchive
 # Export IPA via Xcode Organizer for distribution
