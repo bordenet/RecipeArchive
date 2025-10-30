@@ -30,6 +30,11 @@ func (r *Reporter) GenerateReport(userEmail string) ([]ReportEntry, error) {
 	}
 
 	for _, obj := range recipeObjects {
+		// Skip non-JSON files (images, etc.)
+		if !strings.HasSuffix(*obj.Key, ".json") {
+			continue
+		}
+
 		var recipe Recipe
 		if err := r.getS3Object(*obj.Key, &recipe); err != nil {
 			fmt.Printf("⚠️  Could not read recipe %s: %v\n", *obj.Key, err)
