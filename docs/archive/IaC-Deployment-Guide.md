@@ -87,7 +87,7 @@ cd ../..
 RecipeArchive/
 ├── scripts/
 │   ├── deploy-all.sh                # Automated deployment script
-│   ├── deploy-aws.sh                # AWS infrastructure deployment script
+│   ├── deploy-aws-infrastructure.sh                # AWS infrastructure deployment script
 │   ├── deploy-lambda.sh             # Lambda deployment script
 │   └── deploy-web-app.sh            # Web app deployment script
 ├── aws-backend/

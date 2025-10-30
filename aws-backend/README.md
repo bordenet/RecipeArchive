@@ -6,9 +6,10 @@ Go-based serverless backend for RecipeArchive with comprehensive CRUD operations
 
 ```bash
 # From repository root:
-./scripts/deploy-lambda.sh --all      # Deploy all Lambda functions
-./scripts/deploy-all.sh               # Deploy everything (infrastructure + functions)
-./validate-monorepo.sh --all          # Validate deployment
+./scripts/deploy-lambda.sh --all        # Deploy all Lambda functions
+./scripts/deploy-aws-infrastructure.sh  # Deploy everything (infrastructure + functions)
+./scripts/deploy-all.sh                 # Deploy web app and all Lambda functions
+./validate-monorepo.sh --all            # Validate deployment
 ```
 
 ## Key Features

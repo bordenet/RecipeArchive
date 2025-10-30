@@ -15,7 +15,7 @@
 3. Configure bucket for static website hosting
 4. Set proper index and error documents
 
-**Fixed in:** `scripts/deploy-web-app.sh` and `scripts/deploy-all.sh`
+**Fixed in:** `scripts/deploy-web-app.sh` and `scripts/deploy-aws-infrastructure.sh`
 
 ### Issue: Flutter Build Failures
 
@@ -153,7 +153,7 @@ aws lambda update-function-configuration \
 
 ```bash
 # CORS configuration is now automated in deployment scripts
-./scripts/deploy-all.sh --backend-only
+./scripts/deploy-aws-infrastructure.sh --backend-only
 ```
 
 **Manual Fix (if needed):**
@@ -210,7 +210,7 @@ aws lambda update-function-configuration \
 ## Updated Files (September 18-19, 2025)
 
 - `scripts/deploy-web-app.sh` - Bucket creation + build fixes
-- `scripts/deploy-all.sh` - Flutter build compatibility flags + automated CORS configuration
+- `scripts/deploy-aws-infrastructure.sh` - Flutter build compatibility flags + automated CORS configuration
 - `validate-monorepo.sh` - CORS configuration validation
 - `docs/deployment/troubleshooting.md` - This guide + Lambda environment variable + CORS fixes
 - `.env` - Added API_GATEWAY_ID for deployment automation

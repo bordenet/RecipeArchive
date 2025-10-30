@@ -236,7 +236,8 @@ This project uses a **single `.env` file** in the project root for all component
 ```bash
 ./validate-monorepo.sh --p1    # Quick validation
 ./validate-monorepo.sh --all   # Full test suite
-./scripts/deploy-all.sh        # Deploy everything
+./scripts/deploy-aws-infrastructure.sh        # Initialize AWS environment for application code
+./scripts/deploy-all.sh                   # Deploy web app and all Lambda functions
 ```
 
 **Tech Stack:** Go (AWS Lambda), Flutter (web/mobile), TypeScript (extensions), AWS

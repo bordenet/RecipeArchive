@@ -9,7 +9,7 @@
 #   1. Discovers all Lambda functions with main.go files
 #   2. Builds each function for Linux (AWS Lambda runtime)
 #   3. Creates properly structured packages in functions/dist/
-#   4. Ready for CDK deployment via deploy-aws.sh
+#   4. Ready for CDK deployment via deploy-aws-infrastructure.sh
 #
 # USAGE:
 #   ./scripts/build-lambda-packages.sh              # Build all packages
