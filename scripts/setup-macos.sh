@@ -323,15 +323,50 @@ EOF
 else
   print_success "Android development environment already configured"
 
-  # Update Android SDK components
+  # Update Android SDK components (default YES)
   if command -v sdkmanager &> /dev/null; then
-    if timed_confirm "Update Android SDK components?"; then
-      print_info "Updating Android SDK components..."
+    # Set up environment for sdkmanager
+    ANDROID_HOME="$HOME/Library/Android/sdk"
+    export ANDROID_HOME
+    export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
 
-      # Set up environment for sdkmanager
-      ANDROID_HOME="$HOME/Library/Android/sdk"
-      export ANDROID_HOME
-      export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+    # Fix cmdline-tools path inconsistency BEFORE prompting (Android Studio upgrade issue)
+    CMDLINE_DIR="$ANDROID_HOME/cmdline-tools"
+    if [ -d "$CMDLINE_DIR" ]; then
+      # Find the actual latest version directory (latest-2, latest-3, etc.)
+      LATEST_VERSION=$(find "$CMDLINE_DIR" -maxdepth 1 -type d -name "latest-*" | sort -V | tail -1)
+
+      if [ -n "$LATEST_VERSION" ]; then
+        EXPECTED_TARGET=$(basename "$LATEST_VERSION")
+
+        # Check if 'latest' exists and what it is
+        if [ -L "$CMDLINE_DIR/latest" ]; then
+          # It's a symlink - verify it points to the right place
+          CURRENT_TARGET=$(readlink "$CMDLINE_DIR/latest")
+          if [ "$CURRENT_TARGET" != "$EXPECTED_TARGET" ]; then
+            print_info "Updating cmdline-tools symlink: $CURRENT_TARGET -> $EXPECTED_TARGET"
+            rm "$CMDLINE_DIR/latest"
+            ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
+            print_success "Command-line tools symlink updated"
+          fi
+        elif [ -d "$CMDLINE_DIR/latest" ]; then
+          # It's a directory (Android Studio bug) - replace with symlink
+          print_info "Replacing cmdline-tools directory with symlink: latest -> $EXPECTED_TARGET"
+          rm -rf "$CMDLINE_DIR/latest"
+          ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
+          print_success "Command-line tools path fixed"
+        elif [ ! -e "$CMDLINE_DIR/latest" ]; then
+          # Doesn't exist - create symlink
+          print_info "Creating cmdline-tools symlink: latest -> $EXPECTED_TARGET"
+          ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
+          print_success "Command-line tools symlink created"
+        fi
+      fi
+    fi
+
+    # Now prompt for SDK updates (default to YES)
+    if timed_confirm "Update Android SDK components?" 10 "Y"; then
+      print_info "Updating Android SDK components..."
 
       # Update SDK manager itself
       timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
