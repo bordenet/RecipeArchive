@@ -8,8 +8,8 @@
 | Validate Quick | `./validate-monorepo.sh --p1` |
 | Validate Medium | `./validate-monorepo.sh --med` |
 | Validate Mobile | `./validate-monorepo.sh --mobile` |
-| Deploy All | `./scripts/deploy-all.sh` |
-| Deploy Lambda | `./scripts/deploy-lambda.sh --all` |
+| Deploy All (AWS + Web) | `./scripts/aws-deploy-all.sh` |
+| Deploy Lambda Functions | `./scripts/aws-deploy-lambda.sh --all` |
 | Deploy Web App | `./scripts/web-deploy.sh` |
 | Build Extensions | `npm run build:extensions` |
 | Package Extensions | `./scripts/package-extensions.sh` |
@@ -33,26 +33,31 @@
 
 | Task | Command |
 | --- | --- |
-| iOS Setup | `./scripts/ios-setup.sh` |
-| iOS Simulator (Auto) | `./scripts/ios-simulator.sh` |
-| iOS Xcode (Manual) | `./scripts/ios-xcode.sh` |
-| iOS Run (Legacy) | `./scripts/ios-run.sh` |
-| iOS Build | `./scripts/ios-build.sh` |
-| iOS Help | `./scripts/ios-help.sh` |
-| iOS Clean | `./scripts/ios-clean.sh` |
-| **iOS Production Build (Release)** | `./scripts/build-ios.sh --release --version 1.0.1` |
-| **iOS Production Build (Debug)** | `./scripts/build-ios.sh --debug --version 1.0.1` |
-| iOS Build Help | `./scripts/build-ios.sh --help` |
+| iOS Build (Dev + Run) | `./scripts/ios-build.sh --dev --run` |
+| iOS Build (Production) | `./scripts/ios-build.sh --prod --device --release --version X.Y.Z` |
+| iOS Build (Clean) | `./scripts/ios-build.sh --dev --clean --run` |
+| iOS Build Help | `./scripts/ios-build.sh --help` |
+| iOS Setup | `./scripts/ios/setup.sh` |
+| iOS Simulator | `./scripts/ios/simulator.sh` |
+| iOS Xcode | `./scripts/ios/xcode.sh` |
+| iOS Run | `./scripts/ios/run.sh` |
+| iOS Help | `./scripts/ios/help.sh` |
+| iOS Clean | `./scripts/ios/clean.sh` |
 
-## Mobile App Commands
+## Android Development Commands
 
 | Task | Command |
 | --- | --- |
-| Validate Mobile Setup | `./validate-monorepo.sh --mobile` |
-| Build Android APK | `cd recipe_archive && ./scripts/build-mobile.sh android release` |
-| Build iOS App | `cd recipe_archive && ./scripts/build-mobile.sh ios release` |
-| Build Both Platforms | `cd recipe_archive && ./scripts/build-mobile.sh both release` |
-| Mobile Debug Build | `cd recipe_archive && ./scripts/build-mobile.sh both debug` |
+| Android Build (Dev + Run) | `./scripts/android-build.sh --dev --run` |
+| Android Build (Production APK) | `./scripts/android-build.sh --prod --device --release --version X.Y.Z` |
+| Android Build (Production AAB) | `./scripts/android-build.sh --prod --device --release --version X.Y.Z --appbundle` |
+| Android Build (Clean) | `./scripts/android-build.sh --dev --clean --run` |
+| Android Build Help | `./scripts/android-build.sh --help` |
+| Android Setup | `./scripts/android/setup.sh` |
+| Android Emulator | `./scripts/android/emulator.sh` |
+| Android Run | `./scripts/android/run.sh` |
+| Android Help | `./scripts/android/help.sh` |
+| Android Clean | `./scripts/android/clean.sh` |
 
 ## API Gateway Management Commands
 

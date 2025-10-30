@@ -118,7 +118,7 @@ iOS/Android toolchain available
 - **Build scripts**: Automatically sync `.env` from root before every build
 - **NEVER commit**: `recipe_archive/.env` must stay in `.gitignore`
 
-Both `build-android.sh` and `build-ios.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
+Both `android-build.sh` and `ios-build.sh` automatically copy the root `.env` to `recipe_archive/.env` before building. This ensures the app has current environment variables without committing secrets to git.
 
 ### Development Conventions - CRITICAL
 
@@ -195,29 +195,29 @@ These conventions ensure consistent, maintainable, production-grade automation a
 - `recipe_archive/ios/Runner/AppDelegate.swift` - Flutter integration
 - `recipe_archive/lib/services/share_channel.dart` - Dart bridge
 
-### Android Builds - Unified Script
+### Android Builds
 
-**All Android builds now use a single unified script**: [`./scripts/build-android.sh`](scripts/build-android.sh)
+**All Android builds use**: [`./scripts/android-build.sh`](scripts/android-build.sh)
 
 **Development Builds** (fast iteration, emulator):
 ```bash
 # Quick build and run on emulator
-./scripts/build-android.sh --dev --run
+./scripts/android-build.sh --dev --run
 
 # Release build for emulator testing
-./scripts/build-android.sh --dev --emulator --release
+./scripts/android-build.sh --dev --emulator --release
 
 # Clean build
-./scripts/build-android.sh --dev --clean --run
+./scripts/android-build.sh --dev --clean --run
 ```
 
 **Production Builds** (Play Store, signed APK/AAB):
 ```bash
 # Production release APK with version
-./scripts/build-android.sh --prod --device --release --version 1.0.1
+./scripts/android-build.sh --prod --device --release --version 1.0.1
 
 # Production App Bundle (AAB) for Play Store
-./scripts/build-android.sh --prod --device --release --version 1.0.1 --appbundle
+./scripts/android-build.sh --prod --device --release --version 1.0.1 --appbundle
 ```
 
 **Critical Architecture Decision**:
@@ -247,26 +247,26 @@ If Android Studio fails with "Cannot run program '/opt/homebrew/share/flutter/bi
 3. **Verification**: Command-line builds (`./gradlew assembleDebug`) should already work; this only fixes Android Studio IDE builds
 4. **gradle.properties**: Set `org.gradle.java.home` to Android Studio's JDK if needed (already configured)
 
-### iOS Builds - Unified Script
+### iOS Builds
 
-**All iOS builds now use a single unified script**: [`./scripts/build-ios.sh`](scripts/build-ios.sh)
+**All iOS builds use**: [`./scripts/ios-build.sh`](scripts/ios-build.sh)
 
 **Development Builds** (fast iteration, simulator):
 ```bash
 # Quick build and run on simulator
-./scripts/build-ios.sh --dev --run
+./scripts/ios-build.sh --dev --run
 
 # Release build for simulator testing
-./scripts/build-ios.sh --dev --simulator --release
+./scripts/ios-build.sh --dev --simulator --release
 
 # Clean build
-./scripts/build-ios.sh --dev --clean --run
+./scripts/ios-build.sh --dev --clean --run
 ```
 
 **Production Builds** (App Store, TestFlight, device installs):
 ```bash
 # Release archive with version
-./scripts/build-ios.sh --prod --device --release --version 1.0.1
+./scripts/ios-build.sh --prod --device --release --version 1.0.1
 
 # Creates .xcarchive at: recipe_archive/ios/build/archives/Runner.xcarchive
 # Export IPA via Xcode Organizer for distribution
