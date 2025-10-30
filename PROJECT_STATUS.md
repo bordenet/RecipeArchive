@@ -11,19 +11,13 @@ Recipe management solution with web app, browser extensions, and AWS serverless 
 - **Backend**: AWS Lambda (Go), API Gateway, Cognito, S3
 - **Browser Extensions**: Chrome & Safari (14+ supported recipe sites)
 
-### Mobile Apps - iOS
-- **Status**: ✅ Complete end-to-end workflow operational
-- **Share Extension**: Fully functional - shares URL from Safari to app
-- **Backend Processing**: Automatic HTML fetch, parse, and image download to S3
-- **Image Handling**: External images downloaded and uploaded to S3 automatically
-- **Build Script**: [scripts/build-ios.sh](scripts/build-ios.sh) - Passes all validations
-- **Path**: `recipe-images/{recipeID}/recipes/main-photo.{ext}`
-- **Documentation**: [MOBILE_SHARE_HTML_PASSTHROUGH.md](MOBILE_SHARE_HTML_PASSTHROUGH.md), [XCODE_STEP4_STATUS.md](XCODE_STEP4_STATUS.md)
-
-### Development Toolchains Available
-- **Mobile Apps**: Flutter iOS/Android toolchains operational
-- **iOS Builds**: Universal binaries (iPhone + iPad) via build-ios.sh
-- **Distribution**: Not currently pursuing app store or extension store submissions
+### Mobile Apps
+- **iOS**: ✅ Production ready - WKWebView HTML+image extraction fully operational
+  - Three-tier capture: WKWebView proxy, Web Archive, URL-only fallback
+  - Client-side image download bypasses CDN restrictions
+  - Unified build: `./scripts/build-ios-unified.sh`
+  - See [ADR 002](docs/adr/002-ios-recipe-capture-architecture.md)
+- **Android**: ⚠️ Not implemented - requires Share Extension with WebView bridge
 
 ## Critical Issues Requiring Immediate Attention
 
