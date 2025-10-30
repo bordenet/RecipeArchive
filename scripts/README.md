@@ -27,7 +27,7 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 - **`deploy-lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
 - **`deploy-multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality.
 - **`deploy-secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers.
-- **`deploy-web-app.sh`**: Builds and deploys the Flutter web app to CloudFront via S3.
+- **`web-deploy.sh`**: Builds and deploys the Flutter web app to CloudFront via S3.
 - **`manage-api-routes.sh`**: Provides a centralized, automated, and repeatable way to manage API Gateway routes for the RecipeArchive project.
 - **`package-extensions.sh`**: Creates distribution packages for both Chrome and Safari extensions with semantic versioning.
 - **`setup-aws-billing-controls.sh`**: Sets up monitoring to help you stay within AWS Free Tier limits.

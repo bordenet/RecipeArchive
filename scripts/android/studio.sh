@@ -3,7 +3,7 @@
 #==============================================================================
 # Android Studio Launcher Script
 #==============================================================================
-# NAME: android-studio.sh
+# NAME: studio.sh
 #
 # PURPOSE: Opens the Android project in Android Studio.
 #

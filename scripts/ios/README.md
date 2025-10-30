@@ -10,7 +10,7 @@ The fastest way to build and run the app:
 
 ```bash
 # From repository root
-./scripts/build-ios.sh --dev --run
+./scripts/ios-build.sh --dev --run
 ```
 
 **What it does:**
@@ -27,24 +27,24 @@ If you prefer more control, use the specialized scripts in this directory.
 
 ### Main Build Script
 
-**[../build-ios.sh](../build-ios.sh)** - Build script for all iOS builds
+**[../ios-build.sh](../ios-build.sh)** - Build script for all iOS builds
 
 **Development builds** (fast iteration):
 ```bash
 # Quick debug build and run
-./scripts/build-ios.sh --dev --run
+./scripts/ios-build.sh --dev --run
 
 # Release build for performance testing
-./scripts/build-ios.sh --dev --simulator --release
+./scripts/ios-build.sh --dev --simulator --release
 
 # Clean build
-./scripts/build-ios.sh --dev --clean --run
+./scripts/ios-build.sh --dev --clean --run
 ```
 
 **Production builds** (App Store, TestFlight):
 ```bash
 # Release build for device
-./scripts/build-ios.sh --prod --device --release --version 1.0.1
+./scripts/ios-build.sh --prod --device --release --version 1.0.1
 
 # Creates: recipe_archive/ios/build/Release-iphoneos/Runner.app
 # Export IPA via Xcode Organizer for distribution
@@ -70,7 +70,7 @@ If you prefer more control, use the specialized scripts in this directory.
 
 All iOS simulator management is handled by:
 
-**[../build-ios.sh](../build-ios.sh)** with `--run` flag
+**[../ios-build.sh](../ios-build.sh)** with `--run` flag
 
 The script automatically:
 - Detects available simulators
@@ -91,7 +91,7 @@ open -a Simulator
 
 ### Build Management
 
-All build operations use the main build script ([../build-ios.sh](../build-ios.sh)). Individual helper scripts in this directory are for specialized tasks only.
+All build operations use the main build script ([../ios-build.sh](../ios-build.sh)). Individual helper scripts in this directory are for specialized tasks only.
 
 ## Build Outputs
 
@@ -187,22 +187,22 @@ All iOS dependencies are managed via:
 ### Daily Development
 ```bash
 # First build of the day
-./scripts/build-ios.sh --dev --clean --run
+./scripts/ios-build.sh --dev --clean --run
 
 # Subsequent iterations
-./scripts/build-ios.sh --dev --run
+./scripts/ios-build.sh --dev --run
 ```
 
 ### Testing Performance
 ```bash
 # Release mode on simulator
-./scripts/build-ios.sh --dev --simulator --release --run
+./scripts/ios-build.sh --dev --simulator --release --run
 ```
 
 ### Testing on Physical Device
 ```bash
 # Debug build
-./scripts/build-ios.sh --dev --device --debug
+./scripts/ios-build.sh --dev --device --debug
 
 # Install via Xcode: Devices & Simulators → Installed Apps → + → Select .app
 ```
@@ -210,7 +210,7 @@ All iOS dependencies are managed via:
 ### Preparing for App Store
 ```bash
 # Create release archive
-./scripts/build-ios.sh --prod --device --release --version 1.2.0
+./scripts/ios-build.sh --prod --device --release --version 1.2.0
 
 # Archive location: recipe_archive/ios/build/archives/Runner.xcarchive
 
@@ -223,7 +223,7 @@ All iOS dependencies are managed via:
 ### Manual Installation (Simulator)
 ```bash
 # Build app
-./scripts/build-ios.sh --dev --simulator --debug
+./scripts/ios-build.sh --dev --simulator --debug
 
 # Boot simulator
 xcrun simctl boot "iPhone 16"
@@ -255,7 +255,7 @@ This happens if you try to use `flutter build ios`. Solution:
 
 ```bash
 # Always use Xcode directly via unified script
-./scripts/build-ios.sh --dev --run
+./scripts/ios-build.sh --dev --run
 ```
 
 ### Simulator won't boot
@@ -278,7 +278,7 @@ ls -la recipe_archive/ios/build/Debug-iphonesimulator/Runner.app/PlugIns/
 ### Code signing issues
 ```bash
 # Development builds (simulator): No signing required
-./scripts/build-ios.sh --dev --simulator
+./scripts/ios-build.sh --dev --simulator
 
 # Device builds: Xcode manages signing automatically
 # Ensure Xcode is logged in: Preferences → Accounts
@@ -308,7 +308,7 @@ See [../../CLAUDE.md](../../CLAUDE.md) for complete development conventions.
 ### Via Xcode (Recommended)
 1. Connect device via USB
 2. Trust computer on device
-3. Build: `./scripts/build-ios.sh --dev --device --debug`
+3. Build: `./scripts/ios-build.sh --dev --device --debug`
 4. Open Xcode → Devices & Simulators
 5. Select device → Installed Apps → + → Select Runner.app
 
@@ -328,7 +328,7 @@ xcrun devicectl device process launch --device <UUID> com.recipeArchive.recipeAr
 
 ```bash
 # Build with Profile configuration
-./scripts/build-ios.sh --dev --simulator --profile --run
+./scripts/ios-build.sh --dev --simulator --profile --run
 
 # Then use Xcode Instruments for profiling
 ```

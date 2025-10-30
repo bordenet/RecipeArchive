@@ -15,7 +15,7 @@
 3. Configure bucket for static website hosting
 4. Set proper index and error documents
 
-**Fixed in:** `scripts/deploy-web-app.sh` and `scripts/deploy-aws-infrastructure.sh`
+**Fixed in:** `scripts/web-deploy.sh` and `scripts/deploy-aws-infrastructure.sh`
 
 ### Issue: Flutter Build Failures
 
@@ -50,7 +50,7 @@ aws s3 sync build/web/ s3://bucket-name/ --delete \
   --cli-read-timeout 0 --cli-connect-timeout 60
 ```
 
-**Fixed in:** `scripts/deploy-web-app.sh` includes retry logic
+**Fixed in:** `scripts/web-deploy.sh` includes retry logic
 
 ## CloudFront Configuration
 
@@ -99,7 +99,7 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 Run the updated deployment script:
 
 ```bash
-./scripts/deploy-web-app.sh
+./scripts/web-deploy.sh
 ```
 
 This script now handles all the above issues automatically.
@@ -209,7 +209,7 @@ aws lambda update-function-configuration \
 
 ## Updated Files (September 18-19, 2025)
 
-- `scripts/deploy-web-app.sh` - Bucket creation + build fixes
+- `scripts/web-deploy.sh` - Bucket creation + build fixes
 - `scripts/deploy-aws-infrastructure.sh` - Flutter build compatibility flags + automated CORS configuration
 - `validate-monorepo.sh` - CORS configuration validation
 - `docs/deployment/troubleshooting.md` - This guide + Lambda environment variable + CORS fixes

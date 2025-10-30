@@ -9,14 +9,14 @@
 #
 # USAGE:
 #   Development (emulator):
-#     ./scripts/build-android.sh --dev --emulator --debug
-#     ./scripts/build-android.sh --dev --emulator --release
+#     ./scripts/android-build.sh --dev --emulator --debug
+#     ./scripts/android-build.sh --dev --emulator --release
 #
 #   Production (signed APK/AAB):
-#     ./scripts/build-android.sh --prod --device --release --version 1.0.1
+#     ./scripts/android-build.sh --prod --device --release --version 1.0.1
 #
 #   Quick emulator build+run:
-#     ./scripts/build-android.sh --dev --run
+#     ./scripts/android-build.sh --dev --run
 #
 # PHILOSOPHY:
 #   - Always use Gradle build system directly (NOT flutter build)

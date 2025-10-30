@@ -178,7 +178,7 @@ Once your AWS infrastructure is configured and `.env` is populated, set up your 
 ./validate-monorepo.sh --med
 
 # Deploy the web app to AWS S3 and CloudFront
-./scripts/deploy-web-app.sh
+./scripts/web-deploy.sh
 
 # For full validation including mobile and infrastructure tests
 ./validate-monorepo.sh --all
@@ -188,16 +188,16 @@ Once your AWS infrastructure is configured and `.env` is populated, set up your 
 
 ```bash
 # iOS Development
-./scripts/ios/ios-setup.sh                 # Setup iOS development environment
-./scripts/ios/ios-simulator.sh             # Launch app in simulator (automated)
-./scripts/ios/ios-xcode.sh                 # Open in Xcode (recommended for debugging)
-./scripts/ios/ios-help.sh                  # Basic iOS development guide and troubleshooting
+./scripts/ios/setup.sh                 # Setup iOS development environment
+./scripts/ios/simulator.sh             # Launch app in simulator (automated)
+./scripts/ios/xcode.sh                 # Open in Xcode (recommended for debugging)
+./scripts/ios/help.sh                  # Basic iOS development guide and troubleshooting
 
 # Android Development
-./scripts/android/android-setup.sh             # Setup Android development environment
-./scripts/android/android-emulator.sh start    # Start Android emulator
-./scripts/android/android-run.sh               # Run app on Android emulator
-./scripts/android/android-help.sh              # Basic Android development guide
+./scripts/android/setup.sh             # Setup Android development environment
+./scripts/android/emulator.sh start    # Start Android emulator
+./scripts/android/run.sh               # Run app on Android emulator
+./scripts/android/help.sh              # Basic Android development guide
 
 # Build Scripts (iOS and Android)
 ./scripts/build-ios.sh --dev --run         # Build and run iOS app on simulator

@@ -3,19 +3,19 @@
 #==============================================================================
 # iOS Xcode Launcher Script
 #==============================================================================
-# NAME: ios-xcode.sh
+# NAME: xcode.sh
 #
 # PURPOSE: Opens the iOS project in Xcode, which is the recommended way to run,
 #          debug, and profile the app.
 #
 # USAGE:
-#   ./scripts/ios/ios-xcode.sh
+#   ./scripts/ios/xcode.sh
 #
 # DEPENDENCIES:
 #   - Xcode
 #
 # NOTES:
-#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
+#   - This script is intended to be called from the main ios-build.sh --dev --clean --run script.
 #   - After running, you can select a simulator and run the app from within Xcode.
 #
 #==============================================================================

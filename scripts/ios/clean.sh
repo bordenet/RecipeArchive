@@ -3,13 +3,13 @@
 #==============================================================================
 # iOS Clean Script
 #==============================================================================
-# NAME: ios-clean.sh
+# NAME: clean.sh
 #
 # PURPOSE: Cleans iOS build artifacts, resets the development environment,
 #          and provides options for a deep clean.
 #
 # USAGE:
-#   ./scripts/ios/ios-clean.sh [options]
+#   ./scripts/ios/clean.sh [options]
 #
 # OPTIONS:
 #   --deep      Deep clean (includes CocoaPods, derived data)
@@ -21,7 +21,7 @@
 #   - CocoaPods
 #
 # NOTES:
-#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
+#   - This script is intended to be called from the main ios-build.sh --dev --clean --run script.
 #   - The `--deep` option is useful for resolving persistent build issues.
 #
 #==============================================================================
@@ -185,9 +185,9 @@ print_success "iOS clean completed!"
 
 echo ""
 echo "🚀 Next steps:"
-echo "Run the main build and deploy script: ./scripts/ios-build-and-deploy.sh"
+echo "Run the main build and deploy script: ./scripts/ios-build.sh --dev --clean --run"
 echo ""
 echo "💡 If you're still having issues:"
-echo "1. Try: ./scripts/ios/ios-clean.sh --deep           # Deep clean everything"
+echo "1. Try: ./scripts/ios/clean.sh --deep           # Deep clean everything"
 echo "2. Run: flutter doctor -v                       # Check Flutter setup"
 echo "3. Restart Xcode and your terminal"

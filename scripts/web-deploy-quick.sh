@@ -11,10 +11,10 @@
 #   built and only a deployment is needed.
 #
 # USAGE:
-#   ./quick-deploy.sh
+#   ./scripts/web-deploy-quick.sh
 #
 # HOW IT WORKS:
-#   1.  Checks for the existence of the `build/web` directory.
+#   1.  Checks for the existence of the `recipe_archive/build/web` directory.
 #   2.  Syncs the contents of `build/web` to the specified S3 bucket.
 #   3.  Creates a CloudFront invalidation to purge the cache.
 #
@@ -22,8 +22,8 @@
 #   - AWS CLI (configured with appropriate permissions)
 #
 # NOTES:
-#   - This script is intended to be run from the `recipe_archive` directory.
-#   - It assumes that `flutter build web` has already been run.
+#   - This script should be run from the repository root: ./scripts/web-deploy-quick.sh
+#   - It assumes that `flutter build web` has already been run in recipe_archive/
 #
 ################################################################################
 
@@ -32,19 +32,23 @@
 
 set -e
 
+# Get script directory and repo root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 S3_BUCKET="recipearchive-web-app-prod-990537043943"
 CLOUDFRONT_DISTRIBUTION_ID="E1D19F7SLOJM5H"
 
 echo "🚀 Quick deploying existing build to S3 and invalidating CloudFront..."
 
 # Check if build exists
-if [ ! -d "build/web" ]; then
-    echo "❌ No build/web directory found. Run 'flutter build web' first or use './deploy.sh'"
+if [ ! -d "$REPO_ROOT/recipe_archive/build/web" ]; then
+    echo "❌ No recipe_archive/build/web directory found. Run 'flutter build web' first or use './scripts/web-deploy-simple.sh'"
     exit 1
 fi
 
 # Deploy to S3
-aws s3 sync build/web/ s3://${S3_BUCKET}/ --delete
+aws s3 sync "$REPO_ROOT/recipe_archive/build/web/" s3://${S3_BUCKET}/ --delete
 
 # Invalidate CloudFront
 INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --paths "/*" --query 'Invalidation.Id' --output text)

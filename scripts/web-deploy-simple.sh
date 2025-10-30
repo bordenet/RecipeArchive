@@ -27,7 +27,8 @@
 #   - jq (for parsing JSON output from the AWS CLI)
 #
 # NOTES:
-#   - This script is intended to be run from the `recipe_archive` directory.
+#   - This script should be run from the repository root: ./scripts/web-deploy-simple.sh
+#   - For a more comprehensive deployment (includes extensions), use ./scripts/web-deploy.sh
 #
 ################################################################################
 
@@ -35,6 +36,10 @@
 # Builds, deploys to S3, and invalidates CloudFront cache automatically
 
 set -e  # Exit on any error
+
+# Get script directory and repo root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Configuration
 S3_BUCKET="recipearchive-web-app-prod-990537043943"
@@ -62,6 +67,9 @@ if ! command -v jq &> /dev/null; then
     echo -e "${RED}❌ jq is not installed. Please install jq to continue.${NC}"
     exit 1
 fi
+
+# Navigate to Flutter app directory
+cd "$REPO_ROOT/recipe_archive"
 
 # Step 1: Clean previous build
 echo -e "${YELLOW}🧹 Cleaning previous build...${NC}"

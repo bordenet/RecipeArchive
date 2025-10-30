@@ -3,7 +3,7 @@
 #==============================================================================
 # Android Emulator Script
 #==============================================================================
-# NAME: android-emulator.sh
+# NAME: emulator.sh
 #
 # PURPOSE: Manages Android Virtual Devices (AVDs) for the RecipeArchive app.
 #          It can create, start, stop, and list emulators.

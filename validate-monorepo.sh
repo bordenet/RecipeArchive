@@ -1304,7 +1304,7 @@ validate_deployment_infrastructure() {
 
         # Check for icon tree shaking issues (common problem we fixed)
         if grep -q "flutter_launcher_icons" pubspec.yaml 2>/dev/null; then
-            if ! grep -q "no-tree-shake-icons" ../scripts/deploy-web-app.sh 2>/dev/null; then
+            if ! grep -q "no-tree-shake-icons" ../scripts/web-deploy.sh 2>/dev/null; then
                 print_warning
                 echo "    Icon tree shaking may cause build failures"
                 echo "    Deploy script should use --no-tree-shake-icons flag"
@@ -1326,7 +1326,7 @@ validate_deployment_infrastructure() {
 
     print_step "Deploy script validation"
     add_operation
-    local deploy_script="../scripts/deploy-web-app.sh"
+    local deploy_script="../scripts/web-deploy.sh"
     if [ -f "$deploy_script" ] && [ -x "$deploy_script" ]; then
         # Check if script has our fixes
         local script_has_fixes=1
@@ -1391,7 +1391,7 @@ validate_deployment_infrastructure() {
     add_operation
     print_success
     echo "    ✓ Infrastructure validation complete"
-    echo "    ✓ Deploy with: ./scripts/deploy-web-app.sh"
+    echo "    ✓ Deploy with: ./scripts/web-deploy.sh"
     echo "    ✓ Monitoring: https://d1jcaphz4458q7.cloudfront.net/"
     mark_passed
 

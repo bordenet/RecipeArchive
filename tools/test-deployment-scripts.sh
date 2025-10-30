@@ -20,7 +20,7 @@
 #
 # SCRIPTS TESTED:
 #   - scripts/deploy-lambda.sh
-#   - scripts/deploy-web-app.sh
+#   - scripts/web-deploy.sh
 #   - validate-monorepo.sh
 #   - npm run build:extensions
 #
@@ -54,7 +54,7 @@ fi
 # Test web app deployment script
 echo ""
 echo "2. Testing web app deployment script..."
-if ./scripts/deploy-web-app.sh --help > /dev/null 2>&1; then
+if ./scripts/web-deploy.sh --help > /dev/null 2>&1; then
     echo "✅ Web app deployment script accessible"
 else
     echo "❌ Web app deployment script FAILED"

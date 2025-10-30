@@ -7,7 +7,7 @@
 # This script builds and deploys the Flutter web app to CloudFront via S3.
 #
 # USAGE:
-#   ./deploy-web-app.sh
+#   ./scripts/web-deploy.sh
 #
 # DEPENDENCIES:
 #   - Flutter

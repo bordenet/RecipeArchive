@@ -3,7 +3,7 @@
 #==============================================================================
 # Android Development Help Script
 #==============================================================================
-# NAME: android-help.sh
+# NAME: help.sh
 #
 # PURPOSE: Provides a comprehensive guide for Android development with RecipeArchive.
 #

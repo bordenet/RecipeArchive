@@ -3,19 +3,19 @@
 #==============================================================================
 # iOS Simulator Launcher Script
 #==============================================================================
-# NAME: ios-simulator.sh
+# NAME: simulator.sh
 #
 # PURPOSE: Starts the iOS simulator and runs the RecipeArchive app. It can either
 #          auto-detect a simulator or target a specific one by its UDID.
 #
 # USAGE:
-#   ./scripts/ios/ios-simulator.sh [UDID]
+#   ./scripts/ios/simulator.sh [UDID]
 #
 # ARGUMENTS:
 #   UDID (optional)   The UDID of the simulator to target.
 #
 # NOTES:
-#   - This script is intended to be called from the main ios-build-and-deploy.sh script.
+#   - This script is intended to be called from the main ios-build.sh --dev --clean --run script.
 #
 #==============================================================================
 set -e
