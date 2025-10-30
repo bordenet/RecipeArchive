@@ -95,21 +95,16 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 ✅ Serious Eats • Love & Lemons • Washington Post • Food & Wine • Damn Delicious
 ✅ Alexandra's Kitchen • Lemons and Zest • The Anthony Kitchen
 
-## Next: Execute Week 2 Migration
+## Next: Implement Unified Build Outputs
 
-**Goal:** Reorganize scripts and implement unified build artifacts
+**Week 2 Completed:**
+- ✅ Scripts reorganized into platform directories
+- ✅ Documentation updated
+- ✅ Build system specification created
 
-**Action Required:** Execute script reorganization from [WEEK2_MIGRATION.md](WEEK2_MIGRATION.md)
+**Remaining:** Update build scripts to output to `./build/{platform}/{config}/` with semantic naming
 
-```bash
-# Move build scripts to platform directories
-git mv scripts/ios-build.sh scripts/ios/build.sh
-git mv scripts/android-build.sh scripts/android/build.sh
-git mv scripts/web-*.sh scripts/web/
-git mv scripts/package-extensions.sh scripts/extensions/package.sh
-```
-
-**Then:** Update build scripts to output to `./build/{platform}/{config}/RecipeArchive-{version}...`
+See [docs/development/build-system.md](docs/development/build-system.md) for implementation spec
 
 ## Future Work
 
