@@ -58,7 +58,7 @@ export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-
 # Check if emulator is running
 if ! adb devices | grep -q "emulator"; then
     print_status "Emulator not running. Starting it now..."
-    ./scripts/android-emulator.sh start
+    ./scripts/android/android-emulator.sh start
 fi
 
 # Navigate to Flutter project
