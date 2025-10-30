@@ -193,6 +193,19 @@ if [ $? -eq 0 ]; then
 
     if [ -d "$BUILD_PATH" ]; then
         print_success "Build output: $BUILD_PATH"
+
+        # Create symlink to the build output in recipe_archive/ios/build/
+        SYMLINK_DIR="$FLUTTER_DIR/ios/build/$BUILD_TYPE"
+        mkdir -p "$SYMLINK_DIR"
+        SYMLINK_TARGET="$SYMLINK_DIR/Runner.app"
+
+        # Remove existing symlink if it exists
+        if [ -L "$SYMLINK_TARGET" ]; then
+            rm "$SYMLINK_TARGET"
+        fi
+
+        ln -sf "$FLUTTER_DIR/$BUILD_PATH" "$SYMLINK_TARGET"
+        print_success "Created symlink: $SYMLINK_TARGET -> $FLUTTER_DIR/$BUILD_PATH"
     fi
 
     # Open Xcode if requested

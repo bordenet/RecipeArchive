@@ -4,37 +4,30 @@
 #
 # RecipeArchive Mobile Build Script
 #
-# PURPOSE:
+# ⚠️  DEPRECATED: This script is deprecated and will be removed in a future release.
+#
+# PLEASE USE UNIFIED BUILD SCRIPTS INSTEAD:
+#   - For iOS:     ../../scripts/build-ios-unified.sh
+#   - For Android: ../../scripts/build-android-unified.sh
+#
+# OLD PURPOSE:
 #   This script automates the build process for the RecipeArchive mobile
 #   applications (Android and iOS). It handles dependency checks, cleaning
 #   previous builds, and running the appropriate Flutter build commands.
 #
-# USAGE:
-#   ./scripts/build-mobile.sh [platform] [build_type]
+# MIGRATION GUIDE:
+#   Old: ./scripts/build-mobile.sh android debug
+#   New: ../../scripts/build-android-unified.sh --dev --emulator --debug
 #
-# PLATFORMS:
-#   - android: Build the Android application (APK).
-#   - ios:     Build the iOS application (.app).
-#   - both:    Build both Android and iOS applications.
+#   Old: ./scripts/build-mobile.sh ios release
+#   New: ../../scripts/build-ios-unified.sh --dev --simulator --release
 #
-# BUILD TYPES:
-#   - debug:   Build a debug version of the application. (Default)
-#   - release: Build a release version of the application.
-#
-# EXAMPLES:
-#   # Build a debug version of the Android app
-#   ./scripts/build-mobile.sh android
-#
-#   # Build a release version of the iOS app
-#   ./scripts/build-mobile.sh ios release
-#
-# DEPENDENCIES:
-#   - Flutter SDK
-#   - For Android: Java, Android SDK
-#   - For iOS: macOS, Xcode, CocoaPods
-#
-# NOTES:
-#   - This script is intended to be run from the `recipe_archive` directory.
+# WHY DEPRECATED:
+#   - New unified scripts follow production-grade patterns
+#   - Proper timeout protection (10-minute max)
+#   - Better error handling and logging
+#   - Consistent with iOS gold standard approach
+#   - Direct use of native build systems (Xcode/Gradle)
 #
 ################################################################################
 
@@ -64,6 +57,32 @@ log_warning() {
 
 log_error() {
     echo -e "${RED}❌ $1${NC}"
+}
+
+# Display deprecation warning
+show_deprecation_warning() {
+    echo ""
+    log_warning "═════════════════════════════════════════════════════════════"
+    log_warning "DEPRECATION WARNING: This script is deprecated!"
+    log_warning "═════════════════════════════════════════════════════════════"
+    echo ""
+    log_info "Please use the new unified build scripts:"
+    echo "  iOS:     ../../scripts/build-ios-unified.sh"
+    echo "  Android: ../../scripts/build-android-unified.sh"
+    echo ""
+    log_info "Migration examples:"
+    echo "  Old: ./scripts/build-mobile.sh android debug"
+    echo "  New: ../../scripts/build-android-unified.sh --dev --emulator --debug"
+    echo ""
+    echo "  Old: ./scripts/build-mobile.sh ios release"
+    echo "  New: ../../scripts/build-ios-unified.sh --dev --simulator --release"
+    echo ""
+    log_warning "═════════════════════════════════════════════════════════════"
+    echo ""
+
+    # Give user 5 seconds to cancel
+    log_info "Continuing with old script in 5 seconds... (Ctrl+C to cancel)"
+    sleep 5
 }
 
 print_usage() {
@@ -189,6 +208,12 @@ build_ios() {
     if [ -d "$ios_path" ]; then
         log_success "iOS app built: $ios_path"
         log_warning "Note: App is not codesigned. Manual signing required for device deployment."
+
+        # Create symlink for easier access
+        local symlink_dir="ios/build/$build_type"
+        mkdir -p "$symlink_dir"
+        ln -sf "../../$ios_path" "$symlink_dir/Runner.app"
+        log_success "Symlink created: $symlink_dir/Runner.app -> $ios_path"
     else
         log_error "iOS build failed - app bundle not found"
         return 1
@@ -198,18 +223,21 @@ build_ios() {
 main() {
     local platform="${1:-}"
     local build_type="${2:-debug}"
-    
+
     if [ "$platform" = "--help" ] || [ "$platform" = "-h" ]; then
         print_usage
         exit 0
     fi
-    
+
+    # Show deprecation warning
+    show_deprecation_warning
+
     if [ -z "$platform" ]; then
         log_error "No platform specified."
         print_usage
         exit 1
     fi
-    
+
     if ! check_flutter; then
         exit 1
     fi

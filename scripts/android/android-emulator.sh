@@ -103,10 +103,26 @@ start_emulator() {
     fi
 
     print_status "Starting emulator '$EMULATOR_NAME'..."
-    # Start the emulator in the background
-    emulator -avd "$EMULATOR_NAME" > /dev/null 2>&1 &
-    
-    print_success "Emulator is starting in the background."
+    # Start the emulator in the background with 10-minute timeout
+    timeout 600 emulator -avd "$EMULATOR_NAME" > /dev/null 2>&1 &
+    EMULATOR_PID=$!
+
+    print_success "Emulator is starting in the background (PID: $EMULATOR_PID)."
+    print_status "Emulator will auto-terminate after 10 minutes if still running."
+
+    # Wait for emulator to be ready (max 2 minutes)
+    print_status "Waiting for emulator to be ready..."
+    WAIT_COUNT=0
+    while [ $WAIT_COUNT -lt 24 ]; do
+        if adb devices | grep -q "emulator.*device$"; then
+            print_success "Emulator is ready!"
+            return 0
+        fi
+        sleep 5
+        WAIT_COUNT=$((WAIT_COUNT + 1))
+    done
+
+    print_warning "Emulator startup timeout (2 minutes). Check manually with: adb devices"
 }
 
 stop_emulator() {

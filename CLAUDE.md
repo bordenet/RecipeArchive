@@ -58,6 +58,56 @@ Browser extensions contain hardcoded AWS infrastructure references. New adopters
 
 iOS/Android toolchain available
 
+### Development Conventions - CRITICAL
+
+These conventions ensure consistent, maintainable, production-grade automation across the project:
+
+#### 1. Dependency Management
+- **ALL dependencies** must be installed via [`./scripts/setup-macos.sh`](scripts/setup-macos.sh)
+- Never document manual installation steps without adding them to setup script
+- Setup script is the single source of truth for environment configuration
+
+#### 2. Shell Scripts for Recurring Tasks
+- **Build operations**: Use shell scripts with production-grade error handling
+- **Clean builds**: Dedicated scripts (not ad-hoc commands)
+- **Deployment**: Simulator/device deployments via scripts
+- **AWS operations**: Backend interactions via scripts (see `deploy-lambda.sh`)
+- **Required elements**:
+  - `set -e` for fail-fast behavior
+  - Clear error messages with exit codes
+  - Status logging (info, success, error, warning)
+  - Input validation
+  - Usage documentation in header comments
+
+#### 3. Long-Running Task Safety
+- **MANDATORY 10-minute timeout** on all long-running operations
+- Prevents blocked shells and hung processes
+- Applies to:
+  - Emulator/simulator deployments
+  - Device deployments
+  - Network operations (downloads, API calls)
+  - Build operations that might hang
+- Use `timeout` command or equivalent timing mechanisms
+
+#### 4. Platform-Specific Patterns
+
+**iOS (Gold Standard)**:
+- Unified build script: [`build-ios-unified.sh`](scripts/build-ios-unified.sh)
+- Direct use of native build systems (Xcode, NOT `flutter build ios`)
+- Auto-reset mechanisms (project.pbxproj) to avoid git noise
+- Clear dev vs prod modes
+- Proper SDK targeting (iphonesimulator vs iphoneos)
+- Share Extension verification
+- Symlink organization in builds directory
+
+**Android (Target Parity)**:
+- Unified build script pattern (following iOS approach)
+- Direct use of Gradle build system
+- Proper clean/build separation
+- Dev vs prod modes
+- Emulator management with timeouts
+- APK/AAB output verification
+
 ### iOS Recipe Capture
 
 **Architecture**: Three-tier approach (see [ADR 002](docs/adr/002-ios-recipe-capture-architecture.md))
@@ -78,9 +128,48 @@ iOS/Android toolchain available
 - `recipe_archive/ios/Runner/AppDelegate.swift` - Flutter integration
 - `recipe_archive/lib/services/share_channel.dart` - Dart bridge
 
+### Android Builds - Unified Script
+
+**All Android builds now use a single unified script**: [`./scripts/build-android-unified.sh`](scripts/build-android-unified.sh)
+
+**Development Builds** (fast iteration, emulator):
+```bash
+# Quick build and run on emulator
+./scripts/build-android-unified.sh --dev --run
+
+# Release build for emulator testing
+./scripts/build-android-unified.sh --dev --emulator --release
+
+# Clean build
+./scripts/build-android-unified.sh --dev --clean --run
+```
+
+**Production Builds** (Play Store, signed APK/AAB):
+```bash
+# Production release APK with version
+./scripts/build-android-unified.sh --prod --device --release --version 1.0.1
+
+# Production App Bundle (AAB) for Play Store
+./scripts/build-android-unified.sh --prod --device --release --version 1.0.1 --appbundle
+```
+
+**Critical Architecture Decision**:
+- **Use Gradle build system directly** via `./gradlew` (NOT `flutter build apk`)
+- Gradle configurations: debug, release, profile
+- Automatic 10-minute timeout protection on all builds
+- APK/AAB output verification and symlink organization
+
+**Key Features**:
+- Uses Gradle build system directly
+- Standard Gradle configurations (debug, release, profile)
+- Automatic emulator management with timeouts
+- Auto-resets build artifacts organization
+- Dev mode: Fast `./gradlew assemble*` → APK
+- Prod mode: `./gradlew bundle*` or signed APK
+
 ### iOS Builds - Unified Script
 
-**All iOS builds now use a single unified script**: `./scripts/build-ios-unified.sh`
+**All iOS builds now use a single unified script**: [`./scripts/build-ios-unified.sh`](scripts/build-ios-unified.sh)
 
 **Development Builds** (fast iteration, simulator):
 ```bash
