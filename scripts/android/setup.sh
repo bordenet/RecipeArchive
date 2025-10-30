@@ -3,7 +3,7 @@
 #==============================================================================
 # Android Development Setup Script
 #==============================================================================
-# NAME: android-setup.sh
+# NAME: setup.sh
 #
 # PURPOSE: Sets up the complete Android development environment for the RecipeArchive app.
 #          It checks for prerequisites, configures the Android SDK, and helps

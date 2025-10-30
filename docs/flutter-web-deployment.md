@@ -70,7 +70,7 @@ cd ..
 ./scripts/deploy-all.sh --frontend-only
 
 # Option 4: Deploy specific components
-./scripts/deploy-web-app.sh        # Flutter web app only
+./scripts/web-deploy.sh        # Flutter web app only
 ./scripts/deploy-lambda.sh         # Lambda functions only
 ```
 
@@ -211,7 +211,7 @@ The RecipeArchive project includes several automated deployment scripts:
 - **Options**: `--frontend-only`, `--backend-only`, `--function <name>`
 - **Use case**: Full system updates or coordinated deployments
 
-### `scripts/deploy-web-app.sh`
+### `scripts/web-deploy.sh`
 
 - **Purpose**: Web app deployment wrapper
 - **Features**: Same as `recipe_archive/deploy.sh` but from repo root

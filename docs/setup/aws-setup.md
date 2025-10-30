@@ -187,7 +187,7 @@ npm run build:extensions
 
 ```bash
 # Deploy your Flutter web app to CloudFront
-./scripts/deploy-web-app.sh
+./scripts/web-deploy.sh
 ```
 
 ## Complete Setup Verification

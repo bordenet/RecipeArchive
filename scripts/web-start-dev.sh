@@ -23,12 +23,16 @@
 #   - Flutter SDK
 #
 # NOTES:
-#   - This script is intended to be run from the `recipe_archive` directory.
+#   - This script should be run from the repository root: ./scripts/web-start-dev.sh
 #
 ################################################################################
 
 # Recipe Archive Flutter App Startup Script
 echo "🍳 Starting Recipe Archive Flutter App..."
+
+# Get script directory and repo root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Check if Flutter is installed
 if ! command -v flutter &> /dev/null; then
@@ -36,6 +40,9 @@ if ! command -v flutter &> /dev/null; then
     echo "Please install Flutter: https://flutter.dev/docs/get-started/install"
     exit 1
 fi
+
+# Navigate to Flutter app directory
+cd "$REPO_ROOT/recipe_archive"
 
 # Get dependencies
 echo "📦 Installing dependencies..."

@@ -3,13 +3,13 @@
 #==============================================================================
 # iOS App Runner Script
 #==============================================================================
-# NAME: ios-run.sh
+# NAME: run.sh
 #
 # PURPOSE: Launches the RecipeArchive app on the iOS simulator. It automatically
 #          finds and boots a simulator instance.
 #
 # USAGE:
-#   ./scripts/ios/ios-run.sh
+#   ./scripts/ios/run.sh
 #
 # DEPENDENCIES:
 #   - Flutter SDK
@@ -18,7 +18,7 @@
 #
 # NOTES:
 #   - This is a legacy script. It is recommended to use the main build and deploy script:
-#     ./scripts/ios-build-and-deploy.sh
+#     ./scripts/ios-build.sh --dev --clean --run
 #   - If no simulator is running, it will attempt to start one.
 #   - If multiple simulators are available, it will try to pick one.
 #

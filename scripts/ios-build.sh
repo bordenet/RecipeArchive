@@ -9,14 +9,14 @@
 #
 # USAGE:
 #   Development (simulator):
-#     ./scripts/build-ios.sh --dev --simulator --debug
-#     ./scripts/build-ios.sh --dev --simulator --release
+#     ./scripts/ios-build.sh --dev --simulator --debug
+#     ./scripts/ios-build.sh --dev --simulator --release
 #
 #   Production (archive):
-#     ./scripts/build-ios.sh --prod --device --release --version 1.0.1
+#     ./scripts/ios-build.sh --prod --device --release --version 1.0.1
 #
 #   Quick simulator build+run:
-#     ./scripts/build-ios.sh --dev --run
+#     ./scripts/ios-build.sh --dev --run
 #
 # PHILOSOPHY:
 #   - Always use Flutter's build pipeline first (flutter build ios)

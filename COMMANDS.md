@@ -10,7 +10,7 @@
 | Validate Mobile | `./validate-monorepo.sh --mobile` |
 | Deploy All | `./scripts/deploy-all.sh` |
 | Deploy Lambda | `./scripts/deploy-lambda.sh --all` |
-| Deploy Web App | `./scripts/deploy-web-app.sh` |
+| Deploy Web App | `./scripts/web-deploy.sh` |
 | Build Extensions | `npm run build:extensions` |
 | Package Extensions | `./scripts/package-extensions.sh` |
 | Security Scan | `npm run security:scan` |

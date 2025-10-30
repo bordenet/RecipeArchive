@@ -89,7 +89,7 @@ RecipeArchive/
 │   ├── deploy-all.sh                # Automated deployment script
 │   ├── deploy-aws-infrastructure.sh                # AWS infrastructure deployment script
 │   ├── deploy-lambda.sh             # Lambda deployment script
-│   └── deploy-web-app.sh            # Web app deployment script
+│   └── web-deploy.sh            # Web app deployment script
 ├── aws-backend/
 │   ├── infrastructure/
 │   │   ├── lib/recipe-archive-stack.ts # Complete IaC definition

@@ -21,7 +21,7 @@ cd .. && ./scripts/android-run.sh
 
 ```bash
 # Deploy web app
-cd .. && ./scripts/deploy-web-app.sh
+cd .. && ./scripts/web-deploy.sh
 ```
 
 ## Mobile Builds

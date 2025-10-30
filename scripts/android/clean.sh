@@ -3,7 +3,7 @@
 #==============================================================================
 # Android Clean Script
 #==============================================================================
-# NAME: android-clean.sh
+# NAME: clean.sh
 #
 # PURPOSE: Cleans Android build artifacts.
 #

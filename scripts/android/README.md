@@ -10,7 +10,7 @@ The fastest way to build and run the app:
 
 ```bash
 # From repository root
-./scripts/build-android.sh --dev --run
+./scripts/android-build.sh --dev --run
 ```
 
 **What it does:**
@@ -25,37 +25,37 @@ If you prefer more control:
 
 ```bash
 # 1. Start emulator
-./scripts/android/android-emulator.sh start
+./scripts/android/emulator.sh start
 
 # 2. Build and run
-./scripts/android/android-run.sh
+./scripts/android/run.sh
 ```
 
 ## Available Scripts
 
 ### Main Build Script
 
-**[../build-android.sh](../build-android.sh)** - Build script for all Android builds
+**[../android-build.sh](../android-build.sh)** - Build script for all Android builds
 
 **Development builds** (fast iteration):
 ```bash
 # Quick debug build and run
-./scripts/build-android.sh --dev --run
+./scripts/android-build.sh --dev --run
 
 # Release build for performance testing
-./scripts/build-android.sh --dev --emulator --release
+./scripts/android-build.sh --dev --emulator --release
 
 # Clean build
-./scripts/build-android.sh --dev --clean --run
+./scripts/android-build.sh --dev --clean --run
 ```
 
 **Production builds** (Play Store):
 ```bash
 # Signed release APK
-./scripts/build-android.sh --prod --device --release --version 1.0.1
+./scripts/android-build.sh --prod --device --release --version 1.0.1
 
 # App Bundle (AAB) for Play Store
-./scripts/build-android.sh --prod --device --release --version 1.0.1 --appbundle
+./scripts/android-build.sh --prod --device --release --version 1.0.1 --appbundle
 ```
 
 **Features:**
@@ -67,51 +67,51 @@ If you prefer more control:
 
 ### Emulator Management
 
-**[android-emulator.sh](android-emulator.sh)** - Manage Android Virtual Devices
+**[emulator.sh](emulator.sh)** - Manage Android Virtual Devices
 
 ```bash
 # Start emulator (creates if needed)
-./scripts/android/android-emulator.sh start
+./scripts/android/emulator.sh start
 
 # Stop running emulator
-./scripts/android/android-emulator.sh stop
+./scripts/android/emulator.sh stop
 
 # List available emulators
-./scripts/android/android-emulator.sh list
+./scripts/android/emulator.sh list
 
 # Check emulator status
-./scripts/android/android-emulator.sh status
+./scripts/android/emulator.sh status
 
 # Create new emulator
-./scripts/android/android-emulator.sh create
+./scripts/android/emulator.sh create
 ```
 
 ### App Runner
 
-**[android-run.sh](android-run.sh)** - Launch app on running emulator
+**[run.sh](run.sh)** - Launch app on running emulator
 
 ```bash
-./scripts/android/android-run.sh
+./scripts/android/run.sh
 ```
 
 Auto-starts emulator if not running, then launches the app using `flutter run`.
 
 ### Build Management
 
-**[android-clean.sh](android-clean.sh)** - Clean build artifacts
+**[clean.sh](clean.sh)** - Clean build artifacts
 
 ```bash
-./scripts/android/android-clean.sh
+./scripts/android/clean.sh
 ```
 
 Removes Flutter build cache, Gradle cache, and build outputs.
 
 ### Android Studio
 
-**[android-studio.sh](android-studio.sh)** - Launch Android Studio
+**[studio.sh](studio.sh)** - Launch Android Studio
 
 ```bash
-./scripts/android/android-studio.sh
+./scripts/android/studio.sh
 ```
 
 Opens Android Studio with the RecipeArchive project.
@@ -182,22 +182,22 @@ This project uses Gradle directly (NOT `flutter build apk/appbundle`):
 ### Daily Development
 ```bash
 # First build of the day
-./scripts/build-android.sh --dev --clean --run
+./scripts/android-build.sh --dev --clean --run
 
 # Subsequent iterations
-./scripts/build-android.sh --dev --run
+./scripts/android-build.sh --dev --run
 ```
 
 ### Testing Performance
 ```bash
 # Release mode on emulator
-./scripts/build-android.sh --dev --emulator --release --run
+./scripts/android-build.sh --dev --emulator --release --run
 ```
 
 ### Preparing for Play Store
 ```bash
 # Create signed App Bundle
-./scripts/build-android.sh --prod --device --release --version 1.2.0 --appbundle
+./scripts/android-build.sh --prod --device --release --version 1.2.0 --appbundle
 
 # Output: recipe_archive/build/app/outputs/bundle/release/app-release.aab
 ```
@@ -205,10 +205,10 @@ This project uses Gradle directly (NOT `flutter build apk/appbundle`):
 ### Manual Installation
 ```bash
 # Build APK
-./scripts/build-android.sh --dev --emulator --debug
+./scripts/android-build.sh --dev --emulator --debug
 
 # Start emulator if needed
-./scripts/android/android-emulator.sh start
+./scripts/android/emulator.sh start
 
 # Install manually
 adb install -r recipe_archive/build/app/outputs/flutter-apk/app-debug.apk
@@ -222,10 +222,10 @@ adb shell monkey -p com.recipeArchive.recipe_archive -c android.intent.category.
 ### Emulator won't start
 ```bash
 # Check available emulators
-./scripts/android/android-emulator.sh list
+./scripts/android/emulator.sh list
 
 # If none exist, create one
-./scripts/android/android-emulator.sh create
+./scripts/android/emulator.sh create
 
 # Check emulator logs
 cat ~/Library/Logs/Android/emulator.log
@@ -234,10 +234,10 @@ cat ~/Library/Logs/Android/emulator.log
 ### Build fails
 ```bash
 # Clean everything
-./scripts/android/android-clean.sh
+./scripts/android/clean.sh
 
 # Rebuild
-./scripts/build-android.sh --dev --clean --run
+./scripts/android-build.sh --dev --clean --run
 ```
 
 ### ADB connection issues
