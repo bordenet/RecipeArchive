@@ -107,17 +107,24 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 
 ## Upcoming Work
 
-### Week 2: Build Artifact Management (Planned)
+### Week 2: Build Artifact Management (In Progress)
 
 **Goal:** Predictable, hermetic builds with semantic versioning
 
 **Deliverables:**
 
-- [ ] Unified `./build/` directory structure
-- [ ] Semantic artifact naming: `RecipeArchive-{version}-{platform}-{config}.{ext}`
-- [ ] Eliminate all "auto-reset" mechanisms that fight Git
-- [ ] CI/CD-ready artifact paths for GitHub Actions
-- [ ] Documentation: `docs/development/build-system.md`
+- [x] Unified `./build/` directory structure
+- [x] Semantic artifact naming: `RecipeArchive-{version}-{platform}-{config}.{ext}`
+- [x] Documentation: `docs/development/build-system.md`
+- [x] Script reorganization: Platform-specific scripts in `scripts/{platform}/`
+- [x] Updated `.gitignore` for unified build directory
+- [ ] Update iOS build script to output to new location (pending execution)
+- [ ] Update Android build script to output to new location (pending execution)
+- [ ] Update web build scripts for new location (pending execution)
+- [ ] Eliminate all "auto-reset" mechanisms that fight Git (pending)
+- [ ] Update documentation references (README, COMMANDS, CLAUDE)
+
+**Migration Guide:** [WEEK2_MIGRATION.md](WEEK2_MIGRATION.md)
 
 **Success Criteria:**
 
