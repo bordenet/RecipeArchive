@@ -1,64 +1,89 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# iOS Development Help Script
-#==============================================================================
-# NAME: help.sh
-#
-# PURPOSE: Provides a comprehensive guide for iOS development with RecipeArchive,
-#          focusing on the new build and deploy script.
+################################################################################
+# RecipeArchive iOS Development Help
+################################################################################
+# PURPOSE: Display comprehensive guide for iOS development
+#   - Quick start instructions
+#   - Usage examples
+#   - Workflow guidance
+#   - Troubleshooting resources
 #
 # USAGE:
 #   ./scripts/ios/help.sh
 #
-#==============================================================================
+# EXAMPLES:
+#   ./scripts/ios/help.sh
+################################################################################
 
-echo "🍎 RecipeArchive iOS Development Guide"
-echo "======================================"
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+
+log_header "RecipeArchive iOS Development Guide"
 
 cat << 'EOF'
 
 📚 QUICK START
 ======================================
 
-The iOS development workflow has been simplified to a single script:
+The iOS development workflow uses a single build script:
 
-  ./scripts/ios-build.sh --dev --clean --run
+  ./scripts/ios/build.sh --dev --run
 
-This script handles everything from cleaning and building to deploying to a simulator or device.
+This handles cleaning, building, and deploying to simulator or device.
 
 
 📱 USAGE
 ===================
 
-  ./scripts/ios-build.sh --dev --clean --run [options]
+  ./scripts/ios/build.sh [OPTIONS]
 
 
-OPTIONS:
-  --target <target>   Deployment target. Options: simulator, device (default: simulator)
-  --config <config>   Build configuration. Options: debug, release (default: debug)
-  --help              Show this help
+REQUIRED OPTIONS:
+  --dev               Development mode (fast iteration)
+  --prod              Production mode (create archive)
+
+
+COMMON OPTIONS:
+  --simulator         Build for simulator (default in dev mode)
+  --device            Build for physical device
+  --debug             Debug configuration (default)
+  --release           Release configuration
+  --profile           Profile configuration
+  --run               Auto-launch after build (dev mode only)
+  --clean             Clean before build
+  --version X.Y.Z     Set version (prod mode only)
 
 
 EXAMPLES:
 
-  # Clean build and deploy to simulator in debug mode
-  ./scripts/ios-build.sh --dev --clean --run
+  # Quick development build and run on simulator
+  ./scripts/ios/build.sh --dev --run
 
-  # Clean build and deploy to a physical device in release mode
-  ./scripts/ios-build.sh --dev --clean --run --target device --config release
+  # Clean build for simulator testing
+  ./scripts/ios/build.sh --dev --clean --simulator --debug
+
+  # Release build for device
+  ./scripts/ios/build.sh --dev --device --release
+
+  # Production archive with version
+  ./scripts/ios/build.sh --prod --device --release --version 1.0.1
 
 
 🔧 WORKFLOW
 ======================
 
-1. Run the main script:
-   ./scripts/ios-build.sh --dev --clean --run
+1. Development (fast iteration):
+   ./scripts/ios/build.sh --dev --run
 
-2. For device builds, the script will open Xcode. From there, you can select your
-   device and run the app.
+2. Testing on device:
+   ./scripts/ios/build.sh --dev --device --release
 
-3. For simulator builds, the script will automatically launch the app in the simulator.
+3. Production build:
+   ./scripts/ios/build.sh --prod --device --release --version X.Y.Z
+
+   Then export IPA via Xcode Organizer for distribution.
 
 
 📞 GETTING HELP
@@ -66,12 +91,18 @@ EXAMPLES:
 
 If you're stuck:
 
-1. Run the help command for the main script:
-   ./scripts/ios-build.sh --dev --clean --run --help
+1. Run the build script with --help:
+   ./scripts/ios/build.sh --help
 
 2. Run Flutter diagnostics:
    flutter doctor -v
 
-3. For more detailed scripts, see the `scripts/ios/` directory.
+3. Check Xcode version:
+   xcodebuild -version
+
+4. View available simulators:
+   xcrun simctl list devices
+
+5. See scripts/ios/ directory for additional utilities
 
 EOF
