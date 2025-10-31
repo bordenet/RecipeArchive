@@ -1,134 +1,126 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# Android Emulator Script
-#==============================================================================
-# NAME: emulator.sh
-#
-# PURPOSE: Manages Android Virtual Devices (AVDs) for the RecipeArchive app.
-#          It can create, start, stop, and list emulators.
+################################################################################
+# RecipeArchive Android Emulator Management
+################################################################################
+# PURPOSE: Manage Android Virtual Devices (AVDs) for the RecipeArchive app
+#   - Create new emulator with default configuration
+#   - Start existing or create new emulator
+#   - Stop running emulator
+#   - List available emulators
 #
 # USAGE:
-#   ./scripts/android-emulator.sh [command]
+#   ./scripts/android/emulator.sh [command]
+#
+# EXAMPLES:
+#   ./scripts/android/emulator.sh start
+#   ./scripts/android/emulator.sh create
+#   ./scripts/android/emulator.sh list
+#   ./scripts/android/emulator.sh stop
 #
 # COMMANDS:
-#   start       Starts an emulator. Creates one if it doesn't exist. (default)
-#   create      Creates a new emulator.
-#   list        Lists available emulators.
-#   stop        Stops the running emulator.
-#   --help      Shows this help message.
+#   start       Start emulator (creates if doesn't exist) [default]
+#   create      Create new emulator
+#   list        List available emulators
+#   stop        Stop running emulator
+#   --help      Show this help message
 #
 # DEPENDENCIES:
-#   - Android SDK (with command-line tools)
+#   - Android SDK with command-line tools
+#
+# ENVIRONMENT VARIABLES:
+#   - ANDROID_HOME (optional, auto-detected if not set)
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
-#
-#==============================================================================
-set -e
+#   - Default emulator name: RecipeArchiveEmulator
+#   - Uses Pixel 6 API 34 system image
+#   - Automatically sets up PATH and ANDROID_HOME
+################################################################################
 
-echo "🤖 Android Emulator Script"
-echo "========================="
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly EMULATOR_NAME="RecipeArchiveEmulator"
 
-# Function to print status
-print_status() {
-    echo -e "${BLUE}🤖 $1${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
+log_header "Android Emulator Management"
 
 # Find Android SDK
 ANDROID_SDK_ROOT=""
-if [ -d "$HOME/Library/Android/sdk" ]; then
+if [[ -d "$HOME/Library/Android/sdk" ]]; then
     ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-elif [ -d "/usr/local/share/android-sdk" ]; then
+elif [[ -d "/usr/local/share/android-sdk" ]]; then
     ANDROID_SDK_ROOT="/usr/local/share/android-sdk"
-elif [ ! -z "$ANDROID_HOME" ]; then
+elif [[ -n "$ANDROID_HOME" ]]; then
     ANDROID_SDK_ROOT="$ANDROID_HOME"
 fi
 
-if [ -z "$ANDROID_SDK_ROOT" ]; then
-    print_error "Android SDK not found."
-    echo "Please run ./scripts/android-setup.sh first."
-    exit 1
+if [[ -z "$ANDROID_SDK_ROOT" ]]; then
+    die "Android SDK not found. Please run ./scripts/android/setup.sh first."
 fi
 
 export ANDROID_HOME=$ANDROID_SDK_ROOT
 export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
 
-EMULATOR_NAME="RecipeArchiveEmulator"
+log_debug "Android SDK: $ANDROID_SDK_ROOT"
 
 # --- SCRIPT FUNCTIONS ---
 
 list_emulators() {
-    print_status "Available Android emulators:"
+    log_info "Available Android emulators:"
     emulator -list-avds
 }
 
 create_emulator() {
-    print_status "Creating a new Android emulator: $EMULATOR_NAME"
+    log_info "Creating a new Android emulator: $EMULATOR_NAME"
     # Install a system image
-    print_status "Installing system image... (this may take a while)"
+    log_info "Installing system image... (this may take a while)"
     sdkmanager "system-images;android-33;google_apis;x86_64" > /dev/null
-    print_success "System image is installed."
+    log_success "System image is installed."
 
     # Create AVD
-    print_status "Creating Android Virtual Device (AVD)..."
+    log_info "Creating Android Virtual Device (AVD)..."
     echo "no" | avdmanager create avd -n "$EMULATOR_NAME" -k "system-images;android-33;google_apis;x86_64" -d "pixel_6"
-    print_success "Emulator '$EMULATOR_NAME' created."
+    log_success "Emulator '$EMULATOR_NAME' created."
 }
 
 start_emulator() {
     # Check if emulator exists
     if ! emulator -list-avds | grep -q "$EMULATOR_NAME"; then
-        print_warning "Emulator '$EMULATOR_NAME' not found."
+        log_warning "Emulator '$EMULATOR_NAME' not found."
         create_emulator
     fi
 
-    print_status "Starting emulator '$EMULATOR_NAME'..."
+    log_info "Starting emulator '$EMULATOR_NAME'..."
     # Start the emulator in the background with 10-minute timeout
     timeout 600 emulator -avd "$EMULATOR_NAME" > /dev/null 2>&1 &
     EMULATOR_PID=$!
 
-    print_success "Emulator is starting in the background (PID: $EMULATOR_PID)."
-    print_status "Emulator will auto-terminate after 10 minutes if still running."
+    log_success "Emulator is starting in the background (PID: $EMULATOR_PID)."
+    log_info "Emulator will auto-terminate after 10 minutes if still running."
 
     # Wait for emulator to be ready (max 2 minutes)
-    print_status "Waiting for emulator to be ready..."
+    log_info "Waiting for emulator to be ready..."
     WAIT_COUNT=0
     while [ $WAIT_COUNT -lt 24 ]; do
         if adb devices | grep -q "emulator.*device$"; then
-            print_success "Emulator is ready!"
+            log_success "Emulator is ready!"
             return 0
         fi
         sleep 5
         WAIT_COUNT=$((WAIT_COUNT + 1))
     done
 
-    print_warning "Emulator startup timeout (2 minutes). Check manually with: adb devices"
+    log_warning "Emulator startup timeout (2 minutes). Check manually with: adb devices"
 }
 
 stop_emulator() {
-    print_status "Stopping emulator..."
+    log_info "Stopping emulator..."
     adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done
-    print_success "Emulator stopped."
+    log_success "Emulator stopped."
 }
 
 # --- MAIN LOGIC ---
@@ -166,7 +158,7 @@ case $COMMAND in
         echo "  --help      Shows this help message."
         ;;
     *)
-        print_error "Unknown command: $COMMAND"
-        exit 1
+        log_error "Unknown command: $COMMAND"
+        die "Command failed"
         ;;
 esac
