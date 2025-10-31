@@ -1,15 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-#===============================================================================
-# RecipeArchive Lambda Package Builder for CDK Deployment
-#===============================================================================
+################################################################################
+# RecipeArchive Lambda Package Builder
+################################################################################
 # PURPOSE: Build all Lambda function packages for AWS CDK deployment
-#
-# HOW IT WORKS:
-#   1. Discovers all Lambda functions with main.go files
-#   2. Builds each function for Linux (AWS Lambda runtime)
-#   3. Creates properly structured packages in functions/dist/
-#   4. Ready for CDK deployment via deploy-aws-infrastructure.sh
+#   - Discovers all Lambda functions with main.go files
+#   - Builds each function for Linux (AWS Lambda runtime)
+#   - Creates properly structured packages in functions/dist/
+#   - Ready for CDK deployment via deploy-aws-infrastructure.sh
 #
 # USAGE:
 #   ./scripts/build-lambda-packages.sh              # Build all packages
@@ -17,46 +15,29 @@
 #   ./scripts/build-lambda-packages.sh --clean      # Clean all packages
 #   ./scripts/build-lambda-packages.sh --list       # List available functions
 #
-# REQUIREMENTS: Go installed, functions with main.go files
+# EXAMPLES:
+#   ./scripts/build-lambda-packages.sh
+#   ./scripts/build-lambda-packages.sh recipes
+#   ./scripts/build-lambda-packages.sh --clean
 #
+# DEPENDENCIES:
+#   - Go 1.19+
+#
+# NOTES:
+#   - Builds for Linux AMD64 (AWS Lambda runtime)
+#   - Each function must have a main.go file
+#   - Output directory: aws-backend/functions/dist/
 ################################################################################
 
-set -e
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Get script directory and repo root
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-FUNCTIONS_DIR="$REPO_ROOT/aws-backend/functions"
-DIST_DIR="$FUNCTIONS_DIR/dist"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-# Helper functions
-log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
-
-log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-log_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-log_header() {
-    echo -e "${BLUE}🚀 $1${NC}"
-    echo "======================================"
-}
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FUNCTIONS_DIR="$REPO_ROOT/aws-backend/functions"
+readonly DIST_DIR="$FUNCTIONS_DIR/dist"
 
 # Get available Lambda functions (directories with main.go)
 get_available_functions() {
@@ -242,7 +223,7 @@ main() {
         "")
             log_header "RecipeArchive Lambda Package Builder"
             if ! check_prerequisites; then
-                exit 1
+                die "Build failed"
             fi
             build_all_packages
             exit $?
@@ -252,19 +233,19 @@ main() {
             if echo "$(get_available_functions)" | grep -q "\b$arg\b"; then
                 log_header "Building Single Package: $arg"
                 if ! check_prerequisites; then
-                    exit 1
+                    die "Build failed"
                 fi
                 if build_package "$arg"; then
                     log_success "🎉 Package $arg built successfully!"
                     exit 0
                 else
                     log_error "Failed to build package $arg"
-                    exit 1
+                    die "Build failed"
                 fi
             else
                 log_error "Unknown function: $arg"
                 print_usage
-                exit 1
+                die "Build failed"
             fi
             ;; 
     esac
