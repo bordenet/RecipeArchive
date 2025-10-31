@@ -84,7 +84,7 @@ aws cognito-idp admin-set-user-password \
 
 ```bash
 # Build and deploy Flutter web app
-./scripts/web-deploy.sh
+./scripts/web/deploy.sh
 
 # This deploys to S3 + CloudFront
 # CloudFront URL will be shown in output
@@ -124,7 +124,7 @@ aws cognito-idp admin-set-user-password \
 ### Mobile Development (Optional)
 - [iOS Setup Guide](../../scripts/ios/README.md)
 - [Android Setup Guide](../../scripts/android/README.md)
-- Build native apps: `./scripts/build-ios.sh --help`
+- Build native apps: `./scripts/ios/build.sh --help`
 
 ### Development Workflow
 - [Command Reference](../../COMMANDS.md) - Quick lookup for all commands
