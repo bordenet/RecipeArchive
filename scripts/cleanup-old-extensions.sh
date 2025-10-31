@@ -1,34 +1,45 @@
 #!/usr/bin/env bash
 
-#===============================================================================
-# RecipeArchive Extension Cleanup Script
-#===============================================================================
+################################################################################
+# RecipeArchive Extension Cleanup
+################################################################################
 # PURPOSE: Keep only the latest 2 versions of each browser extension
+#   - Scans S3 bucket for extension files
+#   - Analyzes versions by platform (Chrome, Safari)
+#   - Preserves specified number of latest versions
+#   - Deletes older versions (with confirmation or --auto)
 #
 # USAGE:
 #   ./scripts/cleanup-old-extensions.sh              # Interactive mode
 #   ./scripts/cleanup-old-extensions.sh --dry-run    # Show what would be deleted
 #   ./scripts/cleanup-old-extensions.sh --auto       # Auto-delete old versions
 #
-# SAFETY:
+# EXAMPLES:
+#   ./scripts/cleanup-old-extensions.sh --dry-run
+#   ./scripts/cleanup-old-extensions.sh --auto
+#
+# DEPENDENCIES:
+#   - AWS CLI
+#
+# ENVIRONMENT VARIABLES:
+#   - S3_RECIPE_STORAGE_BUCKET (optional, can override default bucket)
+#
+# NOTES:
 #   - Always preserves the 2 most recent versions of each platform
-#   - Shows exactly what will be deleted before confirmation
 #   - Includes --dry-run mode for safe testing
-#===============================================================================
+#   - Requires confirmation unless --auto is specified
+################################################################################
 
-set -e
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[1;34m'
-NC='\033[0m' # No Color
-
-# Configuration
-BUCKET_NAME="recipe-storage-0ea7007d57f67ecb-990537043943"
-EXTENSIONS_PREFIX="extensions/"
-KEEP_VERSIONS=2
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly BUCKET_NAME="${S3_RECIPE_STORAGE_BUCKET:-recipe-storage-0ea7007d57f67ecb-990537043943}"
+readonly EXTENSIONS_PREFIX="extensions/"
+readonly KEEP_VERSIONS=2
 
 # Command line options
 DRY_RUN=false
@@ -53,20 +64,22 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
-            exit 1
+            die "Unknown option: $1"
             ;;
     esac
 done
 
-echo -e "${BLUE}🧹 RecipeArchive Extension Cleanup${NC}"
-echo "=================================="
-echo "Bucket: s3://$BUCKET_NAME/$EXTENSIONS_PREFIX"
-echo "Keeping: $KEEP_VERSIONS latest versions per platform"
-if [ "$DRY_RUN" = true ]; then
-    echo -e "${YELLOW}Mode: DRY RUN (no files will be deleted)${NC}"
+log_header "Extension Cleanup"
+
+log_info "Bucket: s3://$BUCKET_NAME/$EXTENSIONS_PREFIX"
+log_info "Keeping: $KEEP_VERSIONS latest versions per platform"
+if [[ "$DRY_RUN" == true ]]; then
+    log_warning "Mode: DRY RUN (no files will be deleted)"
 fi
 echo ""
+
+# Validate dependencies
+require_command "aws" "brew install awscli"
 
 # Function to extract version from filename
 extract_version() {
@@ -100,15 +113,16 @@ version_compare() {
 }
 
 # Get all extension files
-echo "📋 Scanning for extension files..."
-mapfile -t all_files < <(aws s3 ls "s3://$BUCKET_NAME/$EXTENSIONS_PREFIX" | grep -E 'RecipeArchive-(Chrome|Safari)-v[0-9]+\.[0-9]+\.[0-9]+\.zip$' | awk '{print $4}')
+log_section "Scanning for Extension Files"
 
-if [ ${#all_files[@]} -eq 0 ]; then
-    echo -e "${YELLOW}No extension files found in s3://$BUCKET_NAME/$EXTENSIONS_PREFIX${NC}"
+mapfile -t all_files < <(aws s3 ls "s3://$BUCKET_NAME/$EXTENSIONS_PREFIX" 2>/dev/null | grep -E 'RecipeArchive-(Chrome|Safari)-v[0-9]+\.[0-9]+\.[0-9]+\.zip$' | awk '{print $4}')
+
+if [[ ${#all_files[@]} -eq 0 ]]; then
+    log_warning "No extension files found in s3://$BUCKET_NAME/$EXTENSIONS_PREFIX"
     exit 0
 fi
 
-echo "Found ${#all_files[@]} extension files"
+log_info "Found ${#all_files[@]} extension files"
 
 # Separate by platform and sort by version
 declare -A chrome_files=()
@@ -117,7 +131,7 @@ declare -A safari_files=()
 for file in "${all_files[@]}"; do
     version=$(extract_version "$file")
     if [[ -z "$version" ]]; then
-        echo -e "${YELLOW}Warning: Could not extract version from $file${NC}"
+        log_warning "Could not extract version from $file"
         continue
     fi
 
@@ -143,17 +157,17 @@ get_files_to_delete() {
     # Sort versions in descending order (newest first)
     IFS=$'\n' sorted_versions=($(sort -t. -k1,1nr -k2,2nr -k3,3nr <<< "${versions[*]}"))
 
-    echo -e "${BLUE}$platform Extensions:${NC}"
+    log_info "$platform Extensions:"
 
     # Keep the latest KEEP_VERSIONS, mark the rest for deletion
     for i in "${!sorted_versions[@]}"; do
         local version="${sorted_versions[i]}"
         local file="${files_ref[$version]}"
 
-        if [ $i -lt $KEEP_VERSIONS ]; then
-            echo -e "  ${GREEN}✓ Keep:${NC} $file (v$version)"
+        if [[ $i -lt $KEEP_VERSIONS ]]; then
+            log_success "  Keep: $file (v$version)"
         else
-            echo -e "  ${RED}✗ Delete:${NC} $file (v$version)"
+            log_error "  Delete: $file (v$version)"
             files_to_delete+=("$file")
         fi
     done
@@ -163,9 +177,7 @@ get_files_to_delete() {
 }
 
 # Get files to delete for each platform
-echo ""
-echo "📊 Analysis Results:"
-echo "==================="
+log_section "Analysis Results"
 
 mapfile -t chrome_to_delete < <(get_files_to_delete chrome_files "Chrome")
 echo ""
@@ -176,59 +188,55 @@ all_to_delete=()
 all_to_delete+=("${chrome_to_delete[@]}")
 all_to_delete+=("${safari_to_delete[@]}")
 
-echo ""
-echo "📋 Summary:"
-echo "==========="
-echo "Total files to delete: ${#all_to_delete[@]}"
+log_section "Summary"
+log_info "Total files to delete: ${#all_to_delete[@]}"
 
-if [ ${#all_to_delete[@]} -eq 0 ]; then
-    echo -e "${GREEN}✅ No cleanup needed - all platforms have $KEEP_VERSIONS or fewer versions${NC}"
+if [[ ${#all_to_delete[@]} -eq 0 ]]; then
+    log_success "No cleanup needed - all platforms have $KEEP_VERSIONS or fewer versions"
     exit 0
 fi
 
 # Show what will be deleted
 echo ""
-echo -e "${RED}Files to be deleted:${NC}"
+log_warning "Files to be deleted:"
 for file in "${all_to_delete[@]}"; do
     echo "  - $file"
 done
 
 # Dry run mode - exit here
-if [ "$DRY_RUN" = true ]; then
+if [[ "$DRY_RUN" == true ]]; then
     echo ""
-    echo -e "${YELLOW}✅ Dry run complete - no files were deleted${NC}"
-    echo "Run without --dry-run to actually delete these files"
+    log_success "Dry run complete - no files were deleted"
+    log_info "Run without --dry-run to actually delete these files"
     exit 0
 fi
 
 # Confirmation (unless auto mode)
-if [ "$AUTO_DELETE" != true ]; then
+if [[ "$AUTO_DELETE" != true ]]; then
     echo ""
-    echo -e "${YELLOW}⚠️  This will permanently delete ${#all_to_delete[@]} extension files${NC}"
+    log_warning "This will permanently delete ${#all_to_delete[@]} extension files"
     read -p "Are you sure you want to continue? (y/N): " -n 1 -r
     echo ""
 
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Cancelled by user"
+        log_info "Cancelled by user"
         exit 0
     fi
 fi
 
 # Perform deletion
-echo ""
-echo "🗑️  Deleting old extension files..."
+log_section "Deleting Old Extension Files"
 
 deleted_count=0
 for file in "${all_to_delete[@]}"; do
-    echo "Deleting: $file"
-    if aws s3 rm "s3://$BUCKET_NAME/$EXTENSIONS_PREFIX$file"; then
+    log_info "Deleting: $file"
+    if aws s3 rm "s3://$BUCKET_NAME/$EXTENSIONS_PREFIX$file" 2>/dev/null; then
         ((deleted_count++))
     else
-        echo -e "${RED}Failed to delete: $file${NC}"
+        log_error "Failed to delete: $file"
     fi
 done
 
-echo ""
-echo -e "${GREEN}✅ Cleanup complete!${NC}"
-echo "Deleted: $deleted_count files"
-echo "Kept: $KEEP_VERSIONS latest versions per platform"
+log_success "Cleanup complete!"
+log_info "Deleted: $deleted_count files"
+log_info "Kept: $KEEP_VERSIONS latest versions per platform"
