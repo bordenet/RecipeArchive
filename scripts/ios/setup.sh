@@ -1,52 +1,51 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# iOS Development Setup Script
-#==============================================================================
-# NAME: setup.sh
-#
-# PURPOSE: Sets up the complete iOS development environment for the RecipeArchive app.
-#          It checks for prerequisites, configures Xcode, and installs all
-#          necessary dependencies.
+################################################################################
+# RecipeArchive iOS Development Setup
+################################################################################
+# PURPOSE: Set up complete iOS development environment for macOS
+#   - Checks for Xcode installation
+#   - Verifies Xcode Command Line Tools
+#   - Installs or updates CocoaPods
+#   - Installs modern Ruby via Homebrew (if needed)
+#   - Installs pod dependencies
+#   - Verifies Flutter setup for iOS
+#   - Runs Flutter doctor
 #
 # USAGE:
-#   ./scripts/ios/setup.sh [OPTIONS]
+#   ./scripts/ios/setup.sh
 #
-#   OPTIONS:
-#     -h, --help              Show this help message
-#     -d, --device DEVICE     Target specific device for setup
-#                            Options: iphone16e, ipadmac, iphone17max, auto
-#     -v, --verbose          Enable verbose output
-#     --skip-xcode           Skip Xcode configuration (for CI/CD)
-#     --skip-pods            Skip CocoaPods installation
-#
-#   DEVICE TARGETS:
-#     iphone16e              iPhone 16e simulator
-#     ipadmac               "My Mac (designed for iPad)" - run iPad app on Mac
-#     iphone17max           iPhone 17 Pro Max simulator
-#     auto                  Auto-detect best available device (default)
+# EXAMPLES:
+#   ./scripts/ios/setup.sh
 #
 # DEPENDENCIES:
-#   - Flutter SDK (3.10+)
-#   - Xcode (14+) and Command Line Tools
-#   - CocoaPods (1.11+)
-#   - macOS 12+ for optimal compatibility
+#   - macOS
+#   - Xcode (from App Store)
+#   - Homebrew
+#   - Flutter SDK
 #
 # NOTES:
-#   - This script is intended to be called from the main ios-build.sh --dev --clean --run script.
-#   - This script should be run once before starting iOS development.
-#   - It may ask for your password to install CocoaPods or configure Xcode.
-#   - For iPad on Mac support, ensure you have macOS 12+ and Apple Silicon.
-#   - The script automatically configures Xcode for proper iOS development.
-#
-#==============================================================================
-set -e
+#   - macOS only
+#   - Run once before starting iOS development
+#   - Installs modern Ruby and CocoaPods
+#   - May take time on first run
+################################################################################
 
-# Default values
-TARGET_DEVICE="auto"
-VERBOSE=false
-SKIP_XCODE=false
-SKIP_PODS=false
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
+
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+
+log_header "iOS Development Setup"
+
+# Validate platform
+if ! is_macos; then
+    die "iOS development is only available on macOS"
+fi
+
 
 # Help function
 show_help() {
@@ -113,7 +112,7 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Unknown option: $1"
             echo "Use -h or --help for usage information."
-            exit 1
+            die "Setup failed"
             ;;
     esac
 done
@@ -125,13 +124,13 @@ case $TARGET_DEVICE in
     *)
         echo "❌ Invalid device target: $TARGET_DEVICE"
         echo "Valid options: auto, iphone16e, ipadmac, iphone17max"
-        exit 1
+        die "Setup failed"
         ;;
 esac
 
-echo "🍎 iOS Development Setup Script"
-echo "================================"
-echo "📱 Target Device: $TARGET_DEVICE"
+log_info "🍎 iOS Development Setup Script"
+log_info "================================"
+log_info "📱 Target Device: $TARGET_DEVICE"
 if [ "$VERBOSE" = true ]; then
     echo "🔧 Verbose mode enabled"
 fi
@@ -150,19 +149,19 @@ command_exists() {
 
 # Function to print status
 print_status() {
-    echo -e "${BLUE}📱 $1${NC}"
+    log_info "📱 $1"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    log_success "✅ $1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    log_warning "⚠️  $1"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    log_error "❌ $1"
 }
 
 # Check prerequisites
@@ -171,13 +170,13 @@ print_status "Checking iOS development prerequisites..."
 if ! command_exists flutter; then
     print_error "Flutter is not installed. Please install Flutter first."
     echo "Visit: https://docs.flutter.dev/get-started/install"
-    exit 1
+    die "Setup failed"
 fi
 
 if ! command_exists xcodebuild; then
     print_error "Xcode Command Line Tools not found."
     echo "Please install Xcode and run: xcode-select --install"
-    exit 1
+    die "Setup failed"
 fi
 
 if ! command_exists pod; then
@@ -216,7 +215,7 @@ fi
 
 if [ ! -f "$FLUTTER_DIR/pubspec.yaml" ]; then
     print_error "Cannot find Flutter project. Expected pubspec.yaml in $FLUTTER_DIR"
-    exit 1
+    die "Setup failed"
 fi
 
 cd "$FLUTTER_DIR"
@@ -313,8 +312,8 @@ else
 fi
 
 print_success "iOS setup complete!"
-echo ""
-echo "🚀 Next steps:"
-echo "Run the main build and deploy script: ./scripts/ios-build.sh --dev --clean --run"
-echo ""
-echo "📚 For more options, see: ./scripts/ios/help.sh"
+log_info ""
+log_info "🚀 Next steps:"
+log_info "Run the main build and deploy script: ./scripts/ios-build.sh --dev --clean --run"
+log_info ""
+log_info "📚 For more options, see: ./scripts/ios/help.sh"
