@@ -1,114 +1,89 @@
 #!/usr/bin/env bash
 
 ################################################################################
-#
-# Normalize Existing Recipes Script
-#
-# This script retroactively normalizes existing recipes with enhanced search
-# metadata by sending them through the background normalization pipeline.
+# RecipeArchive Recipe Normalization Script
+################################################################################
+# PURPOSE: Retroactively normalize existing recipes with enhanced search metadata
+#   - Fetches all recipes for a test user
+#   - Sends recipes through background normalization pipeline
+#   - Enhances recipes with OpenAI-generated search metadata
+#   - Processes asynchronously via SQS
 #
 # USAGE:
-#   ./normalize-existing-recipes.sh
+#   ./scripts/normalize-existing-recipes.sh
+#
+# EXAMPLES:
+#   ./scripts/normalize-existing-recipes.sh
 #
 # DEPENDENCIES:
 #   - AWS CLI
 #   - jq
+#   - aws-backend/functions/test-tools/test-tools
+#
+# ENVIRONMENT VARIABLES:
+#   - NORMALIZATION_QUEUE_URL: SQS queue URL for recipe normalization
+#   - AWS_REGION: AWS region (default: us-west-2)
+#   - TEST_USER_ID: User ID for testing
 #
 # NOTES:
-#   - This script is designed to be run from the root of the monorepo.
-#   - It requires the .env file to be present in the root of the repository with
-#     the following variables:
-#       - NORMALIZATION_QUEUE_URL: The URL of the recipe normalization queue.
-#       - AWS_REGION: The AWS region.
-#       - TEST_USER_ID: The user ID to use for testing.
-#
+#   - Requires .env file with necessary environment variables
+#   - Incurs OpenAI API costs (~$0.01 per recipe)
+#   - Processes recipes asynchronously in background
 ################################################################################
 
-# Script to retroactively normalize existing recipes with enhanced search metadata
-# This sends all existing recipes through the background normalization pipeline
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-set -e
-
-# Load environment variables from repo root
-if [ -f "./.env" ]; then
-    export $(cat ./.env | grep -v '^#' | grep -v '^$' | xargs)
+# Load environment variables
+readonly REPO_ROOT="$(get_repo_root)"
+if [[ -f "$REPO_ROOT/.env" ]]; then
+    set -a
+    source "$REPO_ROOT/.env"
+    set +a
 fi
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
-
-# Helper functions
-log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
-
-log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-log_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-log_header() {
-    echo -e "${PURPLE}🚀 $1${NC}"
-    echo "======================================"
-}
-
-# Configuration
-AWS_REGION=${AWS_REGION:-us-west-2}
-SQS_QUEUE_URL=${NORMALIZATION_QUEUE_URL}
-USER_ID=${TEST_USER_ID}
-
-if [ -z "$SQS_QUEUE_URL" ] || [ -z "$USER_ID" ]; then
-    log_error "Missing required environment variables: SQS_QUEUE_URL, USER_ID"
-    log_error "Please set them in your environment or in a .env file."
-    exit 1
-fi
+# Script variables
+readonly AWS_REGION="${AWS_REGION:-us-west-2}"
+readonly SQS_QUEUE_URL="${NORMALIZATION_QUEUE_URL:-}"
+readonly USER_ID="${TEST_USER_ID:-}"
+readonly TEST_TOOLS="$REPO_ROOT/aws-backend/functions/test-tools/test-tools"
 
 log_header "Recipe Data Quality Enhancement"
+
 log_info "Retroactively normalizing existing recipes with enhanced search metadata"
-echo ""
+
+# Validate environment variables
+if [[ -z "$SQS_QUEUE_URL" ]] || [[ -z "$USER_ID" ]]; then
+    die "Missing required environment variables: NORMALIZATION_QUEUE_URL, TEST_USER_ID. Set them in .env file."
+fi
 
 # Check prerequisites
-log_info "Checking prerequisites..."
-if ! command -v aws > /tmp/normalize-existing-recipes.log 2>&1; then
-    log_error "AWS CLI is required but not installed"
-    exit 1
-fi
+log_section "Checking Prerequisites"
 
-if ! command -v jq > /tmp/normalize-existing-recipes.log 2>&1; then
-    log_error "jq is required but not installed"
-    exit 1
-fi
+require_command "aws" "brew install awscli"
+require_command "jq" "brew install jq"
+require_file "$TEST_TOOLS" "Test tools binary not found at $TEST_TOOLS"
 
 # Verify AWS credentials
 if ! aws sts get-caller-identity > /tmp/normalize-existing-recipes.log 2>&1; then
-    log_error "AWS credentials not configured"
-    exit 1
+    die "AWS credentials not configured"
 fi
 
 log_success "Prerequisites check passed"
-echo ""
 
 # Get list of all recipes
+log_section "Fetching Recipes"
+
 log_info "Fetching list of existing recipes..."
-RECIPE_LIST_OUTPUT=$(./aws-backend/functions/test-tools/test-tools \
+
+RECIPE_LIST_OUTPUT=$("$TEST_TOOLS" \
     -action=list-recipes \
     -user-id="$USER_ID" 2> /tmp/normalize-existing-recipes.log | grep -E "^  [a-f0-9-]{36}")
 
-if [ -z "$RECIPE_LIST_OUTPUT" ]; then
-    log_error "No recipes found for user $USER_ID"
-    exit 1
+if [[ -z "$RECIPE_LIST_OUTPUT" ]]; then
+    die "No recipes found for user $USER_ID"
 fi
 
 # Extract recipe IDs
@@ -116,12 +91,12 @@ RECIPE_IDS=$(echo "$RECIPE_LIST_OUTPUT" | awk '{print $1}' | grep -E '^[a-f0-9-]
 RECIPE_COUNT=$(echo "$RECIPE_IDS" | wc -l | tr -d ' ')
 
 log_success "Found $RECIPE_COUNT recipes to normalize"
-echo ""
 
 # Confirm with user
+echo ""
 log_warning "This will send $RECIPE_COUNT recipes through the background normalization pipeline."
 log_warning "Each recipe will be enhanced with OpenAI-generated search metadata."
-log_warning "This process will incur OpenAI API costs (~$0.01 per recipe)."
+log_warning "This process will incur OpenAI API costs (~\$0.01 per recipe)."
 echo ""
 read -p "Continue? (y/N): " -n 1 -r
 echo ""
@@ -131,21 +106,19 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-echo ""
-log_header "Sending Recipes for Background Normalization"
+# Process recipes
+log_section "Sending Recipes for Background Normalization"
 
-# Counter for tracking progress
 PROCESSED=0
 SUCCESSFUL=0
 FAILED=0
 
-# Process each recipe
 for RECIPE_ID in $RECIPE_IDS; do
     PROCESSED=$((PROCESSED + 1))
-    
+
     log_info "Processing recipe $PROCESSED/$RECIPE_COUNT: $RECIPE_ID"
-    
-    # Create SQS message for background normalization
+
+    # Create SQS message
     SQS_MESSAGE=$(jq -n \
         --arg recipeId "$RECIPE_ID" \
         --arg userId "$USER_ID" \
@@ -155,7 +128,7 @@ for RECIPE_ID in $RECIPE_IDS; do
             userId: $userId,
             action: $action
         }')
-    
+
     # Send message to SQS
     if aws sqs send-message \
         --region "$AWS_REGION" \
@@ -163,37 +136,38 @@ for RECIPE_ID in $RECIPE_IDS; do
         --message-body "$SQS_MESSAGE" \
         --delay-seconds 1 \
         > /tmp/normalize-existing-recipes.log 2>&1; then
-        
+
         SUCCESSFUL=$((SUCCESSFUL + 1))
-        log_success "Queued recipe $RECIPE_ID for normalization"
+        log_debug "Queued recipe $RECIPE_ID"
     else
         FAILED=$((FAILED + 1))
-        log_error "Failed to queue recipe $RECIPE_ID. See /tmp/normalize-existing-recipes.log for details."
+        log_error "Failed to queue recipe $RECIPE_ID. See /tmp/normalize-existing-recipes.log"
     fi
-    
-    # Small delay to avoid overwhelming the queue
+
+    # Small delay to avoid overwhelming queue
     sleep 0.1
 done
 
-echo ""
-log_header "Normalization Queue Summary"
-log_success "🎉 Successfully queued $SUCCESSFUL/$RECIPE_COUNT recipes for normalization"
+# Summary
+log_section "Normalization Queue Summary"
 
-if [ $FAILED -gt 0 ]; then
+log_success "Successfully queued $SUCCESSFUL/$RECIPE_COUNT recipes for normalization"
+
+if [[ $FAILED -gt 0 ]]; then
     log_warning "$FAILED recipes failed to queue"
 fi
 
 echo ""
-log_info "📊 Background Processing Status:"
-log_info "   • Recipes are now being processed asynchronously by the background normalizer"
-log_info "   • Each recipe will be enhanced with 9 search metadata fields via OpenAI"
-log_info "   • Processing typically takes 5-15 seconds per recipe"
-log_info "   • Check CloudWatch logs for detailed processing status"
+log_info "Background Processing Status:"
+echo "  • Recipes are now being processed asynchronously by the background normalizer"
+echo "  • Each recipe will be enhanced with 9 search metadata fields via OpenAI"
+echo "  • Processing typically takes 5-15 seconds per recipe"
+echo "  • Check CloudWatch logs for detailed processing status"
 
 echo ""
-log_info "💰 Estimated Cost: ~\$$(echo "scale=2; $SUCCESSFUL * 0.01" | bc) USD"
-log_info "⏱️  Estimated Time: ~$((SUCCESSFUL * 10 / 60)) minutes"
+log_info "Estimated Cost: ~\$$(echo "scale=2; $SUCCESSFUL * 0.01" | bc) USD"
+log_info "Estimated Time: ~$((SUCCESSFUL * 10 / 60)) minutes"
 
 echo ""
-log_warning "💡 Note: You can monitor progress in AWS CloudWatch logs"
-log_warning "🔄 Recipes will be automatically updated with enhanced metadata when complete"
+log_warning "Note: Monitor progress in AWS CloudWatch logs"
+log_warning "Recipes will be automatically updated with enhanced metadata when complete"
