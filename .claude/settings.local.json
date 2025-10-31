@@ -27,7 +27,16 @@
       "Bash(/Users/matt/GitHub/RecipeArchive/scripts/diagnose-health.sh:*)",
       "Bash(./scripts/diagnose-health.sh:*)",
       "Bash(./scripts/ios/build.sh:*)",
-      "Bash(git pull:*)"
+      "Bash(find:*)",
+      "Bash(/Users/matt/GitHub/RecipeArchive/scripts/lib/migrate-to-standard.sh:*)",
+      "Bash(./scripts/lib/migrate-to-standard.sh:*)",
+      "Bash(for script in aws-deploy-lambda.sh manage-api-routes.sh aws-deploy-admin-endpoints.sh build-lambda-packages.sh aws-deploy-all.sh android/emulator.sh)",
+      "Bash(do if [[ -f \"scripts/$script\" ]])",
+      "Bash(for script in aws-deploy-admin-endpoints.sh aws-deploy-lambda.sh manage-api-routes.sh aws-deploy-all.sh web/deploy.sh)",
+      "Bash(for script in aws-deploy-lambda.sh manage-api-routes.sh setup-macos.sh aws-deploy-all.sh ios/setup.sh android/setup.sh ios/build.sh android/build.sh)",
+      "Bash(git pull:*)",
+      "Bash(gofmt:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": [],
     "ask": []
