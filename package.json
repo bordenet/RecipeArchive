@@ -14,6 +14,8 @@
     "test:multi-tenant": "cd tests/multi-tenant && ./run-tests.sh",
     "test:tenant-isolation": "cd tests/multi-tenant && go test -v ./...",
     "test:invitation-flow": "cd tests/multi-tenant && npm test",
+    "test:e2e": "jest --testMatch='**/tests/e2e/**/*.test.js' --testTimeout=90000",
+    "test:e2e:site": "jest --testMatch='**/tests/e2e/**/*.test.js' --testTimeout=90000",
     "test:extensions": "node tests/automation/extension-regression-test.js",
     "test:build-validation": "node tests/automation/build-validation-pipeline.js",
     "test:no-human": "npm run test:extensions && npm run test:build-validation",

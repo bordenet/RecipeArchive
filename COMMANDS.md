@@ -77,9 +77,24 @@
 | View CloudWatch Dashboard | Navigate to CloudWatch console → Dashboards → RecipeArchive-Production |
 | Test Alarm Triggers | See monitoring implementation plan for test procedures |
 
+## Testing Commands
+
+| Task | Command |
+| --- | --- |
+| Run All E2E Parser Tests | `npm run test:e2e` |
+| Run Single Site Test | `npm run test:e2e -- -t "food52"` |
+| Run Unit Tests | `npm run test:unit` |
+| Run Integration Tests | `npm run test:integration` |
+| Run Parser Tests | `npm run test:parsers` |
+| Run Extension Tests | `npm run test:extensions` |
+| Run Test Coverage | `npm run test:coverage` |
+
 ## Other Useful Scripts
 
 | Task | Command |
 | --- | --- |
 | Analyze Flutter Errors | `./tools/analyze-flutter-errors.sh` |
 | Recipe Report | `./tools/recipe-report.sh` |
+| System Health Check | `./scripts/diagnose-health.sh` |
+| Health Check (Web Only) | `./scripts/diagnose-health.sh --web` |
+| Health Check (Backend Only) | `./scripts/diagnose-health.sh --backend` |

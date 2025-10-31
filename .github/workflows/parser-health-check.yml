@@ -1,0 +1,112 @@
+name: Parser Health Check
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC (1 AM PST, 4 AM EST)
+    - cron: "0 9 * * *"
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches: [main]
+    paths:
+      - "parsers/**"
+      - "tests/e2e/**"
+
+jobs:
+  parser-regression-tests:
+    name: E2E Parser Regression Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test sites in batches for parallel execution
+        batch: [1, 2, 3]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Run E2E parser tests (Batch ${{ matrix.batch }})
+        run: npm run test:e2e
+        env:
+          CI: true
+          TEST_BATCH: ${{ matrix.batch }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parser-test-results-batch-${{ matrix.batch }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  parser-health-report:
+    name: Generate Health Report
+    needs: parser-regression-tests
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results/
+
+      - name: Generate health report
+        run: |
+          echo "# Parser Health Check Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count results (simplified for now - would parse actual test output in production)
+          if [ "${{ needs.parser-regression-tests.result }}" == "success" ]; then
+            echo "✅ All parsers passed validation" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some parsers failed - review artifacts" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Covered Sites" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- AllRecipes" >> $GITHUB_STEP_SUMMARY
+          echo "- Epicurious" >> $GITHUB_STEP_SUMMARY
+          echo "- Food52" >> $GITHUB_STEP_SUMMARY
+          echo "- Food Network" >> $GITHUB_STEP_SUMMARY
+          echo "- Serious Eats" >> $GITHUB_STEP_SUMMARY
+          echo "- Smitten Kitchen" >> $GITHUB_STEP_SUMMARY
+          echo "- NYT Cooking" >> $GITHUB_STEP_SUMMARY
+          echo "- Damn Delicious" >> $GITHUB_STEP_SUMMARY
+          echo "- Food & Wine" >> $GITHUB_STEP_SUMMARY
+          echo "- Alexandra's Kitchen" >> $GITHUB_STEP_SUMMARY
+          echo "- Anthony's Kitchen" >> $GITHUB_STEP_SUMMARY
+          echo "- Love and Lemons" >> $GITHUB_STEP_SUMMARY
+          echo "- Lemons and Zest" >> $GITHUB_STEP_SUMMARY
+          echo "- Washington Post" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## SLO Targets" >> $GITHUB_STEP_SUMMARY
+          echo "- Parser Success Rate: 100%" >> $GITHUB_STEP_SUMMARY
+          echo "- Max Execution Time: <90s per site" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure (optional)
+        if: failure()
+        run: |
+          echo "Parser health check failed. Review test artifacts for details."
+          # In production, would integrate with Slack/PagerDuty/etc.
