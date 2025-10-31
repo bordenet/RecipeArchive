@@ -1,32 +1,43 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# RecipeArchive API Gateway Route Management Script
-#
-# PURPOSE:
-#   This script provides a centralized, automated, and repeatable way to manage
-#   API Gateway routes for the RecipeArchive project. It is designed to
-#   prevent manual configuration errors, maintain consistency across environments,
-#   and simplify the process of updating API endpoints.
+# RecipeArchive API Gateway Route Management
+################################################################################
+# PURPOSE: Manage API Gateway routes and Lambda integrations
+#   - Add new routes to API Gateway
+#   - Configure Lambda integrations
+#   - Set up method responses and CORS
+#   - Deploy changes to stages
+#   - Validate route configurations
 #
 # USAGE:
-#   ./scripts/manage-api-routes.sh <command> [options]
+#   ./scripts/manage-api-routes.sh <command>
 #
-# COMMANDS:
-#   show              Displays the current API Gateway routes for the target API.
-#   validate          Checks all integrations for the target API Gateway,
-#                     ensuring that the configured Lambda functions exist.
-#   fix               [Beta] Attempts to automatically fix broken integrations for
-#                     known API Gateway configurations (secure and dev).
-#   add-analytics     Adds the /v1/analytics/events and /v1/analytics/summary
-#                     routes and connects them to the RecipeAnalyticsAggregator Lambda.
-#   remove-analytics  Removes the /v1/analytics resource and its child routes.
-#   deploy            Deploys the current API Gateway configuration to the 'prod'
-#                     stage.
+# EXAMPLES:
+#   ./scripts/manage-api-routes.sh add-analytics
+#   ./scripts/manage-api-routes.sh list
+#   ./scripts/manage-api-routes.sh deploy
 #
-# OPTIONS & ENVIRONMENT:
-#   The script can be targeted at different API Gateways by setting the
+# DEPENDENCIES:
+#   - AWS CLI
+#   - jq
+#
+# ENVIRONMENT VARIABLES:
+#   - API_GATEWAY_ID
+#
+# NOTES:
+#   - Requires .env file configured
+#   - Manages API Gateway REST API routes
+#   - Supports CORS configuration
+################################################################################
+
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
+
+readonly REPO_ROOT="$(get_repo_root)"
+
 #   API_GATEWAY_ID environment variable.
 #
 #   - API_GATEWAY_ID:         Overrides the default API Gateway ID.
@@ -71,7 +82,7 @@ elif [[ "$(uname)" == "Linux" ]]; then
     PLATFORM="Linux"
 else
     echo "❌ Unsupported platform: $(uname)"
-    exit 1
+    die "Command failed"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -83,7 +94,7 @@ if [ -f "$REPO_ROOT/.env" ]; then
     source "$REPO_ROOT/scripts/load-env.sh"
 else
     echo "❌ .env file not found in repo root. Please create one from .env.example"
-    exit 1
+    die "Command failed"
 fi
 
 # Colors for output
@@ -103,10 +114,10 @@ API_ID=${API_GATEWAY_ID:-$SECURE_API_ID}
 REGION=${AWS_REGION:-"us-west-2"}
 STAGE_NAME="prod"
 
-log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-log_success() { echo -e "${GREEN}✅ $1${NC}"; }
-log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-log_error() { echo -e "${RED}❌ $1${NC}"; }
+log_info() { log_info "ℹ️  $1${NC}"; }
+log_success() { log_success "✅ $1${NC}"; }
+log_warning() { log_warning "⚠️  $1${NC}"; }
+log_error() { log_error "❌ $1${NC}"; }
 
 # Get parent resource ID by path
 get_resource_id() {
@@ -536,6 +547,6 @@ case "${1:-}" in
         ;;
     *)
         usage
-        exit 1
+        die "Command failed"
         ;;
 esac

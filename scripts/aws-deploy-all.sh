@@ -1,32 +1,49 @@
 #!/usr/bin/env bash
 
-#===============================================================================
-# RecipeArchive Complete Deployment Script
-#===============================================================================
-# PURPOSE: Deploy both Flutter web app and all Lambda functions in one command
-#
-# HOW IT WORKS:
-#   1. Auto-discovers Lambda functions from AWS using CLI queries
-#   2. Builds and deploys all Go Lambda functions
-#   3. Builds and deploys Flutter web app to S3
-#   4. Creates CloudFront invalidation for instant updates
-#   5. Provides comprehensive deployment status and URLs
+################################################################################
+# RecipeArchive Complete AWS Deployment
+################################################################################
+# PURPOSE: Deploy all AWS infrastructure and Lambda functions
+#   - Deploys CDK infrastructure stack
+#   - Builds all Lambda functions
+#   - Deploys all Lambda functions
+#   - Configures API Gateway routes
+#   - Sets up monitoring and alarms
+#   - Verifies deployment
 #
 # USAGE:
-#   ./scripts/aws-deploy-all.sh              # Deploy everything
-#   ./scripts/aws-deploy-all.sh --backend-only     # Deploy only Lambda functions
-#   ./scripts/aws-deploy-all.sh --frontend-only    # Deploy only Flutter web app
-#   ./scripts/aws-deploy-all.sh --dry-run    # Show what would be deployed
+#   ./scripts/aws-deploy-all.sh [environment]
 #
-# REQUIREMENTS:
-#   - AWS CLI configured
-#   - Go installed
-#   - Flutter installed
-#   - .env file in the root of the repository with the following variables:
-#       - S3_WEB_APP_BUCKET: The name of the S3 bucket for the web app.
-#       - CLOUDFRONT_DISTRIBUTION_ID: The ID of the CloudFront distribution.
-#       - CLOUDFRONT_URL: The URL of the CloudFront distribution.
-#       - AWS_REGION: The AWS region to deploy to.
+# EXAMPLES:
+#   ./scripts/aws-deploy-all.sh dev
+#   ./scripts/aws-deploy-all.sh prod
+#
+# DEPENDENCIES:
+#   - AWS CLI
+#   - AWS CDK
+#   - Go 1.19+
+#   - Node.js
+#
+# ENVIRONMENT VARIABLES:
+#   - AWS credentials
+#
+# NOTES:
+#   - Requires AWS credentials configured
+#   - Full deployment of entire stack
+#   - May take 10-15 minutes
+################################################################################
+
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
+
+readonly REPO_ROOT="$(get_repo_root)"
+readonly ENVIRONMENT="${1:-dev}"
+
+log_header "Complete AWS Deployment"
+log_info "Environment: $ENVIRONMENT"
+
 #       - API_GATEWAY_ID: The ID of the API Gateway.
 #
 #===============================================================================
@@ -36,7 +53,7 @@ if ((BASH_VERSINFO[0] < 4)); then
     echo "Error: This script requires bash 4.0 or higher"
     echo "Current version: $BASH_VERSION"
     echo "On macOS, install with: brew install bash"
-    exit 1
+    die "Deployment failed"
 fi
 
 set -e  # Exit on any error
@@ -54,7 +71,7 @@ declare -A LAMBDA_FUNCTIONS
 
 # Helper functions
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    log_error "❌ $1"
 }
 
 # Get script directory and repo root
@@ -69,14 +86,14 @@ else
     log_error ".env file not found in the project root."
     log_error "Please copy the .env.example file to .env and populate it with your AWS credentials and infrastructure details."
     log_error "For more information, see the 'Environment Variables Required' section in docs/setup/aws-setup.md."
-    exit 1
+    die "Deployment failed"
 fi
 
 # Configuration from environment variables
 if [ -z "$S3_WEB_APP_BUCKET" ] || [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ] || [ -z "$CLOUDFRONT_URL" ] || [ -z "$AWS_REGION" ] || [ -z "$API_GATEWAY_ID" ]; then
     log_error "Missing required environment variables in .env file."
     log_error "Please check the .env.example file for a complete list of required variables and explanations."
-    exit 1
+    die "Deployment failed"
 fi
 S3_BUCKET=$S3_WEB_APP_BUCKET  # Backward compatibility alias
 
@@ -85,19 +102,19 @@ declare -A LAMBDA_FUNCTIONS
 
 # Helper functions (continued)
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    log_info "ℹ️  $1"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    log_success "✅ $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    log_warning "⚠️  $1"
 }
 
 log_header() {
-    echo -e "${PURPLE}🚀 $1${NC}"
+    echo -e "${PURPLE}🚀 $1"
     echo "======================================"
 }
 
@@ -108,28 +125,28 @@ check_prerequisites() {
     # Check AWS CLI
     if ! aws sts get-caller-identity > /tmp/deploy-all.log 2>&1; then
         log_error "AWS CLI not configured. Please run 'aws configure' first."
-        exit 1
+        die "Deployment failed"
     fi
     log_success "AWS CLI configured"
     
     # Check Flutter
     if ! command -v flutter > /tmp/deploy-all.log 2>&1; then
         log_error "Flutter not found. Please install Flutter."
-        exit 1
+        die "Deployment failed"
     fi
     log_success "Flutter found"
     
     # Check Go
     if ! command -v go > /tmp/deploy-all.log 2>&1; then
         log_error "Go not found. Please install Go for Lambda builds."
-        exit 1
+        die "Deployment failed"
     fi
     log_success "Go found"
     
     # Check jq
     if ! command -v jq > /tmp/deploy-all.log 2>&1; then
         log_error "jq not found. Please install jq for JSON parsing."
-        exit 1
+        die "Deployment failed"
     fi
     log_success "jq found"
     
@@ -259,7 +276,7 @@ deploy_flutter() {
     log_info "Running Flutter analysis..."
     if ! flutter analyze > /tmp/deploy-all.log 2>&1; then
         log_error "Flutter analysis failed - fix issues before deploying. See /tmp/deploy-all.log for details."
-        exit 1
+        die "Deployment failed"
     fi
     log_success "Flutter analysis passed"
     
@@ -275,7 +292,7 @@ deploy_flutter() {
         log_error "Flutter build failed! See /tmp/deploy-all.log for details."
         log_warning "Try: flutter clean && flutter pub get"
         log_warning "Then: flutter build web --release --no-tree-shake-icons"
-        exit 1
+        die "Deployment failed"
     fi
     log_success "Flutter build completed"
     
@@ -283,7 +300,7 @@ deploy_flutter() {
     log_info "Deploying to S3 ($S3_BUCKET)..."
     if ! aws s3 sync build/web/ s3://${S3_BUCKET}/ --delete --cache-control "public, max-age=86400" > /tmp/deploy-all.log 2>&1; then
         log_error "S3 deployment failed! See /tmp/deploy-all.log for details."
-        exit 1
+        die "Deployment failed"
     fi
     log_success "S3 deployment completed"
     
@@ -293,7 +310,7 @@ deploy_flutter() {
     
     if [ $? -ne 0 ]; then
         log_error "CloudFront invalidation failed!"
-        exit 1
+        die "Deployment failed"
     fi
     
     INVALIDATION_ID=$(echo $INVALIDATION_OUTPUT | jq -r '.Invalidation.Id')
@@ -427,14 +444,14 @@ main() {
                 echo ""
                 check_prerequisites
                 get_lambda_function_names
-                echo -e "${BLUE}📋 Lambda Functions that would be deployed:${NC}"
+                log_info "📋 Lambda Functions that would be deployed:"
                 for function_key in "${!LAMBDA_FUNCTIONS[@]}"; do
                     echo "   • $function_key: ${LAMBDA_FUNCTIONS[$function_key]}"
                 done
                 echo ""
-                echo -e "${BLUE}📱 Flutter app would be deployed to:${NC} ${S3_BUCKET}"
-                echo -e "${BLUE}🌐 CloudFront distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
-                echo -e "${BLUE}🔗 Final URL:${NC} ${CLOUDFRONT_URL}"
+                log_info "📱 Flutter app would be deployed to:${NC} ${S3_BUCKET}"
+                log_info "🌐 CloudFront distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
+                log_info "🔗 Final URL:${NC} ${CLOUDFRONT_URL}"
                 exit 0
                 ;; 
             -h|--help)
@@ -449,7 +466,7 @@ main() {
                 ;; 
             *)
                 log_error "Unknown option: $1"
-                exit 1
+                die "Deployment failed"
                 ;; 
         esac
     done
@@ -514,13 +531,13 @@ main() {
     log_header "Deployment Summary"
     log_success "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
     echo ""
-    echo -e "${BLUE}📱 App URL:${NC} ${CLOUDFRONT_URL}"
-    echo -e "${BLUE}🗂️  S3 Bucket:${NC} ${S3_BUCKET}"
-    echo -e "${BLUE}🌐 CloudFront Distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
+    log_info "📱 App URL:${NC} ${CLOUDFRONT_URL}"
+    log_info "🗂️  S3 Bucket:${NC} ${S3_BUCKET}"
+    log_info "🌐 CloudFront Distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
     
     if $DEPLOY_BACKEND;
     then
-        echo -e "${BLUE}⚡ Lambda Functions Deployed:${NC}"
+        log_info "⚡ Lambda Functions Deployed:"
         for function_key in "${!LAMBDA_FUNCTIONS[@]}"; do
             echo "   • $function_key: ${LAMBDA_FUNCTIONS[$function_key]}"
         done
@@ -529,7 +546,7 @@ main() {
     local end_time=$(date +%s)
     local duration=$((end_time - start_time))
     echo ""
-    echo -e "${PURPLE}⏱️  Total deployment time: ${duration}s${NC}"
+    echo -e "${PURPLE}⏱️  Total deployment time: ${duration}s"
     log_warning "💡 Changes may take 1-2 minutes to propagate globally"
     log_warning "🔄 Hard refresh your browser (Cmd+Shift+R) to see changes"
     echo ""
