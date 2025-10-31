@@ -1,58 +1,60 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# RecipeArchive Project Setup Script for macOS
-#
-# This script installs comprehensive development dependencies for the
-# RecipeArchive project on macOS.
+# RecipeArchive macOS Development Environment Setup
+################################################################################
+# PURPOSE: Complete development environment setup for macOS
+#   - Installs Homebrew package manager
+#   - Installs Flutter SDK
+#   - Installs Android Studio and SDK
+#   - Installs Xcode Command Line Tools
+#   - Installs CocoaPods (modern Ruby via Homebrew)
+#   - Installs Node.js and npm
+#   - Installs AWS CLI
+#   - Installs Go
+#   - Installs development tools (git, wget, etc.)
+#   - Configures environment variables
+#   - Sets up shell configuration
+#   - Verifies all installations
 #
 # USAGE:
-#   ./setup-macos.sh
+#   ./scripts/setup-macos.sh
+#
+# EXAMPLES:
+#   ./scripts/setup-macos.sh
+#
+# DEPENDENCIES:
+#   - macOS (this script is macOS-specific)
+#   - Internet connection
 #
 # NOTES:
-#   - This script is designed to be run on macOS only.
-#   - It will install a lot of tools and may ask for your password.
-#
+#   - macOS only
+#   - Run once for initial environment setup
+#   - May take 30-60 minutes on first run
+#   - Requires admin password for some operations
+#   - Installs modern Ruby (not system Ruby)
 ################################################################################
 
-# Get script directory and repository root
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-# RecipeArchive Project Setup Script for macOS
-# Enhanced with comprehensive dependency management and confirmation prompts
+readonly REPO_ROOT="$(get_repo_root)"
 
-set -e
+log_header "macOS Development Environment Setup"
 
-# Color codes for better output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# If a .env file exists in the current directory, source it
-if [ -f ".env" ]; then
-  # shellcheck disable=SC1091
-  source ".env"
+# Validate platform
+if ! is_macos; then
+    die "This script is only for macOS"
 fi
 
-# Function to print colored output
-print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    log_warning "[WARNING]${NC} $1"
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    log_error "[ERROR]${NC} $1"
 }
 
 # Function for timed confirmation (15 seconds default to 'N')
@@ -95,12 +97,12 @@ if ! command -v brew &> /dev/null; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     if ! command -v brew &> /dev/null; then
       print_error "Homebrew installation failed. Please install Homebrew manually."
-      exit 1
+      die "Setup failed"
     fi
     print_success "Homebrew installed successfully"
   else
     print_error "Homebrew is required for this setup. Exiting."
-    exit 1
+    die "Setup failed"
   fi
 else
   print_success "Homebrew already installed"
@@ -115,7 +117,7 @@ if ! command -v node &> /dev/null; then
   brew install node
   if ! command -v node &> /dev/null; then
     print_error "Node.js installation failed. Please install Node.js manually."
-    exit 1
+    die "Setup failed"
   fi
   print_success "Node.js installed: $(node --version)"
 else
@@ -128,7 +130,7 @@ if ! command -v tsc &> /dev/null; then
   timeout 180 npm install -g typescript
   if ! command -v tsc &> /dev/null; then
     print_error "TypeScript installation failed. Please install TypeScript manually."
-    exit 1
+    die "Setup failed"
   fi
   print_success "TypeScript installed: $(tsc --version)"
 else
@@ -141,7 +143,7 @@ if ! command -v cdk &> /dev/null; then
   timeout 180 npm install -g aws-cdk@2.87.0
   if ! command -v cdk &> /dev/null; then
     print_error "AWS CDK installation failed. Please install AWS CDK manually."
-    exit 1
+    die "Setup failed"
   fi
   print_success "AWS CDK installed: $(cdk --version)"
 else
@@ -154,7 +156,7 @@ if ! command -v go &> /dev/null; then
   brew install go
   if ! command -v go &> /dev/null; then
     print_error "Go installation failed. Please install Go manually."
-    exit 1
+    die "Setup failed"
   fi
   print_success "Go installed: $(go version)"
 else
@@ -181,7 +183,7 @@ if ! xcode-select -p &> /dev/null; then
     done
     if ! xcode-select -p &> /dev/null; then
       print_error "Xcode CLI tools installation timed out. Please complete the installation and run this script again."
-      exit 1
+      die "Setup failed"
     fi
   else
     print_warning "Skipping Xcode CLI tools - iOS development will not be available"
@@ -448,7 +450,7 @@ if [ "$ios_setup_needed" = true ]; then
         # Verify 'pod' command is now available
         if ! command -v pod &> /dev/null; then
             print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal or check your shell profile."
-            exit 1
+            die "Setup failed"
         fi
       else
         brew install cocoapods
