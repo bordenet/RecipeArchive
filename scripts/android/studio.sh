@@ -1,43 +1,50 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# Android Studio Launcher Script
-#==============================================================================
-# NAME: studio.sh
-#
-# PURPOSE: Opens the Android project in Android Studio.
+################################################################################
+# RecipeArchive Android Studio Launcher
+################################################################################
+# PURPOSE: Opens Android project in Android Studio
+#   - Locates Flutter project Android directory
+#   - Launches Android Studio with correct project path
 #
 # USAGE:
-#   ./scripts/android-studio.sh
+#   ./scripts/android/studio.sh
+#
+# EXAMPLES:
+#   ./scripts/android/studio.sh
 #
 # DEPENDENCIES:
 #   - Android Studio
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
-#
-#==============================================================================
-set -e
+#   - Run from repository root
+################################################################################
 
-echo "🤖 Android Studio Launcher Script"
-echo "=============================="
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Color codes for output
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
+readonly ANDROID_DIR="$FLUTTER_DIR/android"
 
-# Function to print status
-print_status() {
-    echo -e "${BLUE}🤖 $1${NC}"
-}
+log_header "Android Studio Launcher"
 
-# Navigate to Flutter project
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
+# Validate Android directory exists
+require_directory "$ANDROID_DIR" "Android directory not found: $ANDROID_DIR"
 
-FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
+# Check if Android Studio is installed
+if ! is_macos; then
+    die "This script currently only supports macOS. For other platforms, manually open $ANDROID_DIR in Android Studio."
+fi
 
-# Open Android Studio
-print_status "Opening Android project in Android Studio..."
-open -a "Android Studio" "$FLUTTER_DIR/android"
+if [[ ! -d "/Applications/Android Studio.app" ]]; then
+    die "Android Studio not found. Please install Android Studio first."
+fi
+
+log_info "Opening Android project in Android Studio..."
+open -a "Android Studio" "$ANDROID_DIR"
+
+log_success "Android Studio launched"
