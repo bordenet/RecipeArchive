@@ -1,77 +1,86 @@
 #!/usr/bin/env bash
 
 ################################################################################
-# iOS Build Script for RecipeArchive
+# RecipeArchive iOS Build Script
 ################################################################################
-# PURPOSE: Single source of truth for all iOS builds
-#   - Development builds (fast, simulator-focused)
-#   - Production builds (archives for distribution)
+# PURPOSE: Build iOS app for development or production
+#   - Supports debug, release, and profile configurations
+#   - Builds for simulator or device
+#   - Uses Xcode build system directly (NOT flutter build)
+#   - Automatic Share Extension embedding verification
+#   - Auto-resets project.pbxproj to avoid git noise
+#   - Supports versioning
+#   - Automatic timeout protection (10 minutes)
 #
 # USAGE:
-#   Development (simulator):
-#     ./scripts/ios-build.sh --dev --simulator --debug
-#     ./scripts/ios-build.sh --dev --simulator --release
+#   ./scripts/ios/build.sh [options]
 #
-#   Production (archive):
-#     ./scripts/ios-build.sh --prod --device --release --version 1.0.1
+# EXAMPLES:
+#   ./scripts/ios/build.sh --dev --run
+#   ./scripts/ios/build.sh --prod --release --device --version 1.0.1
+#   ./scripts/ios/build.sh --clean --dev --run
 #
-#   Quick simulator build+run:
-#     ./scripts/ios-build.sh --dev --run
+# OPTIONS:
+#   --dev           Development mode (fast build)
+#   --prod          Production mode (signed release)
+#   --debug         Build Debug configuration
+#   --release       Build Release configuration
+#   --profile       Build Profile configuration
+#   --simulator     Build for iOS Simulator
+#   --device        Build for iOS Device
+#   --clean         Clean before building
+#   --run           Run on simulator/device after build
+#   --version X.Y.Z Set build version
 #
-# PHILOSOPHY:
-#   - Always use Flutter's build pipeline first (flutter build ios)
-#   - Always use "Runner" scheme with standard Xcode configurations
-#   - Consistent workflow regardless of target
-#   - Clear separation between dev (fast iteration) and prod (distribution)
+# DEPENDENCIES:
+#   - Flutter SDK
+#   - Xcode
+#   - CocoaPods
+#
+# NOTES:
+#   - Uses Xcode build system (NOT flutter build ios)
+#   - Automatic 10-minute timeout protection
+#   - Auto-resets project.pbxproj after build
+#   - Xcode 16 compatible (auto-downgrades objectVersion)
 ################################################################################
 
-set -e
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-# Defaults
-MODE=""              # dev or prod
-TARGET="simulator"   # simulator or device
-CONFIG="debug"       # debug, release, profile
-VERSION=""           # Optional version string
-RUN_AFTER=false      # Auto-launch after build
-CLEAN=false          # Clean before build
-
-# Paths
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
+
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
+
+if ! is_macos; then
+    die "iOS builds are only available on macOS"
+fi
+
 IOS_DIR="$FLUTTER_DIR/ios"
 UNIFIED_BUILD_DIR="$PROJECT_ROOT/build"
 
 # Helper functions
 print_header() {
-    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║  $1${NC}"
+    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗"
+    echo -e "${CYAN}║  $1"
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}\n"
 }
 
 print_status() {
-    echo -e "${BLUE}▸ $1${NC}"
+    log_info "▸ $1"
 }
 
 print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
+    log_success "✓ $1"
 }
 
 print_error() {
-    echo -e "${RED}✗ $1${NC}" >&2
+    log_error "✗ $1${NC}" >&2
 }
 
 error_exit() {
     print_error "$1"
-    exit 1
+    die "Build failed"
 }
 
 # Usage
@@ -206,10 +215,10 @@ fi
 
 # Banner
 print_header "iOS Build - RecipeArchive"
-echo -e "${BLUE}Mode:${NC}          ${GREEN}$MODE${NC}"
-echo -e "${BLUE}Target:${NC}        ${GREEN}$TARGET${NC}"
-echo -e "${BLUE}Configuration:${NC} ${GREEN}$XCODE_CONFIG${NC}"
-echo -e "${BLUE}Version:${NC}       ${GREEN}$VERSION${NC}"
+log_info "Mode:${NC}          ${GREEN}$MODE"
+log_info "Target:${NC}        ${GREEN}$TARGET"
+log_info "Configuration:${NC} ${GREEN}$XCODE_CONFIG"
+log_info "Version:${NC}       ${GREEN}$VERSION"
 
 # Validate environment
 print_status "Validating environment..."
@@ -355,8 +364,8 @@ else
     # Production mode: Build for device with signing
     print_status "Building for device (requires Apple Developer account)..."
 
-    echo -e "${YELLOW}Note:${NC} This requires signing with your Apple ID"
-    echo -e "${YELLOW}      Free accounts work! Open Xcode → Preferences → Accounts to add your Apple ID${NC}\n"
+    log_warning "Note:${NC} This requires signing with your Apple ID"
+    log_warning "      Free accounts work! Open Xcode → Preferences → Accounts to add your Apple ID${NC}\n"
 
     SDK="iphoneos"
 
@@ -433,14 +442,14 @@ else
             codesign -dv "$APP_PATH" 2>&1 | grep "Authority\|Identifier" || true
 
             # Next steps
-            echo -e "\n${YELLOW}Next Steps:${NC}"
+            echo -e "\n${YELLOW}Next Steps:"
             echo "  1. Connect your iPhone via USB"
             echo "  2. Open Xcode: Window → Devices and Simulators"
             echo "  3. Select your device"
             echo "  4. Click '+' under Installed Apps"
             echo "  5. Navigate to: $APP_PATH"
             echo ""
-            echo "  ${CYAN}Or use Xcode to run directly:${NC}"
+            echo "  ${CYAN}Or use Xcode to run directly:"
             echo "  open -a Xcode ios/Runner.xcworkspace"
             echo "  Then Product → Destination → Your Device → Run"
         else
@@ -449,7 +458,7 @@ else
     else
         print_error "Build failed - possible signing issues"
         echo ""
-        echo -e "${YELLOW}Common fixes:${NC}"
+        log_warning "Common fixes:"
         echo "  1. Open Xcode → Preferences → Accounts"
         echo "  2. Add your Apple ID (free account works!)"
         echo "  3. Open ios/Runner.xcworkspace in Xcode"
@@ -458,8 +467,8 @@ else
         echo "  6. Select your Team (your Apple ID)"
         echo "  7. Do the same for RecipeArchive target"
         echo ""
-        echo -e "${CYAN}Then run this script again or use Xcode directly${NC}"
-        exit 1
+        echo -e "${CYAN}Then run this script again or use Xcode directly"
+        die "Build failed"
     fi
 fi
 
