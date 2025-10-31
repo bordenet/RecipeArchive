@@ -1,31 +1,46 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-#===============================================================================
-# RecipeArchive Lambda Deployment Script
-#===============================================================================
-# PURPOSE: Deploy Go Lambda functions to AWS with automatic discovery and builds
-#
-# HOW IT WORKS:
-#   1. Auto-discovers Lambda functions in aws-backend/functions/
-#   2. Builds Go binaries for Linux (GOOS=linux GOARCH=amd64)
-#   3. Creates deployment packages and uploads to AWS
-#   4. Uses dynamic function name discovery from AWS CLI
+################################################################################
+# RecipeArchive Lambda Function Deployment
+################################################################################
+# PURPOSE: Deploy individual Lambda functions to AWS
+#   - Builds Go Lambda functions for Linux
+#   - Creates deployment packages
+#   - Updates Lambda function code
+#   - Configures function settings
+#   - Updates environment variables
+#   - Verifies deployment
 #
 # USAGE:
-#   ./scripts/aws-deploy-lambda.sh recipes                    # Deploy single function
-#   ./scripts/aws-deploy-lambda.sh invitation-manager-s3     # Deploy invitation manager
-#   ./scripts/aws-deploy-lambda.sh --all                     # Deploy all functions
-#   ./scripts/aws-deploy-lambda.sh --list                    # List available functions
-#   ./scripts/aws-deploy-lambda.sh --dry-run recipes         # Show what would be deployed
+#   ./scripts/aws-deploy-lambda.sh <function-name>
+#   ./scripts/aws-deploy-lambda.sh --all
+#   ./scripts/aws-deploy-lambda.sh --list
 #
-# REQUIREMENTS:
-#   - AWS CLI configured
-#   - Go installed
-#   - .env file in repo root
+# EXAMPLES:
+#   ./scripts/aws-deploy-lambda.sh recipes
+#   ./scripts/aws-deploy-lambda.sh analytics
+#   ./scripts/aws-deploy-lambda.sh --all
 #
+# DEPENDENCIES:
+#   - AWS CLI
+#   - Go 1.19+
+#
+# ENVIRONMENT VARIABLES:
+#   - AWS credentials
+#
+# NOTES:
+#   - Requires AWS credentials configured
+#   - Builds for Linux AMD64 (AWS Lambda runtime)
+#   - Creates deployment packages with proper structure
 ################################################################################
 
-set -e
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
+
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
 
 # Get script directory and repo root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,7 +51,7 @@ if [ -f "$REPO_ROOT/.env" ]; then
     export $(cat "$REPO_ROOT/.env" | grep -v '^#' | grep -v '^$' | xargs)
 else
     echo "❌ .env file not found in repo root. Please create one from .env.example"
-    exit 1
+    die "Deployment failed"
 fi
 
 # Colors for output
@@ -161,19 +176,19 @@ get_available_functions() {
 }
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+    log_info "ℹ️  $1"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    log_success "✅ $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    log_warning "⚠️  $1"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    log_error "❌ $1"
 }
 
 print_usage() {
@@ -360,7 +375,7 @@ main() {
             log_info "Deploying all Lambda functions..."
             
             if ! check_dependencies; then
-                exit 1
+                die "Deployment failed"
             fi
             
             local failed_deployments=()
@@ -402,7 +417,7 @@ main() {
 
             if [ ${#failed_deployments[@]} -gt 0 ]; then
                 log_error "❌ Failed: ${#failed_deployments[@]} (${failed_deployments[*]})"
-                exit 1
+                die "Deployment failed"
             fi
 
             # Validate API Gateway integrations after deployment
@@ -430,14 +445,14 @@ main() {
         "")
             log_error "No function specified."
             print_usage
-            exit 1
+            die "Deployment failed"
             ;; 
         *)
             if [[ -n "$(get_aws_function_name "$arg")" ]]; then
                 log_info "Deploying single function: $arg"
                 
                 if ! check_dependencies; then
-                    exit 1
+                    die "Deployment failed"
                 fi
                 
                 if deploy_function "$arg"; then
@@ -447,12 +462,12 @@ main() {
                     exit 0
                 else
                     log_error "Failed to deploy $arg"
-                    exit 1
+                    die "Deployment failed"
                 fi
             else
                 log_error "Unknown function: $arg"
                 print_usage
-                exit 1
+                die "Deployment failed"
             fi
             ;; 
     esac
