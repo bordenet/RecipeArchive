@@ -1,142 +1,126 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# RecipeArchive Flutter Web Deployment Script
-#
-# PURPOSE:
-#   This script automates the deployment of the RecipeArchive Flutter web
-#   application. It handles the entire process from building the application
-#   to deploying it to an S3 bucket and invalidating the CloudFront cache to
-#   ensure the latest version is live.
+# RecipeArchive Simple Web Deployment
+################################################################################
+# PURPOSE: Full build and deploy workflow for Flutter web app
+#   - Cleans previous build
+#   - Builds Flutter web in release mode
+#   - Deploys to S3 with caching headers
+#   - Creates CloudFront invalidation
+#   - Waits for invalidation to complete
 #
 # USAGE:
-#   ./deploy.sh
+#   ./scripts/web/deploy-simple.sh
 #
-# HOW IT WORKS:
-#   1.  Cleans any previous builds.
-#   2.  Builds the Flutter web application in release mode.
-#   3.  Syncs the build output to the specified S3 bucket.
-#   4.  Creates a CloudFront invalidation to purge the cache and serve the
-#       new version.
-#   5.  Waits for the invalidation to complete.
+# EXAMPLES:
+#   ./scripts/web/deploy-simple.sh
 #
 # DEPENDENCIES:
 #   - Flutter SDK
-#   - AWS CLI (configured with appropriate permissions)
-#   - jq (for parsing JSON output from the AWS CLI)
+#   - AWS CLI (configured with permissions)
+#   - jq (for JSON parsing)
 #
 # NOTES:
-#   - This script should be run from the repository root: ./scripts/web-deploy-simple.sh
-#   - For a more comprehensive deployment (includes extensions), use ./scripts/web-deploy.sh
-#
+#   - For faster deploys without rebuild, use deploy-quick.sh
+#   - Hard refresh browser (Cmd+Shift+R) to see changes
 ################################################################################
 
-# RecipeArchive Flutter Web Deployment Script
-# Builds, deploys to S3, and invalidates CloudFront cache automatically
-
-set -e  # Exit on any error
-
-# Get script directory and repo root
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Configuration
-S3_BUCKET="recipearchive-web-app-prod-990537043943"
-CLOUDFRONT_DISTRIBUTION_ID="E1D19F7SLOJM5H"
-CLOUDFRONT_URL="https://d1jcaphz4458q7.cloudfront.net"
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
+readonly S3_BUCKET="recipearchive-web-app-prod-990537043943"
+readonly CLOUDFRONT_DISTRIBUTION_ID="E1D19F7SLOJM5H"
+readonly CLOUDFRONT_URL="https://d1jcaphz4458q7.cloudfront.net"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+log_header "Flutter Web Deployment"
 
-echo -e "${BLUE}🚀 RecipeArchive Flutter Web Deployment${NC}"
-echo "======================================"
+# Validate dependencies
+require_command "flutter" "brew install flutter"
+require_command "aws" "brew install awscli"
+require_command "jq" "brew install jq"
 
-# Check if AWS CLI is configured
+# Check AWS CLI is configured
 if ! aws sts get-caller-identity &>/dev/null; then
-    echo -e "${RED}❌ AWS CLI not configured. Please run 'aws configure' first.${NC}"
-    exit 1
+    die "AWS CLI not configured. Please run 'aws configure' first."
 fi
 
-# Check for jq
-if ! command -v jq &> /dev/null; then
-    echo -e "${RED}❌ jq is not installed. Please install jq to continue.${NC}"
-    exit 1
-fi
+# Navigate to Flutter directory
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
 
-# Navigate to Flutter app directory
-cd "$REPO_ROOT/recipe_archive"
-
-# Step 1: Clean previous build
-echo -e "${YELLOW}🧹 Cleaning previous build...${NC}"
-if [ -d "build/web" ]; then
+# Clean previous build
+log_section "Cleaning Previous Build"
+if [[ -d "build/web" ]]; then
     rm -rf build/web
+    log_success "Removed previous build"
 fi
 
-# Step 2: Build Flutter web app
-echo -e "${YELLOW}🔨 Building Flutter web app...${NC}"
-flutter build web --release
+# Build Flutter web app
+log_section "Building Flutter Web App"
+if ! flutter build web --release; then
+    die "Flutter build failed"
+fi
+log_success "Flutter build completed"
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Flutter build failed!${NC}"
-    exit 1
+# Deploy to S3
+log_section "Deploying to S3"
+log_info "Bucket: s3://${S3_BUCKET}/"
+
+if ! aws s3 sync build/web/ "s3://${S3_BUCKET}/" --delete --cache-control "public, max-age=86400"; then
+    die "S3 deployment failed"
+fi
+log_success "S3 deployment completed"
+
+# Create CloudFront invalidation
+log_section "Creating CloudFront Invalidation"
+
+INVALIDATION_OUTPUT=$(aws cloudfront create-invalidation \
+    --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+    --paths "/*" \
+    --output json)
+
+if [[ $? -ne 0 ]]; then
+    die "CloudFront invalidation failed"
 fi
 
-echo -e "${GREEN}✅ Flutter build completed successfully${NC}"
+INVALIDATION_ID=$(echo "$INVALIDATION_OUTPUT" | jq -r '.Invalidation.Id')
+log_success "CloudFront invalidation created: $INVALIDATION_ID"
 
-# Step 3: Deploy to S3
-echo -e "${YELLOW}☁️  Deploying to S3 (${S3_BUCKET})...${NC}"
-aws s3 sync build/web/ s3://${S3_BUCKET}/ --delete --cache-control "public, max-age=86400"
+# Wait for invalidation to complete
+log_section "Waiting for Invalidation"
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ S3 deployment failed!${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}✅ S3 deployment completed successfully${NC}"
-
-# Step 4: Create CloudFront invalidation
-echo -e "${YELLOW}🔄 Creating CloudFront invalidation...${NC}"
-INVALIDATION_OUTPUT=$(aws cloudfront create-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --paths "/*" --output json)
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ CloudFront invalidation failed!${NC}"
-    exit 1
-fi
-
-INVALIDATION_ID=$(echo $INVALIDATION_OUTPUT | jq -r '.Invalidation.Id')
-echo -e "${GREEN}✅ CloudFront invalidation created: ${INVALIDATION_ID}${NC}"
-
-# Step 5: Wait for invalidation to complete (optional)
-echo -e "${YELLOW}⏳ Checking invalidation status...${NC}"
 while true; do
-    STATUS=$(aws cloudfront get-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --id ${INVALIDATION_ID} --query 'Invalidation.Status' --output text)
-    
-    if [ "$STATUS" = "Completed" ]; then
-        echo -e "${GREEN}✅ CloudFront invalidation completed!${NC}"
+    STATUS=$(aws cloudfront get-invalidation \
+        --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" \
+        --id "$INVALIDATION_ID" \
+        --query 'Invalidation.Status' \
+        --output text)
+
+    if [[ "$STATUS" == "Completed" ]]; then
+        log_success "CloudFront invalidation completed"
         break
-    elif [ "$STATUS" = "InProgress" ]; then
-        echo -e "${BLUE}⏳ Invalidation in progress... waiting 10 seconds${NC}"
+    elif [[ "$STATUS" == "InProgress" ]]; then
+        log_debug "Invalidation in progress... waiting 10 seconds"
         sleep 10
     else
-        echo -e "${RED}❌ Unexpected invalidation status: ${STATUS}${NC}"
+        log_warning "Unexpected invalidation status: $STATUS"
         break
     fi
 done
 
-# Step 6: Deployment summary
+# Deployment summary
 echo ""
-echo -e "${GREEN}🎉 DEPLOYMENT SUCCESSFUL!${NC}"
+log_success "DEPLOYMENT SUCCESSFUL!"
 echo "======================================"
-echo -e "${BLUE}📱 App URL:${NC} ${CLOUDFRONT_URL}"
-echo -e "${BLUE}🗂️  S3 Bucket:${NC} ${S3_BUCKET}"
-echo -e "${BLUE}🌐 CloudFront Distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
-echo -e "${BLUE}🔄 Invalidation ID:${NC} ${INVALIDATION_ID}"
+log_info "App URL: $CLOUDFRONT_URL"
+log_info "S3 Bucket: $S3_BUCKET"
+log_info "CloudFront Distribution: $CLOUDFRONT_DISTRIBUTION_ID"
+log_info "Invalidation ID: $INVALIDATION_ID"
 echo ""
-echo -e "${YELLOW}💡 Note: Changes may take 1-2 minutes to propagate globally${NC}"
-echo -e "${YELLOW}🔄 Hard refresh your browser (Cmd+Shift+R / Ctrl+Shift+F5) to see changes${NC}"
-echo ""
+log_warning "Changes may take 1-2 minutes to propagate globally"
+log_warning "Hard refresh your browser (Cmd+Shift+R / Ctrl+Shift+F5) to see changes"
