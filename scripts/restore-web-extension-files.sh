@@ -1,84 +1,128 @@
-#!/bin/bash
-# restore-web-extension-files.sh
-# Restores Safari Web Extension files after Xcode overwrites them
+#!/usr/bin/env bash
 
-set -e
+################################################################################
+# RecipeArchive Safari Web Extension Restoration
+################################################################################
+# PURPOSE: Restore Safari Web Extension files after Xcode overwrites them
+#   - Creates backup of extension files if none exists
+#   - Restores all extension files from backup
+#   - Validates restoration was successful
+#   - Ensures images directory exists
+#
+# USAGE:
+#   ./scripts/restore-web-extension-files.sh
+#
+# EXAMPLES:
+#   ./scripts/restore-web-extension-files.sh
+#
+# NOTES:
+#   - Run this after Xcode build if extension files were overwritten
+#   - Backup is created in .web-extension-backup directory
+################################################################################
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-REPO_ROOT="$SCRIPT_DIR/.."
-EXTENSION_DIR="$REPO_ROOT/recipe_archive/ios/RecipeExtension"
-BACKUP_DIR="$REPO_ROOT/.web-extension-backup"
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly EXTENSION_DIR="$REPO_ROOT/recipe_archive/ios/RecipeExtension"
+readonly BACKUP_DIR="$REPO_ROOT/.web-extension-backup"
 
-echo -e "${GREEN}Safari Web Extension File Restoration${NC}"
-echo "=========================================="
-echo ""
+log_header "Safari Web Extension File Restoration"
 
-# Check if backup exists
-if [ ! -d "$BACKUP_DIR" ]; then
-    echo -e "${YELLOW}No backup found. Creating backup of current files...${NC}"
+# Create backup if it doesn't exist
+create_backup_if_needed() {
+    if [[ -d "$BACKUP_DIR" ]]; then
+        return 0
+    fi
+
+    log_section "Creating Backup"
+    log_warning "No backup found. Creating backup of current files..."
+
     mkdir -p "$BACKUP_DIR"
 
-    # Copy all our implementation files to backup
-    cp "$EXTENSION_DIR/manifest.json" "$BACKUP_DIR/" 2>/dev/null || echo "manifest.json not found"
-    cp "$EXTENSION_DIR/content.js" "$BACKUP_DIR/" 2>/dev/null || echo "content.js not found"
-    cp "$EXTENSION_DIR/popup.html" "$BACKUP_DIR/" 2>/dev/null || echo "popup.html not found"
-    cp "$EXTENSION_DIR/popup.js" "$BACKUP_DIR/" 2>/dev/null || echo "popup.js not found"
-    cp "$EXTENSION_DIR/background.js" "$BACKUP_DIR/" 2>/dev/null || echo "background.js not found"
-    cp "$EXTENSION_DIR/SafariWebExtensionHandler.swift" "$BACKUP_DIR/" 2>/dev/null || echo "SafariWebExtensionHandler.swift not found"
-    cp "$EXTENSION_DIR/Info.plist" "$BACKUP_DIR/" 2>/dev/null || echo "Info.plist not found"
-    cp "$EXTENSION_DIR/RecipeExtension.entitlements" "$BACKUP_DIR/" 2>/dev/null || echo "RecipeExtension.entitlements not found"
-    cp "$EXTENSION_DIR/README.md" "$BACKUP_DIR/" 2>/dev/null || echo "README.md not found"
+    local files=(
+        "manifest.json"
+        "content.js"
+        "popup.html"
+        "popup.js"
+        "background.js"
+        "SafariWebExtensionHandler.swift"
+        "Info.plist"
+        "RecipeExtension.entitlements"
+        "README.md"
+    )
 
-    echo -e "${GREEN}✓ Backup created at: $BACKUP_DIR${NC}"
-fi
+    for file in "${files[@]}"; do
+        if [[ -f "$EXTENSION_DIR/$file" ]]; then
+            cp "$EXTENSION_DIR/$file" "$BACKUP_DIR/"
+            log_debug "Backed up: $file"
+        else
+            log_debug "Skipped (not found): $file"
+        fi
+    done
 
-echo ""
-echo "Restoring files from backup..."
-echo ""
+    log_success "Backup created at: $BACKUP_DIR"
+}
+
+create_backup_if_needed
+
+log_section "Restoring Files from Backup"
 
 # Function to restore a file
 restore_file() {
-    local filename=$1
+    local filename="$1"
     local source="$BACKUP_DIR/$filename"
     local dest="$EXTENSION_DIR/$filename"
 
-    if [ -f "$source" ]; then
+    if [[ -f "$source" ]]; then
         cp "$source" "$dest"
-        echo -e "${GREEN}✓${NC} Restored: $filename"
+        log_debug "Restored: $filename"
+        return 0
     else
-        echo -e "${RED}✗${NC} Missing: $filename (not in backup)"
+        log_warning "Missing: $filename (not in backup)"
+        return 1
     fi
 }
 
-# Restore all files
-restore_file "manifest.json"
-restore_file "content.js"
-restore_file "popup.html"
-restore_file "popup.js"
-restore_file "background.js"
-restore_file "SafariWebExtensionHandler.swift"
-restore_file "Info.plist"
-restore_file "RecipeExtension.entitlements"
-restore_file "README.md"
+# Restore all extension files
+main() {
+    local files=(
+        "manifest.json"
+        "content.js"
+        "popup.html"
+        "popup.js"
+        "background.js"
+        "SafariWebExtensionHandler.swift"
+        "Info.plist"
+        "RecipeExtension.entitlements"
+        "README.md"
+    )
 
-# Create images directory if it doesn't exist
-mkdir -p "$EXTENSION_DIR/images"
-echo -e "${GREEN}✓${NC} Created images directory"
+    local restored=0
+    local missing=0
 
-echo ""
-echo -e "${GREEN}=========================================="
-echo "✓ Restoration complete!"
-echo "==========================================${NC}"
-echo ""
-echo "Next steps:"
-echo "1. In Xcode, verify files are visible in RecipeExtension target"
-echo "2. If files are missing, add them: Right-click RecipeExtension → Add Files"
-echo "3. Create extension icons in images/ directory"
-echo "4. Build and run"
-echo ""
+    for file in "${files[@]}"; do
+        if restore_file "$file"; then
+            restored=$((restored + 1))
+        else
+            missing=$((missing + 1))
+        fi
+    done
+
+    # Create images directory if it doesn't exist
+    mkdir -p "$EXTENSION_DIR/images"
+    log_debug "Ensured images directory exists"
+
+    log_success "Restoration complete ($restored restored, $missing missing)"
+    echo ""
+    log_info "Next steps:"
+    echo "  1. In Xcode, verify files are visible in RecipeExtension target"
+    echo "  2. If files are missing, add them: Right-click RecipeExtension → Add Files"
+    echo "  3. Create extension icons in images/ directory"
+    echo "  4. Build and run"
+}
+
+main "$@"

@@ -1,32 +1,40 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# Update Extension Versions Script
-#
-# This script updates the version of the Chrome and Safari extensions.
+# RecipeArchive Extension Version Updater
+################################################################################
+# PURPOSE: Update version numbers for Chrome and Safari extensions
+#   - Increments version in manifest.json files
+#   - Updates package.json files
+#   - Updates fallback versions in popup.js
+#   - Supports patch, minor, and major version bumps
 #
 # USAGE:
-#   ./update-extension-versions.sh [patch|minor|major]
+#   ./scripts/update-extension-versions.sh [patch|minor|major]
 #
-# EXAMPLE:
-#   ./update-extension-versions.sh patch
+# EXAMPLES:
+#   ./scripts/update-extension-versions.sh patch
+#   ./scripts/update-extension-versions.sh minor
+#   ./scripts/update-extension-versions.sh major
 #
 # DEPENDENCIES:
 #   - sed
 #   - jq or node (optional, for parsing manifest.json)
 #
 # NOTES:
-#   - This script is designed to be run from the root of the monorepo.
-#
+#   - Default version type is 'patch' if not specified
 ################################################################################
 
-set -e
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-VERSION_TYPE=${1:-"patch"}  # patch, minor, major
-CURRENT_DIR=$(pwd)
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly VERSION_TYPE="${1:-patch}"
 
-echo "🔢 Updating browser extension versions (${VERSION_TYPE})"
+log_header "Browser Extension Version Update (${VERSION_TYPE})"
 
 # Function to increment version
 increment_version() {
@@ -52,11 +60,10 @@ increment_version() {
             patch=$((patch + 1))
             ;;
         *)
-            echo "❌ Invalid version type: $type (use: major, minor, patch)"
-            exit 1
+            die "Invalid version type: $type (use: major, minor, patch)"
             ;;
     esac
-    
+
     echo "${major}.${minor}.${patch}"
 }
 
@@ -75,87 +82,107 @@ get_version_from_manifest() {
 }
 
 # Update Chrome extension
-CHROME_DIR="extensions/chrome"
-if [ -d "$CHROME_DIR" ]; then
-    echo "📱 Updating Chrome extension version..."
-    
+update_chrome_extension() {
+    local chrome_dir="$REPO_ROOT/extensions/chrome"
+
+    if [[ ! -d "$chrome_dir" ]]; then
+        log_warning "Chrome extension directory not found"
+        return 0
+    fi
+
+    log_section "Updating Chrome Extension"
+
     # Get current version from manifest
-    CURRENT_VERSION=$(get_version_from_manifest "$CHROME_DIR/manifest.json")
-    NEW_VERSION=$(increment_version "$CURRENT_VERSION" "$VERSION_TYPE")
-    
-    echo "  Chrome: $CURRENT_VERSION → $NEW_VERSION"
-    
+    local current_version
+    current_version=$(get_version_from_manifest "$chrome_dir/manifest.json")
+    local new_version
+    new_version=$(increment_version "$current_version" "$VERSION_TYPE")
+
+    log_info "Chrome: $current_version → $new_version"
+
     # Update manifest.json
-    if [[ "$(uname)" == "Darwin" ]]; then
-        sed -i.bak "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$CHROME_DIR/manifest.json"
-        rm "$CHROME_DIR/manifest.json.bak"
+    if is_macos; then
+        sed -i.bak "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$chrome_dir/manifest.json"
+        rm "$chrome_dir/manifest.json.bak"
     else
-        sed -i "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$CHROME_DIR/manifest.json"
+        sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$chrome_dir/manifest.json"
     fi
-    
+
     # Update package.json
-    if [[ "$(uname)" == "Darwin" ]]; then
-        sed -i.bak "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$CHROME_DIR/package.json"
-        rm "$CHROME_DIR/package.json.bak"
+    if is_macos; then
+        sed -i.bak "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$chrome_dir/package.json"
+        rm "$chrome_dir/package.json.bak"
     else
-        sed -i "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$CHROME_DIR/package.json"
+        sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$chrome_dir/package.json"
     fi
-    
-    echo "  ✅ Chrome extension updated to v$NEW_VERSION"
-else
-    echo "⚠️ Chrome extension directory not found"
-fi
+
+    log_success "Chrome extension updated to v$new_version"
+}
 
 # Update Safari extension
-SAFARI_DIR="extensions/safari"
-if [ -d "$SAFARI_DIR" ]; then
-    echo "🦎 Updating Safari extension version..."
-    
-    # Get current version from manifest
-    CURRENT_VERSION=$(get_version_from_manifest "$SAFARI_DIR/manifest.json")
-    NEW_VERSION=$(increment_version "$CURRENT_VERSION" "$VERSION_TYPE")
-    
-    echo "  Safari: $CURRENT_VERSION → $NEW_VERSION"
-    
-    # Update manifest.json
-    if [[ "$(uname)" == "Darwin" ]]; then
-        sed -i.bak "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$SAFARI_DIR/manifest.json"
-        rm "$SAFARI_DIR/manifest.json.bak"
-    else
-        sed -i "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$SAFARI_DIR/manifest.json"
-    fi
-    
-    # Update package.json
-    if [[ "$(uname)" == "Darwin" ]]; then
-        sed -i.bak "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$SAFARI_DIR/package.json"
-        rm "$SAFARI_DIR/package.json.bak"
-    else
-        sed -i "s/"version": "$CURRENT_VERSION"/"version": "$NEW_VERSION"/g" "$SAFARI_DIR/package.json"
-    fi
-    
-    # Update fallback version in popup.js
-    if [[ "$(uname)" == "Darwin" ]]; then
-        sed -i.bak "s/return \"[0-9]\+\.[0-9]\+\.[0-9]\+\"; \/\/ Fallback version/return \"$NEW_VERSION\"; \/\/ Fallback version/" "$SAFARI_DIR/popup.js"
-        rm "$SAFARI_DIR/popup.js.bak"
-    else
-        sed -i "s/return \"[0-9]\+\.[0-9]\+\.[0-9]\+\"; \/\/ Fallback version/return \"$NEW_VERSION\"; \/\/ Fallback version/" "$SAFARI_DIR/popup.js"
-    fi
-    
-    echo "  ✅ Safari extension updated to v$NEW_VERSION"
-else
-    echo "⚠️ Safari extension directory not found"
-fi
+update_safari_extension() {
+    local safari_dir="$REPO_ROOT/extensions/safari"
 
-echo ""
-echo "🎉 Extension version update complete!"
-echo ""
-echo "📋 Next steps:"
-echo "  1. Review changes: git diff"
-echo "  2. Test extensions with new versions"
-echo "  3. Commit changes: git add . && git commit -m \"🔢 Bump extension versions ($VERSION_TYPE)\""
-echo "  4. Tag release: git tag v$NEW_VERSION"
-echo ""
-echo "📖 Version Strategy:"
-echo "  - PATCH (x.x.X): Bug fixes, parser updates"
-echo "  - MINOR (x.X.0): New features, new site support"
-echo "  - MAJOR (X.0.0): Breaking changes, major rewrites"
+    if [[ ! -d "$safari_dir" ]]; then
+        log_warning "Safari extension directory not found"
+        return 0
+    fi
+
+    log_section "Updating Safari Extension"
+
+    # Get current version from manifest
+    local current_version
+    current_version=$(get_version_from_manifest "$safari_dir/manifest.json")
+    local new_version
+    new_version=$(increment_version "$current_version" "$VERSION_TYPE")
+
+    log_info "Safari: $current_version → $new_version"
+
+    # Update manifest.json
+    if is_macos; then
+        sed -i.bak "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$safari_dir/manifest.json"
+        rm "$safari_dir/manifest.json.bak"
+    else
+        sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$safari_dir/manifest.json"
+    fi
+
+    # Update package.json
+    if is_macos; then
+        sed -i.bak "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$safari_dir/package.json"
+        rm "$safari_dir/package.json.bak"
+    else
+        sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/g" "$safari_dir/package.json"
+    fi
+
+    # Update fallback version in popup.js
+    if is_macos; then
+        sed -i.bak "s/return \"[0-9]\+\.[0-9]\+\.[0-9]\+\"; \/\/ Fallback version/return \"$new_version\"; \/\/ Fallback version/" "$safari_dir/popup.js"
+        rm "$safari_dir/popup.js.bak"
+    else
+        sed -i "s/return \"[0-9]\+\.[0-9]\+\.[0-9]\+\"; \/\/ Fallback version/return \"$new_version\"; \/\/ Fallback version/" "$safari_dir/popup.js"
+    fi
+
+    log_success "Safari extension updated to v$new_version"
+}
+
+# Main function
+main() {
+    # Update both extensions
+    update_chrome_extension
+    update_safari_extension
+
+    log_success "Extension version update complete"
+    echo ""
+    log_info "Next steps:"
+    echo "  1. Review changes: git diff"
+    echo "  2. Test extensions with new versions"
+    echo "  3. Commit changes: git add . && git commit -m \"Bump extension versions ($VERSION_TYPE)\""
+    echo "  4. Tag release: git tag vX.X.X"
+    echo ""
+    log_info "Version Strategy:"
+    echo "  - PATCH (x.x.X): Bug fixes, parser updates"
+    echo "  - MINOR (x.X.0): New features, new site support"
+    echo "  - MAJOR (X.0.0): Breaking changes, major rewrites"
+}
+
+main "$@"
