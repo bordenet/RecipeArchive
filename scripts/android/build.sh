@@ -47,10 +47,10 @@ CLEAN=false          # Clean before build
 
 # Paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
 ANDROID_DIR="$FLUTTER_DIR/android"
-BUILD_DIR="$ANDROID_DIR/app/build"
+UNIFIED_BUILD_DIR="$PROJECT_ROOT/build"
 
 # Helper functions
 print_header() {
@@ -205,13 +205,25 @@ if [ "$FORMAT" = "appbundle" ]; then
     GRADLE_TASK="bundle$(echo "${CONFIG}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')"
 fi
 
+# Auto-detect version if not provided
+if [ -z "$VERSION" ]; then
+    # Try git describe for semantic version
+    if git describe --tags --always --dirty 2>/dev/null | grep -q "^v"; then
+        VERSION=$(git describe --tags --always --dirty | sed 's/^v//')
+    else
+        # Fallback to pubspec.yaml version
+        VERSION=$(grep "^version:" "$FLUTTER_DIR/pubspec.yaml" 2>/dev/null | awk '{print $2}' | cut -d'+' -f1)
+        [ -z "$VERSION" ] && VERSION="1.0.0-dev"
+    fi
+fi
+
 # Banner
 print_header "Android Build - RecipeArchive"
 echo -e "${BLUE}Mode:${NC}          ${GREEN}$MODE${NC}"
 echo -e "${BLUE}Target:${NC}        ${GREEN}$TARGET${NC}"
 echo -e "${BLUE}Configuration:${NC} ${GREEN}$CONFIG${NC}"
 echo -e "${BLUE}Format:${NC}        ${GREEN}$FORMAT${NC}"
-[ -n "$VERSION" ] && echo -e "${BLUE}Version:${NC}       ${GREEN}$VERSION${NC}"
+echo -e "${BLUE}Version:${NC}       ${GREEN}$VERSION${NC}"
 
 # Validate environment
 print_status "Validating environment..."
@@ -335,20 +347,30 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
     if [ -f "$OUTPUT_FILE" ]; then
         print_success "Output location: $OUTPUT_FILE"
 
-        # Create symlink in builds directory organized by build type
-        BUILDS_DIR="android/builds/$CONFIG_LOWER"
-        mkdir -p "$BUILDS_DIR"
-        SYMLINK_NAME="$BUILDS_DIR/$OUTPUT_NAME"
+        # Create unified build directory with semantic naming
+        OUTPUT_DIR="$UNIFIED_BUILD_DIR/android/$CONFIG_LOWER"
+        mkdir -p "$OUTPUT_DIR/artifacts"
 
-        # Remove old symlink if it exists
+        # Semantic artifact naming: RecipeArchive-{version}-android-{config}.{ext}
+        if [ "$FORMAT" = "apk" ]; then
+            SEMANTIC_NAME="RecipeArchive-$VERSION-android-$CONFIG_LOWER.apk"
+        else
+            SEMANTIC_NAME="RecipeArchive-$VERSION-android-$CONFIG_LOWER.aab"
+        fi
+        OUTPUT_PATH="$OUTPUT_DIR/$SEMANTIC_NAME"
+
+        # Copy artifact to unified build directory
+        cp "$OUTPUT_FILE" "$OUTPUT_PATH"
+        print_success "Artifact: $OUTPUT_PATH"
+
+        # Create convenience symlink
+        SYMLINK_NAME="$OUTPUT_DIR/artifacts/$OUTPUT_NAME"
         rm -f "$SYMLINK_NAME"
-
-        # Create new symlink
-        ln -s "../../$OUTPUT_FILE" "$SYMLINK_NAME"
-        print_success "Symlink created: $SYMLINK_NAME"
+        ln -s "../$SEMANTIC_NAME" "$SYMLINK_NAME"
+        print_success "Symlink: $SYMLINK_NAME"
 
         # Show size
-        SIZE=$(du -h "$OUTPUT_FILE" | cut -f1)
+        SIZE=$(du -h "$OUTPUT_PATH" | cut -f1)
         echo -e "\n${BLUE}Build Size:${NC} $SIZE"
 
         # Auto-run if requested
