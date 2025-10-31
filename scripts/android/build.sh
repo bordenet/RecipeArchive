@@ -1,52 +1,53 @@
 #!/usr/bin/env bash
 
 ################################################################################
-# Android Build Script for RecipeArchive
+# RecipeArchive Android Build Script
 ################################################################################
-# PURPOSE: Single source of truth for all Android builds
-#   - Development builds (fast, emulator-focused)
-#   - Production builds (signed APKs/AABs for distribution)
+# PURPOSE: Build Android app for development or production
+#   - Supports debug, release, and profile build types
+#   - Builds APK or App Bundle (AAB)
+#   - Configures signing for release builds
+#   - Manages emulator deployment
+#   - Organizes output with symlinks
+#   - Automatic timeout protection (10 minutes)
 #
 # USAGE:
-#   Development (emulator):
-#     ./scripts/android-build.sh --dev --emulator --debug
-#     ./scripts/android-build.sh --dev --emulator --release
+#   ./scripts/android/build.sh [options]
 #
-#   Production (signed APK/AAB):
-#     ./scripts/android-build.sh --prod --device --release --version 1.0.1
+# EXAMPLES:
+#   ./scripts/android/build.sh --dev --run
+#   ./scripts/android/build.sh --prod --release --appbundle
+#   ./scripts/android/build.sh --clean --dev --run
 #
-#   Quick emulator build+run:
-#     ./scripts/android-build.sh --dev --run
+# OPTIONS:
+#   --dev           Development mode (fast build)
+#   --prod          Production mode (signed release)
+#   --debug         Build debug variant
+#   --release       Build release variant
+#   --profile       Build profile variant
+#   --appbundle     Build App Bundle (AAB) instead of APK
+#   --clean         Clean before building
+#   --run           Run on emulator/device after build
 #
-# PHILOSOPHY:
-#   - Always use Gradle build system directly (NOT flutter build)
-#   - Always use standard Gradle configurations (debug, release)
-#   - Consistent workflow regardless of target
-#   - Clear separation between dev (fast iteration) and prod (distribution)
-#   - Mirror iOS build script patterns for consistency
+# DEPENDENCIES:
+#   - Flutter SDK
+#   - Android SDK
+#   - Gradle
+#
+# NOTES:
+#   - Uses Gradle build system directly (NOT flutter build)
+#   - Automatic 10-minute timeout protection
+#   - Auto-resets build artifacts organization
 ################################################################################
 
-set -e
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-# Defaults
-MODE=""              # dev or prod
-TARGET="emulator"    # emulator or device
-CONFIG="debug"       # debug, release, profile
-FORMAT="apk"         # apk or appbundle
-VERSION=""           # Optional version string
-RUN_AFTER=false      # Auto-launch after build
-CLEAN=false          # Clean before build
-
-# Paths
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
+
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
+
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
 ANDROID_DIR="$FLUTTER_DIR/android"
@@ -54,30 +55,30 @@ UNIFIED_BUILD_DIR="$PROJECT_ROOT/build"
 
 # Helper functions
 print_header() {
-    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║  $1${NC}"
+    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗"
+    echo -e "${CYAN}║  $1"
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}\n"
 }
 
 print_status() {
-    echo -e "${BLUE}▸ $1${NC}"
+    log_info "▸ $1"
 }
 
 print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
+    log_success "✓ $1"
 }
 
 print_error() {
-    echo -e "${RED}✗ $1${NC}" >&2
+    log_error "✗ $1${NC}" >&2
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
+    log_warning "⚠ $1"
 }
 
 error_exit() {
     print_error "$1"
-    exit 1
+    die "Build failed"
 }
 
 # Usage
@@ -219,11 +220,11 @@ fi
 
 # Banner
 print_header "Android Build - RecipeArchive"
-echo -e "${BLUE}Mode:${NC}          ${GREEN}$MODE${NC}"
-echo -e "${BLUE}Target:${NC}        ${GREEN}$TARGET${NC}"
-echo -e "${BLUE}Configuration:${NC} ${GREEN}$CONFIG${NC}"
-echo -e "${BLUE}Format:${NC}        ${GREEN}$FORMAT${NC}"
-echo -e "${BLUE}Version:${NC}       ${GREEN}$VERSION${NC}"
+log_info "Mode:${NC}          ${GREEN}$MODE"
+log_info "Target:${NC}        ${GREEN}$TARGET"
+log_info "Configuration:${NC} ${GREEN}$CONFIG"
+log_info "Format:${NC}        ${GREEN}$FORMAT"
+log_info "Version:${NC}       ${GREEN}$VERSION"
 
 # Validate environment
 print_status "Validating environment..."
@@ -427,7 +428,7 @@ print_header "Build Complete"
 
 # Next steps for production builds
 if [ "$MODE" = "prod" ]; then
-    echo -e "\n${YELLOW}Next Steps for Production:${NC}"
+    echo -e "\n${YELLOW}Next Steps for Production:"
     if [ "$FORMAT" = "apk" ]; then
         echo "  1. Test the APK: adb install $OUTPUT_FILE"
         echo "  2. Upload to Play Store Internal Testing"
