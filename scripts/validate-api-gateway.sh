@@ -1,86 +1,56 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# RecipeArchive API Gateway Validation Script
-#
-# PURPOSE:
-#   This script serves as a standalone validator for API Gateway integrations.
-#   It is designed to be used in CI/CD pipelines or by developers to ensure
-#   that all API Gateway routes are correctly pointing to existing Lambda
-#   functions. It acts as a wrapper around the 'validate' and 'fix' commands
-#   of the 'manage-api-routes.sh' script.
+# RecipeArchive API Gateway Validation
+################################################################################
+# PURPOSE: Validate and optionally fix API Gateway integrations
+#   - Checks all API Gateway routes point to existing Lambda functions
+#   - Supports both production and development APIs
+#   - Can automatically fix broken integrations
+#   - Suitable for CI/CD pipelines
 #
 # USAGE:
 #   ./scripts/validate-api-gateway.sh [options]
 #
-# OPTIONS:
-#   --fix     Attempts to automatically fix any broken integrations it finds.
-#   --dev     Targets the development API Gateway instead of the default
-#             secure (production) API.
-#   --help    Displays the help message.
-#
-# HOW IT WORKS:
-#   1.  Sets the target API Gateway (secure or dev) based on the provided flags.
-#   2.  Calls './scripts/manage-api-routes.sh validate' to check integrations.
-#   3.  If validation fails and the '--fix' flag is provided, it then calls
-#       './scripts/manage-api-routes.sh fix'.
-#   4.  Returns a non-zero exit code if validation fails, making it suitable
-#       for use in automated checks.
-#
 # EXAMPLES:
-#   # Validate the secure (production) API
-#   ./scripts/validate-api-gateway.sh
+#   ./scripts/validate-api-gateway.sh                  # Validate production
+#   ./scripts/validate-api-gateway.sh --dev --fix      # Validate and fix dev API
 #
-#   # Validate and automatically fix the development API
-#   ./scripts/validate-api-gateway.sh --dev --fix
+# OPTIONS:
+#   --fix     Automatically fix broken integrations
+#   --dev     Target development API Gateway
+#   --help    Show this help message
 #
 # DEPENDENCIES:
-#   - AWS CLI: Required for interacting with AWS services.
-#   - jq: Used for parsing JSON output from the AWS CLI.
-#   - manage-api-routes.sh: This script is a wrapper around it.
+#   - AWS CLI
+#   - jq
+#   - scripts/manage-api-routes.sh
 #
 # NOTES:
-#   - This script should be run from the root of the monorepo.
-#   - It requires a .env file in the repository root for environment variables.
-#
+#   - Requires .env file with AWS credentials
+#   - Wrapper around manage-api-routes.sh validate/fix
 ################################################################################
 
-set -e
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-log_success() { echo -e "${GREEN}✅ $1${NC}"; }
-log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-log_error() { echo -e "${RED}❌ $1${NC}"; }
-
-# Get script directory and repo root
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-# Check if this is being run from the root directory
-if [ ! -f "$REPO_ROOT/.env" ]; then
-    log_error ".env file not found. Please run from repository root."
-    exit 1
-fi
-
-# Parse arguments
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
 SHOULD_FIX=false
 USE_DEV_API=false
 
+# Parse arguments
 for arg in "$@"; do
     case $arg in
         --fix)
             SHOULD_FIX=true
+            shift
             ;;
         --dev)
             USE_DEV_API=true
+            shift
             ;;
         --help|-h)
             echo "API Gateway Integration Validation Script"
@@ -93,15 +63,18 @@ for arg in "$@"; do
             exit 0
             ;;
         *)
-            log_error "Unknown argument: $arg"
-            echo "Use --help for usage information"
-            exit 1
+            die "Unknown argument: $arg. Use --help for usage information"
             ;;
     esac
 done
 
-# Set API Gateway ID based on environment
-if $USE_DEV_API; then
+log_header "API Gateway Validation"
+
+# Validate .env exists
+require_file "$REPO_ROOT/.env" ".env file not found at $REPO_ROOT/.env"
+
+# Set API Gateway ID
+if [[ "$USE_DEV_API" == true ]]; then
     export API_GATEWAY_ID="4eprojzbrc"
     log_info "Targeting development API Gateway"
 else
@@ -110,35 +83,35 @@ else
 fi
 
 # Validate integrations
-log_info "Starting API Gateway validation..."
-if ./scripts/manage-api-routes.sh validate; then
-    log_success "✅ All API Gateway integrations are valid!"
+log_section "Validating Integrations"
+
+if "$SCRIPT_DIR/manage-api-routes.sh" validate; then
+    log_success "All API Gateway integrations are valid!"
     exit 0
 else
-    validation_failed=true
-    log_error "❌ API Gateway validation failed!"
+    log_error "API Gateway validation failed!"
 
-    if $SHOULD_FIX; then
+    if [[ "$SHOULD_FIX" == true ]]; then
+        log_section "Fixing Broken Integrations"
         log_warning "Attempting to fix broken integrations..."
-        if ./scripts/manage-api-routes.sh fix; then
-            log_success "✅ API Gateway integrations fixed successfully!"
 
-            # Validate again to confirm fixes worked
-            log_info "Re-validating after fixes..."
-            if ./scripts/manage-api-routes.sh validate; then
-                log_success "✅ All integrations are now valid!"
+        if "$SCRIPT_DIR/manage-api-routes.sh" fix; then
+            log_success "API Gateway integrations fixed successfully!"
+
+            # Re-validate after fixes
+            log_section "Re-validating After Fixes"
+            if "$SCRIPT_DIR/manage-api-routes.sh" validate; then
+                log_success "All integrations are now valid!"
                 exit 0
             else
-                log_error "❌ Some integrations still broken after fix attempt"
-                exit 1
+                die "Some integrations still broken after fix attempt"
             fi
         else
-            log_error "❌ Failed to fix API Gateway integrations"
-            exit 1
+            die "Failed to fix API Gateway integrations"
         fi
     else
-        log_warning "💡 Run with --fix to automatically repair broken integrations"
-        log_warning "💡 Or run: ./scripts/manage-api-routes.sh fix"
+        log_warning "Run with --fix to automatically repair broken integrations"
+        log_warning "Or run: ./scripts/manage-api-routes.sh fix"
         exit 1
     fi
 fi

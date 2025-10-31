@@ -1,121 +1,108 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# iOS App Runner Script
-#==============================================================================
-# NAME: run.sh
-#
-# PURPOSE: Launches the RecipeArchive app on the iOS simulator. It automatically
-#          finds and boots a simulator instance.
+################################################################################
+# RecipeArchive iOS App Runner (Legacy)
+################################################################################
+# PURPOSE: Launch RecipeArchive app on iOS simulator
+#   - Finds and boots available iOS simulator
+#   - Runs Flutter app on simulator
+#   - Falls back to manual instructions if needed
 #
 # USAGE:
 #   ./scripts/ios/run.sh
 #
+# EXAMPLES:
+#   ./scripts/ios/run.sh
+#
 # DEPENDENCIES:
 #   - Flutter SDK
-#   - Xcode and Command Line Tools
-#   - An installed iOS Simulator
+#   - Xcode Command Line Tools
+#   - iOS Simulator
 #
 # NOTES:
-#   - This is a legacy script. It is recommended to use the main build and deploy script:
-#     ./scripts/ios-build.sh --dev --clean --run
-#   - If no simulator is running, it will attempt to start one.
-#   - If multiple simulators are available, it will try to pick one.
-#
-#==============================================================================
-set -e
+#   - LEGACY: Use ./scripts/ios/build.sh --dev --run instead
+#   - Auto-creates .env if missing
+#   - Attempts to find shutdown simulator and boot it
+################################################################################
 
-echo "🍎 iOS App Runner"
-echo "=================="
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
 
-# Function to print status
-print_status() {
-    echo -e "${BLUE}📱 $1${NC}"
-}
+log_header "iOS App Runner (Legacy)"
 
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
+log_warning "This is a legacy script. Recommended: ./scripts/ios/build.sh --dev --run"
 
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-# Navigate to Flutter project
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-cd "$PROJECT_ROOT"
-
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
+# Find Flutter directory
+if [[ -f "$REPO_ROOT/pubspec.yaml" ]]; then
+    FLUTTER_DIR="$REPO_ROOT"
 else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
+    FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 fi
 
-cd "$FLUTTER_DIR"
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
+
+# Validate dependencies
+require_command "flutter" "brew install flutter"
+require_command "xcrun" "xcode-select --install"
 
 # Create .env if missing
-if [ ! -f ".env" ]; then
+if [[ ! -f ".env" ]]; then
     echo "DUMMY_CONFIG=true" > .env
+    log_debug "Created .env file"
 fi
 
-print_status "Starting iOS simulator..."
+# Try to find a shutdown simulator
+log_section "Finding iOS Simulator"
 
-# Try to find and boot an iOS simulator
 SIMULATOR_ID=$(xcrun simctl list devices iPhone | grep -E "iPhone [0-9]+" | grep "Shutdown" | head -1 | grep -o '[A-F0-9-]\{36\}' || true)
 
-if [ -z "$SIMULATOR_ID" ]; then
-    # Try to find any available simulator
+if [[ -z "$SIMULATOR_ID" ]]; then
+    # Try any iPhone simulator
     SIMULATOR_ID=$(xcrun simctl list devices | grep "Shutdown" | grep "iPhone" | head -1 | grep -o '[A-F0-9-]\{36\}' || true)
 fi
 
-if [ -n "$SIMULATOR_ID" ]; then
-    print_status "Booting iOS simulator: $SIMULATOR_ID"
-    xcrun simctl boot "$SIMULATOR_ID" || true
+if [[ -n "$SIMULATOR_ID" ]]; then
+    log_info "Booting iOS simulator: $SIMULATOR_ID"
+    xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || log_debug "Simulator already booted or boot failed"
     open -a Simulator
 
-    # Wait for simulator to be ready
-    print_status "Waiting for simulator to be ready..."
+    log_info "Waiting for simulator to be ready (5 seconds)..."
     sleep 5
 
-    # Try to run the app
-    print_status "Launching RecipeArchive on iOS simulator..."
-
-    # Check if simulator is detected by Flutter
+    log_section "Launching App"
     if flutter devices | grep -q "iOS Simulator"; then
-        flutter run -d "iOS Simulator"
+        if ! flutter run -d "iOS Simulator"; then
+            die "Flutter run failed"
+        fi
     else
-        print_status "Flutter not detecting simulator yet. Trying direct device selection..."
-        flutter run
+        log_warning "Flutter not detecting simulator yet. Trying direct run..."
+        if ! flutter run; then
+            die "Flutter run failed"
+        fi
     fi
 else
-    print_error "No iOS simulator found. Trying alternative approaches..."
-
-    # Try opening Simulator app
-    print_status "Opening Simulator app..."
+    log_warning "No shutdown iOS simulator found"
+    log_info "Opening Simulator app..."
     open -a Simulator
 
     echo ""
-    echo "Please:"
-    echo "1. Wait for Simulator to open"
-    echo "2. Select Device > iOS > iPhone (any model)"
-    echo "3. Once simulator is running, run this script again"
+    log_info "Manual steps:"
+    echo "  1. Wait for Simulator to open"
+    echo "  2. Select Device > iOS > iPhone (any model)"
+    echo "  3. Run: flutter run"
     echo ""
-    echo "Or run: flutter run"
+    log_info "Or run in Xcode:"
+    echo "  1. open ios/Runner.xcworkspace"
+    echo "  2. Select an iOS simulator"
+    echo "  3. Click Run (▶️)"
 
-    # Try flutter run anyway
-    print_status "Attempting to run Flutter app..."
-    flutter run || {
-        print_error "Flutter run failed. Try running in Xcode instead:"
-        echo "1. Run: open ios/Runner.xcworkspace"
-        echo "2. Select an iOS simulator in Xcode"
-        echo "3. Click the Run button (▶️)"
-    }
+    log_warning "Attempting flutter run anyway..."
+    flutter run || log_error "Flutter run failed. Follow manual steps above."
 fi
+
+log_success "iOS app runner completed"
