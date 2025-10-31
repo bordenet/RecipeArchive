@@ -217,6 +217,7 @@ cd RecipeArchive && npm install
 | **Operations** | [System Health Dashboard](PROJECT_STATUS.md) | SLOs, metrics, known issues |
 | **Development** | [Project Guide](CLAUDE.md) | Conventions and best practices |
 | **Reference** | [Command Reference](COMMANDS.md) | Quick command lookup |
+| **Testing** | [E2E Parser Testing](docs/testing/e2e-parser-testing.md) | Automated parser validation |
 | **API** | [API Specification](docs/api/api-specification.md) | Backend API reference |
 | **Mobile** | [Mobile Deployment](recipe_archive/MOBILE_DEPLOYMENT.md) | iOS/Android builds |
 | **Extensions** | [Browser Extensions](extensions/README.md) | Chrome/Safari development |
