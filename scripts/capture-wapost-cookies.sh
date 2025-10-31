@@ -1,48 +1,65 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# Washington Post Cookie Capture Script
-#
-# This script makes it easy to capture authentication cookies for Washington Post
-# recipe parsing.
+# RecipeArchive Washington Post Cookie Capture
+################################################################################
+# PURPOSE: Capture authentication cookies for Washington Post recipe parsing
+#   - Launch browser for Washington Post login
+#   - Guide through authentication process
+#   - Save subscription cookies for automated parsing
 #
 # USAGE:
-#   ./capture-wapost-cookies.sh
+#   ./scripts/capture-wapost-cookies.sh
+#
+# EXAMPLES:
+#   ./scripts/capture-wapost-cookies.sh
 #
 # DEPENDENCIES:
 #   - Go
 #   - Google Chrome
 #
 # NOTES:
-#   - This script is designed to be run from the root of the monorepo.
-#
+#   - Requires active Washington Post subscription
 ################################################################################
 
-# Washington Post Cookie Capture Script
-# This script makes it easy to capture authentication cookies for Washington Post recipe parsing
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-echo "🔐 Washington Post Cookie Capture"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo "This script will:"
-echo "1. Launch a browser window for Washington Post login"
-echo "2. Guide you through the authentication process"
-echo "3. Save your subscription cookies for automated recipe parsing"
-echo ""
-echo "Requirements:"
-echo "- Active Washington Post subscription"
-echo "- Chrome browser installed"
-echo ""
+# Paths
+readonly REPO_ROOT="$(get_repo_root)"
+readonly TOOL_DIR="$REPO_ROOT/tools/cmd/wapost-cookies"
 
-# Change to the wapost-cookies directory
-cd "$(dirname "$0")/../tools/cmd/wapost-cookies" || {
-    echo "❌ ERROR: Could not find wapost-cookies directory"
-    exit 1
+# Main function
+main() {
+    log_header "Washington Post Cookie Capture"
+
+    log_info "This script will:"
+    echo "  1. Launch a browser window for Washington Post login"
+    echo "  2. Guide you through the authentication process"
+    echo "  3. Save your subscription cookies for automated recipe parsing"
+    echo ""
+
+    log_info "Requirements:"
+    echo "  - Active Washington Post subscription"
+    echo "  - Chrome browser installed"
+    echo ""
+
+    # Validate dependencies
+    require_command "go" "brew install go"
+    require_directory "$TOOL_DIR" "Tool directory not found: $TOOL_DIR"
+
+    log_section "Starting Cookie Capture Tool"
+
+    # Navigate to tool directory and run
+    cd "$TOOL_DIR" || die "Failed to change to tool directory"
+
+    if ! go run main.go; then
+        die "Cookie capture tool failed"
+    fi
+
+    log_success "Cookie capture complete"
 }
 
-echo "🚀 Starting cookie capture tool..."
-echo ""
-
-# Run the Go cookie capture tool
-go run main.go
+main "$@"
