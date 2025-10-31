@@ -1,50 +1,42 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# Android Clean Script
-#==============================================================================
-# NAME: clean.sh
-#
-# PURPOSE: Cleans Android build artifacts.
+################################################################################
+# RecipeArchive Android Clean Script
+################################################################################
+# PURPOSE: Clean Android build artifacts
+#   - Runs flutter clean
+#   - Optionally runs Gradle clean (--deep)
+#   - Removes build caches
 #
 # USAGE:
-#   ./scripts/android-clean.sh [options]
+#   ./scripts/android/clean.sh [options]
+#
+# EXAMPLES:
+#   ./scripts/android/clean.sh              # Standard clean
+#   ./scripts/android/clean.sh --deep       # Deep clean with Gradle cache
 #
 # OPTIONS:
-#   --deep    Cleans the Gradle cache in addition to the default clean.
-#   --help    Shows this help message.
+#   --deep    Cleans Gradle cache in addition to Flutter clean
+#   --help    Shows this help message
 #
 # DEPENDENCIES:
 #   - Flutter SDK
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
-#
-#==============================================================================
-set -e
+#   - Deep clean takes longer but is more thorough
+################################################################################
 
-echo "🤖 Android Clean Script"
-echo "======================"
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to print status
-print_status() {
-    echo -e "${BLUE}🤖 $1${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-# Parse command line arguments
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 DEEP_CLEAN=false
 
+# Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --deep)
@@ -55,38 +47,48 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [options]"
             echo ""
             echo "Options:"
-            echo "  --deep    Cleans the Gradle cache in addition to the default clean."
-            echo "  --help    Shows this help message."
+            echo "  --deep    Cleans Gradle cache in addition to Flutter clean"
+            echo "  --help    Shows this help message"
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
-            exit 1
+            die "Unknown option: $1"
             ;;
     esac
 done
 
-# Navigate to Flutter project
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
+log_header "Android Clean"
 
-FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
+# Validate Flutter
+require_command "flutter" "brew install flutter"
 
-cd "$FLUTTER_DIR"
+# Change to Flutter directory
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
 
 # Flutter clean
-print_status "Running flutter clean..."
-flutter clean
-print_success "Flutter clean complete."
+log_section "Running Flutter Clean"
+if ! flutter clean; then
+    die "Flutter clean failed"
+fi
+log_success "Flutter clean complete"
 
 # Deep clean
-if [ "$DEEP_CLEAN" = true ]; then
-    print_status "Performing deep clean..."
-    cd android
-    ./gradlew clean
-    cd ..
-    print_success "Gradle clean complete."
+if [[ "$DEEP_CLEAN" == true ]]; then
+    log_section "Running Deep Clean"
+    log_info "Cleaning Gradle cache..."
+
+    cd android || die "Failed to change to android directory"
+
+    if [[ ! -f "gradlew" ]]; then
+        die "gradlew not found in android directory"
+    fi
+
+    if ! ./gradlew clean; then
+        die "Gradle clean failed"
+    fi
+
+    cd .. || die "Failed to return to Flutter directory"
+    log_success "Gradle clean complete"
 fi
 
-print_success "Android clean complete!"
+log_success "Android clean complete!"
