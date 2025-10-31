@@ -1,89 +1,82 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# iOS Simulator Launcher Script
-#==============================================================================
-# NAME: simulator.sh
-#
-# PURPOSE: Starts the iOS simulator and runs the RecipeArchive app. It can either
-#          auto-detect a simulator or target a specific one by its UDID.
+################################################################################
+# RecipeArchive iOS Simulator Launcher
+################################################################################
+# PURPOSE: Start iOS simulator and run RecipeArchive app
+#   - Auto-detects simulator or targets specific UDID
+#   - Opens Simulator app
+#   - Runs Flutter app on simulator
 #
 # USAGE:
 #   ./scripts/ios/simulator.sh [UDID]
 #
-# ARGUMENTS:
-#   UDID (optional)   The UDID of the simulator to target.
+# EXAMPLES:
+#   ./scripts/ios/simulator.sh                           # Auto-detect
+#   ./scripts/ios/simulator.sh ABCD1234-5678-90EF-GHIJ   # Specific UDID
+#
+# DEPENDENCIES:
+#   - Flutter SDK
+#   - Xcode Command Line Tools
 #
 # NOTES:
-#   - This script is intended to be called from the main ios-build.sh --dev --clean --run script.
-#
-#==============================================================================
-set -e
+#   - Called by ios/build.sh --dev --run
+#   - Waits 8 seconds for simulator to boot
+################################################################################
 
-# --- Configuration ---
-UDID=$1
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# --- Color codes for output ---
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly UDID="${1:-}"
 
-# --- Helper functions ---
-print_status() {
-    echo -e "${BLUE}📱 $1${NC}"
-}
+log_header "iOS Simulator Launcher"
 
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}❌ $1${NC}"
-}
-
-# --- Main execution ---
-echo "🍎 iOS Simulator Launcher"
-echo "=========================="
-
-# Navigate to Flutter project
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-cd "$PROJECT_ROOT"
-
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
+# Find Flutter directory
+if [[ -f "$REPO_ROOT/pubspec.yaml" ]]; then
+    FLUTTER_DIR="$REPO_ROOT"
 else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
+    FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 fi
 
-cd "$FLUTTER_DIR"
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
 
-if [ -z "$UDID" ]; then
-    print_status "No UDID provided, auto-detecting simulator..."
-    # Method 1: Try using open command with Simulator app
-    print_status "Method 1: Opening iOS Simulator app directly..."
+# Validate Flutter
+require_command "flutter" "brew install flutter"
+require_command "xcrun" "xcode-select --install"
+
+if [[ -z "$UDID" ]]; then
+    # Auto-detect simulator
+    log_section "Auto-detecting Simulator"
+    log_info "Opening iOS Simulator app..."
+
     open -a Simulator
 
-    # Wait for Simulator to start
-    print_status "Waiting for Simulator to initialize..."
+    log_info "Waiting for Simulator to initialize (8 seconds)..."
     sleep 8
 
-    # Method 2: Check if Flutter can detect the simulator
-    print_status "Checking for available devices..."
-    flutter run -d ios-simulator --no-sound-null-safety
+    log_info "Running Flutter app on auto-detected simulator..."
+    if ! flutter run -d ios-simulator --no-sound-null-safety; then
+        die "Failed to launch app on simulator"
+    fi
 else
-    print_status "Targeting simulator with UDID: $UDID"
-    xcrun simctl boot "$UDID" || true
+    # Target specific simulator
+    log_section "Launching Specific Simulator"
+    log_info "Targeting simulator with UDID: $UDID"
+
+    xcrun simctl boot "$UDID" 2>/dev/null || log_debug "Simulator already booted or boot failed"
     open -a Simulator
-    print_status "Waiting for simulator to initialize..."
+
+    log_info "Waiting for simulator to initialize (8 seconds)..."
     sleep 8
-    flutter run -d "$UDID"
+
+    log_info "Running Flutter app on $UDID..."
+    if ! flutter run -d "$UDID"; then
+        die "Failed to launch app on simulator"
+    fi
 fi
 
-if [ $? -eq 0 ]; then
-    print_success "iOS app launched successfully!"
-else
-    print_error "Failed to launch iOS app"
-fi
+log_success "iOS app launched successfully!"

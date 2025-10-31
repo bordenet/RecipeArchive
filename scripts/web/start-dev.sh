@@ -1,80 +1,80 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# RecipeArchive Flutter App Startup Script
-#
-# PURPOSE:
-#   This script simplifies the process of starting the RecipeArchive Flutter
-#   web application for local development. It ensures dependencies are up to
-#   date, runs the development server, and attempts to open the application
-#   in a web browser.
+# RecipeArchive Flutter Web Development Server
+################################################################################
+# PURPOSE: Start Flutter web app for local development
+#   - Checks Flutter SDK installation
+#   - Installs dependencies (flutter pub get)
+#   - Starts development server on port 8080
+#   - Auto-opens browser
 #
 # USAGE:
-#   ./start.sh
+#   ./scripts/web/start-dev.sh
 #
-# HOW IT WORKS:
-#   1.  Checks if the Flutter SDK is installed.
-#   2.  Runs `flutter pub get` to install dependencies.
-#   3.  Starts the Flutter development server on port 8080.
-#   4.  Attempts to automatically open the application in a web browser.
+# EXAMPLES:
+#   ./scripts/web/start-dev.sh
 #
 # DEPENDENCIES:
 #   - Flutter SDK
 #
 # NOTES:
-#   - This script should be run from the repository root: ./scripts/web-start-dev.sh
-#
+#   - Press Ctrl+C to stop the development server
+#   - Logs to flutter_output.log in recipe_archive directory
 ################################################################################
 
-# Recipe Archive Flutter App Startup Script
-echo "🍳 Starting Recipe Archive Flutter App..."
-
-# Get script directory and repo root
+# Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Check if Flutter is installed
-if ! command -v flutter &> /dev/null; then
-    echo "❌ Flutter is not installed or not in PATH"
-    echo "Please install Flutter: https://flutter.dev/docs/get-started/install"
-    exit 1
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
+readonly DEV_PORT="8080"
+
+log_header "Flutter Web Development Server"
+
+# Validate Flutter
+require_command "flutter" "brew install flutter"
+
+# Change to Flutter directory
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
+
+# Install dependencies
+log_section "Installing Dependencies"
+if ! flutter pub get; then
+    die "Failed to install Flutter dependencies"
 fi
+log_success "Dependencies installed"
 
-# Navigate to Flutter app directory
-cd "$REPO_ROOT/recipe_archive"
+# Start development server
+log_section "Starting Development Server"
+log_info "Starting Flutter on port $DEV_PORT..."
 
-# Get dependencies
-echo "📦 Installing dependencies..."
-flutter pub get
-
-# Start Flutter in background and capture output
-echo "🚀 Starting Flutter development server..."
-flutter run -d chrome --web-port 8080 > flutter_output.log 2>&1 &
+flutter run -d chrome --web-port "$DEV_PORT" > flutter_output.log 2>&1 &
 FLUTTER_PID=$!
 
-# Wait a moment for the server to start
-echo "⏳ Waiting for development server to start..."
+log_info "Waiting for server to start..."
 sleep 5
 
-# Extract and display the URL
+log_success "Development server started (PID: $FLUTTER_PID)"
 echo ""
-echo "🌐 Flutter app should be available at: http://localhost:8080"
+log_info "Application URL: http://localhost:$DEV_PORT"
 echo ""
 
-# Try to open in browser automatically (macOS)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "🔗 Opening Chrome browser automatically..."
-    open -a "Google Chrome" "http://localhost:8080"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo "🔗 Opening browser automatically..."
-    xdg-open "http://localhost:8080"
+# Open browser
+if is_macos; then
+    log_info "Opening Chrome browser..."
+    open -a "Google Chrome" "http://localhost:$DEV_PORT" 2>/dev/null || log_warning "Could not auto-open Chrome"
+elif is_linux; then
+    log_info "Opening browser..."
+    xdg-open "http://localhost:$DEV_PORT" 2>/dev/null || log_warning "Could not auto-open browser"
 fi
 
 echo ""
-echo "📱 App is running! Click the URL above if browser didn't open automatically."
-echo "🛑 Press Ctrl+C to stop the development server."
+log_info "App is running! Press Ctrl+C to stop."
 echo ""
 
-# Wait for the Flutter process to finish
+# Wait for Flutter process
 wait $FLUTTER_PID
