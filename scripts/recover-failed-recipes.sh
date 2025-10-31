@@ -1,97 +1,130 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# Recover Failed Recipe Normalizations Script
-#
-# This script recovers failed recipe normalizations from the DLQ.
+# RecipeArchive Failed Recipe Recovery
+################################################################################
+# PURPOSE: Recover failed recipe normalizations from DLQ
+#   - Reads messages from normalization DLQ
+#   - Re-queues messages to main normalization queue
+#   - Deletes successfully re-queued messages from DLQ
 #
 # USAGE:
-#   ./recover-failed-recipes.sh
+#   ./scripts/recover-failed-recipes.sh
+#
+# EXAMPLES:
+#   ./scripts/recover-failed-recipes.sh
 #
 # DEPENDENCIES:
 #   - AWS CLI
 #   - jq
 #
-# NOTES:
-#   - This script is designed to be run from the root of the monorepo.
-#   - It requires the .env file to be present in the root of the repository with
-#     the following variables:
-#       - NORMALIZATION_DLQ_URL: The URL of the recipe normalization DLQ.
-#       - NORMALIZATION_QUEUE_URL: The URL of the recipe normalization queue.
-#       - AWS_REGION: The AWS region.
+# ENVIRONMENT VARIABLES:
+#   - NORMALIZATION_DLQ_URL: The URL of the recipe normalization DLQ
+#   - NORMALIZATION_QUEUE_URL: The URL of the recipe normalization queue
+#   - AWS_REGION: The AWS region (default: us-west-2)
 #
+# NOTES:
+#   - Requires .env file with necessary AWS queue URLs
+#   - Processes messages one at a time with 1-second delay
 ################################################################################
 
-# Script to recover failed recipe normalizations from DLQ
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-set -e
-
-# Load environment variables from repo root
-if [ -f "./.env" ]; then
-    export $(cat ./.env | grep -v '^#' | grep -v '^$' | xargs)
+# Load environment variables
+readonly REPO_ROOT="$(get_repo_root)"
+if [[ -f "$REPO_ROOT/.env" ]]; then
+    set -a
+    source "$REPO_ROOT/.env"
+    set +a
 fi
 
-DLQ_URL=${NORMALIZATION_DLQ_URL}
-MAIN_QUEUE_URL=${NORMALIZATION_QUEUE_URL}
-REGION=${AWS_REGION:-us-west-2}
+# Script variables
+readonly DLQ_URL="${NORMALIZATION_DLQ_URL:-}"
+readonly MAIN_QUEUE_URL="${NORMALIZATION_QUEUE_URL:-}"
+readonly REGION="${AWS_REGION:-us-west-2}"
 
-if [ -z "$DLQ_URL" ] || [ -z "$MAIN_QUEUE_URL" ]; then
-    echo "❌ Missing required environment variables: NORMALIZATION_DLQ_URL, NORMALIZATION_QUEUE_URL"
-    echo "💡 Please set them in your environment or in a .env file."
-    exit 1
+log_header "Failed Recipe Recovery"
+
+# Validate dependencies
+require_command "aws" "brew install awscli"
+require_command "jq" "brew install jq"
+
+# Validate environment variables
+if [[ -z "$DLQ_URL" ]] || [[ -z "$MAIN_QUEUE_URL" ]]; then
+    die "Missing required environment variables: NORMALIZATION_DLQ_URL, NORMALIZATION_QUEUE_URL. Please set them in .env file."
 fi
 
-echo "🔧 Recovering failed recipe normalizations from DLQ..."
+log_info "DLQ URL: $DLQ_URL"
+log_info "Main Queue URL: $MAIN_QUEUE_URL"
+log_info "Region: $REGION"
 
-# Get the number of messages in DLQ
-MSG_COUNT=$(aws sqs get-queue-attributes --region $REGION --queue-url $DLQ_URL --attribute-names ApproximateNumberOfMessages --query 'Attributes.ApproximateNumberOfMessages' --output text)
+# Get message count
+log_section "Checking DLQ"
 
-echo "📋 Found $MSG_COUNT messages in DLQ"
+MSG_COUNT=$(aws sqs get-queue-attributes \
+    --region "$REGION" \
+    --queue-url "$DLQ_URL" \
+    --attribute-names ApproximateNumberOfMessages \
+    --query 'Attributes.ApproximateNumberOfMessages' \
+    --output text)
 
-if [ "$MSG_COUNT" -eq 0 ]; then
-    echo "✅ No messages to recover"
+log_info "Found $MSG_COUNT messages in DLQ"
+
+if [[ "$MSG_COUNT" -eq 0 ]]; then
+    log_success "No messages to recover"
     exit 0
 fi
 
-# Process each message
-for i in $(seq 1 $MSG_COUNT); do
-    echo "Processing message $i/$MSG_COUNT..."
-    
-    # Receive a message from DLQ
-    MESSAGE=$(aws sqs receive-message --region $REGION --queue-url $DLQ_URL --max-number-of-messages 1)
-    
-    if [ -z "$MESSAGE" ] || [ "$MESSAGE" == "null" ]; then
-        echo "No more messages to process"
+# Process messages
+log_section "Processing Messages"
+
+for i in $(seq 1 "$MSG_COUNT"); do
+    log_info "Processing message $i/$MSG_COUNT..."
+
+    # Receive message from DLQ
+    MESSAGE=$(aws sqs receive-message \
+        --region "$REGION" \
+        --queue-url "$DLQ_URL" \
+        --max-number-of-messages 1)
+
+    if [[ -z "$MESSAGE" ]] || [[ "$MESSAGE" == "null" ]]; then
+        log_info "No more messages to process"
         break
     fi
-    
+
     # Extract body and receipt handle
-    BODY=$(echo $MESSAGE | jq -r '.Messages[0].Body')
-    RECEIPT_HANDLE=$(echo $MESSAGE | jq -r '.Messages[0].ReceiptHandle')
-    
-    if [ "$BODY" != "null" ] && [ "$RECEIPT_HANDLE" != "null" ]; then
-        echo "📤 Re-queuing message: $BODY"
-        
-        # Send message back to main queue for retry
-        if ! aws sqs send-message --region $REGION --queue-url $MAIN_QUEUE_URL --message-body "$BODY" > /tmp/recover-failed-recipes.log 2>&1; then
-            echo "❌ Failed to re-queue message. See /tmp/recover-failed-recipes.log for details."
-            exit 1
+    BODY=$(echo "$MESSAGE" | jq -r '.Messages[0].Body')
+    RECEIPT_HANDLE=$(echo "$MESSAGE" | jq -r '.Messages[0].ReceiptHandle')
+
+    if [[ "$BODY" != "null" ]] && [[ "$RECEIPT_HANDLE" != "null" ]]; then
+        log_debug "Re-queuing message: $BODY"
+
+        # Send message back to main queue
+        if ! aws sqs send-message \
+            --region "$REGION" \
+            --queue-url "$MAIN_QUEUE_URL" \
+            --message-body "$BODY" > /tmp/recover-failed-recipes.log 2>&1; then
+            die "Failed to re-queue message. See /tmp/recover-failed-recipes.log for details."
         fi
-        
+
         # Delete from DLQ
-        if ! aws sqs delete-message --region $REGION --queue-url $DLQ_URL --receipt-handle "$RECEIPT_HANDLE" > /tmp/recover-failed-recipes.log 2>&1; then
-            echo "❌ Failed to delete message from DLQ. See /tmp/recover-failed-recipes.log for details."
-            exit 1
+        if ! aws sqs delete-message \
+            --region "$REGION" \
+            --queue-url "$DLQ_URL" \
+            --receipt-handle "$RECEIPT_HANDLE" > /tmp/recover-failed-recipes.log 2>&1; then
+            die "Failed to delete message from DLQ. See /tmp/recover-failed-recipes.log for details."
         fi
-        
-        echo "✅ Message re-queued successfully"
+
+        log_debug "Message re-queued successfully"
     else
-        echo "❌ Failed to extract message data"
+        log_error "Failed to extract message data"
     fi
-    
+
     # Small delay to avoid rate limiting
     sleep 1
 done
 
-echo "🎉 Recipe recovery completed!"
+log_success "Recipe recovery completed! Processed $MSG_COUNT messages"

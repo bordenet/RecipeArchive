@@ -1,98 +1,105 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# iOS Xcode Launcher Script
-#==============================================================================
-# NAME: xcode.sh
-#
-# PURPOSE: Opens the iOS project in Xcode, which is the recommended way to run,
-#          debug, and profile the app.
+################################################################################
+# RecipeArchive iOS Xcode Launcher
+################################################################################
+# PURPOSE: Open iOS project in Xcode
+#   - Updates Flutter dependencies
+#   - Creates .env if missing
+#   - Opens Runner.xcworkspace in Xcode
+#   - Provides next steps guidance
 #
 # USAGE:
 #   ./scripts/ios/xcode.sh
 #
+# EXAMPLES:
+#   ./scripts/ios/xcode.sh
+#
 # DEPENDENCIES:
 #   - Xcode
+#   - Flutter SDK
 #
 # NOTES:
-#   - This script is intended to be called from the main ios-build.sh --dev --clean --run script.
-#   - After running, you can select a simulator and run the app from within Xcode.
-#
-#==============================================================================
+#   - Called by ios/build.sh for device builds
+#   - Opens workspace (not project) to include CocoaPods
+################################################################################
 
-echo "🍎 iOS Xcode Launcher"
-echo "===================="
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
 
-# Function to print status
-print_status() {
-    echo -e "${BLUE}📱 $1${NC}"
-}
+log_header "iOS Xcode Launcher"
 
-print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-# Navigate to project root
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-cd "$PROJECT_ROOT"
-
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
+# Find Flutter directory
+if [[ -f "$REPO_ROOT/pubspec.yaml" ]]; then
+    FLUTTER_DIR="$REPO_ROOT"
     IOS_WORKSPACE="ios/Runner.xcworkspace"
 else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
-    IOS_WORKSPACE="recipe_archive/ios/Runner.xcworkspace"
+    FLUTTER_DIR="$REPO_ROOT/recipe_archive"
+    IOS_WORKSPACE="$FLUTTER_DIR/ios/Runner.xcworkspace"
 fi
 
-cd "$FLUTTER_DIR"
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
+
+# Validate dependencies
+require_command "flutter" "brew install flutter"
+
+if ! is_macos; then
+    die "Xcode is only available on macOS"
+fi
+
+if [[ ! -d "/Applications/Xcode.app" ]]; then
+    die "Xcode not found. Please install Xcode from the App Store."
+fi
 
 # Create .env if missing
-if [ ! -f ".env" ]; then
+log_section "Checking Environment"
+if [[ ! -f ".env" ]]; then
     echo "DUMMY_CONFIG=true" > .env
-    print_success "Created .env file"
+    log_success "Created .env file"
+else
+    log_debug ".env file exists"
 fi
 
-# Ensure dependencies are current
-print_status "Updating Flutter dependencies..."
-flutter pub get > /dev/null 2>&1
-print_success "Dependencies updated"
+# Update dependencies
+log_section "Updating Dependencies"
+if ! flutter pub get > /dev/null 2>&1; then
+    die "Failed to update Flutter dependencies"
+fi
+log_success "Dependencies updated"
 
 # Open Xcode
-print_status "Opening iOS project in Xcode..."
-if [ -d "ios/Runner.xcworkspace" ]; then
-    open ios/Runner.xcworkspace
-    XCODE_PATH="ios/Runner.xcworkspace"
-else
-    cd ..
-    open recipe_archive/ios/Runner.xcworkspace
-    XCODE_PATH="recipe_archive/ios/Runner.xcworkspace"
+log_section "Opening Xcode"
+
+if [[ ! -d "$IOS_WORKSPACE" ]]; then
+    die "Xcode workspace not found at $IOS_WORKSPACE. Run 'pod install' in ios/ directory."
 fi
 
-print_success "Xcode opened with RecipeArchive iOS project"
+log_info "Opening $IOS_WORKSPACE..."
+open "$IOS_WORKSPACE"
 
+log_success "Xcode opened with RecipeArchive iOS project"
+
+# Provide guidance
 echo ""
-echo "🚀 Next steps in Xcode:"
-echo "1. Wait for Xcode to load the project"
-echo "2. In the device dropdown (top-left), select an iOS Simulator:"
-echo "   • iPhone 15"
-echo "   • iPhone 15 Pro"
-echo "   • iPhone 15 Pro Max"
-echo "   • iPad (any model)"
-echo "3. Click the Run button (▶️) or press Cmd+R"
+log_info "Next steps in Xcode:"
+echo "  1. Wait for Xcode to load the project"
+echo "  2. In the device dropdown (top-left), select an iOS Simulator:"
+echo "     • iPhone 15"
+echo "     • iPhone 15 Pro"
+echo "     • iPhone 15 Pro Max"
+echo "     • iPad (any model)"
+echo "  3. Click the Run button (▶️) or press Cmd+R"
 echo ""
-echo "🎉 New features to test:"
-echo "   📱 Wakelock: Screen stays awake during recipe viewing"
-echo "   🔒 Visual indicator: Lock icon in recipe detail app bar"
-echo "   📋 Mobile-optimized Extensions page"
-echo "   🧭 Platform-aware navigation"
+log_info "Features to test:"
+echo "  📱 Wakelock: Screen stays awake during recipe viewing"
+echo "  🔒 Visual indicator: Lock icon in recipe detail app bar"
+echo "  📋 Mobile-optimized Extensions page"
+echo "  🧭 Platform-aware navigation"
 echo ""
-echo "💡 Pro tip: Once the simulator is running, you can also use:"
-echo "   flutter run (from terminal)"
-echo "" 
+log_info "Pro tip: Once the simulator is running, you can also use:"
+echo "  flutter run (from terminal)"
