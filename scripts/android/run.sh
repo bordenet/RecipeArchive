@@ -1,75 +1,81 @@
 #!/usr/bin/env bash
 
-#==============================================================================
-# Android App Runner Script
-#==============================================================================
-# NAME: run.sh
-#
-# PURPOSE: Launches the RecipeArchive app on the Android emulator.
+################################################################################
+# RecipeArchive Android App Runner
+################################################################################
+# PURPOSE: Launch RecipeArchive app on Android emulator
+#   - Finds Android SDK installation
+#   - Starts emulator if not running
+#   - Runs Flutter app on emulator
 #
 # USAGE:
-#   ./scripts/android-run.sh
+#   ./scripts/android/run.sh
+#
+# EXAMPLES:
+#   ./scripts/android/run.sh
 #
 # DEPENDENCIES:
 #   - Flutter SDK
+#   - Android SDK
 #   - Android Emulator
 #
 # NOTES:
-#   - This script should be run from the root of the repository.
-#   - It will automatically start the emulator if it's not already running.
-#
-#==============================================================================
-set -e
+#   - Automatically starts emulator if not running
+#   - Uses ./scripts/android/emulator.sh for emulator management
+################################################################################
 
-echo "🤖 Android App Runner Script"
-echo "==========================="
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../lib/common.sh"
+init_script
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 
-# Function to print status
-print_status() {
-    echo -e "${BLUE}🤖 $1${NC}"
-}
+log_header "Android App Runner"
 
 # Find Android SDK
+log_section "Locating Android SDK"
+
 ANDROID_SDK_ROOT=""
-if [ -d "$HOME/Library/Android/sdk" ]; then
+if [[ -d "$HOME/Library/Android/sdk" ]]; then
     ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
-elif [ -d "/usr/local/share/android-sdk" ]; then
+elif [[ -d "/usr/local/share/android-sdk" ]]; then
     ANDROID_SDK_ROOT="/usr/local/share/android-sdk"
-elif [ ! -z "$ANDROID_HOME" ]; then
+elif [[ -n "${ANDROID_HOME:-}" ]]; then
     ANDROID_SDK_ROOT="$ANDROID_HOME"
 fi
 
-if [ -z "$ANDROID_SDK_ROOT" ]; then
-    print_error "Android SDK not found."
-    echo "Please run ./scripts/android-setup.sh first."
-    exit 1
+if [[ -z "$ANDROID_SDK_ROOT" ]]; then
+    die "Android SDK not found. Please run ./scripts/android/setup.sh first."
 fi
 
-export ANDROID_HOME=$ANDROID_SDK_ROOT
-export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+export ANDROID_HOME="$ANDROID_SDK_ROOT"
+export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"
+
+log_success "Android SDK found: $ANDROID_SDK_ROOT"
 
 # Check if emulator is running
+log_section "Checking Emulator Status"
+
 if ! adb devices | grep -q "emulator"; then
-    print_status "Emulator not running. Starting it now..."
-    ./scripts/android/emulator.sh start
+    log_warning "Emulator not running"
+    log_info "Starting emulator..."
+    "$SCRIPT_DIR/emulator.sh" start
 fi
 
-# Navigate to Flutter project
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
-
-FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
-
-cd "$FLUTTER_DIR"
+log_success "Emulator is running"
 
 # Run the app
-print_status "Launching RecipeArchive on Android emulator..."
-flutter run
+log_section "Launching App"
+cd "$FLUTTER_DIR" || die "Failed to change to Flutter directory"
+
+log_info "Starting RecipeArchive on Android emulator..."
+require_command "flutter" "brew install flutter"
+
+if ! flutter run; then
+    die "Flutter run failed"
+fi
+
+log_success "App launched successfully"
