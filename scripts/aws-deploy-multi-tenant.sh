@@ -1,175 +1,180 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ################################################################################
-#
-# Deploy Multi-Tenant User Provisioning System
-#
-# This script deploys all components needed for multi-tenant functionality.
+# RecipeArchive Multi-Tenant System Deployment
+################################################################################
+# PURPOSE: Deploy all components for multi-tenant functionality
+#   - DynamoDB tables (InvitationTokens, UserProfiles, UsageTracking)
+#   - Lambda functions (invitation-manager-s3, registration-handler)
+#   - API Gateway routes
+#   - Health checks and verification
 #
 # USAGE:
-#   ./aws-deploy-multi-tenant.sh [dev|prod]
+#   ./scripts/aws-deploy-multi-tenant.sh [dev|prod]
+#
+# EXAMPLES:
+#   ./scripts/aws-deploy-multi-tenant.sh dev
+#   ./scripts/aws-deploy-multi-tenant.sh prod
 #
 # DEPENDENCIES:
 #   - AWS CLI
-#   - Go
+#   - Go 1.19+
+#
+# ENVIRONMENT VARIABLES:
+#   - AWS_REGION (optional, defaults to us-west-2)
 #
 # NOTES:
-#   - This script is designed to be run from the root of the monorepo.
-#   - It requires the .env file to be present in the root of the repository.
-#
+#   - Requires .env file in repository root
+#   - Creates CloudFormation stacks with prefix: recipearchive-{environment}
+#   - Runs health checks after deployment
 ################################################################################
 
-# Deploy Multi-Tenant User Provisioning System
-# This script deploys all components needed for multi-tenant functionality
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-set -e
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
+readonly ENVIRONMENT="${1:-dev}"
+readonly AWS_REGION="${AWS_REGION:-us-west-2}"
+readonly STACK_PREFIX="recipearchive-${ENVIRONMENT}"
 
-# Configuration
-ENVIRONMENT=${1:-dev}
+log_header "Multi-Tenant System Deployment"
 
-# Load environment variables from repo root
-if [ -f "./.env" ]; then
-    export $(cat ./.env | grep -v '^#' | grep -v '^$' | xargs)
-else
-    echo "❌ .env file not found in repo root. Please create one from .env.example"
-    exit 1
-fi
-
-AWS_REGION=${AWS_REGION:-us-west-2}
-STACK_PREFIX="recipearchive-${ENVIRONMENT}"
-
-echo "🚀 Deploying RecipeArchive Multi-Tenant System"
-echo "Environment: $ENVIRONMENT"
-echo "Region: $AWS_REGION"
+log_info "Environment: $ENVIRONMENT"
+log_info "Region: $AWS_REGION"
+log_info "Stack Prefix: $STACK_PREFIX"
 echo ""
 
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Verify prerequisites
-echo "📋 Checking prerequisites..."
-
-if ! command_exists aws; then
-    echo "❌ AWS CLI not found. Please install: https://aws.amazon.com/cli/"
-    exit 1
+# Load environment variables
+if [[ -f "$REPO_ROOT/.env" ]]; then
+    set -a
+    source "$REPO_ROOT/.env"
+    set +a
+    log_debug "Environment variables loaded"
+else
+    die ".env file not found. Please create one from .env.example"
 fi
 
-if ! command_exists go; then
-    echo "❌ Go not found. Please install Go 1.19+"
-    exit 1
-fi
+# Validate prerequisites
+log_section "Checking Prerequisites"
+
+require_command "aws" "https://aws.amazon.com/cli/"
+require_command "go" "brew install go"
 
 # Check AWS credentials
 if ! aws sts get-caller-identity >/dev/null 2>&1; then
-    echo "❌ AWS credentials not configured. Please run 'aws configure'"
-    exit 1
+    die "AWS credentials not configured. Please run 'aws configure'"
 fi
 
-echo "✅ Prerequisites check passed"
+log_success "Prerequisites validated"
 echo ""
 
 # Step 1: Deploy DynamoDB Tables
-echo "📊 Step 1: Deploying DynamoDB Tables..."
+log_section "Step 1: Deploying DynamoDB Tables"
+
+readonly TEMPLATE_FILE="$REPO_ROOT/aws-backend/infrastructure/dynamodb-tables.yaml"
+require_file "$TEMPLATE_FILE" "CloudFormation template not found"
 
 if ! aws cloudformation deploy \
-    --template-file aws-backend/infrastructure/dynamodb-tables.yaml \
+    --template-file "$TEMPLATE_FILE" \
     --stack-name "${STACK_PREFIX}-tables" \
     --parameter-overrides Environment="$ENVIRONMENT" \
     --region "$AWS_REGION" \
     --capabilities CAPABILITY_IAM > /tmp/deploy-multi-tenant.log 2>&1; then
-    echo "❌ Failed to deploy DynamoDB tables. See /tmp/deploy-multi-tenant.log for details."
-    exit 1
+    die "Failed to deploy DynamoDB tables. See /tmp/deploy-multi-tenant.log for details."
 fi
-echo "✅ DynamoDB tables deployed successfully"
+log_success "DynamoDB tables deployed"
 
-echo ""
+# Step 2: Build Lambda Functions
+log_section "Step 2: Building Lambda Functions"
 
-# Step 2: Build and Deploy Lambda Functions
-echo "🔨 Step 2: Building Lambda Functions..."
+cd "$REPO_ROOT" || die "Failed to change to repository root"
 
-./scripts/build-lambda-packages.sh invitation-manager-s3
-./scripts/build-lambda-packages.sh registration-handler
+if ! "$SCRIPT_DIR/build-lambda-packages.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
+    die "Failed to build invitation-manager-s3. See /tmp/deploy-multi-tenant.log"
+fi
 
-echo "✅ Lambda functions built successfully"
-echo ""
+if ! "$SCRIPT_DIR/build-lambda-packages.sh" registration-handler > /tmp/deploy-multi-tenant.log 2>&1; then
+    die "Failed to build registration-handler. See /tmp/deploy-multi-tenant.log"
+fi
+
+log_success "Lambda functions built"
 
 # Step 3: Deploy Lambda Functions
-echo "🚀 Step 3: Deploying Lambda Functions..."
+log_section "Step 3: Deploying Lambda Functions"
 
-./scripts/aws-deploy-lambda.sh invitation-manager-s3
-./scripts/aws-deploy-lambda.sh registration-handler
+if ! "$SCRIPT_DIR/aws-deploy-lambda.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
+    die "Failed to deploy invitation-manager-s3. See /tmp/deploy-multi-tenant.log"
+fi
 
-echo "✅ Lambda functions deployed successfully"
-echo ""
+if ! "$SCRIPT_DIR/aws-deploy-lambda.sh" registration-handler > /tmp/deploy-multi-tenant.log 2>&1; then
+    die "Failed to deploy registration-handler. See /tmp/deploy-multi-tenant.log"
+fi
+
+log_success "Lambda functions deployed"
 
 # Step 4: Configure API Gateway Routes
-echo "🌐 Step 4: Configuring API Gateway Routes..."
+log_section "Step 4: Configuring API Gateway Routes"
 
-./scripts/manage-api-routes.sh add-analytics
+if ! "$SCRIPT_DIR/manage-api-routes.sh" add-analytics > /tmp/deploy-multi-tenant.log 2>&1; then
+    die "Failed to configure API Gateway routes. See /tmp/deploy-multi-tenant.log"
+fi
 
-echo "✅ API Gateway routes configured successfully"
-echo ""
+log_success "API Gateway routes configured"
 
 # Step 5: Cleanup build artifacts
-echo "🧹 Step 5: Cleaning up build artifacts..."
-rm -rf aws-backend/functions/dist
+log_section "Step 5: Cleaning Up"
 
-echo "✅ Cleanup completed"
-echo ""
+rm -rf "$REPO_ROOT/aws-backend/functions/dist"
+log_success "Build artifacts cleaned"
 
-# Step 6: Output deployment summary
-echo "📋 Deployment Summary"
-echo "===================="
-echo "Environment: $ENVIRONMENT"
-echo "Region: $AWS_REGION"
+# Step 6: Deployment Summary
+log_section "Deployment Summary"
+
+log_info "Environment: $ENVIRONMENT"
+log_info "Region: $AWS_REGION"
 echo ""
-echo "📊 DynamoDB Tables:"
+log_info "DynamoDB Tables:"
 echo "  - ${ENVIRONMENT}-InvitationTokens"
 echo "  - ${ENVIRONMENT}-UserProfiles"
 echo "  - ${ENVIRONMENT}-UsageTracking"
 echo ""
-echo "🔧 Lambda Functions:"
+log_info "Lambda Functions:"
 echo "  - ${STACK_PREFIX}-invitation-manager-s3"
-
 echo "  - ${STACK_PREFIX}-registration-handler"
 echo ""
-echo "📝 Next Steps:"
+log_info "Next Steps:"
 echo "1. Configure SES (Simple Email Service) for invitation emails"
 echo "2. Update API Gateway routes (if not done automatically)"
 echo "3. Test invitation flow end-to-end"
 echo "4. Update Flutter app with developer settings"
-echo ""
-echo "🎉 Multi-tenant deployment completed successfully!"
 
-# Optional: Run basic health checks
-echo ""
-echo "🔍 Running basic health checks..."
+# Step 7: Health Checks
+log_section "Running Health Checks"
 
-# Check if tables exist
+# Check DynamoDB tables
 for table in "InvitationTokens" "UserProfiles" "UsageTracking"; do
     if aws dynamodb describe-table --table-name "${ENVIRONMENT}-${table}" --region "$AWS_REGION" >/dev/null 2>&1; then
-        echo "✅ Table ${ENVIRONMENT}-${table} is active"
+        log_success "Table ${ENVIRONMENT}-${table} is active"
     else
-        echo "❌ Table ${ENVIRONMENT}-${table} not found"
+        log_error "Table ${ENVIRONMENT}-${table} not found"
     fi
 done
 
-# Check if functions exist
+# Check Lambda functions
 for func in "${STACK_PREFIX}-invitation-manager-s3" "${STACK_PREFIX}-registration-handler"; do
     if aws lambda get-function --function-name "$func" --region "$AWS_REGION" >/dev/null 2>&1; then
-        echo "✅ Function $func is deployed"
+        log_success "Function $func is deployed"
     else
-        echo "❌ Function $func not found"
+        log_error "Function $func not found"
     fi
 done
 
+log_success "Multi-tenant deployment completed!"
 echo ""
-echo "🚀 Deployment verification completed!"
-
-echo ""
-echo "🔗 Useful Commands:"
-echo "   View tables: aws dynamodb list-tables --region $AWS_REGION"
-echo "   View functions: aws lambda list-functions --region $AWS_REGION"
-echo "   View logs: aws logs tail /aws/lambda/${STACK_PREFIX}-invitation-manager-s3 --follow"
+log_info "Useful commands:"
+echo "  View tables: aws dynamodb list-tables --region $AWS_REGION"
+echo "  View functions: aws lambda list-functions --region $AWS_REGION"
+echo "  View logs: aws logs tail /aws/lambda/${STACK_PREFIX}-invitation-manager-s3 --follow"
