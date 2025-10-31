@@ -7,6 +7,7 @@ import '../services/recipe_service.dart' as service;
 import '../utils/units_converter.dart';
 import '../widgets/star_rating.dart';
 import '../providers/recipe_provider.dart';
+import '../services/share_channel.dart';
 import 'recipe_edit_screen.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -21,7 +22,8 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
-class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
+class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
+    with WidgetsBindingObserver {
   late int currentServings;
   bool useMetricUnits = false;
   int selectedCookingMethodIndex = 0;
@@ -40,13 +42,50 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
 
     // Enable wakelock to prevent screen from sleeping during cooking
     WakelockPlus.enable();
+
+    // Register lifecycle observer to detect app resume
+    WidgetsBinding.instance.addObserver(this);
+
+    // Check for shared URLs from iOS Share Extension
+    _checkForSharedUrl();
+
+    // Set up handler for when app is already running
+    ShareChannel.setSharedUrlHandler((sharedData) {
+      if (mounted) {
+        final url = sharedData['url']!;
+        final html = sharedData['html'];
+        final images = sharedData['images'] as List?;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(html != null
+                ? 'Processing recipe with HTML...'
+                : 'Processing shared URL...'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        _processSharedRecipe(url, html: html, images: images);
+      }
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // Disable wakelock when leaving recipe screen
     WakelockPlus.disable();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Check for shared recipes when app resumes from background
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('DEBUG: App resumed on recipe detail page, checking for shared recipes');
+      _checkForSharedUrl();
+    }
   }
 
   @override
@@ -1277,10 +1316,120 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     if (ingredientText.startsWith('## ')) {
       return false;
     }
-    
+
     // Use the same regex pattern as UnitsConverter to detect ingredients with measurable quantities
     // This ensures consistency between scaling and display logic
     final regex = RegExp(r'((?:\d+\s+)?[\d½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]+(?:\.\d+)?(?:/\d+)?)\s*(?:\([^)]+\))?\s*([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?=\s|$|,|\()', unicode: true);
     return regex.hasMatch(ingredientText);
+  }
+
+  Future<void> _checkForSharedUrl() async {
+    final sharedData = await ShareChannel.checkForSharedUrl();
+    if (sharedData != null && mounted) {
+      final url = sharedData['url']!;
+      final html = sharedData['html'];
+      final images = sharedData['images'] as List?;
+
+      debugPrint('DEBUG _checkForSharedUrl (detail screen): URL = $url');
+      debugPrint('DEBUG _checkForSharedUrl (detail screen): Has HTML = ${html != null}');
+      if (html != null) {
+        debugPrint('DEBUG _checkForSharedUrl (detail screen): HTML length = ${html.length}');
+      }
+      if (images != null) {
+        debugPrint(
+            'DEBUG _checkForSharedUrl (detail screen): Has ${images.length} images from Web Archive');
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(html != null
+              ? 'Processing recipe with HTML...'
+              : 'Processing shared URL...'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      await _processSharedRecipe(url, html: html, images: images);
+    }
+  }
+
+  Future<void> _processSharedRecipe(String url,
+      {String? html, List? images}) async {
+    try {
+      final recipeService = ref.read(service.recipeServiceProvider);
+      final uri = Uri.parse(url);
+      final domain = uri.host.replaceAll('www.', '');
+
+      debugPrint('DEBUG (detail screen): Processing shared recipe from $url');
+
+      // Build recipe data with HTML if available
+      final recipeData = {
+        'id': '', // Will be set by backend
+        'sourceUrl': url,
+        'title': 'Recipe from $domain',
+        // Send empty arrays - backend will parse the HTML
+        'ingredients': [],
+        'instructions': [],
+        // Include HTML if provided (from Web Archive or Safari Web Extension)
+        if (html != null && html.isNotEmpty) 'webArchiveHtml': html,
+        // Include images if provided (from Web Archive)
+        if (images != null && images.isNotEmpty) 'webArchiveImages': images,
+      };
+
+      debugPrint(
+          'DEBUG (detail screen): Recipe data includes HTML: ${html != null && html.isNotEmpty}');
+      if (html != null && html.isNotEmpty) {
+        debugPrint(
+            'DEBUG (detail screen): HTML length being sent to backend: ${html.length} chars');
+      }
+      if (images != null && images.isNotEmpty) {
+        debugPrint(
+            'DEBUG (detail screen): Sending ${images.length} images from Web Archive to backend');
+      }
+
+      debugPrint('DEBUG (detail screen): Calling saveRecipeRaw to preserve webArchiveHtml...');
+      final response = await recipeService.saveRecipeRaw(recipeData);
+      debugPrint('DEBUG (detail screen): Recipe saved successfully with ID: ${response.id}');
+
+      if (mounted) {
+        // Invalidate recipes provider to refresh the list
+        ref.invalidate(recipeProvider);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Recipe saved! Processing...'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                // Navigate to the new recipe, replacing current detail screen
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        RecipeDetailScreen(recipe: response),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+
+        // Check for more queued recipes after a brief delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _checkForSharedUrl();
+        });
+      }
+    } catch (e, stackTrace) {
+      debugPrint('ERROR (detail screen): Failed to save shared recipe: $e');
+      debugPrint('ERROR (detail screen): Stack trace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save recipe: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
   }
 }
