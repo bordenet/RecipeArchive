@@ -1,101 +1,115 @@
 #!/usr/bin/env bash
 
-#===============================================================================
-# Deploy Admin Endpoints to API Gateway
-#===============================================================================
+################################################################################
+# RecipeArchive Admin Endpoints Deployment
+################################################################################
 # PURPOSE: Add missing admin/invitations endpoints to existing API Gateway
+#   - Creates /admin resource in API Gateway
+#   - Creates /admin/invitations resource
+#   - Links to InvitationManager Lambda function
+#   - Configures POST method with Lambda integration
+#   - Sets up CORS for endpoints
+#   - Deploys changes to production stage
 #
 # USAGE:
 #   ./scripts/aws-deploy-admin-endpoints.sh
 #
-# REQUIREMENTS:
-#   - AWS CLI configured
-#   - .env file with API_GATEWAY_ID
+# EXAMPLES:
+#   ./scripts/aws-deploy-admin-endpoints.sh
 #
-# This script adds the admin endpoints that are missing from the minimal CDK stack
-#===============================================================================
+# DEPENDENCIES:
+#   - AWS CLI
+#
+# ENVIRONMENT VARIABLES:
+#   - API_GATEWAY_ID (required)
+#
+# NOTES:
+#   - Requires .env file configured
+#   - Adds endpoints to existing API Gateway (minimal CDK stack)
+#   - Skips creation if endpoints already exist
+################################################################################
 
-set -e
+# Source common library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
+init_script
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[1;34m'
-NC='\033[0m' # No Color
+# Script variables
+readonly REPO_ROOT="$(get_repo_root)"
 
-echo -e "${BLUE}🔧 Adding Admin Endpoints to API Gateway${NC}"
-echo "========================================"
+log_header "Adding Admin Endpoints to API Gateway"
 
 # Load environment variables
-if [ -f .env ]; then
-    source .env
+if [[ -f "$REPO_ROOT/.env" ]]; then
+    set -a
+    source "$REPO_ROOT/.env"
+    set +a
 else
-    echo -e "${RED}❌ .env file not found${NC}"
-    exit 1
+    die ".env file not found"
 fi
 
-if [ -z "$API_GATEWAY_ID" ]; then
-    echo -e "${RED}❌ API_GATEWAY_ID not set in .env${NC}"
-    exit 1
+if [[ -z "$API_GATEWAY_ID" ]]; then
+    die "API_GATEWAY_ID not set in .env"
 fi
 
-echo "API Gateway ID: $API_GATEWAY_ID"
+log_info "API Gateway ID: $API_GATEWAY_ID"
 
 # Find invitation manager Lambda function
+log_section "Finding Lambda Function"
 LAMBDA_FUNCTION=$(aws lambda list-functions --query 'Functions[?contains(FunctionName, `InvitationManager`)].FunctionName' --output text)
-if [ -z "$LAMBDA_FUNCTION" ]; then
-    echo -e "${RED}❌ Invitation Manager Lambda function not found${NC}"
-    exit 1
+if [[ -z "$LAMBDA_FUNCTION" ]]; then
+    die "Invitation Manager Lambda function not found"
 fi
 
-echo "Lambda Function: $LAMBDA_FUNCTION"
+log_success "Lambda Function: $LAMBDA_FUNCTION"
 
 # Get Lambda ARN
 LAMBDA_ARN=$(aws lambda get-function --function-name "$LAMBDA_FUNCTION" --query 'Configuration.FunctionArn' --output text)
-echo "Lambda ARN: $LAMBDA_ARN"
+log_info "Lambda ARN: $LAMBDA_ARN"
 
 # Get root resource ID
+log_section "Configuring API Gateway Resources"
 ROOT_ID=$(aws apigateway get-resources --rest-api-id "$API_GATEWAY_ID" --query 'items[?pathPart==null].id' --output text)
-echo "Root Resource ID: $ROOT_ID"
+log_info "Root Resource ID: $ROOT_ID"
 
 # Check if admin resource already exists
 EXISTING_ADMIN=$(aws apigateway get-resources --rest-api-id "$API_GATEWAY_ID" --query 'items[?pathPart==`admin`].id' --output text)
 
-if [ -n "$EXISTING_ADMIN" ]; then
-    echo -e "${YELLOW}⚠️  Admin resource already exists: $EXISTING_ADMIN${NC}"
+if [[ -n "$EXISTING_ADMIN" ]]; then
+    log_warning "Admin resource already exists: $EXISTING_ADMIN"
     ADMIN_RESOURCE_ID="$EXISTING_ADMIN"
 else
-    echo "Creating admin resource..."
+    log_info "Creating admin resource..."
     ADMIN_RESOURCE_ID=$(aws apigateway create-resource \
         --rest-api-id "$API_GATEWAY_ID" \
         --parent-id "$ROOT_ID" \
         --path-part admin \
         --query 'id' --output text)
-    echo -e "${GREEN}✅ Created admin resource: $ADMIN_RESOURCE_ID${NC}"
+    log_success "Created admin resource: $ADMIN_RESOURCE_ID"
 fi
 
 # Check if invitations resource already exists
 EXISTING_INVITATIONS=$(aws apigateway get-resources --rest-api-id "$API_GATEWAY_ID" --query 'items[?pathPart==`invitations`].id' --output text)
 
-if [ -n "$EXISTING_INVITATIONS" ]; then
-    echo -e "${YELLOW}⚠️  Invitations resource already exists: $EXISTING_INVITATIONS${NC}"
+if [[ -n "$EXISTING_INVITATIONS" ]]; then
+    log_warning "Invitations resource already exists: $EXISTING_INVITATIONS"
     INVITATIONS_RESOURCE_ID="$EXISTING_INVITATIONS"
 else
-    echo "Creating invitations resource..."
+    log_info "Creating invitations resource..."
     INVITATIONS_RESOURCE_ID=$(aws apigateway create-resource \
         --rest-api-id "$API_GATEWAY_ID" \
         --parent-id "$ADMIN_RESOURCE_ID" \
         --path-part invitations \
         --query 'id' --output text)
-    echo -e "${GREEN}✅ Created invitations resource: $INVITATIONS_RESOURCE_ID${NC}"
+
+    log_success "✅ Created invitations resource: $INVITATIONS_RESOURCE_ID"
 fi
 
 # Check if invitation ID resource already exists
 EXISTING_INVITATION_ID=$(aws apigateway get-resources --rest-api-id "$API_GATEWAY_ID" --query 'items[?parentId==`'$INVITATIONS_RESOURCE_ID'` && pathPart==`{invitationId}`].id' --output text)
 
 if [ -n "$EXISTING_INVITATION_ID" ]; then
-    echo -e "${YELLOW}⚠️  Invitation ID resource already exists: $EXISTING_INVITATION_ID${NC}"
+    log_warning "⚠️  Invitation ID resource already exists: $EXISTING_INVITATION_ID"
     INVITATION_ID_RESOURCE_ID="$EXISTING_INVITATION_ID"
 else
     echo "Creating invitation ID resource..."
@@ -104,18 +118,18 @@ else
         --parent-id "$INVITATIONS_RESOURCE_ID" \
         --path-part '{invitationId}' \
         --query 'id' --output text)
-    echo -e "${GREEN}✅ Created invitation ID resource: $INVITATION_ID_RESOURCE_ID${NC}"
+    log_success "✅ Created invitation ID resource: $INVITATION_ID_RESOURCE_ID"
 fi
 
 # Add Lambda permission for API Gateway
-echo "Adding Lambda permission..."
+log_info "Adding Lambda permission..."
 aws lambda add-permission \
     --function-name "$LAMBDA_FUNCTION" \
     --statement-id "apigateway-invoke-admin-invitations-$(date +%s)" \
     --action lambda:InvokeFunction \
     --principal apigateway.amazonaws.com \
     --source-arn "arn:aws:execute-api:$AWS_REGION:$(aws sts get-caller-identity --query Account --output text):$API_GATEWAY_ID/*/*" \
-    2>/dev/null || echo -e "${YELLOW}⚠️  Lambda permission may already exist${NC}"
+    2>/dev/null || log_warning "⚠️  Lambda permission may already exist"
 
 # Function to add method and integration
 add_method_with_integration() {
@@ -126,7 +140,7 @@ add_method_with_integration() {
 
     # Check if method already exists
     if aws apigateway get-method --rest-api-id "$API_GATEWAY_ID" --resource-id "$INVITATIONS_RESOURCE_ID" --http-method "$HTTP_METHOD" >/dev/null 2>&1; then
-        echo -e "${YELLOW}⚠️  $HTTP_METHOD method already exists, deleting first...${NC}"
+        log_warning "⚠️  $HTTP_METHOD method already exists, deleting first..."
         aws apigateway delete-method --rest-api-id "$API_GATEWAY_ID" --resource-id "$INVITATIONS_RESOURCE_ID" --http-method "$HTTP_METHOD"
     fi
 
@@ -147,7 +161,7 @@ add_method_with_integration() {
         --integration-http-method POST \
         --uri "arn:aws:apigateway:$AWS_REGION:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations" >/dev/null
 
-    echo -e "${GREEN}✅ Added $HTTP_METHOD method for $DESCRIPTION${NC}"
+    log_success "✅ Added $HTTP_METHOD method for $DESCRIPTION"
 }
 
 # Add methods for invitations collection
@@ -155,9 +169,9 @@ add_method_with_integration "GET" "listing invitations"
 add_method_with_integration "POST" "creating invitations"
 
 # Add DELETE method for individual invitations
-echo "Adding DELETE method for individual invitation..."
+log_info "Adding DELETE method for individual invitation..."
 if aws apigateway get-method --rest-api-id "$API_GATEWAY_ID" --resource-id "$INVITATION_ID_RESOURCE_ID" --http-method DELETE >/dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️  DELETE method already exists, deleting first...${NC}"
+    log_warning "⚠️  DELETE method already exists, deleting first..."
     aws apigateway delete-method --rest-api-id "$API_GATEWAY_ID" --resource-id "$INVITATION_ID_RESOURCE_ID" --http-method DELETE
 fi
 
@@ -178,12 +192,12 @@ aws apigateway put-integration \
     --integration-http-method POST \
     --uri "arn:aws:apigateway:$AWS_REGION:lambda:path/2015-03-31/functions/$LAMBDA_ARN/invocations" >/dev/null
 
-echo -e "${GREEN}✅ Added DELETE method for individual invitation${NC}"
+log_success "✅ Added DELETE method for individual invitation"
 
 # Add OPTIONS method for CORS
-echo "Adding OPTIONS method for CORS..."
+log_info "Adding OPTIONS method for CORS..."
 if aws apigateway get-method --rest-api-id "$API_GATEWAY_ID" --resource-id "$INVITATIONS_RESOURCE_ID" --http-method OPTIONS >/dev/null 2>&1; then
-    echo -e "${YELLOW}⚠️  OPTIONS method already exists, deleting first...${NC}"
+    log_warning "⚠️  OPTIONS method already exists, deleting first..."
     aws apigateway delete-method --rest-api-id "$API_GATEWAY_ID" --resource-id "$INVITATIONS_RESOURCE_ID" --http-method OPTIONS
 fi
 
@@ -218,10 +232,10 @@ aws apigateway put-integration-response \
     --status-code 200 \
     --response-parameters '{"method.response.header.Access-Control-Allow-Headers":"'\''Content-Type,Authorization'\''","method.response.header.Access-Control-Allow-Methods":"'\''GET,POST,OPTIONS'\''","method.response.header.Access-Control-Allow-Origin":"'\''*'\''"}'>/dev/null
 
-echo -e "${GREEN}✅ Added OPTIONS method for CORS${NC}"
+log_success "✅ Added OPTIONS method for CORS"
 
 # Add OPTIONS method for CORS on invitation ID resource
-echo "Adding OPTIONS method for CORS on invitation ID resource..."
+log_info "Adding OPTIONS method for CORS on invitation ID resource..."
 aws apigateway put-method \
     --rest-api-id "$API_GATEWAY_ID" \
     --resource-id "$INVITATION_ID_RESOURCE_ID" \
@@ -253,21 +267,21 @@ aws apigateway put-integration-response \
     --status-code 200 \
     --response-parameters '{"method.response.header.Access-Control-Allow-Headers":"'\''Content-Type,Authorization'\''","method.response.header.Access-Control-Allow-Methods":"'\''DELETE,OPTIONS'\''","method.response.header.Access-Control-Allow-Origin":"'\''*'\''"}'>/dev/null
 
-echo -e "${GREEN}✅ Added OPTIONS method for CORS on invitation ID resource${NC}"
+log_success "✅ Added OPTIONS method for CORS on invitation ID resource"
 
 # Deploy the changes
-echo "Deploying API Gateway changes..."
+log_info "Deploying API Gateway changes..."
 DEPLOYMENT_ID=$(aws apigateway create-deployment \
     --rest-api-id "$API_GATEWAY_ID" \
     --stage-name prod \
     --description "Deploy admin endpoints via script" \
     --query 'id' --output text)
 
-echo -e "${GREEN}✅ Deployed API Gateway changes (Deployment ID: $DEPLOYMENT_ID)${NC}"
+log_success "✅ Deployed API Gateway changes (Deployment ID: $DEPLOYMENT_ID)"
 
 # Test the endpoint
-echo ""
-echo "Testing admin endpoints..."
+log_info ""
+log_info "Testing admin endpoints..."
 if [ -n "$RECIPE_ADMIN_TOKEN" ]; then
     echo "Testing GET /admin/invitations..."
     RESPONSE=$(curl -s -H "Authorization: Bearer $RECIPE_ADMIN_TOKEN" \
@@ -275,16 +289,16 @@ if [ -n "$RECIPE_ADMIN_TOKEN" ]; then
     echo "Response: $RESPONSE"
 
     if echo "$RESPONSE" | grep -q '"invitations"'; then
-        echo -e "${GREEN}✅ Admin endpoint is working correctly!${NC}"
+        log_success "✅ Admin endpoint is working correctly!"
     else
-        echo -e "${YELLOW}⚠️  Endpoint accessible but unexpected response${NC}"
+        log_warning "⚠️  Endpoint accessible but unexpected response"
     fi
 else
-    echo -e "${YELLOW}⚠️  RECIPE_ADMIN_TOKEN not set, skipping endpoint test${NC}"
+    log_warning "⚠️  RECIPE_ADMIN_TOKEN not set, skipping endpoint test"
 fi
 
 # Add analytics endpoints
-echo "Adding analytics endpoints..."
+log_info "Adding analytics endpoints..."
 
 # Find analytics Lambda function
 ANALYTICS_FUNCTION=$(aws lambda list-functions --query 'Functions[?contains(FunctionName, `Analytics`)].FunctionName' --output text)
@@ -301,7 +315,7 @@ if [ -n "$ANALYTICS_FUNCTION" ]; then
         --action lambda:InvokeFunction \
         --principal apigateway.amazonaws.com \
         --source-arn "arn:aws:execute-api:$AWS_REGION:$(aws sts get-caller-identity --query Account --output text):$API_GATEWAY_ID/*/*" \
-        2>/dev/null || echo -e "${YELLOW}⚠️  Analytics Lambda permission may already exist${NC}"
+        2>/dev/null || log_warning "⚠️  Analytics Lambda permission may already exist"
 
     # Create analytics resource
     EXISTING_ANALYTICS=$(aws apigateway get-resources --rest-api-id "$API_GATEWAY_ID" --query 'items[?pathPart==`analytics`].id' --output text)
@@ -313,7 +327,7 @@ if [ -n "$ANALYTICS_FUNCTION" ]; then
             --parent-id "$ROOT_ID" \
             --path-part analytics \
             --query 'id' --output text)
-        echo -e "${GREEN}✅ Created analytics resource: $ANALYTICS_RESOURCE_ID${NC}"
+        log_success "✅ Created analytics resource: $ANALYTICS_RESOURCE_ID"
     fi
 
     # Create summary and events resources
@@ -326,7 +340,7 @@ if [ -n "$ANALYTICS_FUNCTION" ]; then
             --parent-id "$ANALYTICS_RESOURCE_ID" \
             --path-part summary \
             --query 'id' --output text)
-        echo -e "${GREEN}✅ Created summary resource: $SUMMARY_RESOURCE_ID${NC}"
+        log_success "✅ Created summary resource: $SUMMARY_RESOURCE_ID"
     fi
 
     EXISTING_EVENTS=$(aws apigateway get-resources --rest-api-id "$API_GATEWAY_ID" --query 'items[?pathPart==`events`].id' --output text)
@@ -338,7 +352,7 @@ if [ -n "$ANALYTICS_FUNCTION" ]; then
             --parent-id "$ANALYTICS_RESOURCE_ID" \
             --path-part events \
             --query 'id' --output text)
-        echo -e "${GREEN}✅ Created events resource: $EVENTS_RESOURCE_ID${NC}"
+        log_success "✅ Created events resource: $EVENTS_RESOURCE_ID"
     fi
 
     # Add methods and integrations for analytics
@@ -366,21 +380,21 @@ if [ -n "$ANALYTICS_FUNCTION" ]; then
             --integration-http-method POST \
             --uri "arn:aws:apigateway:$AWS_REGION:lambda:path/2015-03-31/functions/$ANALYTICS_ARN/invocations" >/dev/null
 
-        echo -e "${GREEN}✅ Added $HTTP_METHOD method for $DESCRIPTION${NC}"
+        log_success "✅ Added $HTTP_METHOD method for $DESCRIPTION"
     }
 
     add_analytics_method "$SUMMARY_RESOURCE_ID" "GET" "analytics summary"
     add_analytics_method "$EVENTS_RESOURCE_ID" "POST" "analytics events"
 
-    echo -e "${GREEN}✅ Analytics endpoints configured${NC}"
+    log_success "✅ Analytics endpoints configured"
 else
-    echo -e "${YELLOW}⚠️  Analytics Lambda function not found, skipping analytics endpoints${NC}"
+    log_warning "⚠️  Analytics Lambda function not found, skipping analytics endpoints"
 fi
 
-echo ""
-echo -e "${GREEN}🎉 Admin and analytics endpoints deployment complete!${NC}"
-echo "Endpoints available:"
-echo "  GET  https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/admin/invitations"
-echo "  POST https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/admin/invitations"
-echo "  GET  https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/analytics/summary"
-echo "  POST https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/analytics/events"
+log_info ""
+log_success "🎉 Admin and analytics endpoints deployment complete!"
+log_info "Endpoints available:"
+log_info "  GET  https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/admin/invitations"
+log_info "  POST https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/admin/invitations"
+log_info "  GET  https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/analytics/summary"
+log_info "  POST https://$API_GATEWAY_ID.execute-api.$AWS_REGION.amazonaws.com/prod/analytics/events"
