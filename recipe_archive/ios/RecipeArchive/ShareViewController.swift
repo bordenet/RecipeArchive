@@ -2,17 +2,26 @@
 //  ShareViewController.swift
 //  RecipeArchive
 //
-//  Created by Matt Bordenet on 10/25/25.
+//  Share Extension view controller for capturing recipes from Safari
 //
 
 import UIKit
 import WebKit
-@_exported import Shared // Import our shared framework // This makes WebViewContentLoader available
+@_exported import Shared
 
-class ShareViewController: UIViewController {
+/// View controller for the Share Extension
+final class ShareViewController: UIViewController {
+
+    // MARK: - Properties
 
     private var hasCompleted = false
     private var contentLoader: WebViewContentLoader?
+
+    private let contentExtractor = ContentExtractor()
+    private let recipeQueueService = RecipeQueueService()
+    private let timeout: TimeInterval = 10.0
+
+    // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,166 +29,84 @@ class ShareViewController: UIViewController {
         setupAndProcess()
     }
 
+    // MARK: - Setup
+
     private func setupAndProcess() {
-        // Set a timeout to ensure we don't hang
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
-            if !(self?.hasCompleted ?? true) {
-                self?.showErrorAndDismiss(message: "Timeout: Unable to extract URL from shared content")
-            }
+        // Set timeout to prevent hanging
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            guard let self = self, !self.hasCompleted else { return }
+            self.handleError(.timeout)
         }
 
-        // Process shared content after view is loaded
+        // Process shared content
         DispatchQueue.main.async { [weak self] in
             self?.processSharedContent()
         }
     }
 
+    // MARK: - Content Processing
+
     private func processSharedContent() {
         guard let extensionItems = extensionContext?.inputItems as? [NSExtensionItem] else {
-            showErrorAndDismiss(message: "No content to share")
+            handleError(.noExtensionItems)
             return
         }
 
-        extractContent(from: extensionItems) { [weak self] url, html, images in
+        contentExtractor.extractContent(from: extensionItems) { [weak self] result in
             guard let self = self, !self.hasCompleted else { return }
 
-            guard let url = url else {
-                self.showErrorAndDismiss(message: "No URL found. Please share a web page.")
-                return
+            switch result {
+            case .success(let content):
+                self.handleExtractedContent(content)
+            case .failure(let error):
+                self.handleError(error)
             }
-
-            guard self.isValidWebURL(url) else {
-                self.showErrorAndDismiss(message: "Invalid URL. Please share a web page (http:// or https://)")
-                return
-            }
-
-            self.saveToAppGroup(url: url, html: html, images: images)
-            self.showSuccessAndDismiss(url: url)
         }
     }
 
-    private func extractContent(from extensionItems: [NSExtensionItem], completion: @escaping (URL?, String?, [[String: Any]]) -> Void) {
-        var extractedURL: URL?
-        var extractedHTML: String?
-        var webArchiveImages: [[String: Any]] = []
-        let dispatchGroup = DispatchGroup()
-
-        for item in extensionItems {
-            guard let attachments = item.attachments else { continue }
-
-            for attachment in attachments {
-                // Extract URL
-                let urlTypes = ["public.url", "public.file-url", "public.text", "public.plain-text"]
-                for urlType in urlTypes where attachment.hasItemConformingToTypeIdentifier(urlType) {
-                    dispatchGroup.enter()
-                    attachment.loadItem(forTypeIdentifier: urlType, options: nil) { item, _ in
-                        defer { dispatchGroup.leave() }
-                        if let url = self.url(from: item) {
-                            if extractedURL == nil {
-                                extractedURL = url
-                            }
-                        }
-                    }
-                }
-
-                // Extract Web Archive
-                if attachment.hasItemConformingToTypeIdentifier("com.apple.webarchive") {
-                    dispatchGroup.enter()
-                    attachment.loadItem(forTypeIdentifier: "com.apple.webarchive", options: nil) { item, error in
-                        defer { dispatchGroup.leave() }
-                        guard error == nil, let item = item else { return }
-                        self.processWebArchive(item: item) { url, html, images in
-                            if extractedURL == nil {
-                                extractedURL = url
-                            }
-                            if extractedHTML == nil {
-                                extractedHTML = html
-                            }
-                            webArchiveImages.append(contentsOf: images)
-                        }
-                    }
-                }
-
-                // Extract HTML
-                if attachment.hasItemConformingToTypeIdentifier("public.html") {
-                    dispatchGroup.enter()
-                    attachment.loadItem(forTypeIdentifier: "public.html", options: nil) { item, _ in
-                        defer { dispatchGroup.leave() }
-                        if let data = item as? Data, let html = String(data: data, encoding: .utf8) {
-                            extractedHTML = html
-                        } else if let html = item as? String {
-                            extractedHTML = html
-                        }
-                    }
-                }
-            }
-        }
-
-        dispatchGroup.notify(queue: .main) {
-            completion(extractedURL, extractedHTML, webArchiveImages)
+    private func handleExtractedContent(_ content: ExtractedContent) {
+        // If no HTML was extracted, try loading via WKWebView
+        if content.html == nil {
+            loadContentViaWebView(url: content.url, existingImages: content.images)
+        } else {
+            enqueueRecipe(url: content.url, html: content.html, images: content.images)
         }
     }
 
-    private func url(from item: Any?) -> URL? {
-        if let url = item as? URL {
-            return url
-        }
-        if let nsurl = item as? NSURL {
-            return nsurl as URL
-        }
-        if let urlString = item as? String, let url = URL(string: urlString), isValidWebURL(url) {
-            return url
-        }
-        if let data = item as? Data, let urlString = String(data: data, encoding: .utf8), let url = URL(string: urlString), isValidWebURL(url) {
-            return url
-        }
-        if let description = (item as? CustomStringConvertible)?.description, let url = URL(string: description), isValidWebURL(url) {
-            return url
-        }
-        return nil
-    }
+    private func loadContentViaWebView(url: URL, existingImages: [[String: Any]]) {
+        let loader = WebViewContentLoader(url: url) { [weak self] html, imageData in
+            guard let self = self else { return }
 
-    private func processWebArchive(item: Any, completion: @escaping (URL?, String?, [[String: Any]]) -> Void) {
-        var extractedURL: URL?
-        var extractedHTML: String?
-        var webArchiveImages: [[String: Any]] = []
+            var allImages = existingImages
 
-        let processArchiveData: (Data) -> Void = { data in
-            guard let archive = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { return }
-
-            if let mainResource = archive["WebMainResource"] as? [String: Any] {
-                if let urlString = mainResource["WebResourceURL"] as? String, let webURL = URL(string: urlString) {
-                    extractedURL = webURL
-                }
-                if let htmlData = mainResource["WebResourceData"] as? Data, let html = String(data: htmlData, encoding: .utf8) {
-                    extractedHTML = html
+            // Convert image data to expected format
+            if let imageData = imageData {
+                for (imageUrl, data) in imageData {
+                    allImages.append([
+                        "url": imageUrl,
+                        "data": data,
+                        "mimeType": self.inferMimeType(from: imageUrl)
+                    ])
                 }
             }
 
-            if let subresources = archive["WebSubresources"] as? [[String: Any]] {
-                for resource in subresources {
-                    if let mimeType = resource["WebResourceMIMEType"] as? String,
-                       mimeType.hasPrefix("image/"),
-                       let resourceURL = resource["WebResourceURL"] as? String,
-                       let resourceData = resource["WebResourceData"] as? Data {
-                        webArchiveImages.append([
-                            "url": resourceURL,
-                            "data": resourceData,
-                            "mimeType": mimeType
-                        ])
-                    }
-                }
-            }
+            self.enqueueRecipe(url: url, html: html, images: allImages)
         }
 
-        if let url = item as? URL, let data = try? Data(contentsOf: url) {
-            processArchiveData(data)
-        } else if let data = item as? Data {
-            processArchiveData(data)
-        }
-
-        completion(extractedURL, extractedHTML, webArchiveImages)
+        // Retain loader to prevent deallocation
+        self.contentLoader = loader
     }
+
+    private func enqueueRecipe(url: URL, html: String?, images: [[String: Any]]) {
+        do {
+            try recipeQueueService.enqueue(url: url, html: html, images: images)
+            showSuccessAndDismiss(url: url)
+        } catch {
+            handleError(.extractionFailed(error.localizedDescription))
+        }
+    }
+
+    // MARK: - UI
 
     private func showSuccessAndDismiss(url: URL) {
         let alert = UIAlertController(
@@ -195,78 +122,18 @@ class ShareViewController: UIViewController {
         present(alert, animated: true)
     }
 
-    private func isValidWebURL(_ url: URL) -> Bool {
-        guard let scheme = url.scheme?.lowercased() else { return false }
-        return scheme == "http" || scheme == "https"
-    }
+    private func handleError(_ error: ContentExtractionError) {
+        let alert = UIAlertController(
+            title: "Cannot Share Recipe",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
 
-    private func saveToAppGroup(url: URL, html: String?, images: [[String: Any]]) {
-        // If no HTML content was shared directly, try to load it via WKWebView
-        if html == nil {
-            let contentLoader = WebViewContentLoader(url: url) { [weak self] loadedHtml, imageData in
-                var allImages = images
-                if let imageData = imageData {
-                    // Convert image data to the expected format
-                    for (imageUrl, data) in imageData {
-                        allImages.append([
-                            "url": imageUrl,
-                            "data": data,
-                            "mimeType": self?.inferMimeType(from: imageUrl) ?? "image/jpeg"
-                        ])
-                    }
-                }
-                self?.saveToAppGroup(url: url, html: loadedHtml, images: allImages)
-            }
-            // Store the loader as a property to prevent deallocation
-            self.contentLoader = contentLoader
-            return
-        }
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            self?.dismissExtension()
+        })
 
-        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.recipearchive.shared") else {
-            return
-        }
-
-        let queueURL = containerURL.appendingPathComponent("recipe_queue")
-        try? FileManager.default.createDirectory(at: queueURL, withIntermediateDirectories: true, attributes: nil)
-
-        let timestamp = Date().timeIntervalSince1970
-        let uuid = UUID().uuidString.prefix(8)
-        let filename = "recipe_\(Int(timestamp))_\(uuid).json"
-        let fileURL = queueURL.appendingPathComponent(filename)
-
-        var payload: [String: Any] = [
-            "url": url.absoluteString,
-            "timestamp": timestamp
-        ]
-        if let html = html {
-            payload["html"] = html
-        }
-
-        if !images.isEmpty {
-            var serializableImages: [[String: Any]] = []
-            for image in images {
-                if let imageURL = image["url"] as? String,
-                   let imageData = image["data"] as? Data,
-                   let mimeType = image["mimeType"] as? String {
-                    serializableImages.append([
-                        "url": imageURL,
-                        "data": imageData.base64EncodedString(),
-                        "mimeType": mimeType
-                    ])
-                }
-            }
-            payload["images"] = serializableImages
-        }
-
-        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
-            return
-        }
-
-        do {
-            try data.write(to: fileURL, options: [.atomic])
-        } catch {
-            print("ERROR ShareViewController: Failed to queue recipe: \(error)")
-        }
+        present(alert, animated: true)
     }
 
     private func dismissExtension() {
@@ -274,6 +141,8 @@ class ShareViewController: UIViewController {
         hasCompleted = true
         extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
     }
+
+    // MARK: - Helpers
 
     private func inferMimeType(from url: String) -> String {
         let lowercasedURL = url.lowercased()
@@ -286,20 +155,6 @@ class ShareViewController: UIViewController {
         } else if lowercasedURL.hasSuffix(".webp") {
             return "image/webp"
         }
-        return "image/jpeg" // default to JPEG if unknown
-    }
-
-    private func showErrorAndDismiss(message: String) {
-        let alert = UIAlertController(
-            title: "Cannot Share Recipe",
-            message: message,
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
-            self?.dismissExtension()
-        })
-
-        present(alert, animated: true)
+        return "image/jpeg" // Default
     }
 }
