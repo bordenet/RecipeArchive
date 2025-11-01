@@ -7,80 +7,106 @@
 
 import SafariServices
 import os.log
-import Shared
 
-/// Handler for Safari Web Extension native messaging
-final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
-
-    // MARK: - Properties
+class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     private let logger = Logger(subsystem: "com.recipearchive.RecipeExtension", category: "Handler")
-    private let recipeQueueService = RecipeQueueService()
-    private let notificationBridge = NotificationBridge()
-
-    // MARK: - NSExtensionRequestHandling
 
     func beginRequest(with context: NSExtensionContext) {
         logger.log("Safari Web Extension request received")
 
-        guard let message = extractMessage(from: context) else {
-            logger.error("No valid message found in request")
-            respondWithError(context: context, error: "No valid message")
+        // Handle native messaging from JavaScript
+        let request = context.inputItems.first as? NSExtensionItem
+
+        guard let message = request?.userInfo?[SFExtensionMessageKey] as? [String: Any] else {
+            logger.error("No message found in request")
+            context.completeRequest(returningItems: nil, completionHandler: nil)
             return
         }
 
         logger.log("Received message: \(String(describing: message))")
 
-        guard let action = message["action"] as? String else {
+        // Handle different message types
+        if let action = message["action"] as? String {
+            switch action {
+            case "saveRecipe":
+                handleSaveRecipe(message: message, context: context)
+            case "getAppGroupData":
+                handleGetAppGroupData(context: context)
+            default:
+                logger.warning("Unknown action: \(action)")
+                respondWithError(context: context, error: "Unknown action")
+            }
+        } else {
             respondWithError(context: context, error: "No action specified")
-            return
-        }
-
-        handleAction(action, message: message, context: context)
-    }
-
-    // MARK: - Private Methods - Message Handling
-
-    private func extractMessage(from context: NSExtensionContext) -> [String: Any]? {
-        guard let request = context.inputItems.first as? NSExtensionItem,
-              let message = request.userInfo?[SFExtensionMessageKey] as? [String: Any] else {
-            return nil
-        }
-        return message
-    }
-
-    private func handleAction(_ action: String, message: [String: Any], context: NSExtensionContext) {
-        switch action {
-        case "saveRecipe":
-            handleSaveRecipe(message: message, context: context)
-        case "getAppGroupData":
-            handleGetAppGroupData(context: context)
-        default:
-            logger.warning("Unknown action: \(action)")
-            respondWithError(context: context, error: "Unknown action")
         }
     }
 
-    // MARK: - Private Methods - Save Recipe
-
+    // Handle saving recipe to App Group
     private func handleSaveRecipe(message: [String: Any], context: NSExtensionContext) {
-        guard let urlString = message["url"] as? String,
-              let url = URL(string: urlString),
+        guard let url = message["url"] as? String,
               let html = message["html"] as? String else {
             logger.error("Missing required fields: url or html")
             respondWithError(context: context, error: "Missing required fields")
             return
         }
 
-        logger.log("Saving recipe: \(urlString)")
+        let title = message["title"] as? String
+        let recipeSchema = message["recipeSchema"] as? [String: Any]
+
+        logger.log("Saving recipe: \(url)")
         logger.log("HTML size: \(html.count) bytes")
 
-        do {
-            try recipeQueueService.enqueue(url: url, html: html, images: [])
-            logger.log("Recipe saved successfully")
+        // Save to App Group container
+        guard let containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "group.com.recipearchive.shared"
+        ) else {
+            logger.error("Failed to access App Group container")
+            respondWithError(context: context, error: "App Group access failed")
+            return
+        }
 
-            respondWithSuccess(context: context, message: "Recipe saved successfully")
-            notificationBridge.postNotification()
+        // Ensure container directory exists
+        try? FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true, attributes: nil)
+
+        // Create payload
+        var payload: [String: Any] = [
+            "url": url,
+            "html": html,
+            "timestamp": Date().timeIntervalSince1970,
+            "source": "webextension"
+        ]
+
+        if let title = title {
+            payload["title"] = title
+        }
+
+        if let schema = recipeSchema {
+            payload["recipeSchema"] = schema
+        }
+
+        // Serialize and write to file
+        let fileURL = containerURL.appendingPathComponent("shared_recipe.json")
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: payload, options: [])
+            try data.write(to: fileURL, options: [])
+
+            logger.log("Recipe saved successfully to: \(fileURL.path)")
+
+            // Send success response back to JavaScript
+            let response = NSExtensionItem()
+            response.userInfo = [
+                SFExtensionMessageKey: [
+                    "success": true,
+                    "message": "Recipe saved successfully"
+                ]
+            ]
+
+            context.completeRequest(returningItems: [response], completionHandler: nil)
+
+            // Try to notify the main app (may fail if app not running)
+            notifyMainApp()
 
         } catch {
             logger.error("Failed to save recipe: \(error.localizedDescription)")
@@ -88,36 +114,37 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
     }
 
-    // MARK: - Private Methods - Get App Group Data
-
+    // Handle reading data from App Group
     private func handleGetAppGroupData(context: NSExtensionContext) {
-        if let item = recipeQueueService.dequeueNext(),
-           let jsonString = item.jsonString,
-           let data = jsonString.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            respondWithSuccess(context: context, data: json)
-        } else {
-            respondWithError(context: context, error: "No data available")
+        guard let containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "group.com.recipearchive.shared"
+        ) else {
+            respondWithError(context: context, error: "App Group access failed")
+            return
+        }
+
+        let fileURL = containerURL.appendingPathComponent("shared_recipe.json")
+
+        do {
+            let data = try Data(contentsOf: fileURL)
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let response = NSExtensionItem()
+                response.userInfo = [
+                    SFExtensionMessageKey: [
+                        "success": true,
+                        "data": json
+                    ]
+                ]
+                context.completeRequest(returningItems: [response], completionHandler: nil)
+            } else {
+                respondWithError(context: context, error: "Invalid JSON data")
+            }
+        } catch {
+            respondWithError(context: context, error: "Failed to read data: \(error.localizedDescription)")
         }
     }
 
-    // MARK: - Private Methods - Response Helpers
-
-    private func respondWithSuccess(context: NSExtensionContext, message: String? = nil, data: [String: Any]? = nil) {
-        var response: [String: Any] = ["success": true]
-
-        if let message = message {
-            response["message"] = message
-        }
-        if let data = data {
-            response["data"] = data
-        }
-
-        let extensionItem = NSExtensionItem()
-        extensionItem.userInfo = [SFExtensionMessageKey: response]
-        context.completeRequest(returningItems: [extensionItem], completionHandler: nil)
-    }
-
+    // Send error response
     private func respondWithError(context: NSExtensionContext, error: String) {
         let response = NSExtensionItem()
         response.userInfo = [
@@ -127,5 +154,19 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             ]
         ]
         context.completeRequest(returningItems: [response], completionHandler: nil)
+    }
+
+    // Notify main app via CFNotificationCenter
+    private func notifyMainApp() {
+        // Post notification that main app can listen for
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName("com.recipearchive.newRecipe" as CFString),
+            nil,
+            nil,
+            true
+        )
+
+        logger.log("Posted notification to main app")
     }
 }

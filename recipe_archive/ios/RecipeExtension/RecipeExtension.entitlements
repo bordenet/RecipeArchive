@@ -5,7 +5,6 @@
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.recipearchive.shared</string>
-		<string>group.com.recipearchive.RecipeArchive</string>
 	</array>
 </dict>
 </plist>
