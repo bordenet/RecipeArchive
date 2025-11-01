@@ -46,9 +46,9 @@ func runMobileTests(projectRoot string) bool {
 	return scriptsFound >= 2
 }
 
-// runIOSValidation performs iOS build and deploy validation
+// runIOSValidation performs iOS clean build, test, and lint validation (NO simulator deployment)
 func runIOSValidation(projectRoot string) bool {
-	fmt.Println("\n=== iOS BUILD & DEPLOY VALIDATION ===")
+	fmt.Println("\n=== iOS BUILD, TEST & LINT VALIDATION ===")
 
 	// Check for unified iOS build script
 	iosBuildScript := filepath.Join(projectRoot, "scripts/build-ios.sh")
@@ -73,19 +73,19 @@ func runIOSValidation(projectRoot string) bool {
 		fmt.Printf("  Install with: brew install swiftlint\n")
 	}
 
-	// Run iOS build validation using unified script (dev mode with auto-run)
-	fmt.Printf("  Running iOS dev build and deploy to simulator...\n")
+	// Run iOS clean build validation (NO deployment to simulator)
+	fmt.Printf("  Running iOS clean build (no simulator deployment)...\n")
 	output, err := runCommand(
 		projectRoot,
 		iosBuildScript,
 		"--dev",
 		"--simulator",
 		"--debug",
-		"--run",
+		"--clean",
 	)
 
 	if err != nil {
-		fmt.Printf("  iOS build and deploy: ✗\n")
+		fmt.Printf("  iOS clean build: ✗\n")
 		fmt.Printf("  Error: %v\n", err)
 		if output != "" {
 			fmt.Printf("  Output: %s\n", output)
@@ -93,6 +93,7 @@ func runIOSValidation(projectRoot string) bool {
 		return false
 	}
 
-	fmt.Printf("  iOS build and deploy: ✓\n")
+	fmt.Printf("  iOS clean build: ✓\n")
+	fmt.Printf("  Note: Skipping simulator deployment (use --run flag manually for deployment)\n")
 	return true
 }

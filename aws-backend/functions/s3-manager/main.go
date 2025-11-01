@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -14,14 +15,28 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-var s3Client *s3.Client
+var (
+	s3Client *s3.Client
+	initOnce sync.Once
+	initErr  error
+)
 
-func init() {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
-	if err != nil {
-		log.Fatalf("Failed to load AWS config: %v", err)
-	}
-	s3Client = s3.NewFromConfig(cfg)
+// initAWSClient performs lazy initialization of S3 client using sync.Once.
+func initAWSClient(ctx context.Context) error {
+	initOnce.Do(func() {
+		region := os.Getenv("AWS_REGION")
+		if region == "" {
+			region = "us-west-2"
+		}
+
+		cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+		if err != nil {
+			initErr = fmt.Errorf("failed to load AWS config: %w", err)
+			return
+		}
+		s3Client = s3.NewFromConfig(cfg)
+	})
+	return initErr
 }
 
 func main() {
@@ -50,6 +65,9 @@ func main() {
 	}
 
 	ctx := context.Background()
+	if err := initAWSClient(ctx); err != nil {
+		log.Fatalf("Failed to initialize AWS client: %v", err)
+	}
 
 	switch *action {
 	case "cleanup-all":
