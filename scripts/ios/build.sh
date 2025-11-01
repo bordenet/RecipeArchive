@@ -57,13 +57,13 @@ if ! is_macos; then
 fi
 
 IOS_DIR="$FLUTTER_DIR/ios"
-UNIFIED_BUILD_DIR="$PROJECT_ROOT/build"
+UNIFIED_BUILD_DIR="$REPO_ROOT/build"
 
 # Helper functions
 print_header() {
-    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗"
-    echo -e "${CYAN}║  $1"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}\n"
+    echo -e "\n${COLOR_CYAN}╔════════════════════════════════════════════════════════════════╗"
+    echo -e "${COLOR_CYAN}║  $1"
+    echo -e "${COLOR_CYAN}╚════════════════════════════════════════════════════════════════╝${COLOR_RESET}\n"
 }
 
 print_status() {
@@ -75,7 +75,7 @@ print_success() {
 }
 
 print_error() {
-    log_error "✗ $1${NC}" >&2
+    log_error "✗ $1${COLOR_RESET}" >&2
 }
 
 error_exit() {
@@ -86,20 +86,20 @@ error_exit() {
 # Usage
 usage() {
     cat << EOF
-${CYAN}iOS Build Script${NC}
+${COLOR_CYAN}iOS Build Script${COLOR_RESET}
 
-${GREEN}Usage:${NC}
+${COLOR_GREEN}Usage:${COLOR_RESET}
     # Development (fast iteration)
     $0 --dev [--simulator|--device] [--debug|--release] [--run]
 
     # Production (distribution)
     $0 --prod --device --release --version X.Y.Z
 
-${GREEN}Required:${NC}
+${COLOR_GREEN}Required:${COLOR_RESET}
     --dev              Development mode (build for simulator)
     --prod             Production mode (create archive)
 
-${GREEN}Optional:${NC}
+${COLOR_GREEN}Optional:${COLOR_RESET}
     --simulator        Build for simulator (default in dev mode)
     --device           Build for physical device
     --debug            Debug configuration (default)
@@ -109,7 +109,7 @@ ${GREEN}Optional:${NC}
     --run              Auto-launch after build (dev mode only)
     --clean            Clean build (flutter clean + pod install)
 
-${GREEN}Examples:${NC}
+${COLOR_GREEN}Examples:${COLOR_RESET}
     # Quick dev build and run
     $0 --dev --run
 
@@ -119,7 +119,7 @@ ${GREEN}Examples:${NC}
     # Clean release build for simulator testing
     $0 --dev --simulator --release --clean
 
-${GREEN}Note:${NC}
+${COLOR_GREEN}Note:${COLOR_RESET}
     - Dev mode: Fast builds using xcodebuild build
     - Prod mode: Creates .xcarchive for distribution
     - Always uses Flutter build pipeline first
@@ -215,10 +215,10 @@ fi
 
 # Banner
 print_header "iOS Build - RecipeArchive"
-log_info "Mode:${NC}          ${GREEN}$MODE"
-log_info "Target:${NC}        ${GREEN}$TARGET"
-log_info "Configuration:${NC} ${GREEN}$XCODE_CONFIG"
-log_info "Version:${NC}       ${GREEN}$VERSION"
+log_info "Mode:${COLOR_RESET}          ${COLOR_GREEN}$MODE"
+log_info "Target:${COLOR_RESET}        ${COLOR_GREEN}$TARGET"
+log_info "Configuration:${COLOR_RESET} ${COLOR_GREEN}$XCODE_CONFIG"
+log_info "Version:${COLOR_RESET}       ${COLOR_GREEN}$VERSION"
 
 # Validate environment
 print_status "Validating environment..."
@@ -364,8 +364,8 @@ else
     # Production mode: Build for device with signing
     print_status "Building for device (requires Apple Developer account)..."
 
-    log_warning "Note:${NC} This requires signing with your Apple ID"
-    log_warning "      Free accounts work! Open Xcode → Preferences → Accounts to add your Apple ID${NC}\n"
+    log_warning "Note:${COLOR_RESET} This requires signing with your Apple ID"
+    log_warning "      Free accounts work! Open Xcode → Preferences → Accounts to add your Apple ID${COLOR_RESET}\n"
 
     SDK="iphoneos"
 
@@ -435,21 +435,21 @@ else
 
             # Show size
             SIZE=$(du -sh "$APP_PATH" | cut -f1)
-            echo -e "\n${BLUE}App Size:${NC} $SIZE"
+            echo -e "\n${COLOR_BLUE}App Size:${COLOR_RESET} $SIZE"
 
             # Check signing
             print_status "Checking code signature..."
             codesign -dv "$APP_PATH" 2>&1 | grep "Authority\|Identifier" || true
 
             # Next steps
-            echo -e "\n${YELLOW}Next Steps:"
+            echo -e "\n${COLOR_YELLOW}Next Steps:"
             echo "  1. Connect your iPhone via USB"
             echo "  2. Open Xcode: Window → Devices and Simulators"
             echo "  3. Select your device"
             echo "  4. Click '+' under Installed Apps"
             echo "  5. Navigate to: $APP_PATH"
             echo ""
-            echo "  ${CYAN}Or use Xcode to run directly:"
+            echo "  ${COLOR_CYAN}Or use Xcode to run directly:"
             echo "  open -a Xcode ios/Runner.xcworkspace"
             echo "  Then Product → Destination → Your Device → Run"
         else
@@ -467,7 +467,7 @@ else
         echo "  6. Select your Team (your Apple ID)"
         echo "  7. Do the same for RecipeArchive target"
         echo ""
-        echo -e "${CYAN}Then run this script again or use Xcode directly"
+        echo -e "${COLOR_CYAN}Then run this script again or use Xcode directly"
         die "Build failed"
     fi
 fi

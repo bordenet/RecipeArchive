@@ -6,20 +6,20 @@ import (
 
 // RecipeTrace contains the complete end-to-end trace of a recipe
 type RecipeTrace struct {
-	RecipeID    string           `json:"recipeId"`
-	Timeline    []TraceEvent     `json:"timeline"`
-	S3Events    []S3Event        `json:"s3Events"`
-	SQSEvents   []SQSEvent       `json:"sqsEvents"`
-	LogEvents   []LogEvent       `json:"logEvents"`
-	Summary     TraceSummary     `json:"summary"`
-	CurrentData *RecipeData      `json:"currentData,omitempty"`
+	RecipeID    string       `json:"recipeId"`
+	Timeline    []TraceEvent `json:"timeline"`
+	S3Events    []S3Event    `json:"s3Events"`
+	SQSEvents   []SQSEvent   `json:"sqsEvents"`
+	LogEvents   []LogEvent   `json:"logEvents"`
+	Summary     TraceSummary `json:"summary"`
+	CurrentData *RecipeData  `json:"currentData,omitempty"`
 }
 
 // TraceEvent represents a timestamped event in the recipe lifecycle
 type TraceEvent struct {
 	Timestamp time.Time `json:"timestamp"`
-	Source    string    `json:"source"`    // "s3", "sqs", "logs"
-	Type      string    `json:"type"`      // "created", "updated", "queued", "processed"
+	Source    string    `json:"source"` // "s3", "sqs", "logs"
+	Type      string    `json:"type"`   // "created", "updated", "queued", "processed"
 	Message   string    `json:"message"`
 	Details   string    `json:"details,omitempty"`
 }
@@ -36,7 +36,7 @@ type S3Event struct {
 // SQSEvent represents an SQS message related to the recipe
 type SQSEvent struct {
 	Timestamp time.Time `json:"timestamp"`
-	Action    string    `json:"action"`    // "sent", "received", "processed"
+	Action    string    `json:"action"` // "sent", "received", "processed"
 	MessageID string    `json:"messageId"`
 	QueueName string    `json:"queueName"`
 	Body      string    `json:"body,omitempty"`
@@ -44,11 +44,11 @@ type SQSEvent struct {
 
 // LogEvent represents a CloudWatch log entry related to the recipe
 type LogEvent struct {
-	Timestamp  time.Time `json:"timestamp"`
-	LogGroup   string    `json:"logGroup"`
-	LogStream  string    `json:"logStream"`
-	Message    string    `json:"message"`
-	Level      string    `json:"level"` // "INFO", "ERROR", "DEBUG"
+	Timestamp time.Time `json:"timestamp"`
+	LogGroup  string    `json:"logGroup"`
+	LogStream string    `json:"logStream"`
+	Message   string    `json:"message"`
+	Level     string    `json:"level"` // "INFO", "ERROR", "DEBUG"
 }
 
 // TraceSummary provides a high-level overview of the recipe trace

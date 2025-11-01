@@ -132,7 +132,7 @@ func loadTestData(ctx context.Context, filePath string) error {
 		return fmt.Errorf("failed to parse test data: %w", err)
 	}
 
-	fmt.Printf("📝 Found %d test recipes to load\\n", len(recipes))
+	log.Printf("INFO: Found %d test recipes to load\\n", len(recipes))
 
 	// Load each recipe using S3 storage
 	for i, recipe := range recipes {
@@ -310,9 +310,9 @@ func listRecipes(ctx context.Context, userID string) error {
 		testRecipeID := "3f94d5c1-aa0f-48dd-8d1a-3fd5ebd67988"
 		recipe, err := recipeDB.GetRecipe(userID, testRecipeID)
 		if err != nil {
-			fmt.Printf("❌ DEBUG: GetRecipe failed for %s: %v\n", testRecipeID, err)
+			log.Printf("ERROR: DEBUG: GetRecipe failed for %s: %v\n", testRecipeID, err)
 		} else {
-			fmt.Printf("✅ DEBUG: GetRecipe succeeded for %s: %s\n", testRecipeID, recipe.Title)
+			log.Printf("INFO: DEBUG: GetRecipe succeeded for %s: %s\n", testRecipeID, recipe.Title)
 		}
 	}
 

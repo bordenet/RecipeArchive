@@ -121,10 +121,7 @@ func (r *Reporter) extractUserInfo(idToken string) error {
 	return nil
 }
 
-
 // GetAccessToken returns the current access token
 func (r *Reporter) GetAccessToken() string {
 	return r.accessToken
 }
-
-

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -166,8 +167,8 @@ func submitAnalyticsEvents(ctx context.Context, request events.APIGatewayProxyRe
 
 	var req BatchAnalyticsRequest
 	if err := json.Unmarshal([]byte(request.Body), &req); err != nil {
-		fmt.Printf("❌ JSON unmarshaling error: %v\n", err)
-		fmt.Printf("❌ Request body: %s\n", request.Body)
+		log.Printf("ERROR: JSON unmarshaling error: %v\n", err)
+		log.Printf("ERROR: Request body: %s\n", request.Body)
 		return utils.NewAPIResponse(http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
 	}
 
@@ -199,17 +200,17 @@ func submitAnalyticsEvents(ctx context.Context, request events.APIGatewayProxyRe
 	// Store raw events for current month
 	currentMonth := time.Now().Format("2006-01")
 	if err := storeRawEvents(ctx, userID, currentMonth, enrichedEvents); err != nil {
-		fmt.Printf("❌ Failed to store raw events: %v\n", err)
+		log.Printf("ERROR: Failed to store raw events: %v\n", err)
 		return utils.NewAPIResponse(http.StatusInternalServerError, map[string]string{"error": "Failed to store events"})
 	}
 
 	// Update monthly summary
 	if err := updateMonthlySummary(ctx, userID, currentMonth, enrichedEvents); err != nil {
-		fmt.Printf("⚠️ Failed to update summary (non-critical): %v\n", err)
+		log.Printf("WARN: Failed to update summary (non-critical): %v\n", err)
 		// Don't fail the request - raw events are stored
 	}
 
-	fmt.Printf("✅ Successfully processed %d analytics events\n", len(enrichedEvents))
+	log.Printf("INFO: Successfully processed %d analytics events\n", len(enrichedEvents))
 
 	return utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
 		"message":    "Analytics events processed successfully",
@@ -230,7 +231,7 @@ func getAnalyticsSummary(ctx context.Context, userID, month string) (events.APIG
 	// Get monthly summary
 	summary, err := getMonthlySummary(ctx, userID, month)
 	if err != nil {
-		fmt.Printf("❌ Failed to get monthly summary: %v\n", err)
+		log.Printf("ERROR: Failed to get monthly summary: %v\n", err)
 		// Return empty summary instead of error
 		emptySummary := MonthlyAnalyticsSummary{
 			UserID:              userID,
@@ -248,7 +249,7 @@ func getAnalyticsSummary(ctx context.Context, userID, month string) (events.APIG
 		return utils.NewAPIResponse(http.StatusOK, emptySummary)
 	}
 
-	fmt.Printf("✅ Retrieved analytics summary: %d searches, %d clicks\n", summary.TotalSearches, summary.TotalClicks)
+	log.Printf("INFO: Retrieved analytics summary: %d searches, %d clicks\n", summary.TotalSearches, summary.TotalClicks)
 	return utils.NewAPIResponse(http.StatusOK, summary)
 }
 

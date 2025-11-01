@@ -7,13 +7,13 @@ import (
 
 // Recipe represents the recipe structure for analysis
 type Recipe struct {
-	ID             string           `json:"id"`
-	Title          string           `json:"title"`
-	SourceURL      string           `json:"sourceUrl"`
-	CreatedAt      time.Time        `json:"createdAt"`
-	Ingredients    []Ingredient     `json:"ingredients"`
-	Instructions   []Instruction    `json:"instructions"`
-	CookingMethods []CookingMethod  `json:"cookingMethods"`
+	ID             string          `json:"id"`
+	Title          string          `json:"title"`
+	SourceURL      string          `json:"sourceUrl"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	Ingredients    []Ingredient    `json:"ingredients"`
+	Instructions   []Instruction   `json:"instructions"`
+	CookingMethods []CookingMethod `json:"cookingMethods"`
 }
 
 // Ingredient represents a recipe ingredient
@@ -35,17 +35,17 @@ type CookingMethod struct {
 
 // AnalysisReport contains the results of recipe normalization analysis
 type AnalysisReport struct {
-	RecipeID         string
-	Title            string
-	SourceURL        string
-	CreatedAt        time.Time
-	IngredientCount  int
-	InstructionCount int
-	CookingMethods   int
+	RecipeID           string
+	Title              string
+	SourceURL          string
+	CreatedAt          time.Time
+	IngredientCount    int
+	InstructionCount   int
+	CookingMethods     int
 	HasMultipleMethods bool
-	QualityScore     float64
-	Issues           []string
-	Suggestions      []string
+	QualityScore       float64
+	Issues             []string
+	Suggestions        []string
 }
 
 // Analyzer provides recipe normalization analysis functionality
@@ -59,16 +59,16 @@ func NewAnalyzer() *Analyzer {
 // AnalyzeRecipe performs comprehensive analysis of a recipe's normalization quality
 func (a *Analyzer) AnalyzeRecipe(recipe *Recipe) *AnalysisReport {
 	report := &AnalysisReport{
-		RecipeID:         recipe.ID,
-		Title:            recipe.Title,
-		SourceURL:        recipe.SourceURL,
-		CreatedAt:        recipe.CreatedAt,
-		IngredientCount:  len(recipe.Ingredients),
-		InstructionCount: len(recipe.Instructions),
-		CookingMethods:   len(recipe.CookingMethods),
+		RecipeID:           recipe.ID,
+		Title:              recipe.Title,
+		SourceURL:          recipe.SourceURL,
+		CreatedAt:          recipe.CreatedAt,
+		IngredientCount:    len(recipe.Ingredients),
+		InstructionCount:   len(recipe.Instructions),
+		CookingMethods:     len(recipe.CookingMethods),
 		HasMultipleMethods: len(recipe.CookingMethods) > 0,
-		Issues:           []string{},
-		Suggestions:      []string{},
+		Issues:             []string{},
+		Suggestions:        []string{},
 	}
 
 	// Calculate quality score

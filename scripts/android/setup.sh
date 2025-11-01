@@ -89,15 +89,13 @@ log_info "Installing required SDK packages (platform-tools, emulator, build-tool
 sdkmanager "platform-tools" "emulator" "build-tools;34.0.0" > /dev/null
 log_success "SDK packages are up to date."
 
-# Navigate to project root
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
+# Navigate to project root and Flutter directory
+cd "$REPO_ROOT"
 
-log_info "Project root: $PROJECT_ROOT"
+log_info "Project root: $REPO_ROOT"
 
 # Navigate to Flutter project directory
-FLUTTER_DIR="$PROJECT_ROOT/../recipe_archive"
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 
 if [ ! -f "$FLUTTER_DIR/pubspec.yaml" ]; then
     log_error "Cannot find Flutter project. Expected pubspec.yaml in $FLUTTER_DIR"

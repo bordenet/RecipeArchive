@@ -5,21 +5,22 @@ import (
 	"os"
 	"path/filepath"
 
+	"bufio"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"strings"
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"context"
-	"bufio"
-	"strings"
-	"encoding/base64"
-	"encoding/json"
-	"time"
 )
 
 const (
-	CognitoAWSRegion   = "us-west-2"
-	CognitoUserPoolID  = "us-west-2_rpBcEEhYK"
-	CognitoClientID    = "7lm8mqr03s0m0fn17dnv373s4h"
+	CognitoAWSRegion  = "us-west-2"
+	CognitoUserPoolID = "us-west-2_rpBcEEhYK"
+	CognitoClientID   = "7lm8mqr03s0m0fn17dnv373s4h"
 )
 
 type JWTClaims struct {

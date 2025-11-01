@@ -6,13 +6,12 @@ import (
 	"time"
 )
 
-
 // ValidationResult stores the outcome of a single validation step.
 type ValidationResult struct {
-	Name     string
-	Success  bool
-	Duration time.Duration
-	Message  string
+	Name      string
+	Success   bool
+	Duration  time.Duration
+	Message   string
 	StartTime time.Time
 }
 

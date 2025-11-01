@@ -485,11 +485,11 @@ func extractSmittenKitchenInstructions(container *html.Node, recipe *Recipe) {
 				pText := strings.TrimSpace(getTextContent(n))
 				// Include substantial paragraphs that contain cooking instructions
 				if pText != "" && len(pText) > 20 &&
-				   (strings.Contains(strings.ToLower(pText), "finish") ||
-				    strings.Contains(strings.ToLower(pText), "chicken") ||
-				    strings.Contains(strings.ToLower(pText), "serve") ||
-				    strings.Contains(strings.ToLower(pText), "taste") ||
-				    strings.Contains(strings.ToLower(pText), "season")) {
+					(strings.Contains(strings.ToLower(pText), "finish") ||
+						strings.Contains(strings.ToLower(pText), "chicken") ||
+						strings.Contains(strings.ToLower(pText), "serve") ||
+						strings.Contains(strings.ToLower(pText), "taste") ||
+						strings.Contains(strings.ToLower(pText), "season")) {
 					instructionTexts = append(instructionTexts, pText)
 				}
 			default:

@@ -119,15 +119,15 @@ func (t *RecipeTracer) traceS3Events(ctx context.Context, recipeID string) (*Rec
 	})
 	if err == nil {
 		var recipe struct {
-			Title              string    `json:"title"`
-			SourceURL          string    `json:"sourceUrl"`
-			CreatedAt          time.Time `json:"createdAt"`
-			UpdatedAt          time.Time `json:"updatedAt"`
-			Version            int       `json:"version"`
-			Ingredients        []any     `json:"ingredients"`
-			Instructions       []any     `json:"instructions"`
-			CookingMethods     []any     `json:"cookingMethods"`
-			SearchMetadata     *struct {
+			Title          string    `json:"title"`
+			SourceURL      string    `json:"sourceUrl"`
+			CreatedAt      time.Time `json:"createdAt"`
+			UpdatedAt      time.Time `json:"updatedAt"`
+			Version        int       `json:"version"`
+			Ingredients    []any     `json:"ingredients"`
+			Instructions   []any     `json:"instructions"`
+			CookingMethods []any     `json:"cookingMethods"`
+			SearchMetadata *struct {
 				QualityScore float64 `json:"qualityScore"`
 			} `json:"searchMetadata"`
 		}
@@ -200,7 +200,7 @@ func (t *RecipeTracer) traceLogEvents(ctx context.Context, recipeID string) ([]L
 	}
 
 	// Search recent logs (last 48 hours for more comprehensive analysis)
-	startTime := time.Now().Add(-48 * time.Hour).Unix() * 1000
+	startTime := time.Now().Add(-48*time.Hour).Unix() * 1000
 
 	for _, logGroup := range logGroups {
 		// Get more log streams for comprehensive analysis

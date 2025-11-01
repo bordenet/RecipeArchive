@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -124,7 +125,6 @@ func fetchHTMLFromURL(ctx context.Context, urlStr string) (string, error) {
 		return "", fmt.Errorf("empty response body")
 	}
 
-	fmt.Printf("✅ [BEST-EFFORT] Successfully fetched HTML (%d bytes) from %s\n", len(body), urlStr)
 	return string(body), nil
 }
 
@@ -139,11 +139,13 @@ func getDomainFromURL(urlStr string) string {
 	return domain
 }
 
-// queueRecipeNormalization sends a message to SQS to normalize a recipe in the background
+// queueRecipeNormalization sends a message to SQS to normalize a recipe in the background.
+//
+// If the normalization queue is not configured, this is a no-op and returns nil.
+// This allows recipe creation to succeed even when background normalization is unavailable.
 func queueRecipeNormalization(ctx context.Context, userID, recipeID string) error {
 	queueURL := os.Getenv("NORMALIZATION_QUEUE_URL")
 	if queueURL == "" {
-		fmt.Printf("⚠️ NORMALIZATION_QUEUE_URL not set, skipping background normalization\n")
 		return nil // Don't fail recipe creation if queue isn't configured
 	}
 
@@ -358,7 +360,6 @@ func inferBasicTags(title string, ingredients []models.Ingredient, instructions 
 
 	return tags
 }
-
 
 func main() {
 	lambda.Start(handler)
@@ -690,7 +691,7 @@ func handleListRecipes(ctx context.Context, userID string, queryParams map[strin
 	// Get all recipes for user from S3
 	allRecipes, err := recipeDB.ListRecipes(userID)
 	if err != nil {
-		fmt.Printf("❌ Failed to list recipes for user %s: %v\n", userID, err)
+		log.Printf("ERROR: Failed to list recipes for user %s: %v\n", userID, err)
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "INTERNAL_ERROR",
@@ -928,7 +929,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	hasValidURL := recipeData.SourceURL != "" && (strings.HasPrefix(recipeData.SourceURL, "http://") || strings.HasPrefix(recipeData.SourceURL, "https://"))
 
 	if len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 && !hasHTML && !hasValidURL {
-		fmt.Printf("❌ ERROR: Rejected recipe submission with 0 ingredients AND 0 instructions and no HTML/URL from %s\n", recipeData.SourceURL)
+		log.Printf("ERROR: ERROR: Rejected recipe submission with 0 ingredients AND 0 instructions and no HTML/URL from %s\n", recipeData.SourceURL)
 		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "VALIDATION_ERROR",
@@ -953,10 +954,10 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 	// Warn about incomplete recipes but allow them (bookmarks or partial data)
 	if len(recipeData.Ingredients) == 0 {
-		fmt.Printf("⚠️ WARN: Recipe has 0 ingredients (may be bookmark): %s\n", recipeData.SourceURL)
+		log.Printf("WARN: WARN: Recipe has 0 ingredients (may be bookmark): %s\n", recipeData.SourceURL)
 	}
 	if len(recipeData.Instructions) == 0 {
-		fmt.Printf("⚠️ WARN: Recipe has 0 instructions (may be bookmark): %s\n", recipeData.SourceURL)
+		log.Printf("WARN: WARN: Recipe has 0 instructions (may be bookmark): %s\n", recipeData.SourceURL)
 	}
 
 	// Check for existing recipe with same source URL (de-duplication)
@@ -994,8 +995,8 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		html, err := fetchHTMLFromURL(ctx, sourceURL)
 		if err != nil {
 			// Fetch failed - this is expected for paywalled sites
-			fmt.Printf("⚠️ [BEST-EFFORT] Failed to fetch HTML: %v\n", err)
-			fmt.Printf("📝 [BEST-EFFORT] Saving as bookmark - use Safari Web Extension for full parsing\n")
+			log.Printf("WARN: [BEST-EFFORT] Failed to fetch HTML: %v\n", err)
+			log.Printf("INFO: [BEST-EFFORT] Saving as bookmark - use Safari Web Extension for full parsing\n")
 
 			// Update title to indicate bookmark status
 			domain := getDomainFromURL(sourceURL)
@@ -1003,7 +1004,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			// Don't parse HTML - just save as bookmark
 		} else {
 			// Successfully fetched HTML
-			fmt.Printf("✅ [BEST-EFFORT] HTML fetched successfully (%d bytes)\n", len(html))
+			log.Printf("INFO: [BEST-EFFORT] HTML fetched successfully (%d bytes)\n", len(html))
 			htmlContent = html
 			recipeData.WebArchiveHTML = &html
 		}
@@ -1019,8 +1020,8 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		fmt.Printf("🔍 Attempting to parse HTML for recipe data...\n")
 		parsedRecipe, err := parseHTMLToRecipe(htmlContent, sourceURL)
 		if err != nil {
-			fmt.Printf("⚠️ HTML parsing failed: %v\n", err)
-			fmt.Printf("📝 Continuing with existing recipe data (may be incomplete)\n")
+			log.Printf("WARN: HTML parsing failed: %v\n", err)
+			log.Printf("INFO: Continuing with existing recipe data (may be incomplete)\n")
 		} else {
 			// Merge parsed data with existing data (existing data takes precedence if present)
 			// Update title if it's empty, a bookmark, or a placeholder from iOS
@@ -1053,7 +1054,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 				recipeData.Servings = parsedRecipe.Servings
 			}
 
-			fmt.Printf("✅ HTML parsing successful - merged data into recipe\n")
+			log.Printf("INFO: HTML parsing successful - merged data into recipe\n")
 			fmt.Printf("📊 Recipe data: %d ingredients, %d instructions\n",
 				len(recipeData.Ingredients), len(recipeData.Instructions))
 		}
@@ -1071,7 +1072,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		firstImage := (*recipeData.WebArchiveImages)[0]
 		imageURL := firstImage.URL
 		recipeData.MainPhotoURL = &imageURL
-		fmt.Printf("✅ Set MainPhotoURL from Web Archive: %s\n", imageURL)
+		log.Printf("INFO: Set MainPhotoURL from Web Archive: %s\n", imageURL)
 	}
 
 	if recipeData.MainPhotoURL != nil && *recipeData.MainPhotoURL != "" {
@@ -1089,14 +1090,14 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 				for _, img := range *recipeData.WebArchiveImages {
 					if img.URL == imageURL {
 						webArchiveImageData = &img
-						fmt.Printf("✅ Found exact URL match in Web Archive: %s\n", imageURL)
+						log.Printf("INFO: Found exact URL match in Web Archive: %s\n", imageURL)
 						break
 					}
 				}
 
 				// If no exact match, select BEST image (largest, skip icons/logos)
 				if webArchiveImageData == nil {
-					fmt.Printf("⚙️ No exact URL match - selecting best Web Archive image\n")
+					log.Printf("INFO: No exact URL match - selecting best Web Archive image\n")
 
 					var largestImage *models.WebArchiveImage
 					var largestSize int
@@ -1126,11 +1127,11 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 					if largestImage != nil {
 						webArchiveImageData = largestImage
-						fmt.Printf("✅ Selected largest image (%d bytes, %s)\n", largestSize, webArchiveImageData.MimeType)
+						log.Printf("INFO: Selected largest image (%d bytes, %s)\n", largestSize, webArchiveImageData.MimeType)
 						fmt.Printf("   Parsed URL:  %s\n", imageURL)
 						fmt.Printf("   Archive URL: %s\n", webArchiveImageData.URL)
 					} else {
-						fmt.Printf("⚠️ No suitable images found (all too small)\n")
+						log.Printf("WARN: No suitable images found (all too small)\n")
 					}
 				}
 			}
@@ -1143,10 +1144,10 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 				fmt.Printf("📤 Uploading image from Web Archive data (%s)\n", webArchiveImageData.MimeType)
 				s3URL, uploadErr := uploadWebArchiveImage(ctx, webArchiveImageData, userID, tempRecipeID)
 				if uploadErr != nil {
-					fmt.Printf("⚠️ Web Archive image upload failed: %s - recipe will save without image\n", uploadErr.Error())
+					log.Printf("WARN: Web Archive image upload failed: %s - recipe will save without image\n", uploadErr.Error())
 					recipeData.MainPhotoURL = nil
 				} else {
-					fmt.Printf("✅ Image uploaded to S3 from Web Archive: %s\n", s3URL)
+					log.Printf("INFO: Image uploaded to S3 from Web Archive: %s\n", s3URL)
 					recipeData.MainPhotoURL = &s3URL
 				}
 			} else {
@@ -1154,15 +1155,15 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 				fmt.Printf("📥 No Web Archive images - downloading external image from: %s\n", imageURL)
 				s3URL, downloadErr := downloadAndUploadImage(ctx, imageURL, userID, tempRecipeID)
 				if downloadErr != nil {
-					fmt.Printf("⚠️ Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
+					log.Printf("WARN: Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
 					recipeData.MainPhotoURL = nil
 				} else {
-					fmt.Printf("✅ Image uploaded to S3: %s\n", s3URL)
+					log.Printf("INFO: Image uploaded to S3: %s\n", s3URL)
 					recipeData.MainPhotoURL = &s3URL
 				}
 			}
 		} else {
-			fmt.Printf("✅ Image URL is already from S3, keeping as-is\n")
+			log.Printf("INFO: Image URL is already from S3, keeping as-is\n")
 		}
 	}
 
@@ -1214,17 +1215,17 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		hasContent := len(updatedRecipe.Ingredients) > 0 || len(updatedRecipe.Instructions) > 0
 		if hasContent {
 			if err := queueRecipeNormalization(ctx, userID, updatedRecipe.ID); err != nil {
-				fmt.Printf("⚠️ Failed to queue normalization for updated recipe %s: %v\n", updatedRecipe.ID, err)
+				log.Printf("WARN: Failed to queue normalization for updated recipe %s: %v\n", updatedRecipe.ID, err)
 				// Fallback: Apply basic normalization immediately
 				if normalizedRecipe, err := applyBasicNormalization(updatedRecipe); err == nil {
 					if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
-						fmt.Printf("✅ Applied fallback normalization for updated recipe %s\n", updatedRecipe.ID)
+						log.Printf("INFO: Applied fallback normalization for updated recipe %s\n", updatedRecipe.ID)
 						updatedRecipe = normalizedRecipe
 					} else {
-						fmt.Printf("⚠️ Failed to save normalized updated recipe: %v\n", err)
+						log.Printf("WARN: Failed to save normalized updated recipe: %v\n", err)
 					}
 				} else {
-					fmt.Printf("⚠️ Fallback normalization failed for update: %v\n", err)
+					log.Printf("WARN: Fallback normalization failed for update: %v\n", err)
 				}
 			}
 		} else {
@@ -1293,17 +1294,17 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	hasContent := len(recipe.Ingredients) > 0 || len(recipe.Instructions) > 0
 	if hasContent {
 		if err := queueRecipeNormalization(ctx, userID, recipe.ID); err != nil {
-			fmt.Printf("⚠️ Failed to queue normalization for recipe %s: %v\n", recipe.ID, err)
+			log.Printf("WARN: Failed to queue normalization for recipe %s: %v\n", recipe.ID, err)
 			// Fallback: Apply basic normalization immediately
 			if normalizedRecipe, err := applyBasicNormalization(recipe); err == nil {
 				if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
-					fmt.Printf("✅ Applied fallback normalization for recipe %s\n", recipe.ID)
+					log.Printf("INFO: Applied fallback normalization for recipe %s\n", recipe.ID)
 					recipe = normalizedRecipe
 				} else {
-					fmt.Printf("⚠️ Failed to save normalized recipe: %v\n", err)
+					log.Printf("WARN: Failed to save normalized recipe: %v\n", err)
 				}
 			} else {
-				fmt.Printf("⚠️ Fallback normalization failed: %v\n", err)
+				log.Printf("WARN: Fallback normalization failed: %v\n", err)
 			}
 		}
 	} else {
@@ -1708,10 +1709,10 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 		return nil, fmt.Errorf("failed to decode normalization response: %w", err)
 	}
 
-	fmt.Printf("✅ OpenAI normalization completed with quality score: %.1f (fallback: %v)\n",
+	log.Printf("INFO: OpenAI normalization completed with quality score: %.1f (fallback: %v)\n",
 		normalizeResponse.QualityScore, normalizeResponse.FallbackUsed)
 	if normalizeResponse.NormalizationNotes != "" {
-		fmt.Printf("📝 Normalization notes: %s\n", normalizeResponse.NormalizationNotes)
+		log.Printf("INFO: Normalization notes: %s\n", normalizeResponse.NormalizationNotes)
 	}
 
 	// Convert normalized response back to CreateRecipeRequest format
@@ -2097,4 +2098,3 @@ func SortSearchResults(recipes []models.Recipe, sortBy, sortOrder string) {
 		return less
 	})
 }
-

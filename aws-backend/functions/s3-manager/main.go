@@ -74,7 +74,7 @@ func main() {
 		if *dryRun {
 			fmt.Printf("🔍 Dry run completed for user %s - no changes made\\n", *userID)
 		} else {
-			fmt.Printf("✅ User %s objects cleaned up successfully\\n", *userID)
+			log.Printf("INFO: User %s objects cleaned up successfully\\n", *userID)
 		}
 
 	case "list-objects":

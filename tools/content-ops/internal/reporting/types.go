@@ -32,15 +32,15 @@ type Report struct {
 
 // Recipe represents a stored recipe
 type Recipe struct {
-	ID             string            `json:"id"`
-	Title          string            `json:"title"`
-	SourceURL      string            `json:"sourceUrl"`
-	URL            string            `json:"url"`
-	CreatedAt      time.Time         `json:"createdAt"`
-	UserID         string            `json:"userId"`
-	Ingredients    []Ingredient      `json:"ingredients"`
-	Instructions   []Instruction     `json:"instructions"`
-	CookingMethods []CookingMethod   `json:"cookingMethods,omitempty"`
+	ID             string          `json:"id"`
+	Title          string          `json:"title"`
+	SourceURL      string          `json:"sourceUrl"`
+	URL            string          `json:"url"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UserID         string          `json:"userId"`
+	Ingredients    []Ingredient    `json:"ingredients"`
+	Instructions   []Instruction   `json:"instructions"`
+	CookingMethods []CookingMethod `json:"cookingMethods,omitempty"`
 }
 
 // ParseFailure represents a failed recipe extraction

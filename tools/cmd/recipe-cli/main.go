@@ -398,14 +398,6 @@ func main() {
 	}
 }
 
-
-
-
-
-
-
-
-
 func testSingleRecipeExtraction(testURL string) error {
 	// Load configuration
 	config := loadConfig()
@@ -1074,5 +1066,3 @@ func deployToAws(environment string) error {
 
 	return nil
 }
-
-

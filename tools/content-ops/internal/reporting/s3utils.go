@@ -17,7 +17,7 @@ func (r *Reporter) listS3Objects(prefix string) ([]types.Object, error) {
 	for {
 		input := &s3.ListObjectsV2Input{
 			Bucket:            aws.String(r.bucketName),
-			Prefix:           aws.String(prefix),
+			Prefix:            aws.String(prefix),
 			ContinuationToken: continuationToken,
 		}
 
