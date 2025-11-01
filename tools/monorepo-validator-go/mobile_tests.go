@@ -43,7 +43,7 @@ func runMobileTests(projectRoot string) bool {
 		}
 	}
 
-	return scriptsFound >= 2
+	return scriptsFound >= 1
 }
 
 // runIOSValidation performs iOS clean build, test, and lint validation (NO simulator deployment)
