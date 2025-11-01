@@ -54,7 +54,8 @@
       "Bash(\"$script\")",
       "Bash(./scripts/android/build.sh:*)",
       "Bash(do echo \"Building $dir...\" go build -C \"aws-backend/functions/$dir\" -o /dev/null .)",
-      "Bash(./scripts/ios-build.sh:*)"
+      "Bash(./scripts/ios-build.sh:*)",
+      "Bash(flutter analyze:*)"
     ],
     "deny": [],
     "ask": []
