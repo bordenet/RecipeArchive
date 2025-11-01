@@ -199,22 +199,16 @@ else
     print_warning "Please install Xcode from the App Store for full iOS development support"
 fi
 
-# Navigate to project root
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-cd "$PROJECT_ROOT"
+# Navigate to project root and Flutter directory
+cd "$REPO_ROOT"
 
-print_status "Project root: $PROJECT_ROOT"
+log_info "Project root: $REPO_ROOT"
 
 # Navigate to Flutter project directory
-if [ -f "pubspec.yaml" ]; then
-    FLUTTER_DIR="$PROJECT_ROOT"
-else
-    FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
-fi
+readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 
 if [ ! -f "$FLUTTER_DIR/pubspec.yaml" ]; then
-    print_error "Cannot find Flutter project. Expected pubspec.yaml in $FLUTTER_DIR"
+    log_error "Cannot find Flutter project. Expected pubspec.yaml in $FLUTTER_DIR"
     die "Setup failed"
 fi
 

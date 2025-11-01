@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"golang.org/x/net/html"
 	"recipe-archive/models"
+
+	"golang.org/x/net/html"
 )
 
 // JSONLDRecipe represents the JSON-LD Recipe schema structure
@@ -19,7 +20,7 @@ type JSONLDRecipe struct {
 	Author             interface{} `json:"author"` // Can be string or object
 	RecipeIngredient   []string    `json:"recipeIngredient"`
 	RecipeInstructions interface{} `json:"recipeInstructions"` // Can be string, []string, or []HowToStep
-	Image              interface{} `json:"image"`               // Can be string, []string, or object
+	Image              interface{} `json:"image"`              // Can be string, []string, or object
 	PrepTime           string      `json:"prepTime"`
 	CookTime           string      `json:"cookTime"`
 	TotalTime          string      `json:"totalTime"`

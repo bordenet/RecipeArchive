@@ -47,17 +47,14 @@ init_script
 
 readonly REPO_ROOT="$(get_repo_root)"
 readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
-
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FLUTTER_DIR="$PROJECT_ROOT/recipe_archive"
-ANDROID_DIR="$FLUTTER_DIR/android"
-UNIFIED_BUILD_DIR="$PROJECT_ROOT/build"
+readonly ANDROID_DIR="$FLUTTER_DIR/android"
+readonly UNIFIED_BUILD_DIR="$REPO_ROOT/build"
 
 # Helper functions
 print_header() {
-    echo -e "\n${CYAN}╔════════════════════════════════════════════════════════════════╗"
-    echo -e "${CYAN}║  $1"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}\n"
+    echo -e "\n${COLOR_CYAN}╔════════════════════════════════════════════════════════════════╗"
+    echo -e "${COLOR_CYAN}║  $1"
+    echo -e "${COLOR_CYAN}╚════════════════════════════════════════════════════════════════╝${COLOR_RESET}\n"
 }
 
 print_status() {
@@ -69,7 +66,7 @@ print_success() {
 }
 
 print_error() {
-    log_error "✗ $1${NC}" >&2
+    log_error "✗ $1${COLOR_RESET}" >&2
 }
 
 print_warning() {
@@ -84,20 +81,20 @@ error_exit() {
 # Usage
 usage() {
     cat << EOF
-${CYAN}Android Build Script${NC}
+${COLOR_CYAN}Android Build Script${COLOR_RESET}
 
-${GREEN}Usage:${NC}
+${COLOR_GREEN}Usage:${COLOR_RESET}
     # Development (fast iteration)
     $0 --dev [--emulator|--device] [--debug|--release] [--run]
 
     # Production (distribution)
     $0 --prod --device --release --version X.Y.Z [--apk|--appbundle]
 
-${GREEN}Required:${NC}
+${COLOR_GREEN}Required:${COLOR_RESET}
     --dev              Development mode (build for emulator)
     --prod             Production mode (create signed release)
 
-${GREEN}Optional:${NC}
+${COLOR_GREEN}Optional:${COLOR_RESET}
     --emulator         Build for emulator (default in dev mode)
     --device           Build for physical device
     --debug            Debug configuration (default)
@@ -109,7 +106,7 @@ ${GREEN}Optional:${NC}
     --run              Auto-launch after build (dev mode only)
     --clean            Clean build (flutter clean + gradle clean)
 
-${GREEN}Examples:${NC}
+${COLOR_GREEN}Examples:${COLOR_RESET}
     # Quick dev build and run
     $0 --dev --run
 
@@ -119,7 +116,7 @@ ${GREEN}Examples:${NC}
     # Clean release build for emulator testing
     $0 --dev --emulator --release --clean
 
-${GREEN}Note:${NC}
+${COLOR_GREEN}Note:${COLOR_RESET}
     - Dev mode: Fast builds using gradle
     - Prod mode: Creates signed APK/AAB for distribution
     - Always uses Gradle build system directly
@@ -220,11 +217,11 @@ fi
 
 # Banner
 print_header "Android Build - RecipeArchive"
-log_info "Mode:${NC}          ${GREEN}$MODE"
-log_info "Target:${NC}        ${GREEN}$TARGET"
-log_info "Configuration:${NC} ${GREEN}$CONFIG"
-log_info "Format:${NC}        ${GREEN}$FORMAT"
-log_info "Version:${NC}       ${GREEN}$VERSION"
+log_info "Mode:${COLOR_RESET}          ${COLOR_GREEN}$MODE"
+log_info "Target:${COLOR_RESET}        ${COLOR_GREEN}$TARGET"
+log_info "Configuration:${COLOR_RESET} ${COLOR_GREEN}$CONFIG"
+log_info "Format:${COLOR_RESET}        ${COLOR_GREEN}$FORMAT"
+log_info "Version:${COLOR_RESET}       ${COLOR_GREEN}$VERSION"
 
 # Validate environment
 print_status "Validating environment..."
@@ -372,7 +369,7 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
 
         # Show size
         SIZE=$(du -h "$OUTPUT_PATH" | cut -f1)
-        echo -e "\n${BLUE}Build Size:${NC} $SIZE"
+        echo -e "\n${COLOR_BLUE}Build Size:${COLOR_RESET} $SIZE"
 
         # Auto-run if requested
         if [ "$RUN_AFTER" = true ] && [ "$TARGET" = "emulator" ]; then
@@ -428,7 +425,7 @@ print_header "Build Complete"
 
 # Next steps for production builds
 if [ "$MODE" = "prod" ]; then
-    echo -e "\n${YELLOW}Next Steps for Production:"
+    echo -e "\n${COLOR_YELLOW}Next Steps for Production:"
     if [ "$FORMAT" = "apk" ]; then
         echo "  1. Test the APK: adb install $OUTPUT_FILE"
         echo "  2. Upload to Play Store Internal Testing"

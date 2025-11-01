@@ -184,7 +184,7 @@ func (r *Reporter) ListAllTenants() ([]Tenant, error) {
 
 	for {
 		input := &cognitoidentityprovider.ListUsersInput{
-			UserPoolId:     aws.String(userPoolID),
+			UserPoolId:      aws.String(userPoolID),
 			PaginationToken: paginationToken,
 		}
 

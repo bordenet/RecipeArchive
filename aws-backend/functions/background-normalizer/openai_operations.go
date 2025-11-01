@@ -174,15 +174,15 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 // deepCopyRecipe creates a deep copy of a Recipe to prevent pointer sharing between concurrent Lambda invocations
 func deepCopyRecipe(original *Recipe) Recipe {
 	result := Recipe{
-		ID:       original.ID,
-		UserID:   original.UserID,
-		Title:    original.Title,
-		SourceURL: original.SourceURL,
+		ID:           original.ID,
+		UserID:       original.UserID,
+		Title:        original.Title,
+		SourceURL:    original.SourceURL,
 		MainPhotoURL: original.MainPhotoURL,
-		CreatedAt: original.CreatedAt,
-		UpdatedAt: original.UpdatedAt,
-		IsDeleted: original.IsDeleted,
-		Version:   original.Version,
+		CreatedAt:    original.CreatedAt,
+		UpdatedAt:    original.UpdatedAt,
+		IsDeleted:    original.IsDeleted,
+		Version:      original.Version,
 	}
 
 	// Deep copy slice fields

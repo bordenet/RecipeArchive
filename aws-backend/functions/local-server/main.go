@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -231,10 +232,10 @@ func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 			})
 
 			if err != nil {
-				fmt.Printf("⚠️  Failed to store HTML in S3: %v\n", err)
+				log.Printf("WARN:  Failed to store HTML in S3: %v\n", err)
 				s3StorageResult = fmt.Sprintf("Failed to store HTML: %v", err)
 			} else {
-				fmt.Printf("✅ Stored failed parsing HTML: %s\n", filename)
+				log.Printf("INFO: Stored failed parsing HTML: %s\n", filename)
 				s3StorageResult = fmt.Sprintf("HTML stored as: %s", filename)
 			}
 		}
@@ -583,7 +584,7 @@ func main() {
 	// Initialize S3 client for failed parsing storage
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		fmt.Printf("⚠️  Failed to load AWS config (S3 storage disabled): %v\n", err)
+		log.Printf("WARN:  Failed to load AWS config (S3 storage disabled): %v\n", err)
 	} else {
 		s3Client = s3.NewFromConfig(cfg)
 		fmt.Println("✅ S3 client initialized for failed parsing storage")
@@ -637,7 +638,7 @@ func main() {
 	}
 
 	fmt.Printf("🚀 Recipe Archive Local Server starting on port %s\n", port)
-	fmt.Printf("📝 Health check: http://localhost:%s/health\n", port)
+	log.Printf("INFO: Health check: http://localhost:%s/health\n", port)
 	fmt.Printf("🔐 API endpoints:\n")
 	fmt.Printf("   - Recipes: http://localhost:%s/api/recipes\n", port)
 	fmt.Printf("   - Backup: http://localhost:%s/api/backup/create\n", port)
@@ -646,7 +647,7 @@ func main() {
 	fmt.Printf("🔧 Mock authentication enabled (use any Bearer token)\n")
 
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		fmt.Printf("❌ Server failed to start: %v\n", err)
+		log.Printf("ERROR: Server failed to start: %v\n", err)
 		os.Exit(1)
 	}
 }

@@ -15,7 +15,7 @@ type Recipe struct {
 	// Required Fields (Browser Extension Extraction)
 	Title          string          `json:"title"`
 	Ingredients    []Ingredient    `json:"ingredients"`
-	Instructions   []Instruction   `json:"instructions"`                   // Shared/prep instructions
+	Instructions   []Instruction   `json:"instructions"`             // Shared/prep instructions
 	CookingMethods []CookingMethod `json:"cookingMethods,omitempty"` // Multiple method options
 	SourceURL      string          `json:"sourceUrl"`
 
@@ -57,15 +57,15 @@ type Recipe struct {
 // Designed to minimize S3 storage costs while enabling fast in-memory search
 type SearchMetadata struct {
 	// Core search fields optimized for small storage footprint
-	SemanticTags       []string `json:"semanticTags,omitempty"`             // Max 5 tags
+	SemanticTags       []string `json:"semanticTags,omitempty"`       // Max 5 tags
 	PrimaryIngredients []string `json:"primaryIngredients,omitempty"` // Max 5 ingredients
-	CookingMethods     []string `json:"cookingMethods,omitempty"`         // Max 3 methods
-	DietaryTags        []string `json:"dietaryTags,omitempty"`               // Max 5 tags
-	FlavorProfile      []string `json:"flavorProfile,omitempty"`           // Max 4 flavors
-	Equipment          []string `json:"equipment,omitempty"`                   // Max 3 items
-	TimeCategory       string   `json:"timeCategory,omitempty"`             // Single category
-	Complexity         string   `json:"complexity,omitempty"`                 // Single level
-	MealType           string   `json:"mealType,omitempty"`                     // Single meal type: breakfast, lunch, brunch, dinner, snack, dessert, appetizer, drink
+	CookingMethods     []string `json:"cookingMethods,omitempty"`     // Max 3 methods
+	DietaryTags        []string `json:"dietaryTags,omitempty"`        // Max 5 tags
+	FlavorProfile      []string `json:"flavorProfile,omitempty"`      // Max 4 flavors
+	Equipment          []string `json:"equipment,omitempty"`          // Max 3 items
+	TimeCategory       string   `json:"timeCategory,omitempty"`       // Single category
+	Complexity         string   `json:"complexity,omitempty"`         // Single level
+	MealType           string   `json:"mealType,omitempty"`           // Single meal type: breakfast, lunch, brunch, dinner, snack, dessert, appetizer, drink
 }
 
 // Ingredient represents a structured ingredient
@@ -84,31 +84,31 @@ type Instruction struct {
 
 // CookingMethod represents a specific cooking method with its own instructions
 type CookingMethod struct {
-	Name         string        `json:"name"`                         // "Stovetop", "Slow Cooker", "Oven", etc.
-	Instructions []Instruction `json:"instructions"`         // Method-specific steps
+	Name         string        `json:"name"`                   // "Stovetop", "Slow Cooker", "Oven", etc.
+	Instructions []Instruction `json:"instructions"`           // Method-specific steps
 	TimeEstimate *string       `json:"timeEstimate,omitempty"` // "30 minutes", "6-8 hours", etc.
-	Equipment    []string      `json:"equipment,omitempty"`       // "Large pot", "Slow cooker", etc.
+	Equipment    []string      `json:"equipment,omitempty"`    // "Large pot", "Slow cooker", etc.
 }
 
 // CreateRecipeRequest represents the payload for creating a recipe
 type CreateRecipeRequest struct {
-	Title                   string          `json:"title" validate:"required,max=200"`
-	Ingredients             []Ingredient    `json:"ingredients" validate:"required,min=1"`
-	Instructions            []Instruction   `json:"instructions" validate:"required,min=1"`
-	CookingMethods          []CookingMethod `json:"cookingMethods,omitempty"`
-	SourceURL               string          `json:"sourceUrl" validate:"required,url"`
-	MainPhotoURL            *string       `json:"mainPhotoUrl,omitempty" validate:"omitempty,url"`
-	PrepTimeMinutes         *int          `json:"prepTimeMinutes,omitempty" validate:"omitempty,min=0"`
-	CookTimeMinutes         *int          `json:"cookTimeMinutes,omitempty" validate:"omitempty,min=0"`
-	TotalTimeMinutes        *int          `json:"totalTimeMinutes,omitempty" validate:"omitempty,min=0"`
-	Servings                *int          `json:"servings,omitempty" validate:"omitempty,min=1"`
-	Yield                   *string       `json:"yield,omitempty" validate:"omitempty,max=100"`
-	Categories              []string      `json:"categories,omitempty"`
-	Description             *string             `json:"description,omitempty"`
-	Reviews                 *string             `json:"reviews,omitempty"`
-	Nutrition               *string             `json:"nutrition,omitempty"`
-	WebArchiveHTML          *string             `json:"webArchiveHtml,omitempty"`
-	WebArchiveImages        *[]WebArchiveImage `json:"webArchiveImages,omitempty"`
+	Title            string             `json:"title" validate:"required,max=200"`
+	Ingredients      []Ingredient       `json:"ingredients" validate:"required,min=1"`
+	Instructions     []Instruction      `json:"instructions" validate:"required,min=1"`
+	CookingMethods   []CookingMethod    `json:"cookingMethods,omitempty"`
+	SourceURL        string             `json:"sourceUrl" validate:"required,url"`
+	MainPhotoURL     *string            `json:"mainPhotoUrl,omitempty" validate:"omitempty,url"`
+	PrepTimeMinutes  *int               `json:"prepTimeMinutes,omitempty" validate:"omitempty,min=0"`
+	CookTimeMinutes  *int               `json:"cookTimeMinutes,omitempty" validate:"omitempty,min=0"`
+	TotalTimeMinutes *int               `json:"totalTimeMinutes,omitempty" validate:"omitempty,min=0"`
+	Servings         *int               `json:"servings,omitempty" validate:"omitempty,min=1"`
+	Yield            *string            `json:"yield,omitempty" validate:"omitempty,max=100"`
+	Categories       []string           `json:"categories,omitempty"`
+	Description      *string            `json:"description,omitempty"`
+	Reviews          *string            `json:"reviews,omitempty"`
+	Nutrition        *string            `json:"nutrition,omitempty"`
+	WebArchiveHTML   *string            `json:"webArchiveHtml,omitempty"`
+	WebArchiveImages *[]WebArchiveImage `json:"webArchiveImages,omitempty"`
 }
 
 // WebArchiveImage represents an image extracted from a Web Archive

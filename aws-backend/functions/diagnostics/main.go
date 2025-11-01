@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -122,7 +123,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		if s3Client != nil {
 			bucketName := os.Getenv("S3_FAILED_PARSING_BUCKET")
 			if bucketName == "" {
-				fmt.Printf("⚠️ S3_FAILED_PARSING_BUCKET not configured, skipping S3 storage\n")
+				log.Printf("WARN: S3_FAILED_PARSING_BUCKET not configured, skipping S3 storage\n")
 			} else {
 				// Create filename from URL and timestamp
 				timestamp := time.Now().Format("2006-01-02_15-04-05")
@@ -151,10 +152,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 				})
 
 				if err != nil {
-					fmt.Printf("⚠️ Failed to store diagnostic data in S3: %v\n", err)
+					log.Printf("WARN: Failed to store diagnostic data in S3: %v\n", err)
 					s3StorageResults = append(s3StorageResults, "failed")
 				} else {
-					fmt.Printf("✅ Stored diagnostic data in S3: %s\n", jsonFilename)
+					log.Printf("INFO: Stored diagnostic data in S3: %s\n", jsonFilename)
 					s3StorageResults = append(s3StorageResults, jsonFilename)
 				}
 
@@ -176,9 +177,9 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 					})
 
 					if err != nil {
-						fmt.Printf("⚠️ Failed to store HTML in S3: %v\n", err)
+						log.Printf("WARN: Failed to store HTML in S3: %v\n", err)
 					} else {
-						fmt.Printf("✅ Stored HTML content in S3: %s\n", htmlFilename)
+						log.Printf("INFO: Stored HTML content in S3: %s\n", htmlFilename)
 					}
 				}
 			}
@@ -229,7 +230,7 @@ func publishMetric(ctx context.Context, metricName string, value float64, errorT
 		},
 	})
 	if err != nil {
-		fmt.Printf("⚠️ Failed to publish metric: %v\n", err)
+		log.Printf("WARN: Failed to publish metric: %v\n", err)
 	}
 }
 

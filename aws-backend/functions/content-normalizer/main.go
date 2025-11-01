@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -19,7 +20,7 @@ import (
 type RecipeData struct {
 	Title          string            `json:"title"`
 	Ingredients    []IngredientData  `json:"ingredients"`
-	Instructions   []InstructionData `json:"instructions"`           // Shared/prep instructions
+	Instructions   []InstructionData `json:"instructions"`             // Shared/prep instructions
 	CookingMethods []CookingMethod   `json:"cookingMethods,omitempty"` // Multiple method options
 	Author         string            `json:"author,omitempty"`
 	PrepTime       string            `json:"prepTime,omitempty"`
@@ -42,10 +43,10 @@ type InstructionData struct {
 }
 
 type CookingMethod struct {
-	Name         string            `json:"name"`                    // "Stovetop", "Slow Cooker", "Oven", etc.
-	Instructions []InstructionData `json:"instructions"`            // Method-specific steps
-	TimeEstimate string            `json:"timeEstimate,omitempty"`  // "30 minutes", "6-8 hours", etc.
-	Equipment    []string          `json:"equipment,omitempty"`     // "Large pot", "Slow cooker", etc.
+	Name         string            `json:"name"`                   // "Stovetop", "Slow Cooker", "Oven", etc.
+	Instructions []InstructionData `json:"instructions"`           // Method-specific steps
+	TimeEstimate string            `json:"timeEstimate,omitempty"` // "30 minutes", "6-8 hours", etc.
+	Equipment    []string          `json:"equipment,omitempty"`    // "Large pot", "Slow cooker", etc.
 }
 
 // NormalizationRequest represents the input to the normalizer
@@ -60,8 +61,8 @@ type NormalizationRequest struct {
 type NormalizationResponse struct {
 	NormalizedTitle        string            `json:"normalizedTitle"`
 	NormalizedIngredients  []IngredientData  `json:"normalizedIngredients"`
-	NormalizedInstructions []InstructionData `json:"normalizedInstructions"`    // Shared/prep instructions
-	CookingMethods         []CookingMethod   `json:"cookingMethods,omitempty"`  // Multiple method options
+	NormalizedInstructions []InstructionData `json:"normalizedInstructions"`   // Shared/prep instructions
+	CookingMethods         []CookingMethod   `json:"cookingMethods,omitempty"` // Multiple method options
 	InferredMetadata       InferredMetadata  `json:"inferredMetadata"`
 	InferredServings       *int              `json:"inferredServings,omitempty"`
 	InferredTotalTime      *int              `json:"inferredTotalTime,omitempty"`
@@ -152,7 +153,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Call OpenAI API for normalization
 	normalizedResponse, err := normalizeWithOpenAI(ctx, normRequest.OriginalRecipe, normRequest.PageHtml)
 	if err != nil {
-		fmt.Printf("❌ OpenAI normalization failed: %v\n", err)
+		log.Printf("ERROR: OpenAI normalization failed: %v\n", err)
 		// Fallback: return original recipe with basic cleanup
 		fallbackRecipe := basicNormalization(normRequest.OriginalRecipe)
 		responseBody, _ := json.Marshal(map[string]interface{}{
@@ -185,7 +186,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		}, nil
 	}
 
-	fmt.Printf("✅ Recipe normalization completed with quality score: %.1f\n", normalizedResponse.QualityScore)
+	log.Printf("INFO: Recipe normalization completed with quality score: %.1f\n", normalizedResponse.QualityScore)
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
@@ -211,7 +212,7 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData, pageHtml string
 	stage2Response, err := performStage2Normalization(ctx, openaiApiKey, recipe, stage1Response)
 	if err != nil {
 		// If stage 2 fails, return stage 1 results (degraded but functional)
-		fmt.Printf("⚠️ Stage 2 failed, using stage 1 results: %v\n", err)
+		log.Printf("WARN: Stage 2 failed, using stage 1 results: %v\n", err)
 		return stage1Response, nil
 	}
 

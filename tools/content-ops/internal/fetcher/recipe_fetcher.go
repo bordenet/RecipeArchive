@@ -21,30 +21,30 @@ type SupportedDomain struct {
 
 // RecipeFetcher handles recipe fetching from supported websites
 type RecipeFetcher struct {
-	apiBaseURL    string
-	accessToken   string
-	userAgent     string
-	timeout       time.Duration
+	apiBaseURL  string
+	accessToken string
+	userAgent   string
+	timeout     time.Duration
 }
 
 // RecipeFetchRequest represents a request to create a recipe from a URL
 type RecipeFetchRequest struct {
-	Title                   string            `json:"title"`
-	Ingredients             []Ingredient      `json:"ingredients"`
-	Instructions            []Instruction     `json:"instructions"`
-	CookingMethods          []CookingMethod   `json:"cookingMethods,omitempty"`
-	SourceURL               string            `json:"sourceUrl"`
-	MainPhotoURL            *string           `json:"mainPhotoUrl,omitempty"`
-	PrepTimeMinutes         *int              `json:"prepTimeMinutes,omitempty"`
-	CookTimeMinutes         *int              `json:"cookTimeMinutes,omitempty"`
-	TotalTimeMinutes        *int              `json:"totalTimeMinutes,omitempty"`
-	Servings                *int              `json:"servings,omitempty"`
-	Yield                   *string           `json:"yield,omitempty"`
-	Categories              []string          `json:"categories,omitempty"`
-	Description             *string           `json:"description,omitempty"`
-	Reviews                 *string           `json:"reviews,omitempty"`
-	Nutrition               *string           `json:"nutrition,omitempty"`
-	WebArchiveHTML          *string           `json:"webArchiveHtml,omitempty"`
+	Title            string          `json:"title"`
+	Ingredients      []Ingredient    `json:"ingredients"`
+	Instructions     []Instruction   `json:"instructions"`
+	CookingMethods   []CookingMethod `json:"cookingMethods,omitempty"`
+	SourceURL        string          `json:"sourceUrl"`
+	MainPhotoURL     *string         `json:"mainPhotoUrl,omitempty"`
+	PrepTimeMinutes  *int            `json:"prepTimeMinutes,omitempty"`
+	CookTimeMinutes  *int            `json:"cookTimeMinutes,omitempty"`
+	TotalTimeMinutes *int            `json:"totalTimeMinutes,omitempty"`
+	Servings         *int            `json:"servings,omitempty"`
+	Yield            *string         `json:"yield,omitempty"`
+	Categories       []string        `json:"categories,omitempty"`
+	Description      *string         `json:"description,omitempty"`
+	Reviews          *string         `json:"reviews,omitempty"`
+	Nutrition        *string         `json:"nutrition,omitempty"`
+	WebArchiveHTML   *string         `json:"webArchiveHtml,omitempty"`
 }
 
 // Ingredient represents a recipe ingredient
@@ -71,15 +71,15 @@ type CookingMethod struct {
 
 // Recipe represents a fetched recipe
 type Recipe struct {
-	ID             string            `json:"id"`
-	Title          string            `json:"title"`
-	SourceURL      string            `json:"sourceUrl"`
-	URL            string            `json:"url"`
-	CreatedAt      time.Time         `json:"createdAt"`
-	UserID         string            `json:"userId"`
-	Ingredients    []Ingredient      `json:"ingredients"`
-	Instructions   []Instruction     `json:"instructions"`
-	CookingMethods []CookingMethod   `json:"cookingMethods,omitempty"`
+	ID             string          `json:"id"`
+	Title          string          `json:"title"`
+	SourceURL      string          `json:"sourceUrl"`
+	URL            string          `json:"url"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UserID         string          `json:"userId"`
+	Ingredients    []Ingredient    `json:"ingredients"`
+	Instructions   []Instruction   `json:"instructions"`
+	CookingMethods []CookingMethod `json:"cookingMethods,omitempty"`
 }
 
 // NewRecipeFetcher creates a new recipe fetcher

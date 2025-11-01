@@ -1,7 +1,5 @@
 package main
 
-import ()
-
 // runSecurityScan migrates the security scan logic from the shell script.
 func runSecurityScan(projectRoot string) bool {
 	if !checkCommand("trufflehog") {

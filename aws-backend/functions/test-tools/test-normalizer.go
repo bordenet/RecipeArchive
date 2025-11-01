@@ -150,17 +150,17 @@ type OpenAIResponse struct {
 }
 
 type NormalizationResponse struct {
-	NormalizedTitle        string                 `json:"normalizedTitle"`
-	NormalizedIngredients  []models.Ingredient    `json:"normalizedIngredients"`
-	NormalizedInstructions []models.Instruction   `json:"normalizedInstructions"`
-	InferredMetadata       InferredMetadata       `json:"inferredMetadata"`
-	SearchMetadata         models.SearchMetadata  `json:"searchMetadata"`
-	InferredServings       *int                   `json:"inferredServings,omitempty"`
-	InferredTotalTime      *int                   `json:"inferredTotalTime,omitempty"`
-	InferredPrepTime       *int                   `json:"inferredPrepTime,omitempty"`
-	InferredCookTime       *int                   `json:"inferredCookTime,omitempty"`
-	QualityScore           float64                `json:"qualityScore"`
-	NormalizationNotes     string                 `json:"normalizationNotes"`
+	NormalizedTitle        string                `json:"normalizedTitle"`
+	NormalizedIngredients  []models.Ingredient   `json:"normalizedIngredients"`
+	NormalizedInstructions []models.Instruction  `json:"normalizedInstructions"`
+	InferredMetadata       InferredMetadata      `json:"inferredMetadata"`
+	SearchMetadata         models.SearchMetadata `json:"searchMetadata"`
+	InferredServings       *int                  `json:"inferredServings,omitempty"`
+	InferredTotalTime      *int                  `json:"inferredTotalTime,omitempty"`
+	InferredPrepTime       *int                  `json:"inferredPrepTime,omitempty"`
+	InferredCookTime       *int                  `json:"inferredCookTime,omitempty"`
+	QualityScore           float64               `json:"qualityScore"`
+	NormalizationNotes     string                `json:"normalizationNotes"`
 }
 
 type InferredMetadata struct {
