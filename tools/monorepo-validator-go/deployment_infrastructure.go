@@ -142,7 +142,7 @@ func validateDeploymentInfrastructure(projectRoot string) bool {
 	go func() {
 		defer wg.Done()
 		fmt.Print("  Deploy script validation... ")
-		deployScriptPath := filepath.Join(projectRoot, "scripts", "deploy-web-app.sh")
+		deployScriptPath := filepath.Join(projectRoot, "scripts", "web", "deploy.sh")
 
 		if _, err := os.Stat(deployScriptPath); os.IsNotExist(err) {
 			fmt.Println("✗ (Deploy script missing or not executable)")
