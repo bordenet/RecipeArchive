@@ -129,6 +129,15 @@ EOF
     exit 0
 }
 
+# Initialize variables (required for set -u)
+MODE=""
+TARGET="simulator"
+CONFIG="debug"
+VERSION=""
+CLEAN_BUILD=false
+CLEAN=false
+RUN_AFTER=false
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -203,14 +212,9 @@ fi
 
 # Auto-detect version if not provided
 if [ -z "$VERSION" ]; then
-    # Try git describe for semantic version
-    if git describe --tags --always --dirty 2>/dev/null | grep -q "^v"; then
-        VERSION=$(git describe --tags --always --dirty | sed 's/^v//')
-    else
-        # Fallback to pubspec.yaml version
-        VERSION=$(grep "^version:" "$FLUTTER_DIR/pubspec.yaml" 2>/dev/null | awk '{print $2}' | cut -d'+' -f1)
-        [ -z "$VERSION" ] && VERSION="1.0.0-dev"
-    fi
+    # Use pubspec.yaml version (git describe format is not valid semver)
+    VERSION=$(grep "^version:" "$FLUTTER_DIR/pubspec.yaml" 2>/dev/null | awk '{print $2}' | cut -d'+' -f1)
+    [ -z "$VERSION" ] && VERSION="1.0.0-dev"
 fi
 
 # Banner
@@ -231,9 +235,9 @@ print_success "Environment validated"
 cd "$FLUTTER_DIR" || error_exit "Cannot access $FLUTTER_DIR"
 
 # Ensure .env file is copied from root (Flutter doesn't follow symlinks in assets)
-if [ -f "$PROJECT_ROOT/.env" ]; then
+if [ -f "$REPO_ROOT/.env" ]; then
     print_status "Syncing .env file from repository root..."
-    cp "$PROJECT_ROOT/.env" .env
+    cp "$REPO_ROOT/.env" .env
     print_success ".env file synced"
 fi
 

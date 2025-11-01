@@ -50,8 +50,8 @@ func runMobileTests(projectRoot string) bool {
 func runIOSValidation(projectRoot string) bool {
 	fmt.Println("\n=== iOS BUILD, TEST & LINT VALIDATION ===")
 
-	// Check for unified iOS build script
-	iosBuildScript := filepath.Join(projectRoot, "scripts/build-ios.sh")
+	// Check for iOS build script (in subdirectory structure)
+	iosBuildScript := filepath.Join(projectRoot, "scripts/ios/build.sh")
 	if _, err := os.Stat(iosBuildScript); os.IsNotExist(err) {
 		fmt.Printf("  iOS build script: ✗ (not found at %s)\n", iosBuildScript)
 		return false
@@ -74,6 +74,7 @@ func runIOSValidation(projectRoot string) bool {
 	}
 
 	// Run iOS clean build validation (NO deployment to simulator)
+	// Note: Removed --clean flag to avoid version conflicts in CI
 	fmt.Printf("  Running iOS clean build (no simulator deployment)...\n")
 	output, err := runCommand(
 		projectRoot,
@@ -81,7 +82,6 @@ func runIOSValidation(projectRoot string) bool {
 		"--dev",
 		"--simulator",
 		"--debug",
-		"--clean",
 	)
 
 	if err != nil {
