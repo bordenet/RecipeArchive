@@ -8,7 +8,8 @@
       "Bash(timeout 120 ./validate-monorepo.sh:*)",
       "Bash(timeout 600 ./validate-monorepo.sh:*)",
       "Bash(timeout 120 ./scripts/ios/build.sh:*)",
-      "Bash(timeout 180 ./scripts/ios/build.sh:*)"
+      "Bash(timeout 180 ./scripts/ios/build.sh:*)",
+      "Read(//Users/matt/Library/Developer/Xcode/DerivedData/Runner-gllulbsivfkkmhdkmvisizqmfjeq/Build/Products/Debug-iphonesimulator/Runner.app/**)"
     ],
     "deny": [],
     "ask": []
