@@ -203,12 +203,8 @@ done
 # Convert config to Xcode format
 XCODE_CONFIG="$(echo "${CONFIG}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')"
 
-# Determine the scheme based on the configuration
-if [ "$XCODE_CONFIG" = "Debug" ]; then
-    SCHEME="Runner-Debug"
-else
-    SCHEME="Runner"
-fi
+# Always use Runner scheme (Runner-Debug doesn't exist)
+SCHEME="Runner"
 
 # Auto-detect version if not provided
 if [ -z "$VERSION" ]; then

@@ -5,7 +5,10 @@
       "Bash(./validate-monorepo.sh:*)",
       "Bash(do echo \"=== Processing $dir ===\")",
       "Bash(timeout 60 ./scripts/ios/build.sh:*)",
-      "Bash(timeout 120 ./validate-monorepo.sh:*)"
+      "Bash(timeout 120 ./validate-monorepo.sh:*)",
+      "Bash(timeout 600 ./validate-monorepo.sh:*)",
+      "Bash(timeout 120 ./scripts/ios/build.sh:*)",
+      "Bash(timeout 180 ./scripts/ios/build.sh:*)"
     ],
     "deny": [],
     "ask": []
