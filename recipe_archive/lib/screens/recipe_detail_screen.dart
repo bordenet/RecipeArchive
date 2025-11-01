@@ -7,7 +7,12 @@ import '../services/recipe_service.dart' as service;
 import '../utils/units_converter.dart';
 import '../widgets/star_rating.dart';
 import '../providers/recipe_provider.dart';
-import '../services/share_channel.dart';
+import '../services/recipe_sharing_service.dart';
+import '../controllers/recipe_operations.dart';
+import '../widgets/recipe_detail/recipe_header.dart';
+import '../widgets/recipe_detail/recipe_info_chips.dart';
+import '../widgets/recipe_detail/recipe_instructions.dart';
+import '../widgets/recipe_detail/recipe_tags_section.dart';
 import 'recipe_edit_screen.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -28,16 +33,25 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
   bool useMetricUnits = false;
   int selectedCookingMethodIndex = 0;
 
+  // Services
+  late final RecipeSharingService _sharingService;
+  late final RecipeOperations _operations;
+
   @override
   void initState() {
     super.initState();
     currentServings = widget.recipe.servings ?? 4;
 
+    // Initialize services
+    final recipeService = ref.read(service.recipeServiceProvider);
+    _sharingService = RecipeSharingService(recipeService);
+    _operations = RecipeOperations(recipeService);
+
     // If recipe has cooking methods, default to first method, not general instructions
     if (widget.recipe.cookingMethodOptions.isNotEmpty) {
-      selectedCookingMethodIndex = 0; // Start with first cooking method
+      selectedCookingMethodIndex = 0;
     } else {
-      selectedCookingMethodIndex = -1; // Use general instructions for single-method recipes
+      selectedCookingMethodIndex = -1;
     }
 
     // Enable wakelock to prevent screen from sleeping during cooking
@@ -50,21 +64,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     _checkForSharedUrl();
 
     // Set up handler for when app is already running
-    ShareChannel.setSharedUrlHandler((sharedData) {
+    _sharingService.setSharedUrlHandler((sharedData) {
       if (mounted) {
-        final url = sharedData['url']!;
-        final html = sharedData['html'];
-        final images = sharedData['images'] as List?;
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(html != null
-                ? 'Processing recipe with HTML...'
-                : 'Processing shared URL...'),
+            content: Text(sharedData.processingMessage),
             duration: const Duration(seconds: 2),
           ),
         );
-        _processSharedRecipe(url, html: html, images: images);
+        _processSharedRecipe(sharedData);
       }
     });
   }
@@ -81,10 +89,69 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    // Check for shared recipes when app resumes from background
     if (state == AppLifecycleState.resumed) {
       debugPrint('DEBUG: App resumed on recipe detail page, checking for shared recipes');
       _checkForSharedUrl();
+    }
+  }
+
+  /// Check for shared URLs from iOS Share Extension
+  Future<void> _checkForSharedUrl() async {
+    final sharedData = await _sharingService.checkForSharedUrl();
+    if (sharedData != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(sharedData.processingMessage),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      await _processSharedRecipe(sharedData);
+    }
+  }
+
+  /// Process shared recipe data
+  Future<void> _processSharedRecipe(SharedRecipeData data) async {
+    try {
+      final recipe = await _sharingService.processSharedRecipe(
+        data.url,
+        html: data.html,
+        images: data.images,
+      );
+
+      if (mounted) {
+        ref.invalidate(recipeProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Recipe saved! Processing...'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => RecipeDetailScreen(recipe: recipe),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+
+        // Check for more queued recipes after a brief delay
+        Future.delayed(const Duration(milliseconds: 500), _checkForSharedUrl);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('ERROR: Failed to save shared recipe: $e');
+      debugPrint('ERROR: Stack trace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save recipe: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
@@ -94,130 +161,13 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       body: CustomScrollView(
         slivers: [
           // App Bar with Image
-          SliverAppBar(
-            expandedHeight: 300,
-            pinned: true,
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            actions: [
-              // Screen awake indicator
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                child: IconButton(
-                  icon: const Icon(Icons.screen_lock_portrait_outlined),
-                  onPressed: null, // Non-interactive indicator
-                  tooltip: 'Screen stays awake while cooking',
-                  iconSize: 20,
-                ),
-              ),
-              if (widget.recipe.sourceUrl != null)
-                IconButton(
-                  icon: const Icon(Icons.open_in_new),
-                  onPressed: () => _launchUrl(widget.recipe.sourceUrl!),
-                  tooltip: 'View Original at Source',
-                  key: const Key('banner_source_button'),
-                ),
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _navigateToEditScreen(context),
-                tooltip: 'Edit Recipe',
-                key: const Key('banner_edit_button'),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => _showDeleteConfirmation(context),
-                tooltip: 'Delete Recipe',
-                key: const Key('banner_delete_button'),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                widget.recipe.cleanTitle,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      offset: Offset(1, 1),
-                      blurRadius: 2,
-                      color: Colors.black54,
-                    ),
-                  ],
-                ),
-              ),
-              background: widget.recipe.imageUrl != null
-                  ? Stack(
-                      children: [
-                        Image.network(
-                          widget.recipe.imageUrl!,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;
-                            }
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: Colors.white,
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            // Detail image load error for recipe "${widget.recipe.title}": ${widget.recipe.imageUrl}
-                            // Error details: $error
-
-                            return Container(
-                              color: Colors.grey[300],
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.broken_image,
-                                    size: 48,
-                                    color: Colors.grey,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Image unavailable',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.5),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.restaurant_menu,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
-                    ),
-            ),
+          RecipeHeader(
+            recipe: widget.recipe,
+            onEdit: () => _navigateToEditScreen(context),
+            onDelete: () => _showDeleteConfirmation(context),
+            onViewSource: widget.recipe.sourceUrl != null ? () => _launchUrl(widget.recipe.sourceUrl!) : null,
           ),
-          
+
           // Content
           SliverToBoxAdapter(
             child: Padding(
@@ -226,59 +176,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Recipe Meta Info
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      // Cooking Time
-                      _buildInfoChip(
-                        Icons.access_time,
-                        widget.recipe.displayTime,
-                      ),
-                      
-                      // Servings (clickable)
-                      GestureDetector(
-                        onTap: _showServingsDialog,
-                        child: _buildInfoChip(
-                          Icons.people,
-                          '$currentServings servings',
-                          color: Colors.green,
-                        ),
-                      ),
-                      
-                      // Units Toggle (clickable)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            useMetricUnits = !useMetricUnits;
-                          });
-                        },
-                        child: _buildInfoChip(
-                          useMetricUnits ? Icons.straighten : Icons.straighten,
-                          useMetricUnits ? 'Metric' : 'Imperial',
-                          color: Colors.blue,
-                        ),
-                      ),
-                      
-                      // Source URL (clickable)
-                      if (widget.recipe.sourceUrl != null)
-                        GestureDetector(
-                          onTap: () => _launchUrl(widget.recipe.sourceUrl!),
-                          child: _buildInfoChip(
-                            Icons.link,
-                            widget.recipe.displaySourceName,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      
-                      // Cuisine
-                      if (widget.recipe.cuisine != null)
-                        _buildInfoChip(
-                          Icons.public,
-                          widget.recipe.cuisine!,
-                          color: Colors.green,
-                        ),
-                    ],
+                  RecipeInfoChips(
+                    recipe: widget.recipe,
+                    currentServings: currentServings,
+                    onServingsTap: _showServingsDialog,
                   ),
                   
                   const SizedBox(height: 16),
@@ -471,17 +372,25 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
                       ),
                     );
                   }),
-                  
+
                   const SizedBox(height: 24),
-                  
-                  // Instructions - Multiple Cooking Methods Support
-                  _buildInstructionsSection(context),
-                  
+
+                  // Instructions
+                  RecipeInstructions(
+                    recipe: widget.recipe,
+                    useMetricUnits: useMetricUnits,
+                    initialMethodIndex: selectedCookingMethodIndex,
+                  ),
+
                   const SizedBox(height: 24),
-                  
-                  // Enhanced Tags Section (moved from earlier position)
-                  _buildTagsSection(context),
-                  
+
+                  // Tags Section
+                  RecipeTagsSection(
+                    recipe: widget.recipe,
+                    onAddTag: _handleAddTag,
+                    onRemoveTag: _handleRemoveTag,
+                  ),
+
                   const SizedBox(height: 32),
                 ],
               ),
@@ -490,6 +399,60 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         ],
       ),
     );
+  }
+
+  /// Handle adding a tag
+  Future<void> _handleAddTag(Recipe recipe, String tag) async {
+    try {
+      await _operations.addTag(recipe, tag);
+      ref.invalidate(recipeProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added tag "#$tag"'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add tag: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle removing a tag
+  Future<void> _handleRemoveTag(Recipe recipe, String tag) async {
+    try {
+      await _operations.removeTag(recipe, tag);
+      ref.invalidate(recipeProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Removed tag "#$tag"'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove tag: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Launch URL in browser
@@ -768,549 +731,9 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     }
   }
 
-  Widget _buildInfoChip(IconData icon, String text, {Color? color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: (color ?? Colors.grey).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (color ?? Colors.grey).withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: color ?? Colors.grey[600],
-          ),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(
-              color: color ?? Colors.grey[700],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Helper methods
 
-  Widget _buildInstructionsSection(BuildContext context) {
-    final hasCookingMethods = widget.recipe.cookingMethodOptions.isNotEmpty;
-    final hasMultipleCookingMethods = widget.recipe.cookingMethodOptions.length > 1;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header with method selection
-        Row(
-          children: [
-            Text(
-              'Instructions',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (hasMultipleCookingMethods) ...[
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: DropdownButton<int>(
-                  value: selectedCookingMethodIndex,
-                  underline: const SizedBox(),
-                  isDense: true,
-                  items: [
-                    ...widget.recipe.cookingMethodOptions.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final method = entry.value;
-                      return DropdownMenuItem(
-                        value: index,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _getCookingMethodIcon(method.name),
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 8),
-                            Text(method.name),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCookingMethodIndex = value ?? 0;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Method-specific info
-        if (hasCookingMethods) ...[
-          _buildCookingMethodInfo(widget.recipe.cookingMethodOptions[selectedCookingMethodIndex]),
-          const SizedBox(height: 16),
-        ],
-
-        // Instructions list
-        ..._getDisplayInstructions().map((instruction) {
-          final displayText = UnitsConverter.convertInstructions(instruction.text, useMetricUnits);
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Text(
-                      instruction.stepNumber.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    displayText,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildCookingMethodInfo(CookingMethod method) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(_getCookingMethodIcon(method.name), color: Colors.blue[700]),
-              const SizedBox(width: 8),
-              Text(
-                method.name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
-                ),
-              ),
-              if (method.timeEstimate != null) ...[
-                const Spacer(),
-                Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  method.timeEstimate!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          if (method.equipment.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.build, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Equipment needed: ${method.equipment.join(', ')}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  List<RecipeInstruction> _getDisplayInstructions() {
-    final hasCookingMethods = widget.recipe.cookingMethodOptions.isNotEmpty;
-
-    if (!hasCookingMethods) {
-      // Standard recipe - show all instructions
-      return widget.recipe.instructions;
-    }
-
-    // Multi-method recipe - show the selected cooking method's instructions
-    if (selectedCookingMethodIndex >= 0 && selectedCookingMethodIndex < widget.recipe.cookingMethodOptions.length) {
-      final methodInstructions = widget.recipe.cookingMethodOptions[selectedCookingMethodIndex].instructions;
-
-      // Combine prep instructions (if any) with method-specific instructions
-      final allInstructions = <RecipeInstruction>[];
-
-      // Add prep instructions first (renumber them)
-      for (int i = 0; i < widget.recipe.instructions.length; i++) {
-        allInstructions.add(RecipeInstruction(
-          stepNumber: i + 1,
-          text: widget.recipe.instructions[i].text,
-        ));
-      }
-
-      // Add method-specific instructions (continue numbering)
-      final prepStepsCount = widget.recipe.instructions.length;
-      for (int i = 0; i < methodInstructions.length; i++) {
-        allInstructions.add(RecipeInstruction(
-          stepNumber: prepStepsCount + i + 1,
-          text: methodInstructions[i].text,
-        ));
-      }
-
-      return allInstructions;
-    }
-
-    // Fallback
-    return widget.recipe.instructions;
-  }
-
-  IconData _getCookingMethodIcon(String methodName) {
-    switch (methodName.toLowerCase()) {
-      case 'stovetop':
-      case 'stove':
-        return Icons.local_fire_department;
-      case 'slow cooker':
-      case 'crockpot':
-        return Icons.soup_kitchen;
-      case 'oven':
-      case 'bake':
-      case 'baked':
-        return Icons.local_pizza;
-      case 'grill':
-      case 'grilled':
-      case 'grilling':
-        return Icons.outdoor_grill;
-      case 'microwave':
-        return Icons.microwave;
-      case 'instant pot':
-      case 'pressure cooker':
-        return Icons.coffee_maker;
-      case 'air fryer':
-        return Icons.air;
-      default:
-        return Icons.restaurant;
-    }
-  }
-
-  Widget _buildTagsSection(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        // Get the current recipe from the provider to get latest tags
-        final recipesAsyncValue = ref.watch(recipeProvider);
-        final currentRecipe = recipesAsyncValue.when(
-          data: (recipes) => recipes.firstWhere(
-            (r) => r.id == widget.recipe.id,
-            orElse: () => widget.recipe,
-          ),
-          loading: () => widget.recipe,
-          error: (_, __) => widget.recipe,
-        );
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Tags',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                // Add Tag Button
-                IconButton(
-                  onPressed: () => _showAddTagDialog(context, currentRecipe),
-                  icon: const Icon(Icons.add_circle_outline),
-                  tooltip: 'Add Tag',
-                  color: Colors.green,
-                  key: const Key('add_tag_button'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (currentRecipe.tags.isEmpty) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.local_offer_outlined,
-                      size: 32,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'No tags yet',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Add tags to improve recipe discovery',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ] else ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: currentRecipe.tags.map((tag) => _buildEditableTag(
-                  context,
-                  tag,
-                  currentRecipe,
-                )).toList(),
-              ),
-            ],
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildEditableTag(BuildContext context, String tag, Recipe recipe) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.green[50],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green[200]!),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
-            child: Text(
-              '#$tag',
-              style: TextStyle(
-                color: Colors.green[700],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () => _showRemoveTagDialog(context, tag, recipe),
-            icon: const Icon(Icons.close),
-            iconSize: 18,
-            color: Colors.green[600],
-            padding: const EdgeInsets.only(left: 4, right: 8),
-            constraints: const BoxConstraints(
-              minWidth: 24,
-              minHeight: 24,
-            ),
-            tooltip: 'Remove tag',
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddTagDialog(BuildContext context, Recipe recipe) {
-    final TextEditingController controller = TextEditingController();
-    
-    showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add New Tag'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: 'Tag name',
-                  hintText: 'e.g., breakfast, quick, vegetarian',
-                  border: OutlineInputBorder(),
-                  prefixText: '#',
-                ),
-                textCapitalization: TextCapitalization.words,
-                autofocus: true,
-                onSubmitted: (value) {
-                  if (value.trim().isNotEmpty) {
-                    Navigator.of(context).pop(value.trim().toLowerCase());
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tags help you find recipes faster using search',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final tag = controller.text.trim().toLowerCase();
-                if (tag.isNotEmpty) {
-                  Navigator.of(context).pop(tag);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Add Tag'),
-            ),
-          ],
-        );
-      },
-    ).then((newTag) {
-      if (newTag != null && !recipe.tags.contains(newTag)) {
-        _addTag(recipe, newTag);
-      }
-    });
-  }
-
-  void _showRemoveTagDialog(BuildContext context, String tag, Recipe recipe) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Remove Tag'),
-          content: Text('Remove "#$tag" from this recipe?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _removeTag(recipe, tag);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Remove'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _addTag(Recipe recipe, String newTag) async {
-    try {
-      final updatedTags = [...recipe.tags, newTag];
-      final updatedRecipe = recipe.copyWith(tags: updatedTags);
-      
-      await ref.read(recipeProvider.notifier).updateRecipe(updatedRecipe);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added tag "#$newTag"'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to add tag: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _removeTag(Recipe recipe, String tagToRemove) async {
-    try {
-      final updatedTags = recipe.tags.where((tag) => tag != tagToRemove).toList();
-      final updatedRecipe = recipe.copyWith(tags: updatedTags);
-      
-      await ref.read(recipeProvider.notifier).updateRecipe(updatedRecipe);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Removed tag "#$tagToRemove"'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to remove tag: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  // Helper method to check if an ingredient can be scaled (contains numbers)
+  /// Helper method to check if an ingredient can be scaled (contains numbers)
   bool _isIngredientScalable(String ingredientText) {
     // Skip section headers
     if (ingredientText.startsWith('## ')) {
@@ -1321,115 +744,5 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     // This ensures consistency between scaling and display logic
     final regex = RegExp(r'((?:\d+\s+)?[\d½⅓⅔¼¾⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]+(?:\.\d+)?(?:/\d+)?)\s*(?:\([^)]+\))?\s*([a-zA-Z]+(?:\s+[a-zA-Z]+)*?)(?=\s|$|,|\()', unicode: true);
     return regex.hasMatch(ingredientText);
-  }
-
-  Future<void> _checkForSharedUrl() async {
-    final sharedData = await ShareChannel.checkForSharedUrl();
-    if (sharedData != null && mounted) {
-      final url = sharedData['url']!;
-      final html = sharedData['html'];
-      final images = sharedData['images'] as List?;
-
-      debugPrint('DEBUG _checkForSharedUrl (detail screen): URL = $url');
-      debugPrint('DEBUG _checkForSharedUrl (detail screen): Has HTML = ${html != null}');
-      if (html != null) {
-        debugPrint('DEBUG _checkForSharedUrl (detail screen): HTML length = ${html.length}');
-      }
-      if (images != null) {
-        debugPrint(
-            'DEBUG _checkForSharedUrl (detail screen): Has ${images.length} images from Web Archive');
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(html != null
-              ? 'Processing recipe with HTML...'
-              : 'Processing shared URL...'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      await _processSharedRecipe(url, html: html, images: images);
-    }
-  }
-
-  Future<void> _processSharedRecipe(String url,
-      {String? html, List? images}) async {
-    try {
-      final recipeService = ref.read(service.recipeServiceProvider);
-      final uri = Uri.parse(url);
-      final domain = uri.host.replaceAll('www.', '');
-
-      debugPrint('DEBUG (detail screen): Processing shared recipe from $url');
-
-      // Build recipe data with HTML if available
-      final recipeData = {
-        'id': '', // Will be set by backend
-        'sourceUrl': url,
-        'title': 'Recipe from $domain',
-        // Send empty arrays - backend will parse the HTML
-        'ingredients': [],
-        'instructions': [],
-        // Include HTML if provided (from Web Archive or Safari Web Extension)
-        if (html != null && html.isNotEmpty) 'webArchiveHtml': html,
-        // Include images if provided (from Web Archive)
-        if (images != null && images.isNotEmpty) 'webArchiveImages': images,
-      };
-
-      debugPrint(
-          'DEBUG (detail screen): Recipe data includes HTML: ${html != null && html.isNotEmpty}');
-      if (html != null && html.isNotEmpty) {
-        debugPrint(
-            'DEBUG (detail screen): HTML length being sent to backend: ${html.length} chars');
-      }
-      if (images != null && images.isNotEmpty) {
-        debugPrint(
-            'DEBUG (detail screen): Sending ${images.length} images from Web Archive to backend');
-      }
-
-      debugPrint('DEBUG (detail screen): Calling saveRecipeRaw to preserve webArchiveHtml...');
-      final response = await recipeService.saveRecipeRaw(recipeData);
-      debugPrint('DEBUG (detail screen): Recipe saved successfully with ID: ${response.id}');
-
-      if (mounted) {
-        // Invalidate recipes provider to refresh the list
-        ref.invalidate(recipeProvider);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Recipe saved! Processing...'),
-            action: SnackBarAction(
-              label: 'View',
-              onPressed: () {
-                // Navigate to the new recipe, replacing current detail screen
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        RecipeDetailScreen(recipe: response),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-
-        // Check for more queued recipes after a brief delay
-        Future.delayed(const Duration(milliseconds: 500), () {
-          _checkForSharedUrl();
-        });
-      }
-    } catch (e, stackTrace) {
-      debugPrint('ERROR (detail screen): Failed to save shared recipe: $e');
-      debugPrint('ERROR (detail screen): Stack trace: $stackTrace');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save recipe: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
   }
 }
