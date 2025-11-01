@@ -7,6 +7,7 @@
 
 import Flutter
 import UIKit
+import Shared
 
 @main
 @objc final class AppDelegate: FlutterAppDelegate {
