@@ -23,6 +23,10 @@ public struct WebArchiveResult {
 /// Service for processing web archives
 public final class WebArchiveProcessor {
 
+    // MARK: - Initialization
+
+    public init() {}
+
     // MARK: - Public Methods
 
     /// Processes a web archive item

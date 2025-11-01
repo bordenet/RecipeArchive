@@ -8,7 +8,7 @@
 import Foundation
 
 /// Errors that can occur during recipe queue operations
-enum RecipeQueueError: LocalizedError {
+public enum RecipeQueueError: LocalizedError {
     case appGroupUnavailable
     case invalidPayload
     case serializationFailed
@@ -16,7 +16,7 @@ enum RecipeQueueError: LocalizedError {
     case fileReadFailed(Error)
     case noRecipesInQueue
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .appGroupUnavailable:
             return "Unable to access App Group container"
@@ -35,14 +35,14 @@ enum RecipeQueueError: LocalizedError {
 }
 
 /// Errors that can occur during content extraction
-enum ContentExtractionError: LocalizedError {
+public enum ContentExtractionError: LocalizedError {
     case noExtensionItems
     case noURL
     case invalidURL
     case timeout
     case extractionFailed(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .noExtensionItems:
             return "No content to share"
@@ -59,12 +59,12 @@ enum ContentExtractionError: LocalizedError {
 }
 
 /// Errors that can occur during web archive processing
-enum WebArchiveError: LocalizedError {
+public enum WebArchiveError: LocalizedError {
     case invalidArchiveData
     case missingMainResource
     case serializationFailed
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidArchiveData:
             return "Web archive data is invalid"

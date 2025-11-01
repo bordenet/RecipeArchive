@@ -7,6 +7,7 @@
 
 import SafariServices
 import os.log
+import Shared
 
 /// Handler for Safari Web Extension native messaging
 final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {

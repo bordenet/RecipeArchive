@@ -7,6 +7,7 @@
 
 import Flutter
 import Foundation
+import Shared
 
 /// Service for managing communication between iOS and Flutter
 final class FlutterBridge {
