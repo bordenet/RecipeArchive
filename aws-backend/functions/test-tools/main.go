@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -22,24 +23,34 @@ var (
 	s3Client   *s3.Client
 	recipeDB   db.RecipeDB
 	bucketName string
+	initOnce   sync.Once
+	initErr    error
 )
 
-func init() {
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
-	if err != nil {
-		log.Fatalf("Failed to load AWS config: %v", err)
-	}
+// initAWSClient performs lazy initialization of AWS client using sync.Once.
+func initAWSClient(ctx context.Context) error {
+	initOnce.Do(func() {
+		region := os.Getenv("AWS_REGION")
+		if region == "" {
+			region = "us-west-2"
+		}
 
-	s3Client = s3.NewFromConfig(cfg)
+		cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+		if err != nil {
+			initErr = fmt.Errorf("failed to load AWS config: %w", err)
+			return
+		}
 
-	// Get configuration from environment variables or use defaults for testing
-	bucketName = os.Getenv("S3_STORAGE_BUCKET")
-	if bucketName == "" {
-		bucketName = "recipe-archive-dev" // Default for testing
-	}
+		s3Client = s3.NewFromConfig(cfg)
 
-	// Initialize S3-based recipe storage
-	recipeDB = db.NewS3RecipeDB(s3Client, bucketName)
+		bucketName = os.Getenv("S3_STORAGE_BUCKET")
+		if bucketName == "" {
+			bucketName = "recipe-archive-dev"
+		}
+
+		recipeDB = db.NewS3RecipeDB(s3Client, bucketName)
+	})
+	return initErr
 }
 
 func main() {
@@ -48,6 +59,11 @@ func main() {
 	_ = flag.String("recipe-id", "", "Recipe ID for single operations") // Currently unused
 	var testDataFile = flag.String("test-data", "../testdata/test-recipes.json", "Path to test data file")
 	flag.Parse()
+
+	ctx := context.Background()
+	if err := initAWSClient(ctx); err != nil {
+		log.Fatalf("Failed to initialize AWS client: %v", err)
+	}
 
 	if *action == "" {
 		flag.Usage()
@@ -62,8 +78,6 @@ func main() {
 		fmt.Println("  test-normalizer    - Test background normalizer with cocktail recipe")
 		os.Exit(1)
 	}
-
-	ctx := context.Background()
 
 	switch *action {
 	case "load-test-data":
