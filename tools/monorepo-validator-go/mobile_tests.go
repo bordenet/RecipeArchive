@@ -29,11 +29,14 @@ func runMobileTests(projectRoot string) bool {
 		}
 	}
 
+	// Validate presence of all critical mobile development scripts
+	// These scripts are required for complete iOS and Android development
 	scriptsFound := 0
 	scripts := []string{
-		"scripts/ios/ios-setup.sh",
-		"scripts/android/setup.sh",
-		"recipe_archive/scripts/build-mobile.sh",
+		"scripts/ios/build.sh",    // iOS build automation
+		"scripts/ios/setup.sh",     // iOS environment setup
+		"scripts/android/build.sh", // Android build automation
+		"scripts/android/setup.sh", // Android environment setup
 	}
 
 	for _, script := range scripts {
@@ -43,7 +46,9 @@ func runMobileTests(projectRoot string) bool {
 		}
 	}
 
-	return scriptsFound >= 1
+	// Require all 4 scripts to exist for complete mobile validation
+	// This ensures both iOS and Android toolchains are properly configured
+	return scriptsFound >= 4
 }
 
 // runIOSValidation performs iOS clean build, test, and lint validation (NO simulator deployment)
