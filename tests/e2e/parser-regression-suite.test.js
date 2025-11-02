@@ -152,9 +152,35 @@ describe("E2E Parser Regression Suite", () => {
           waitUntil: "domcontentloaded",
           timeout: 60000,
         });
+
+        // Inject TypeScript parser bundle into page
+        const parserBundle = require("fs").readFileSync(
+          require("path").resolve(__dirname, "../../extensions/chrome/typescript-parser-bundle.js"),
+          "utf-8"
+        );
+        await page.addScriptTag({ content: parserBundle });
+
         await page.waitForTimeout(3000);
 
+        // Debug: Check if parser loaded
+        const parserLoaded = await page.evaluate(() => {
+          return {
+            hasTypeScriptParser: typeof window.TypeScriptParser !== "undefined",
+            hasExtractMethod: typeof window.TypeScriptParser?.extractRecipeFromPage === "function",
+            currentUrl: window.location.href
+          };
+        });
+        console.log("Parser status:", JSON.stringify(parserLoaded, null, 2));
+
         const result = await extractRecipe(page, recipe);
+
+        // Debug: Log what was extracted
+        console.log("Extracted data:", JSON.stringify({
+          title: result.title,
+          ingredientsCount: result.ingredients?.length || 0,
+          instructionsCount: result.instructions?.length || 0,
+          sourceUrl: result.sourceUrl
+        }, null, 2));
 
         // AWS backend contract validation
         validateRecipeContract(result, recipe);
@@ -172,12 +198,21 @@ describe("E2E Parser Regression Suite", () => {
 });
 
 /**
- * Extract recipe data using JSON-LD and HTML fallbacks
- * Mirrors the production parser logic
+ * Extract recipe data using the TypeScript parser bundle
+ * Mirrors the production parser logic used in browser extensions
  */
 async function extractRecipe(page, recipe) {
   const result = await page.evaluate(() => {
-    // JSON-LD Extraction (Primary method)
+    // Use TypeScript parser if available (loaded via addInitScript)
+    if (window.TypeScriptParser && window.TypeScriptParser.extractRecipeFromPage) {
+      try {
+        return window.TypeScriptParser.extractRecipeFromPage();
+      } catch (error) {
+        console.log("TypeScript parser failed, falling back to JSON-LD:", error.message);
+      }
+    }
+
+    // Fallback: JSON-LD Extraction (Primary method)
     function extractRecipeFromJsonLd() {
       const jsonLdScripts = document.querySelectorAll(
         "script[type=\"application/ld+json\"]"
