@@ -16718,6 +16718,7 @@
   registry.registerParser("foodandwine.com", FoodAndWineParser);
   registry.registerParser("washingtonpost.com", WashingtonPostParser);
   registry.registerParser("alexandracooks.com", AlexandrasKitchenParser);
+  registry.registerParser("lemonsandzest.com", LemonsAndZestParser);
   if (typeof window !== "undefined") {
     window.RecipeArchiveParserRegistry = registry;
     window.TypeScriptParser = {

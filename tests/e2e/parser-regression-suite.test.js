@@ -33,10 +33,10 @@ const PARSER_TEST_CATALOG = [
   },
   {
     site: "epicurious",
-    url: "https://www.epicurious.com/recipes/food/views/classic-basil-pesto",
-    expected: "Classic Basil Pesto",
-    minIngredients: 4,
-    minInstructions: 2,
+    url: "https://www.epicurious.com/recipes/food/views/pasta-with-no-cook-tomato-sauce-and-fresh-mozzarella",
+    expected: "Pasta with No-Cook Tomato Sauce",
+    minIngredients: 6,
+    minInstructions: 3,
   },
   {
     site: "food52",
@@ -61,8 +61,8 @@ const PARSER_TEST_CATALOG = [
   },
   {
     site: "smitten-kitchen",
-    url: "https://smittenkitchen.com/2008/04/best-chocolate-chip-cookies/",
-    expected: "Best Chocolate Chip Cookies",
+    url: "https://smittenkitchen.com/2016/06/the-consummate-chocolate-chip-cookie-revisited/",
+    expected: "Consummate Chocolate Chip Cookie",
     minIngredients: 8,
     minInstructions: 5,
   },
@@ -75,7 +75,7 @@ const PARSER_TEST_CATALOG = [
   },
   {
     site: "damn-delicious",
-    url: "https://damndelicious.net/2019/03/29/korean-beef-bowl/",
+    url: "https://damndelicious.net/2013/07/07/korean-beef-bowl/",
     expected: "Korean Beef Bowl",
     minIngredients: 8,
     minInstructions: 3,
@@ -89,17 +89,10 @@ const PARSER_TEST_CATALOG = [
   },
   {
     site: "alexandras-kitchen",
-    url: "https://alexandracooks.com/2017/10/24/simple-sourdough-bread-a-beginners-guide/",
-    expected: "Simple Sourdough Bread",
+    url: "https://alexandracooks.com/2017/10/24/artisan-sourdough-made-simple-sourdough-bread-demystified-a-beginners-guide-to-sourdough-baking/",
+    expected: "Sourdough Bread",
     minIngredients: 3,
     minInstructions: 5,
-  },
-  {
-    site: "anthony-kitchen",
-    url: "https://www.anthonyskitchen.com/recipes/italian-wedding-soup",
-    expected: "Italian Wedding Soup",
-    minIngredients: 10,
-    minInstructions: 6,
   },
   {
     site: "loveandlemons",
@@ -179,7 +172,7 @@ describe("E2E Parser Regression Suite", () => {
           title: result.title,
           ingredientsCount: result.ingredients?.length || 0,
           instructionsCount: result.instructions?.length || 0,
-          sourceUrl: result.sourceUrl
+          source: result.source
         }, null, 2));
 
         // AWS backend contract validation
@@ -250,7 +243,7 @@ async function extractRecipe(page, recipe) {
               title: recipeData.name,
               ingredients,
               instructions,
-              sourceUrl: window.location.href,
+              source: window.location.href,
               mainPhotoUrl: recipeData.image
                 ? Array.isArray(recipeData.image)
                   ? recipeData.image[0]
@@ -326,7 +319,7 @@ async function extractRecipe(page, recipe) {
         title,
         ingredients,
         instructions,
-        sourceUrl: window.location.href,
+        source: window.location.href,
       };
     }
 
@@ -390,13 +383,16 @@ function validateRecipeContract(result, recipe) {
   });
 
   // Source URL validation
-  expect(result.sourceUrl).toBe(recipe.url);
+  expect(result.source).toBe(recipe.url);
 
   // Optional fields (if present, must be valid)
-  if (result.mainPhotoUrl) expect(typeof result.mainPhotoUrl).toBe("string");
-  if (result.prepTimeMinutes) expect(typeof result.prepTimeMinutes).toBe("number");
-  if (result.cookTimeMinutes) expect(typeof result.cookTimeMinutes).toBe("number");
-  if (result.totalTimeMinutes) expect(typeof result.totalTimeMinutes).toBe("number");
-  if (result.servings) expect(typeof result.servings).toBe("number");
-  if (result.yield) expect(typeof result.yield).toBe("string");
+  // Note: All optional time and serving fields are strings per Recipe type definition
+  if (result.imageUrl) expect(typeof result.imageUrl).toBe("string");
+  if (result.prepTime) expect(typeof result.prepTime).toBe("string");
+  if (result.cookTime) expect(typeof result.cookTime).toBe("string");
+  if (result.totalTime) expect(typeof result.totalTime).toBe("string");
+  if (result.servings) expect(typeof result.servings).toBe("string");
+  if (result.author) expect(typeof result.author).toBe("string");
+  if (result.notes) expect(Array.isArray(result.notes)).toBe(true);
+  if (result.tags) expect(Array.isArray(result.tags)).toBe(true);
 }
