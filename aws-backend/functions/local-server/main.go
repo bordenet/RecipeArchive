@@ -6,7 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -86,11 +86,13 @@ func MockAuthMiddleware(next http.Handler) http.Handler {
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"status":   "healthy",
 		"service":  "recipe-archive-local",
 		"database": "local-in-memory",
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode health response: %v\n", err)
+	}
 }
 
 // Test page handler for extension testing
@@ -102,10 +104,10 @@ func testPageHandler(w http.ResponseWriter, r *http.Request) {
 	cwd, _ := os.Getwd()
 	projectRoot := filepath.Join(cwd, "..", "..", "..")
 	testPagePath := filepath.Join(projectRoot, "tests", "chrome-extension-validation.html")
-	content, err := ioutil.ReadFile(testPagePath)
+	content, err := os.ReadFile(testPagePath)
 	if err != nil {
 		// Fallback to simple HTML if file doesn't exist
-		w.Write([]byte(`
+		if _, writeErr := w.Write([]byte(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,17 +169,21 @@ func testPageHandler(w http.ResponseWriter, r *http.Request) {
     </script>
 </body>
 </html>
-		`))
+		`)); writeErr != nil {
+			log.Printf("WARN: Failed to write fallback HTML: %v\n", writeErr)
+		}
 		return
 	}
 
-	w.Write(content)
+	if _, err := w.Write(content); err != nil {
+		log.Printf("WARN: Failed to write test page: %v\n", err)
+	}
 }
 
 // Diagnostics handler for browser extension debugging
 func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 	// Read the request body
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
@@ -256,7 +262,9 @@ func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 	// Respond with success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("WARN: Failed to encode diagnostics response: %v\n", err)
+	}
 }
 
 // List recipes handler
@@ -271,17 +279,19 @@ func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"recipes": userRecipes,
 		"count":   len(userRecipes),
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode list recipes response: %v\n", err)
+	}
 }
 
 // Create recipe handler
 func createRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
@@ -305,10 +315,12 @@ func createRecipeHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Recipe created successfully",
 		"recipe":  recipe,
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode create recipe response: %v\n", err)
+	}
 }
 
 // Get recipe handler
@@ -324,9 +336,11 @@ func getRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"recipe": recipe,
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode get recipe response: %v\n", err)
+	}
 }
 
 // Update recipe handler
@@ -341,7 +355,7 @@ func updateRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
@@ -392,10 +406,12 @@ func updateRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	db.recipes[recipeID] = recipe
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Recipe updated successfully",
 		"recipe":  recipe,
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode update recipe response: %v\n", err)
+	}
 }
 
 // Delete recipe handler
@@ -415,9 +431,11 @@ func deleteRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	db.recipes[recipeID] = recipe
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Recipe deleted successfully",
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode delete recipe response: %v\n", err)
+	}
 }
 
 // Recipe routes handler
@@ -495,7 +513,9 @@ func createBackupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	manifestData, _ := json.MarshalIndent(manifest, "", "  ")
-	manifestWriter.Write(manifestData)
+	if _, err := manifestWriter.Write(manifestData); err != nil {
+		log.Printf("WARN: Failed to write manifest to zip: %v\n", err)
+	}
 
 	// Add README to zip
 	readmeWriter, err := zipWriter.Create("README.md")
@@ -518,7 +538,9 @@ Backup ID: %s
 Created: %s
 Recipe Count: %d
 `, manifest.CreatedAt.Format("2006-01-02 15:04:05 UTC"), len(activeRecipes), backupID, manifest.CreatedAt.Format("2006-01-02 15:04:05 UTC"), len(activeRecipes))
-	readmeWriter.Write([]byte(readme))
+	if _, err := readmeWriter.Write([]byte(readme)); err != nil {
+		log.Printf("WARN: Failed to write README to zip: %v\n", err)
+	}
 
 	// Add individual recipe files
 	for i, recipe := range activeRecipes {
@@ -529,23 +551,29 @@ Recipe Count: %d
 			return
 		}
 		recipeData, _ := json.MarshalIndent(recipe, "", "  ")
-		recipeWriter.Write(recipeData)
+		if _, err := recipeWriter.Write(recipeData); err != nil {
+			log.Printf("WARN: Failed to write recipe %s to zip: %v\n", recipe.Title, err)
+		}
 	}
 
-	zipWriter.Close()
+	if err := zipWriter.Close(); err != nil {
+		log.Printf("WARN: Failed to close zip writer: %v\n", err)
+	}
 
 	// For local testing, we'll return a mock download URL
 	mockDownloadURL := fmt.Sprintf("http://localhost:8080/download/%s.zip", backupID)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"backupId":    backupID,
 		"downloadUrl": mockDownloadURL,
 		"expiresAt":   time.Now().Add(24 * time.Hour).Format(time.RFC3339),
 		"recipeCount": len(activeRecipes),
 		"sizeBytes":   int64(buf.Len()),
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode backup response: %v\n", err)
+	}
 }
 
 // List backups handler (mock implementation for local testing)
@@ -569,10 +597,12 @@ func listBackupsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"backups": mockBackups,
 		"total":   len(mockBackups),
-	})
+	}); err != nil {
+		log.Printf("WARN: Failed to encode backups response: %v\n", err)
+	}
 }
 
 func main() {

@@ -401,8 +401,23 @@ func splitInstructions(text string) []string {
 		return nil
 	}
 
-	// Split on period followed by space and capital letter
-	periodSplit := regexp.MustCompile(`\.\s+(?=[A-Z])`).Split(text, -1)
+	// Split on period followed by space and capital letter (manual implementation since Go regex doesn't support lookahead)
+	periodRe := regexp.MustCompile(`\.\s+[A-Z]`)
+	matches := periodRe.FindAllStringIndex(text, -1)
+
+	var periodSplit []string
+	lastIdx := 0
+	for _, match := range matches {
+		// Split before the capital letter (include period and space in previous part)
+		periodSplit = append(periodSplit, text[lastIdx:match[1]-1])
+		lastIdx = match[1] - 1
+	}
+	if lastIdx < len(text) {
+		periodSplit = append(periodSplit, text[lastIdx:])
+	}
+	if len(periodSplit) == 0 {
+		periodSplit = []string{text}
+	}
 
 	var steps []string
 	for _, step := range periodSplit {
@@ -486,9 +501,10 @@ func decodeHTMLEntities(text string) string {
 	result = numericEntityRe.ReplaceAllStringFunc(result, func(match string) string {
 		// Extract number
 		var code int
-		fmt.Sscanf(match, "&#%d;", &code)
-		if code > 0 && code < 1114112 { // Valid Unicode range
-			return string(rune(code))
+		if _, err := fmt.Sscanf(match, "&#%d;", &code); err == nil {
+			if code > 0 && code < 1114112 { // Valid Unicode range
+				return string(rune(code))
+			}
 		}
 		return match
 	})
@@ -497,9 +513,10 @@ func decodeHTMLEntities(text string) string {
 	hexEntityRe := regexp.MustCompile(`&#x([0-9A-Fa-f]+);`)
 	result = hexEntityRe.ReplaceAllStringFunc(result, func(match string) string {
 		var code int
-		fmt.Sscanf(strings.ToLower(match), "&#x%x;", &code)
-		if code > 0 && code < 1114112 { // Valid Unicode range
-			return string(rune(code))
+		if _, err := fmt.Sscanf(strings.ToLower(match), "&#x%x;", &code); err == nil {
+			if code > 0 && code < 1114112 { // Valid Unicode range
+				return string(rune(code))
+			}
 		}
 		return match
 	})
@@ -524,13 +541,17 @@ func parseISO8601Duration(duration string) int {
 
 	// Parse hours
 	if strings.Contains(duration, "H") {
-		fmt.Sscanf(duration, "%dH", &hours)
+		if _, err := fmt.Sscanf(duration, "%dH", &hours); err != nil {
+			hours = 0
+		}
 		duration = duration[strings.Index(duration, "H")+1:]
 	}
 
 	// Parse minutes
 	if strings.Contains(duration, "M") {
-		fmt.Sscanf(duration, "%dM", &minutes)
+		if _, err := fmt.Sscanf(duration, "%dM", &minutes); err != nil {
+			minutes = 0
+		}
 	}
 
 	return hours*60 + minutes

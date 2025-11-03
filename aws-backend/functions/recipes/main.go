@@ -635,25 +635,6 @@ func handleGetRecipes(ctx context.Context, request events.APIGatewayProxyRequest
 
 // handleGetRecipeByID handles GET requests for a specific recipe
 func handleGetRecipeByID(ctx context.Context, userID, recipeID string) (events.APIGatewayProxyResponse, error) {
-	// Validate resource access (additional tenant isolation check)
-	resourcePath := fmt.Sprintf("recipes/%s/%s.json", userID, recipeID)
-	if validator, err := utils.NewTenantValidation(); err == nil {
-		if validateErr := validator.ValidateResourceAccess(ctx, userID, resourcePath); validateErr != nil {
-			fmt.Printf("Resource access validation failed: %v\n", validateErr)
-			response, responseErr := utils.NewAPIResponse(http.StatusForbidden, map[string]interface{}{
-				"error": map[string]interface{}{
-					"code":      "ACCESS_DENIED",
-					"message":   "Access to this resource is not allowed",
-					"timestamp": time.Now().UTC(),
-				},
-			})
-			if responseErr != nil {
-				return events.APIGatewayProxyResponse{}, responseErr
-			}
-			return response, nil
-		}
-	}
-
 	// Get the recipe from S3
 	recipe, err := recipeDB.GetRecipe(userID, recipeID)
 	if err != nil {

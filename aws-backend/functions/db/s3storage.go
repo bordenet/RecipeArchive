@@ -39,7 +39,11 @@ func (db *S3RecipeDB) GetRecipe(userID, recipeID string) (*models.Recipe, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipe: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() {
+		if closeErr := result.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close S3 response body: %v\n", closeErr)
+		}
+	}()
 
 	data, err := io.ReadAll(result.Body)
 	if err != nil {

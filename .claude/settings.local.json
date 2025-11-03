@@ -25,7 +25,12 @@
       "Bash(/dev/null)",
       "Bash(for func in background-normalizer backup content-normalizer db diagnostics-mobile-share invitation-manager-s3 local-server recipes s3-manager test-tools)",
       "Bash(for func in backup content-normalizer db diagnostics-mobile-share invitation-manager-s3 local-server recipes s3-manager test-tools)",
-      "Bash(do cd aws-backend/functions/$func)"
+      "Bash(do cd aws-backend/functions/$func)",
+      "Bash(git checkout:*)",
+      "Bash(timeout 180 ./validate-monorepo.sh:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(timeout 360 git commit -m \"fix(lint): clean up all linting errors across Lambda functions\")"
     ],
     "deny": [],
     "ask": []
