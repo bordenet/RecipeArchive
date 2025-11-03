@@ -72,7 +72,11 @@ timed_confirm() {
     local default="${3:-N}"
     
     print_warning "$message"
-    echo -n "Continue? [y/N] (auto-${default} in ${timeout}s): "
+    local prompt_options="[y/N]"
+    if [ "$default" = "Y" ]; then
+        prompt_options="[Y/n]"
+    fi
+    echo -n "Continue? ${prompt_options} (auto-${default} in ${timeout}s): "
     
     if read -t "$timeout" -r response; then
         case "$response" in
@@ -398,7 +402,7 @@ else
     CMDLINE_DIR="$ANDROID_HOME/cmdline-tools"
     if [ -d "$CMDLINE_DIR" ]; then
       # Find the actual latest version directory (latest-2, latest-3, etc.)
-      LATEST_VERSION=$(find "$CMDLINE_DIR" -maxdepth 1 -type d -name "latest-*" | sort -V | tail -1)
+      LATEST_VERSION=$(find "$CMDLINE_DIR" -maxdepth 1 -type d \( -name "latest-*" -o -name "[0-9]*" \) | sort -V | tail -1)
 
       if [ -n "$LATEST_VERSION" ]; then
         EXPECTED_TARGET=$(basename "$LATEST_VERSION")
@@ -551,10 +555,14 @@ else
 fi
 
 # AWS CLI
-if ! command -v aws &> /dev/null; then
-  print_info "Installing AWS CLI..."
-  brew install awscli
-  print_success "AWS CLI installed: $(aws --version)"
+if ! aws --version &> /dev/null; then
+  print_info "AWS CLI is not working. Reinstalling..."
+  brew reinstall awscli
+  if ! aws --version &> /dev/null; then
+    print_error "AWS CLI reinstall failed. Please check your Homebrew and Python setup."
+    die "Setup failed"
+  fi
+  print_success "AWS CLI reinstalled successfully: $(aws --version)"
 else
   print_success "AWS CLI already installed: $(aws --version)"
 fi
