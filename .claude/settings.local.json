@@ -22,7 +22,8 @@
       "Bash(golangci-lint run:*)",
       "Bash(for func in analytics-aggregator background-normalizer backup content-normalizer db diagnostics-mobile-share invitation-manager-s3 local-server recipes s3-manager test-tools)",
       "Bash(do echo \"=== $func ===\")",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "Bash(for func in background-normalizer backup content-normalizer db diagnostics-mobile-share invitation-manager-s3 local-server recipes s3-manager test-tools)"
     ],
     "deny": [],
     "ask": []

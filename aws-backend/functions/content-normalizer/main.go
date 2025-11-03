@@ -497,12 +497,8 @@ func applyNormalization(original RecipeData, normalized *NormalizationResponse) 
 	if normalized.InferredMetadata.DifficultyLevel != "" {
 		result.Tags = append(result.Tags, normalized.InferredMetadata.DifficultyLevel)
 	}
-	for _, method := range normalized.InferredMetadata.CookingMethods {
-		result.Tags = append(result.Tags, method)
-	}
-	for _, diet := range normalized.InferredMetadata.DietaryInfo {
-		result.Tags = append(result.Tags, diet)
-	}
+	result.Tags = append(result.Tags, normalized.InferredMetadata.CookingMethods...)
+	result.Tags = append(result.Tags, normalized.InferredMetadata.DietaryInfo...)
 
 	return result
 }

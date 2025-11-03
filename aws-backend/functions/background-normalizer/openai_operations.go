@@ -345,12 +345,8 @@ func applyTags(recipe Recipe, normResponse *NormalizationResponse) Recipe {
 	if normResponse.InferredMetadata.DifficultyLevel != "" {
 		recipe.Tags = append(recipe.Tags, normResponse.InferredMetadata.DifficultyLevel)
 	}
-	for _, method := range normResponse.InferredMetadata.CookingMethods {
-		recipe.Tags = append(recipe.Tags, method)
-	}
-	for _, diet := range normResponse.InferredMetadata.DietaryInfo {
-		recipe.Tags = append(recipe.Tags, diet)
-	}
+	recipe.Tags = append(recipe.Tags, normResponse.InferredMetadata.CookingMethods...)
+	recipe.Tags = append(recipe.Tags, normResponse.InferredMetadata.DietaryInfo...)
 
 	// Add key search metadata tags to main tags for UI display
 	// Add top 2-3 semantic tags
