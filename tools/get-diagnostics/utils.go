@@ -15,7 +15,7 @@ func loadEnvFile() {
 
 	for _, path := range paths {
 		if file, err := os.Open(path); err == nil {
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
 				line := strings.TrimSpace(scanner.Text())
@@ -29,7 +29,7 @@ func loadEnvFile() {
 					value := strings.TrimSpace(parts[1])
 					// Only set if not already in environment
 					if os.Getenv(key) == "" {
-						os.Setenv(key, value)
+						_ = os.Setenv(key, value)
 					}
 				}
 			}

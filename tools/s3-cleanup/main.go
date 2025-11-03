@@ -160,7 +160,7 @@ func isInRecipesDir(key string) bool {
 }
 
 func printUsage() {
-	fmt.Println(`S3 Cleanup Tool - Move misplaced recipe images
+	fmt.Print(`S3 Cleanup Tool - Move misplaced recipe images
 
 USAGE:
   ./s3-cleanup [OPTIONS]

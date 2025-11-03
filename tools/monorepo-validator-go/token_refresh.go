@@ -111,7 +111,7 @@ func (tr *TokenRefresher) RefreshToken() (string, error) {
 
 	result, err := tr.cognitoClient.InitiateAuth(tr.ctx, input)
 	if err != nil {
-		return "", fmt.Errorf("Cognito authentication failed: %w", err)
+		return "", fmt.Errorf("cognito authentication failed: %w", err)
 	}
 
 	if result.AuthenticationResult == nil {
@@ -151,7 +151,7 @@ func (tr *TokenRefresher) updateEnvFile(envPath, newToken string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open .env file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var lines []string
 	tokenUpdated := false
@@ -186,26 +186,26 @@ func (tr *TokenRefresher) updateEnvFile(envPath, newToken string) error {
 	writer := bufio.NewWriter(tempFile)
 	for _, line := range lines {
 		if _, err := writer.WriteString(line + "\n"); err != nil {
-			tempFile.Close()
-			os.Remove(tempPath)
+			_ = tempFile.Close()
+			_ = os.Remove(tempPath)
 			return fmt.Errorf("failed to write to temp file: %w", err)
 		}
 	}
 
 	if err := writer.Flush(); err != nil {
-		tempFile.Close()
-		os.Remove(tempPath)
+		_ = tempFile.Close()
+		_ = os.Remove(tempPath)
 		return fmt.Errorf("failed to flush temp file: %w", err)
 	}
 
 	if err := tempFile.Close(); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
 
 	// Replace original file with temp file
 	if err := os.Rename(tempPath, envPath); err != nil {
-		os.Remove(tempPath)
+		_ = os.Remove(tempPath)
 		return fmt.Errorf("failed to replace .env file: %w", err)
 	}
 

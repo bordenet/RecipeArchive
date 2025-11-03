@@ -1,9 +1,7 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 )
 
@@ -46,39 +44,4 @@ func buildGoBinaries(projectRoot string) bool {
 	}
 
 	return allPassed
-}
-
-// findGoModDirectories finds all directories containing go.mod files
-func findGoModDirectories(rootPath string) ([]string, error) {
-	var dirs []string
-
-	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.Name() == "go.mod" {
-			dirs = append(dirs, filepath.Dir(path))
-		}
-
-		return nil
-	})
-
-	return dirs, err
-}
-
-// hasGoSourceFiles checks if a directory contains .go source files
-func hasGoSourceFiles(dir string) (bool, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return false, err
-	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".go") {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }

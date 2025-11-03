@@ -164,3 +164,31 @@ func runWebValidation(projectRoot string) bool {
 	fmt.Printf("  Flutter web build: ✓\n")
 	return true
 }
+
+// runWebExtensionLinting performs ESLint validation on browser extensions
+func runWebExtensionLinting(projectRoot string) bool {
+	fmt.Println("\n=== WEB EXTENSION LINTING ===")
+
+	// Check if eslint is available
+	if !checkCommand("npm") {
+		fmt.Printf("  npm: ✗ (not installed)\n")
+		return false
+	}
+
+	// Run npm run lint (which uses the browser extensions ESLint config)
+	fmt.Printf("  Running ESLint on browser extensions...\n")
+	output, err := runCommand(projectRoot, "npm", "run", "lint")
+
+	if err != nil {
+		fmt.Printf("  Extension linting: ✗\n")
+		fmt.Printf("  Run 'npm run lint' for details\n")
+		if output != "" {
+			// Show first few lines of output for context
+			fmt.Printf("  Hint: Check extensions/ directory for linting issues\n")
+		}
+		return false
+	}
+
+	fmt.Printf("  Extension linting: ✓\n")
+	return true
+}

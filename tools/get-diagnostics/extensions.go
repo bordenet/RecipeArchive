@@ -54,11 +54,11 @@ func harvestExtensionDiagnostics(cfg *HarvesterConfig, since time.Duration) ([]D
 			var rawData map[string]interface{}
 			decoder := json.NewDecoder(result.Body)
 			if err := decoder.Decode(&rawData); err != nil {
-				result.Body.Close()
+				_ = result.Body.Close()
 				fmt.Fprintf(os.Stderr, "⚠️  Failed to parse JSON from %s: %v\n", *obj.Key, err)
 				continue
 			}
-			result.Body.Close()
+			_ = result.Body.Close()
 
 			// Extract diagnostic information
 			entry := DiagnosticEntry{

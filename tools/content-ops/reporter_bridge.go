@@ -32,7 +32,7 @@ func (r *RecipeReporter) Authenticate(username, password string) error {
 	}
 
 	// Store access token for backwards compatibility
-	r.accessToken = r.Reporter.GetAccessToken()
+	r.accessToken = r.GetAccessToken()
 	return nil
 }
 

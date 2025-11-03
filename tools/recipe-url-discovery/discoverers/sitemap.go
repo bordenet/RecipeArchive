@@ -73,7 +73,7 @@ func (d *SitemapDiscoverer) DiscoverURLs(sitemapURL string, domain string) ([]st
 		if err != nil {
 			return fmt.Errorf("failed to fetch sitemap: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("sitemap returned status %d", resp.StatusCode)
@@ -85,7 +85,7 @@ func (d *SitemapDiscoverer) DiscoverURLs(sitemapURL string, domain string) ([]st
 			if err != nil {
 				return fmt.Errorf("failed to create gzip reader: %w", err)
 			}
-			defer gzReader.Close()
+			defer func() { _ = gzReader.Close() }()
 			bodyReader = gzReader
 		}
 

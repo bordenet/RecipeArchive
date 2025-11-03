@@ -19,7 +19,7 @@ func loadEnv() error {
 	if err != nil {
 		return fmt.Errorf("failed to open .env file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -42,7 +42,7 @@ func loadEnv() error {
 			value = value[1 : len(value)-1]
 		}
 
-		os.Setenv(key, value)
+		_ = os.Setenv(key, value)
 	}
 
 	return scanner.Err()

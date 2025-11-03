@@ -82,11 +82,11 @@ func PrintReport(entries []ReportEntry, includeRecipeID bool, jsonOutput bool) {
 
 	// Print header
 	if includeRecipeID {
-		fmt.Fprintln(w, "NAME\tDOMAIN\tDATE\tTYPE\tRECIPE ID")
-		fmt.Fprintln(w, "────\t──────\t────\t────\t─────────")
+		_, _ = fmt.Fprintln(w, "NAME\tDOMAIN\tDATE\tTYPE\tRECIPE ID")
+		_, _ = fmt.Fprintln(w, "────\t──────\t────\t────\t─────────")
 	} else {
-		fmt.Fprintln(w, "NAME\tDOMAIN\tDATE\tTYPE")
-		fmt.Fprintln(w, "────\t──────\t────\t────")
+		_, _ = fmt.Fprintln(w, "NAME\tDOMAIN\tDATE\tTYPE")
+		_, _ = fmt.Fprintln(w, "────\t──────\t────\t────")
 	}
 
 	// Print entries
@@ -106,13 +106,13 @@ func PrintReport(entries []ReportEntry, includeRecipeID bool, jsonOutput bool) {
 
 		if includeRecipeID {
 			recipeID := entry.RecipeID
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name, domain, date, entryType, recipeID)
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name, domain, date, entryType, recipeID)
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, domain, date, entryType)
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", name, domain, date, entryType)
 		}
 	}
 
-	w.Flush()
+	_ = w.Flush()
 	fmt.Printf("\n")
 }
 
@@ -158,8 +158,8 @@ func PrintFailedParserReport(entries []ReportEntry) {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "NAME\tDOMAIN\tDATE")
-	fmt.Fprintln(w, "────\t──────\t────")
+	_, _ = fmt.Fprintln(w, "NAME\tDOMAIN\tDATE")
+	_, _ = fmt.Fprintln(w, "────\t──────\t────")
 
 	for i := 0; i < maxToShow; i++ {
 		failure := failures[i]
@@ -167,10 +167,10 @@ func PrintFailedParserReport(entries []ReportEntry) {
 		if len(name) > 50 {
 			name = name[:47] + "..."
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", name, failure.Domain, failure.Date.Format("2006-01-02"))
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n", name, failure.Domain, failure.Date.Format("2006-01-02"))
 	}
 
-	w.Flush()
+	_ = w.Flush()
 	fmt.Printf("\n")
 }
 
@@ -208,8 +208,8 @@ func PrintTenantsTable(tenants []Tenant) {
 
 	// Detailed table
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "EMAIL\tUSER ID\tRECIPES\tSTATUS\tLAST ACTIVITY")
-	fmt.Fprintln(w, "─────\t───────\t───────\t──────\t─────────────")
+	_, _ = fmt.Fprintln(w, "EMAIL\tUSER ID\tRECIPES\tSTATUS\tLAST ACTIVITY")
+	_, _ = fmt.Fprintln(w, "─────\t───────\t───────\t──────\t─────────────")
 
 	for _, tenant := range tenants {
 		email := tenant.Email
@@ -233,11 +233,11 @@ func PrintTenantsTable(tenants []Tenant) {
 			}
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%d\t%s\t%s\n",
 			email, userID, tenant.RecipeCount, tenant.Status, lastActivity)
 	}
 
-	w.Flush()
+	_ = w.Flush()
 	fmt.Printf("\n")
 }
 

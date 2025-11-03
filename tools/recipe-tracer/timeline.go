@@ -34,9 +34,10 @@ func (t *RecipeTracer) buildTimeline(trace *RecipeTrace) []TraceEvent {
 	// Add log events to timeline
 	for _, event := range trace.LogEvents {
 		eventType := "log_info"
-		if event.Level == "ERROR" {
+		switch event.Level {
+		case "ERROR":
 			eventType = "log_error"
-		} else if event.Level == "WARN" {
+		case "WARN":
 			eventType = "log_warning"
 		}
 

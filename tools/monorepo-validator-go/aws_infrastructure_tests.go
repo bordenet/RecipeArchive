@@ -138,7 +138,7 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 
 							// Attempt automatic token refresh
 							if err := EnsureValidToken(projectRoot); err != nil {
-								fmt.Println("    ❌ Token refresh failed: %v", err)
+								fmt.Printf("    ❌ Token refresh failed: %v\n", err)
 								fmt.Print("    💡 Please manually refresh token or check TEST_USER_EMAIL/TEST_USER_PASSWORD")
 								validToken = false
 							} else {
@@ -157,7 +157,7 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 
 		// Attempt to generate a new token if none exists
 		if err := EnsureValidToken(projectRoot); err != nil {
-			fmt.Println("    ❌ Token generation failed: %v", err)
+			fmt.Printf("    ❌ Token generation failed: %v\n", err)
 			fmt.Print("    💡 To test all endpoints: Ensure TEST_USER_EMAIL and TEST_USER_PASSWORD are set in .env file")
 			validToken = false
 		} else {
@@ -177,10 +177,11 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 		// Create request with appropriate body for POST requests
 		if endpoint.method == "POST" {
 			var body string
-			if endpoint.path == "/report-error" {
+			switch endpoint.path {
+			case "/report-error":
 				// Test payload for diagnostics endpoint
 				body = `{"errors":[{"url":"test","userAgent":"validator","errorType":"test","error":"validation test","timestamp":"` + time.Now().UTC().Format(time.RFC3339) + `","extension":"test","context":"validation"}]}`
-			} else if endpoint.path == "/analytics/events" {
+			case "/analytics/events":
 				// Test payload for analytics endpoint - matches BatchAnalyticsRequest structure
 				body = `{"events":[{"eventType":"test","timestamp":"` + time.Now().UTC().Format(time.RFC3339) + `","deviceType":"validator"}]}`
 			}
@@ -193,7 +194,7 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 		}
 
 		if err != nil {
-			fmt.Println("    ❌ %s: Failed to create request - %v", endpoint.description, err)
+			fmt.Printf("    ❌ %s: Failed to create request - %v\n", endpoint.description, err)
 			if endpoint.critical {
 				criticalHealthy = false
 			}
@@ -223,13 +224,13 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Println("    ❌ %s: Request failed - %v", endpoint.description, err)
+			fmt.Printf("    ❌ %s: Request failed - %v\n", endpoint.description, err)
 			if endpoint.critical {
 				criticalHealthy = false
 			}
 			continue
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Check status codes with different expectations for critical vs non-critical
 		if endpoint.critical {
@@ -252,7 +253,7 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 			if isHealthy {
 				fmt.Printf("\n    ✅ %s: HTTP %d", endpoint.description, resp.StatusCode)
 			} else {
-				fmt.Println("    ❌ %s: HTTP %d (critical endpoint failed)", endpoint.description, resp.StatusCode)
+				fmt.Printf("    ❌ %s: HTTP %d (critical endpoint failed)\n", endpoint.description, resp.StatusCode)
 				criticalHealthy = false
 			}
 		} else {

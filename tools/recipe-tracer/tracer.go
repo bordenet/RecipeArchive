@@ -150,7 +150,7 @@ func (t *RecipeTracer) traceS3Events(ctx context.Context, recipeID string) (*Rec
 				QualityScore:       qualityScore,
 			}
 		}
-		getOutput.Body.Close()
+		_ = getOutput.Body.Close()
 	}
 
 	return currentData, events, nil
