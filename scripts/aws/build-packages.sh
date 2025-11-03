@@ -10,15 +10,15 @@
 #   - Ready for CDK deployment via deploy-aws-infrastructure.sh
 #
 # USAGE:
-#   ./scripts/build-lambda-packages.sh              # Build all packages
-#   ./scripts/build-lambda-packages.sh analytics    # Build specific package
-#   ./scripts/build-lambda-packages.sh --clean      # Clean all packages
-#   ./scripts/build-lambda-packages.sh --list       # List available functions
+#   ./scripts/aws/build-packages.sh              # Build all packages
+#   ./scripts/aws/build-packages.sh analytics    # Build specific package
+#   ./scripts/aws/build-packages.sh --clean      # Clean all packages
+#   ./scripts/aws/build-packages.sh --list       # List available functions
 #
 # EXAMPLES:
-#   ./scripts/build-lambda-packages.sh
-#   ./scripts/build-lambda-packages.sh recipes
-#   ./scripts/build-lambda-packages.sh --clean
+#   ./scripts/aws/build-packages.sh
+#   ./scripts/aws/build-packages.sh recipes
+#   ./scripts/aws/build-packages.sh --clean
 #
 # DEPENDENCIES:
 #   - Go 1.19+
@@ -190,11 +190,11 @@ print_usage() {
     echo "🚀 RecipeArchive Lambda Package Builder"
     echo ""
     echo "Usage:"
-    echo "  ./scripts/build-lambda-packages.sh                # Build all packages"
-    echo "  ./scripts/build-lambda-packages.sh <function>     # Build specific package"
-    echo "  ./scripts/build-lambda-packages.sh --clean        # Clean all packages"
-    echo "  ./scripts/build-lambda-packages.sh --list         # List available functions"
-    echo "  ./scripts/build-lambda-packages.sh --help         # Show this help"
+    echo "  ./scripts/aws/build-packages.sh                # Build all packages"
+    echo "  ./scripts/aws/build-packages.sh <function>     # Build specific package"
+    echo "  ./scripts/aws/build-packages.sh --clean        # Clean all packages"
+    echo "  ./scripts/aws/build-packages.sh --list         # List available functions"
+    echo "  ./scripts/aws/build-packages.sh --help         # Show this help"
     echo ""
     echo "Available functions:"
     for func in $(get_available_functions);

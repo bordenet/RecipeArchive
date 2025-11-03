@@ -38,8 +38,8 @@ All scripts should use:
 
 #### Phase 2: Setup & Infrastructure (High Impact)
 - [ ] `scripts/setup-macos.sh` (1395 lines) - Should be split into modules first
-- [ ] `scripts/aws-deploy-lambda.sh` (460 lines)
-- [ ] `scripts/aws-deploy-all.sh` (539 lines)
+- [ ] `scripts/aws/lambda.sh` (460 lines)
+- [ ] `scripts/aws/all.sh` (539 lines)
 - [ ] `scripts/manage-api-routes.sh` (541 lines)
 
 #### Phase 3: Mobile Development
@@ -49,7 +49,7 @@ All scripts should use:
 - [ ] `scripts/android/emulator.sh`
 
 #### Phase 4: Utilities & Testing
-- [ ] `scripts/extension-helper.sh`
+- [ ] `scripts/extensions/helper.sh`
 - [ ] `scripts/end-to-end-recipe-test.sh`
 - [ ] `scripts/validate-safari-auth.sh`
 - [ ] All remaining scripts

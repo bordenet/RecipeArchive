@@ -21,12 +21,16 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 
 ### Deployment & Infrastructure (`.sh`)
 
-- **`build-lambda-packages.sh`**: Build all Lambda function packages for AWS CDK deployment
+#### AWS Deployment Scripts (`aws/`)
+- **`build-packages.sh`**: Build all Lambda function packages for AWS CDK deployment
+- **`all.sh`**: Deploy web app and all Lambda functions
+- **`lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
+- **`multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality
+- **`admin-endpoints.sh`**: Deploys admin endpoints for invitations and analytics
+- **`secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers
+
+#### Web Deployment
 - **`deploy-aws-infrastructure.sh`**: Guides you through the complete AWS setup process, including checking prerequisites, configuring credentials, creating the environment file, and deploying the CDK infrastructure.
-- **`aws-deploy-all.sh`**: Deploy web app and all Lambda functions
-- **`aws-deploy-lambda.sh`**: Deploy Go Lambda functions to AWS with automatic discovery and builds
-- **`aws-deploy-multi-tenant.sh`**: Deploys all components needed for multi-tenant functionality.
-- **`aws-deploy-secure-infrastructure.sh`**: Deploys the secure infrastructure with randomized identifiers.
 - **`web/deploy.sh`**: Builds and deploys the Flutter web app to CloudFront via S3.
 - **`manage-api-routes.sh`**: Provides a centralized, automated, and repeatable way to manage API Gateway routes for the RecipeArchive project.
 - **`extensions/package.sh`**: Creates distribution packages for both Chrome and Safari extensions with semantic versioning.
@@ -43,6 +47,7 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 - **`help.sh`**: Complete iOS development guide and troubleshooting
 - **`clean.sh`**: iOS environment cleanup and reset functionality
 - **`run.sh`**: Legacy run script for iOS simulator
+- **`generate-icons.sh`**: Generate iOS AppIcon.appiconset from 1024x1024 PNG
 
 #### Android Development Scripts (`android/`)
 - **`setup.sh`**: Complete Android development environment setup with SDK validation
@@ -62,17 +67,17 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 
 #### Extension Scripts (`extensions/`)
 - **`package.sh`**: Package Chrome and Safari extensions for distribution
+- **`helper.sh`**: Streamline testing and reloading for Chrome and Safari extensions
+- **`update-versions.sh`**: Update version numbers for Chrome and Safari extensions
 
 ### Development & Maintenance (`.sh`)
 
 - **`capture-wapost-cookies.sh`**: Makes it easy to capture authentication cookies for Washington Post recipe parsing.
-- **`extension-helper.sh`**: Streamlines testing and reloading for Chrome and Safari extensions.
 - **`install-dependencies.sh`**: Ensures all dependencies are properly installed across the monorepo.
 - **`load-env.sh`**: Loads environment variables from the .env file in the root of the repository.
 - **`normalize-existing-recipes.sh`**: Retroactively normalizes existing recipes with enhanced search metadata by sending them through the background normalization pipeline.
 - **`recover-failed-recipes.sh`**: Recovers failed recipe normalizations from the DLQ.
 - **`setup-macos.sh`**: Installs comprehensive development dependencies for the RecipeArchive project on macOS.
-- **`update-extension-versions.sh`**: Updates the version of the Chrome and Safari extensions.
 - **`validate-safari-auth.sh`**: Provides comprehensive testing and validation of the enhanced authentication system for the Safari extension.
 
 ### Testing & Validation (`.sh`)

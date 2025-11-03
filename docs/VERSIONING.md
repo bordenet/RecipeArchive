@@ -21,13 +21,13 @@ Use the automated script to update versions:
 
 ```bash
 # Increment patch version (default)
-./scripts/update-extension-versions.sh patch
+./scripts/extensions/update-versions.sh patch
 
 # Increment minor version (new features)
-./scripts/update-extension-versions.sh minor
+./scripts/extensions/update-versions.sh minor
 
 # Increment major version (breaking changes)
-./scripts/update-extension-versions.sh major
+./scripts/extensions/update-versions.sh major
 ```
 
 ### Release Process

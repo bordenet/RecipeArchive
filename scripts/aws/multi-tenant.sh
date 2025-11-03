@@ -10,11 +10,11 @@
 #   - Health checks and verification
 #
 # USAGE:
-#   ./scripts/aws-deploy-multi-tenant.sh [dev|prod]
+#   ./scripts/aws/multi-tenant.sh [dev|prod]
 #
 # EXAMPLES:
-#   ./scripts/aws-deploy-multi-tenant.sh dev
-#   ./scripts/aws-deploy-multi-tenant.sh prod
+#   ./scripts/aws/multi-tenant.sh dev
+#   ./scripts/aws/multi-tenant.sh prod
 #
 # DEPENDENCIES:
 #   - AWS CLI
@@ -92,11 +92,11 @@ log_section "Step 2: Building Lambda Functions"
 
 cd "$REPO_ROOT" || die "Failed to change to repository root"
 
-if ! "$SCRIPT_DIR/build-lambda-packages.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
+if ! "$SCRIPT_DIR/build-packages.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
     die "Failed to build invitation-manager-s3. See /tmp/deploy-multi-tenant.log"
 fi
 
-if ! "$SCRIPT_DIR/build-lambda-packages.sh" registration-handler > /tmp/deploy-multi-tenant.log 2>&1; then
+if ! "$SCRIPT_DIR/build-packages.sh" registration-handler > /tmp/deploy-multi-tenant.log 2>&1; then
     die "Failed to build registration-handler. See /tmp/deploy-multi-tenant.log"
 fi
 
@@ -105,11 +105,11 @@ log_success "Lambda functions built"
 # Step 3: Deploy Lambda Functions
 log_section "Step 3: Deploying Lambda Functions"
 
-if ! "$SCRIPT_DIR/aws-deploy-lambda.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
+if ! "$SCRIPT_DIR/lambda.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
     die "Failed to deploy invitation-manager-s3. See /tmp/deploy-multi-tenant.log"
 fi
 
-if ! "$SCRIPT_DIR/aws-deploy-lambda.sh" registration-handler > /tmp/deploy-multi-tenant.log 2>&1; then
+if ! "$SCRIPT_DIR/lambda.sh" registration-handler > /tmp/deploy-multi-tenant.log 2>&1; then
     die "Failed to deploy registration-handler. See /tmp/deploy-multi-tenant.log"
 fi
 

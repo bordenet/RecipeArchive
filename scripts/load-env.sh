@@ -20,9 +20,11 @@
 #   - Fails with clear error if .env not found
 ################################################################################
 
-# Source common library
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+# Source common library (only if not already loaded)
+if [[ -z "${COLOR_RED}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    source "$SCRIPT_DIR/lib/common.sh"
+fi
 
 # Don't call init_script - this file is sourced, not executed
 # init_script would interfere with the parent shell

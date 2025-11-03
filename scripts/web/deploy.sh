@@ -80,16 +80,9 @@ else
     log_success "S3 bucket exists"
 fi
 
-
-    echo "✅ S3 bucket created and configured"
-else
-    echo "✅ S3 bucket already exists"
-fi
-echo ""
-
 # Build Flutter web app
 echo "📦 Building Flutter web app for production..."
-cd "$REPO_ROOT/$APP_DIR"
+cd "$APP_DIR"
 
 # Use compatibility flags to avoid build issues
 echo "🔧 Building with compatibility flags..."
@@ -126,9 +119,9 @@ echo ""
 
 # Deploy to S3
 echo "☁️  Uploading to S3..."
-if ! aws s3 sync "$REPO_ROOT/$APP_DIR/build/web/" s3://$S3_BUCKET/ --delete > /tmp/deploy-web-app.log 2>&1; then
+if ! aws s3 sync "$APP_DIR/build/web/" s3://$S3_BUCKET/ --delete > /tmp/deploy-web-app.log 2>&1; then
     echo "⚠️  S3 upload encountered issues. Retrying with timeout adjustments..."
-    if ! aws s3 sync "$REPO_ROOT/$APP_DIR/build/web/" s3://$S3_BUCKET/ --delete \
+    if ! aws s3 sync "$APP_DIR/build/web/" s3://$S3_BUCKET/ --delete \
         --cli-read-timeout 0 --cli-connect-timeout 60 > /tmp/deploy-web-app.log 2>&1; then
         echo "❌ S3 upload failed. See /tmp/deploy-web-app.log for details."
         die "Deployment failed"

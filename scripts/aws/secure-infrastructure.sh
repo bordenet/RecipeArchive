@@ -10,10 +10,10 @@
 #   - Configures secure policies and permissions
 #
 # USAGE:
-#   ./scripts/aws-deploy-secure-infrastructure.sh
+#   ./scripts/aws/secure-infrastructure.sh
 #
 # EXAMPLES:
-#   ./scripts/aws-deploy-secure-infrastructure.sh
+#   ./scripts/aws/secure-infrastructure.sh
 #
 # DEPENDENCIES:
 #   - AWS CLI

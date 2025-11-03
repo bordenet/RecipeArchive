@@ -12,11 +12,11 @@
 #   - Verifies deployment
 #
 # USAGE:
-#   ./scripts/aws-deploy-all.sh [environment]
+#   ./scripts/aws/all.sh [environment]
 #
 # EXAMPLES:
-#   ./scripts/aws-deploy-all.sh dev
-#   ./scripts/aws-deploy-all.sh prod
+#   ./scripts/aws/all.sh dev
+#   ./scripts/aws/all.sh prod
 #
 # DEPENDENCIES:
 #   - AWS CLI
@@ -520,7 +520,7 @@ main() {
     if $DEPLOY_BACKEND;
     then
         log_header "Deploying Admin Endpoints"
-        if ./scripts/aws-deploy-admin-endpoints.sh; then
+        if "$SCRIPT_DIR/admin-endpoints.sh"; then
             log_success "✅ Admin endpoints deployed successfully"
         else
             log_warning "⚠️ Admin endpoints deployment failed. Check logs for details."

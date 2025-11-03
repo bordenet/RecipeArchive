@@ -70,7 +70,7 @@ All defined in `aws-backend/infrastructure/lib/recipe-archive-stack.ts`:
 ```bash
 # 1. Make changes to Lambda functions
 cd aws-backend/functions
-./scripts/build-lambda-packages.sh
+./scripts/aws/build-packages.sh
 
 # 2. Update infrastructure
 cd ../infrastructure
