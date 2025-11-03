@@ -1,4 +1,4 @@
-# RecipeArchive v1.0.0
+# RecipeArchive v1.3.0
 
 **Production-ready recipe management system for personal use**
 
