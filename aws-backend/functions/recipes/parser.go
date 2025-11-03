@@ -565,7 +565,9 @@ func parseServings(text string) int {
 	match := re.FindString(text)
 	if match != "" {
 		var servings int
-		fmt.Sscanf(match, "%d", &servings)
+		if _, err := fmt.Sscanf(match, "%d", &servings); err != nil {
+			servings = 0
+		}
 		return servings
 	}
 	return 0
