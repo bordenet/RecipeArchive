@@ -18,7 +18,11 @@
       "Bash(for func in analytics-aggregator backup invitation-manager-s3 recipes)",
       "Bash(do echo \"=== Tidying $func ===\")",
       "Bash(for dir in /Users/matt/GitHub/RecipeArchive/aws-backend/functions/analytics-aggregator /Users/matt/GitHub/RecipeArchive/aws-backend/functions/backup /Users/matt/GitHub/RecipeArchive/aws-backend/functions/invitation-manager-s3 /Users/matt/GitHub/RecipeArchive/aws-backend/functions/recipes)",
-      "Bash(./validate-monorepo.sh:*)"
+      "Bash(./validate-monorepo.sh:*)",
+      "Bash(golangci-lint run:*)",
+      "Bash(for func in analytics-aggregator background-normalizer backup content-normalizer db diagnostics-mobile-share invitation-manager-s3 local-server recipes s3-manager test-tools)",
+      "Bash(do echo \"=== $func ===\")",
+      "Bash(/dev/null)"
     ],
     "deny": [],
     "ask": []
