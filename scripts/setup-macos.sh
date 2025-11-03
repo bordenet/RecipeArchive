@@ -40,6 +40,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 init_script
 
+# Map color variables for summary
+readonly GREEN="${COLOR_GREEN}"
+readonly YELLOW="${COLOR_YELLOW}"
+readonly BLUE="${COLOR_BLUE}"
+readonly NC="${COLOR_RESET}"
+
 readonly REPO_ROOT="$(get_repo_root)"
 
 log_header "macOS Development Environment Setup"
