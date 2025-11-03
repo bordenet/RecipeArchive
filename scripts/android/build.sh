@@ -255,9 +255,9 @@ print_success "Environment validated"
 cd "$FLUTTER_DIR" || error_exit "Cannot access $FLUTTER_DIR"
 
 # Ensure .env file is copied from root (Flutter doesn't follow symlinks in assets)
-if [ -f "$PROJECT_ROOT/.env" ]; then
+if [ -f "$REPO_ROOT/.env" ]; then
     print_status "Syncing .env file from repository root..."
-    cp "$PROJECT_ROOT/.env" .env
+    cp "$REPO_ROOT/.env" .env
     print_success ".env file synced"
 fi
 
