@@ -9,15 +9,6 @@ export class Food52Parser extends BaseParser {
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
-    // Detect Food52 404 page and throw error, but skip for local fixture files
-    const isLocalFixture =
-      url.endsWith('.html') || url.startsWith('tests/fixtures/html-samples/');
-    if (
-      !isLocalFixture &&
-      html.includes('Apologies, that page cannot be found.')
-    ) {
-      throw new Error(`[Food52] 404 page detected for URL: ${url}`);
-    }
     const jsonLd = this.extractJsonLD(html);
     let recipe: Recipe;
     if (jsonLd) {

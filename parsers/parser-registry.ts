@@ -20,23 +20,8 @@ export class ParserRegistry {
   private parsers: BaseParser[] = [];
 
   constructor() {
-    // Register all parsers
-    this.parsers.push(
-      new SmittenKitchenParser(),
-      new FoodNetworkParser(),
-      new NYTCookingParser(),
-      new AllRecipesParser(),
-      new LoveAndLemonsParser(),
-      new Food52Parser(),
-      new EpicuriousParser(),
-      new WashingtonPostParser(),
-      new FoodAndWineParser(),
-      new DamnDeliciousParser(),
-      new SeriousEatsParser(),
-      new AlexandrasKitchenParser(),
-      new LemonsAndZestParser(),
-      new AnthonyKitchenParser()
-    );
+    // Parsers are registered via registerParser() method
+    // This allows the bundle build script to control which parsers are included
   }
 
   static getInstance(): ParserRegistry {

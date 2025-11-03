@@ -116,7 +116,7 @@ fi
 
 # Package extensions with semantic versioning and upload to S3
 echo "📋 Packaging extensions with semantic versioning..."
-if ! ./scripts/package-extensions.sh > /tmp/deploy-web-app.log 2>&1; then
+if ! ./scripts/extensions/package.sh > /tmp/deploy-web-app.log 2>&1; then
     echo "❌ Extension packaging failed. See /tmp/deploy-web-app.log for details."
     die "Deployment failed"
 fi
