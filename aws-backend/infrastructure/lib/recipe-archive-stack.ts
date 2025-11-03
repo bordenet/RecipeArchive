@@ -257,7 +257,6 @@ export class RecipeArchiveStack extends cdk.Stack {
               ],
               resources: ['*'], // Will be restricted to specific queue in production
             }),
-            // DynamoDB permissions removed - invitation system now uses S3 JSON storage
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: ['ses:SendEmail', 'ses:SendRawEmail'],
@@ -371,9 +370,8 @@ export class RecipeArchiveStack extends cdk.Stack {
 
 
 
-    // S3-Based Invitation System (Cost Optimized - no DynamoDB needed)
-    // Invitations now stored as JSON files in existing S3 bucket
-    // Cost savings: ~70-90% reduction from DynamoDB approach
+    // S3-Based Invitation System
+    // Invitations stored as JSON files in existing S3 bucket
 
 
 
@@ -801,9 +799,6 @@ export class RecipeArchiveStack extends cdk.Stack {
       value: props.adminEmail,
       description: 'Admin Email for Billing Alerts and Initial User Creation',
     });
-
-    // DynamoDB outputs removed - invitation system now uses S3 JSON storage
-    // Cost savings: ~$4.50-13.50/month for low-volume usage
 
     // Initialize background normalizer to ensure SQS event source is created
     this.getBackgroundNormalizerFunction();

@@ -102,3 +102,65 @@ func runIOSValidation(projectRoot string) bool {
 	fmt.Printf("  Note: Skipping simulator deployment (use --run flag manually for deployment)\n")
 	return true
 }
+
+// runAndroidValidation performs Android build validation
+func runAndroidValidation(projectRoot string) bool {
+	fmt.Println("\n=== ANDROID BUILD & LINT VALIDATION ===")
+
+	// Check for Android build script
+	androidBuildScript := filepath.Join(projectRoot, "scripts/android/build.sh")
+	if _, err := os.Stat(androidBuildScript); os.IsNotExist(err) {
+		fmt.Printf("  Android build script: ✗ (not found at %s)\n", androidBuildScript)
+		return false
+	}
+
+	// Run Android build validation (dev debug build)
+	fmt.Printf("  Running Android debug build...\n")
+	output, err := runCommand(
+		projectRoot,
+		androidBuildScript,
+		"--dev",
+		"--emulator",
+		"--debug",
+	)
+
+	if err != nil {
+		fmt.Printf("  Android debug build: ✗\n")
+		fmt.Printf("  Error: %v\n", err)
+		if output != "" {
+			fmt.Printf("  Output: %s\n", output)
+		}
+		return false
+	}
+
+	fmt.Printf("  Android debug build: ✓\n")
+	return true
+}
+
+// runWebValidation performs Flutter web build validation
+func runWebValidation(projectRoot string) bool {
+	fmt.Println("\n=== WEB BUILD VALIDATION ===")
+
+	recipeArchivePath := filepath.Join(projectRoot, "recipe_archive")
+
+	if !checkCommand("flutter") {
+		fmt.Printf("  Flutter: ✗ (not installed)\n")
+		return false
+	}
+
+	// Run flutter build web
+	fmt.Printf("  Running flutter build web...\n")
+	output, err := runCommand(recipeArchivePath, "flutter", "build", "web")
+
+	if err != nil {
+		fmt.Printf("  Flutter web build: ✗\n")
+		fmt.Printf("  Error: %v\n", err)
+		if output != "" {
+			fmt.Printf("  Output: %s\n", output)
+		}
+		return false
+	}
+
+	fmt.Printf("  Flutter web build: ✓\n")
+	return true
+}

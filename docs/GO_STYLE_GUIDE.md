@@ -130,37 +130,190 @@ Use structured logging with context:
 log.Printf("ERROR: Failed to normalize recipe %s: %v", recipeID, err)
 ```
 
-## 5. Logging Standards
+## 5. Structured Logging
 
-### Logging Levels (via prefixes)
-- `ERROR:` - Critical failures, data loss, service disruption
-- `WARN:` - Recoverable issues, degraded functionality
-- `INFO:` - Normal operation milestones
-- `DEBUG:` - Detailed diagnostic information (dev only)
-
-### Structured Logging
-Include relevant context in every log message:
+### Use log/slog for Structured Logging
+For all new Go code, use the standard `log/slog` package (Go 1.21+) for structured logging. This provides better CloudWatch integration and easier log parsing.
 
 ```go
-// Good
-log.Printf("INFO: Processing recipe normalization [recipeID=%s, userID=%s, requestID=%s]",
-	recipeID, userID, requestID)
+import (
+	"context"
+	"log/slog"
+	"os"
+)
 
-// Bad
-log.Println("Processing recipe")
+var logger *slog.Logger
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	// Text handler for CLI tools (human-readable)
+	// logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
+}
+```
+
+### Logging Levels
+- `Debug()` - Detailed diagnostic information (development/troubleshooting only)
+- `Info()` - Normal operation milestones, request tracking
+- `Warn()` - Recoverable issues, degraded functionality
+- `Error()` - Critical failures, data loss, service disruption
+
+```go
+// Good - structured fields
+logger.Info("recipe normalized",
+	"recipeID", recipeID,
+	"userID", userID,
+	"duration", duration,
+)
+
+// Good - error context
+logger.Error("failed to normalize recipe",
+	"recipeID", recipeID,
+	"error", err,
+)
+
+// Bad - unstructured string formatting
+log.Printf("INFO: Recipe %s normalized by user %s", recipeID, userID)
+```
+
+### Context Propagation
+Pass logger through context for request-scoped logging:
+
+```go
+type contextKey string
+
+const loggerKey contextKey = "logger"
+
+// Add logger with request context
+func withLogger(ctx context.Context, logger *slog.Logger) context.Context {
+	return context.WithValue(ctx, loggerKey, logger)
+}
+
+// Get logger from context
+func getLogger(ctx context.Context) *slog.Logger {
+	if logger, ok := ctx.Value(loggerKey).(*slog.Logger); ok {
+		return logger
+	}
+	return slog.Default()
+}
+
+// Lambda handler pattern
+func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) error {
+	requestLogger := logger.With(
+		"requestID", event.RequestContext.RequestID,
+		"userID", event.RequestContext.Authorizer["userId"],
+	)
+	ctx = withLogger(ctx, requestLogger)
+
+	// All subsequent logs include requestID and userID
+	getLogger(ctx).Info("processing request", "path", event.Path)
+	return processRequest(ctx, event)
+}
+```
+
+### Structured Fields vs String Formatting
+Always use structured fields instead of string interpolation:
+
+```go
+// Good - structured fields for filtering/aggregation
+logger.Info("recipe created",
+	"recipeID", recipeID,
+	"source", source,
+	"ingredientCount", len(ingredients),
+)
+
+// Bad - string formatting makes filtering difficult
+logger.Info(fmt.Sprintf("Recipe %s created from %s with %d ingredients",
+	recipeID, source, len(ingredients)))
+
+// Good - error wrapping with structured context
+if err != nil {
+	logger.Error("database query failed",
+		"query", "GetRecipe",
+		"recipeID", recipeID,
+		"error", err,
+	)
+	return fmt.Errorf("failed to fetch recipe %s: %w", recipeID, err)
+}
+
+// Bad - loses error type information
+if err != nil {
+	logger.Error(fmt.Sprintf("Database error: %v", err))
+}
+```
+
+### Performance Considerations
+Structured logging has minimal overhead, but follow these guidelines:
+
+```go
+// Good - log at appropriate level
+if logger.Enabled(ctx, slog.LevelDebug) {
+	logger.Debug("detailed state", "data", expensiveOperation())
+}
+
+// Bad - always evaluates expensive operation
+logger.Debug("detailed state", "data", expensiveOperation())
+
+// Good - reuse logger with common fields
+recipeLogger := logger.With("recipeID", recipeID, "userID", userID)
+recipeLogger.Info("starting normalization")
+recipeLogger.Info("parsing ingredients")
+recipeLogger.Info("normalization complete")
+
+// Bad - repeat fields in every log
+logger.Info("starting", "recipeID", recipeID, "userID", userID)
+logger.Info("parsing", "recipeID", recipeID, "userID", userID)
+logger.Info("complete", "recipeID", recipeID, "userID", userID)
+```
+
+### CloudWatch Logs Integration
+Use JSON handler for Lambda functions to enable CloudWatch Logs Insights queries:
+
+```go
+// Lambda function initialization
+func init() {
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
+
+// Enables CloudWatch Logs Insights queries like:
+// fields @timestamp, recipeID, userID, duration
+// | filter recipeID = "abc123"
+// | sort @timestamp desc
 ```
 
 ### Emoji Usage (Console Tools Only)
-Lambda functions: NO emojis (CloudWatch log aggregation)
-CLI tools: Emojis OK for user-facing output
+Lambda functions: NO emojis (breaks JSON parsing, CloudWatch aggregation)
+CLI tools: Emojis OK for user-facing output (stdout), not structured logs
 
 ```go
-// Lambda function - NO emojis
-log.Printf("INFO: Recipe normalized successfully [recipeID=%s]", recipeID)
+// Lambda function - NO emojis, JSON structured logs
+logger.Info("recipe normalized", "recipeID", recipeID)
 
-// CLI tool - emojis OK
+// CLI tool - emojis for user output, structured logs for debugging
 fmt.Printf("✅ Recipe normalized successfully: %s\n", recipeID)
+logger.Info("recipe normalized", "recipeID", recipeID)
 ```
+
+### Legacy log Package
+For existing code using the `log` package, maintain consistency:
+
+```go
+// Prefix-based levels for legacy code
+log.Printf("ERROR: Failed to normalize recipe %s: %v", recipeID, err)
+log.Printf("WARN: Retrying recipe normalization [recipeID=%s, attempt=%d]", recipeID, attempt)
+log.Printf("INFO: Recipe normalized [recipeID=%s, duration=%s]", recipeID, duration)
+
+// Include structured context in brackets
+log.Printf("INFO: Processing batch [batchID=%s, size=%d, userID=%s]", batchID, size, userID)
+```
+
+**Migration Strategy**: Convert legacy logging to `log/slog` during refactoring, not as standalone changes.
 
 ## 6. Context Handling
 

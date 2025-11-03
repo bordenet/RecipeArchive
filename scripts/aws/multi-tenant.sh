@@ -71,24 +71,11 @@ fi
 log_success "Prerequisites validated"
 echo ""
 
-# Step 1: Deploy DynamoDB Tables
-log_section "Step 1: Deploying DynamoDB Tables"
+# DynamoDB removed - now using S3-based invitation system for cost optimization
+# Multi-tenant invitations stored as JSON files in S3 bucket
 
-readonly TEMPLATE_FILE="$REPO_ROOT/aws-backend/infrastructure/dynamodb-tables.yaml"
-require_file "$TEMPLATE_FILE" "CloudFormation template not found"
-
-if ! aws cloudformation deploy \
-    --template-file "$TEMPLATE_FILE" \
-    --stack-name "${STACK_PREFIX}-tables" \
-    --parameter-overrides Environment="$ENVIRONMENT" \
-    --region "$AWS_REGION" \
-    --capabilities CAPABILITY_IAM > /tmp/deploy-multi-tenant.log 2>&1; then
-    die "Failed to deploy DynamoDB tables. See /tmp/deploy-multi-tenant.log for details."
-fi
-log_success "DynamoDB tables deployed"
-
-# Step 2: Build Lambda Functions
-log_section "Step 2: Building Lambda Functions"
+# Step 1: Build Lambda Functions
+log_section "Step 1: Building Lambda Functions"
 
 cd "$REPO_ROOT" || die "Failed to change to repository root"
 
@@ -102,8 +89,8 @@ fi
 
 log_success "Lambda functions built"
 
-# Step 3: Deploy Lambda Functions
-log_section "Step 3: Deploying Lambda Functions"
+# Step 2: Deploy Lambda Functions
+log_section "Step 2: Deploying Lambda Functions"
 
 if ! "$SCRIPT_DIR/lambda.sh" invitation-manager-s3 > /tmp/deploy-multi-tenant.log 2>&1; then
     die "Failed to deploy invitation-manager-s3. See /tmp/deploy-multi-tenant.log"
@@ -115,8 +102,8 @@ fi
 
 log_success "Lambda functions deployed"
 
-# Step 4: Configure API Gateway Routes
-log_section "Step 4: Configuring API Gateway Routes"
+# Step 3: Configure API Gateway Routes
+log_section "Step 3: Configuring API Gateway Routes"
 
 if ! "$SCRIPT_DIR/manage-api-routes.sh" add-analytics > /tmp/deploy-multi-tenant.log 2>&1; then
     die "Failed to configure API Gateway routes. See /tmp/deploy-multi-tenant.log"
