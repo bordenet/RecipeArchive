@@ -62,7 +62,9 @@ func TestMobileShareFailureHandler(t *testing.T) {
 		},
 	}
 
-	os.Setenv("DIAGNOSTICS_BUCKET", "test-bucket")
+	if err := os.Setenv("DIAGNOSTICS_BUCKET", "test-bucket"); err != nil {
+		t.Fatalf("Failed to set DIAGNOSTICS_BUCKET: %v", err)
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -90,7 +92,9 @@ func TestMobileShareFailureHandler(t *testing.T) {
 
 func TestS3DiagnosticStorage(t *testing.T) {
 	bucketName := "test-bucket"
-	os.Setenv("DIAGNOSTICS_BUCKET", bucketName)
+	if err := os.Setenv("DIAGNOSTICS_BUCKET", bucketName); err != nil {
+		t.Fatalf("Failed to set DIAGNOSTICS_BUCKET: %v", err)
+	}
 
 	payload := MobileShareFailure{
 		EventType: "mobile_share_failure",
