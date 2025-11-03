@@ -37,7 +37,13 @@
       "Bash(then echo \"$RECIPE_ADMIN_TOKEN\")",
       "Bash(else echo \"No token\")",
       "Bash(fi)",
-      "Bash(./run-invitation-tests.sh:*)"
+      "Bash(./run-invitation-tests.sh:*)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(.husky/check-binaries:*)",
+      "Bash(EXIT_CODE=$?)",
+      "Bash(git reset:*)",
+      "Bash(exit $EXIT_CODE)"
     ],
     "deny": [],
     "ask": []
