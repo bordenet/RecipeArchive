@@ -222,9 +222,9 @@ if [ "$java_working" = false ]; then
 
   # Add to shell profile
   SHELL_PROFILE=""
-  if [ -n "$ZSH_VERSION" ]; then
+  if [ -n "${ZSH_VERSION:-}" ]; then
     SHELL_PROFILE="$HOME/.zshrc"
-  elif [ -n "$BASH_VERSION" ]; then
+  elif [ -n "${BASH_VERSION:-}" ]; then
     SHELL_PROFILE="$HOME/.bash_profile"
   fi
 
@@ -266,9 +266,9 @@ if ! command -v flutter &> /dev/null; then
     
     # Add to shell profile
     SHELL_PROFILE=""
-    if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "${ZSH_VERSION:-}" ]; then
       SHELL_PROFILE="$HOME/.zshrc"
-    elif [ -n "$BASH_VERSION" ]; then
+    elif [ -n "${BASH_VERSION:-}" ]; then
       SHELL_PROFILE="$HOME/.bash_profile"
     fi
     
