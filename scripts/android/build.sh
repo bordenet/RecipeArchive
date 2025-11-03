@@ -128,12 +128,12 @@ EOF
 
 # Initialize variables
 MODE=""
-BUILD_TYPE=""
-TARGET=""
-OUTPUT_TYPE="apk"
+CONFIG="debug"
+TARGET="emulator"
+FORMAT="apk"
 VERSION=""
-RUN_AFTER_BUILD=false
-CLEAN_BUILD=false
+RUN_AFTER=false
+CLEAN=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
