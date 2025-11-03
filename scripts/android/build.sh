@@ -214,13 +214,11 @@ fi
 
 # Auto-detect version if not provided
 if [ -z "$VERSION" ]; then
-    # Try git describe for semantic version
-    if git describe --tags --always --dirty 2>/dev/null | grep -q "^v"; then
-        VERSION=$(git describe --tags --always --dirty | sed 's/^v//')
-    else
-        # Fallback to pubspec.yaml version
-        VERSION=$(grep "^version:" "$FLUTTER_DIR/pubspec.yaml" 2>/dev/null | awk '{print $2}' | cut -d'+' -f1)
-        [ -z "$VERSION" ] && VERSION="1.0.0-dev"
+    # For dev mode, just use pubspec.yaml version (don't modify it)
+    # For prod mode, version is required and must be provided via --version flag
+    if [ "$MODE" = "dev" ]; then
+        VERSION=$(grep "^version:" "$FLUTTER_DIR/pubspec.yaml" 2>/dev/null | awk '{print $2}')
+        [ -z "$VERSION" ] && VERSION="1.0.0+1"
     fi
 fi
 
@@ -261,8 +259,8 @@ if [ -f "$REPO_ROOT/.env" ]; then
     print_success ".env file synced"
 fi
 
-# Set version if specified
-if [ -n "$VERSION" ]; then
+# Set version if specified (prod mode only)
+if [ -n "$VERSION" ] && [ "$MODE" = "prod" ]; then
     print_status "Setting version to $VERSION..."
 
     # Get current build number
