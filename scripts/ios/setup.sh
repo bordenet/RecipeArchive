@@ -262,16 +262,19 @@ case $TARGET_DEVICE in
         ;;
     iphone17max)
         print_status "Configuring for iPhone 17 Pro Max..."
-        DEVICE_UDID=$(xcrun simctl list devices | grep -E "iPhone 17.*Pro Max" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
-        if [ -z "$DEVICE_UDID" ]; then
-            print_warning "iPhone 17 Pro Max not found. Using iPhone 17 Pro as fallback."
-            DEVICE_UDID=$(xcrun simctl list devices | grep -E "iPhone 17.*Pro" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+        DEVICE_UDID=$(get_standard_ios_simulator)
+        if [[ -z "$DEVICE_UDID" ]]; then
+            print_error "iPhone 17 Pro Max simulator not found. Please create it in Xcode."
+            exit 1
         fi
         ;;
     auto)
-        print_status "Auto-detecting best available device..."
-        # Priority: iPhone 17 Pro Max > iPhone 17 > iPhone 15 Pro > iPhone 15
-        DEVICE_UDID=$(xcrun simctl list devices | grep -E "iPhone (17.*Pro Max|17.*Pro|17[^M]*[^a]$|15.*Pro|15[^M]*[^a]$)" | head -1 | grep -o '([A-Z0-9\-]*)'| tr -d '()')
+        print_status "Using standard iPhone 17 Pro Max simulator..."
+        DEVICE_UDID=$(get_standard_ios_simulator)
+        if [[ -z "$DEVICE_UDID" ]]; then
+            print_error "iPhone 17 Pro Max simulator not found. Please create it in Xcode."
+            exit 1
+        fi
         ;;
 esac
 

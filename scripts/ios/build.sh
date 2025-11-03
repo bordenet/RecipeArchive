@@ -339,8 +339,8 @@ if [ "$MODE" = "dev" ]; then
             # Auto-run if requested
             if [ "$RUN_AFTER" = true ] && [ "$TARGET" = "simulator" ]; then
                 print_status "Launching simulator..."
-                # Find any available iPhone simulator
-                SIMULATOR_ID=$(xcrun simctl list devices available | grep -m 1 "iPhone" | grep -o '([A-F0-9\-]*)' | tr -d '()')
+                # Use standard iPhone 17 Pro Max simulator
+                SIMULATOR_ID=$(get_standard_ios_simulator)
 
                 if [ -n "$SIMULATOR_ID" ]; then
                     xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || true
@@ -348,9 +348,9 @@ if [ "$MODE" = "dev" ]; then
                     xcrun simctl install "$SIMULATOR_ID" "$APP_PATH"
                     BUNDLE_ID=$(plutil -extract CFBundleIdentifier raw "$APP_PATH/Info.plist")
                     xcrun simctl launch "$SIMULATOR_ID" "$BUNDLE_ID"
-                    print_success "App launched on simulator"
+                    print_success "App launched on iPhone 17 Pro Max simulator"
                 else
-                    print_error "No simulator found"
+                    print_error "iPhone 17 Pro Max simulator not found"
                 fi
             fi
         else
