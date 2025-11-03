@@ -37,8 +37,11 @@ func printUsage() {
 │ -infra           │ 2-3min   │ ☁️  AWS Infrastructure: Multi-tenant + S3 + diagnostics │
 │                  │          │    Best for: Infrastructure validation, AWS connectivity│
 ├──────────────────┼──────────┼─────────────────────────────────────────────────────────┤
-│ -mobile          │ 1-2min   │ 📱 Mobile App: Flutter setup + platform prerequisites  │
+│ -mobile          │ 3-5min   │ 📱 Mobile + Web: iOS/Android/Web builds + lint         │
 │                  │          │    Best for: Mobile development, app store preparation │
+├──────────────────┼──────────┼─────────────────────────────────────────────────────────┤
+│ -tools           │ 2-4min   │ 🔧 Go Tools: Build, test, lint, and run all Go tools  │
+│                  │          │    Best for: Tools development, CLI validation         │
 └──────────────────┴──────────┴─────────────────────────────────────────────────────────┘
 
 🔧 EXECUTION OPTIONS:
@@ -97,6 +100,7 @@ func main() {
 	p1Flag := flag.Bool("p1", false, "Run Phase 1 validations (prerequisites, dependencies, builds)")
 	medFlag := flag.Bool("med", false, "Run medium scope validations (p1 + tests + linting)")
 	mobileFlag := flag.Bool("mobile", false, "Run mobile app validations (Android/iOS build readiness)")
+	toolsFlag := flag.Bool("tools", false, "Run Go tools build, test, and execution validation")
 	sequentialFlag := flag.Bool("sequential", false, "Run validations sequentially (default is parallel)")
 	verboseFlag := flag.Bool("verbose", false, "Enable verbose output")
 
@@ -161,6 +165,8 @@ func main() {
 		validations = getMediumValidations()
 	} else if *mobileFlag {
 		validations = getMobileValidations()
+	} else if *toolsFlag {
+		validations = getToolsValidations()
 	} else if *allFlag {
 		validations = getAllValidations()
 	} else {
@@ -304,11 +310,21 @@ func getMediumValidations() []ValidationTask {
 func getMobileValidations() []ValidationTask {
 	return []ValidationTask{
 		{"Mobile App Validation", runMobileTests, false},
-		{"iOS Build & Deploy Validation", runIOSValidation, false},
+		{"iOS Build & Lint Validation", runIOSValidation, false},
+		{"Android Build & Lint Validation", runAndroidValidation, false},
+		{"Web Build Validation", runWebValidation, false},
 	}
 }
 
-// getAllValidations returns all validations including infrastructure and mobile
+// getToolsValidations returns Go tools build/test/run validations
+func getToolsValidations() []ValidationTask {
+	return []ValidationTask{
+		{"Go Tools Build, Test & Run", runGoToolsValidation, false},
+		{"Go Lint Validation", runGoLintValidation, false},
+	}
+}
+
+// getAllValidations returns all validations including infrastructure, mobile, web, and tools
 func getAllValidations() []ValidationTask {
 	validations := getMediumValidations()
 	validations = append(validations,
@@ -317,7 +333,11 @@ func getAllValidations() []ValidationTask {
 		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true},
 		ValidationTask{"Check Frontend Status", checkFrontendStatus, true},
 		ValidationTask{"Mobile App Validation", runMobileTests, true},
-		ValidationTask{"iOS Build & Deploy Validation", runIOSValidation, false}, // Sequential, takes time
+		ValidationTask{"iOS Build & Lint Validation", runIOSValidation, false},        // Sequential, takes time
+		ValidationTask{"Android Build & Lint Validation", runAndroidValidation, false}, // Sequential, takes time
+		ValidationTask{"Web Build Validation", runWebValidation, false},                // Sequential, takes time
+		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, false},      // Sequential, takes time
+		ValidationTask{"Go Lint Validation", runGoLintValidation, false},               // Sequential, takes time
 		ValidationTask{"AWS Infrastructure Tests", runAwsInfrastructureTests, true},
 		ValidationTask{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, true},
 		ValidationTask{"Validate Extension Downloads", validateExtensionDownloads, true},

@@ -6,7 +6,19 @@
       "Bash(xcrun simctl list:*)",
       "Bash(source:*)",
       "Bash(get_standard_ios_simulator)",
-      "Bash(xcrun simctl:*)"
+      "Bash(xcrun simctl:*)",
+      "Bash(go build:*)",
+      "Bash(cd:*)",
+      "Bash(./tools/monorepo-validator-go/monorepo-validator-go:*)",
+      "Bash(timeout 120 ./tools/monorepo-validator-go/monorepo-validator-go:*)",
+      "Bash(timeout 120 ./validate-monorepo.sh:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(for dir in /Users/matt/GitHub/RecipeArchive/aws-backend/functions/*/)",
+      "Bash(done)",
+      "Bash(for func in analytics-aggregator backup invitation-manager-s3 recipes)",
+      "Bash(do echo \"=== Tidying $func ===\")",
+      "Bash(for dir in /Users/matt/GitHub/RecipeArchive/aws-backend/functions/analytics-aggregator /Users/matt/GitHub/RecipeArchive/aws-backend/functions/backup /Users/matt/GitHub/RecipeArchive/aws-backend/functions/invitation-manager-s3 /Users/matt/GitHub/RecipeArchive/aws-backend/functions/recipes)",
+      "Bash(./validate-monorepo.sh:*)"
     ],
     "deny": [],
     "ask": []

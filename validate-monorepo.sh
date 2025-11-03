@@ -104,7 +104,7 @@ show_help() {
 
     # Call the Go tool's help (which has the nice table formatting)
     # But adjust the usage line to show the shell script name and flag format
-    "$VALIDATOR_BINARY" --help | sed "s|./monorepo-validator-go|$0|g; s| -p1| --p1|g; s| -med| --med|g; s| -all| --all|g; s| -infra| --infrastructure|g; s| -mobile| --mobile|g"
+    "$VALIDATOR_BINARY" --help | sed "s|./monorepo-validator-go|$0|g; s| -p1| --p1|g; s| -med| --med|g; s| -all| --all|g; s| -infra| --infrastructure|g; s| -mobile| --mobile|g; s| -tools| --tools|g"
 }
 
 # Check if test category should run in current tier
@@ -121,6 +121,7 @@ TEST_TIERS[med]="${TEST_TIERS[p1]} builds_extended quality_basic"
 TEST_TIERS[all]="${TEST_TIERS[med]} tests_comprehensive quality_extended extensions_full aws_infrastructure"
 TEST_TIERS[infrastructure]="prerequisites aws_infrastructure"
 TEST_TIERS[mobile]="mobile"
+TEST_TIERS[tools]="tools"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -143,6 +144,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --mobile)
       VALIDATION_TIER="mobile"
+      shift
+      ;;
+    --tools)
+      VALIDATION_TIER="tools"
       shift
       ;;
     --help|-h)
@@ -1110,13 +1115,8 @@ run_quality_gates() {
     print_step "Multi-tenant infrastructure validation"
     add_operation
     local mt_infrastructure_valid=1
-    
-    # Check DynamoDB table definitions
-    if [ ! -f "aws-backend/infrastructure/dynamodb-tables.yaml" ]; then
-        print_error
-        echo "    Missing DynamoDB table definitions"
-        mt_infrastructure_valid=0
-    fi
+
+    # DynamoDB removed - now using S3-based invitation system for cost optimization
     
     # Check Lambda function source
     if [ ! -f "aws-backend/functions/invitation-manager-s3/main.go" ] || [ ! -f "aws-backend/functions/registration-handler/main.go" ]; then
@@ -1498,6 +1498,9 @@ main() {
             ;;
         "mobile")
             GO_ARGS="--mobile"
+            ;;
+        "tools")
+            GO_ARGS="--tools"
             ;;
     esac
 
