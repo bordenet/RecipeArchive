@@ -21,7 +21,11 @@ func getRecipeFromS3(ctx context.Context, s3Client *s3.Client, bucketName, userI
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipe from S3: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() {
+		if closeErr := result.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close S3 response body: %v\n", closeErr)
+		}
+	}()
 
 	// First decode to a generic map to handle field name inconsistencies
 	var rawData map[string]interface{}

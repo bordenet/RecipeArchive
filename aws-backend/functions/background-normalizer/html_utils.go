@@ -158,11 +158,6 @@ func findListByClass(doc *html.Node, className string) []string {
 	return results
 }
 
-// findAllByClass finds all elements with specific class (helper function)
-func findAllByClass(doc *html.Node, className string) []string {
-	return findListByClass(doc, className)
-}
-
 // hasClass checks if node has specific CSS class
 func hasClass(n *html.Node, className string) bool {
 	for _, attr := range n.Attr {
