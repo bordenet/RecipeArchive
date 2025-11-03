@@ -5,12 +5,19 @@ bin/
 *.out
 *.log
 
-# Extracted recipe outputs  
+# Extracted recipe outputs
 extracted-*.json
 
 # Performance test artifacts
 performance-results/
 *.perf
 
-# Monorepo validator binary
+# Go tool binaries (should be built from source)
 monorepo-validator
+recipe-url-discovery/recipe-url-discovery
+s3-cleanup/s3-cleanup
+content-ops/content-ops
+recipe-tracer/recipe-tracer
+get-diagnostics/get-diagnostics
+monorepo-validator-go/monorepo-validator-go
+monorepo-validator-go/monorepo-validator

@@ -19,6 +19,9 @@ tree.txt
 *.dll
 *.bin
 
+# Root-level compiled binaries (should be built from source)
+/monorepo-validator
+
 # Other sites
 external-references/
 
