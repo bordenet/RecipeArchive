@@ -49,12 +49,20 @@ if ! is_macos; then
     die "This script is only for macOS"
 fi
 
+print_info() {
+    log_info "$1"
+}
+
+print_success() {
+    log_success "$1"
+}
+
 print_warning() {
-    log_warning "[WARNING]${NC} $1"
+    log_warning "$1"
 }
 
 print_error() {
-    log_error "[ERROR]${NC} $1"
+    log_error "$1"
 }
 
 # Function for timed confirmation (15 seconds default to 'N')

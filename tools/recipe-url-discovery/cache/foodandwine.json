@@ -1,0 +1,171 @@
+{
+  "URL": "https://www.foodandwine.com/recipes/fried-chicken-tomato-gravy",
+  "IsValid": true,
+  "QualityScore": 110,
+  "Recipe": {
+    "title": "Fried Chicken with Tomato Gravy",
+    "source": "https://www.foodandwine.com/recipes/fried-chicken-tomato-gravy",
+    "ingredients": [
+      {
+        "text": "1/2 cup kosher salt"
+      },
+      {
+        "text": "2 quarts cold water"
+      },
+      {
+        "text": "One 3 1/2-pound chicken, cut into 8 pieces"
+      },
+      {
+        "text": "3 cups buttermilk"
+      },
+      {
+        "text": "1 1/2 cups all-purpose flour"
+      },
+      {
+        "text": "1/4 cup cornstarch"
+      },
+      {
+        "text": "2 tablespoons potato starch (optional)"
+      },
+      {
+        "text": "Fine sea salt and freshly ground pepper"
+      },
+      {
+        "text": "ground black pepper"
+      },
+      {
+        "text": "1 pound lard or solid vegetable shortening, for frying"
+      },
+      {
+        "text": "1 stick (4 ounces) unsalted butter"
+      },
+      {
+        "text": "1/4 pound sliced bacon"
+      },
+      {
+        "text": "1 small onion, finely chopped (about 1/2 cup)"
+      },
+      {
+        "text": "1 garlic clove, minced"
+      },
+      {
+        "text": "4 cups drained canned diced tomatoes (from three 14-ounce cans)"
+      },
+      {
+        "text": "2 teaspoons dried thyme"
+      },
+      {
+        "text": "2 cups heavy cream"
+      },
+      {
+        "text": "1 1/2 cups milk"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "In a large bowl, dissolve the kosher salt in the cold water."
+      },
+      {
+        "stepNumber": 2,
+        "text": "Add the chicken; cover and refrigerate for 4 hours."
+      },
+      {
+        "stepNumber": 3,
+        "text": "Drain and rinse the chicken."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Put the chicken in a large bowl, add the buttermilk, and turn the pieces to coat."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Cover and refrigerate for 4 hours."
+      },
+      {
+        "stepNumber": 6,
+        "text": "In a large, sturdy plastic bag, combine the flour, cornstarch, potato starch, 1 1/2 teaspoons sea salt, and 1/2 teaspoon pepper and shake."
+      },
+      {
+        "stepNumber": 7,
+        "text": "Set aside 1/2 cup of the flour mixture for the gravy."
+      },
+      {
+        "stepNumber": 8,
+        "text": "Lift the chicken out of the buttermilk, wipe off any excess, and set the pieces on a wire rack; let dry for 5 minutes."
+      },
+      {
+        "stepNumber": 9,
+        "text": "Add the chicken, a few pieces at a time, to the flour mixture in the bag; shake to coat."
+      },
+      {
+        "stepNumber": 10,
+        "text": "Dry the rack."
+      },
+      {
+        "stepNumber": 11,
+        "text": "Shake off any excess flour and return the chicken to the rack."
+      },
+      {
+        "stepNumber": 12,
+        "text": "Meanwhile, in a large cast-iron skillet, melt the lard and butter."
+      },
+      {
+        "stepNumber": 13,
+        "text": "Add the bacon and cook over moderate heat until crisp, about 5 minutes; reserve the bacon for another use."
+      },
+      {
+        "stepNumber": 14,
+        "text": "Add the chicken, in batches, if necessary, and cook over moderate heat, turning, until golden, crisp, and cooked through, about 30 minutes."
+      },
+      {
+        "stepNumber": 15,
+        "text": "Lower the heat if necessary."
+      },
+      {
+        "stepNumber": 16,
+        "text": "Set the chicken on a clean wire rack to drain."
+      },
+      {
+        "stepNumber": 17,
+        "text": "Transfer 1/4 cup of the chicken cooking fat to a large saucepan."
+      },
+      {
+        "stepNumber": 18,
+        "text": "Add the onion and garlic and cook over moderate heat, stirring occasionally, until the onion is golden, about 5 minutes."
+      },
+      {
+        "stepNumber": 19,
+        "text": "Add the reserved 1/2 cup of seasoned flour and cook, whisking, for 2 minutes."
+      },
+      {
+        "stepNumber": 20,
+        "text": "Add the tomatoes and thyme and stir constantly until blended."
+      },
+      {
+        "stepNumber": 21,
+        "text": "Whisk in the cream and milk until the sauce is smooth."
+      },
+      {
+        "stepNumber": 22,
+        "text": "Season with salt and pepper and cook over moderate heat, stirring occasionally, until thickened and no floury taste remains, about 10 minutes."
+      },
+      {
+        "stepNumber": 23,
+        "text": "Transfer the fried chicken to a platter."
+      },
+      {
+        "stepNumber": 24,
+        "text": "Pour the tomato gravy into a gravy boat and serve with the chicken."
+      }
+    ],
+    "imageUrl": "https://www.foodandwine.com/thmb/-G-I6pMlZCfgbmfoU9O5nuW6OEY=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/fried-chicken-with-tomato-gravy-and-the-best-biscuits-XL-RECIPE0918-607f86024db24458b632f3c43f9cb032.jpg",
+    "totalTime": "PT570M",
+    "servings": "4",
+    "notes": [
+      "This crispy fried chicken recipe from chef Scott Peacock was named one of our 40 best recipes ever in 2018. Serve it with the accompanying tomato gravy and Edna Lewis' irresistible biscuits for a meal with plenty of Southern charm. Get the recipe at Food \u0026 Wine."
+    ]
+  },
+  "ErrorMessage": "",
+  "ValidationErrors": null
+}

@@ -1,0 +1,113 @@
+{
+  "URL": "https://www.allrecipes.com/recipe/233429/farm-fresh-zucchini-cranberry-nut-muffins/",
+  "IsValid": true,
+  "QualityScore": 110,
+  "Recipe": {
+    "title": "Farm Fresh Zucchini Cranberry Nut Muffins",
+    "source": "https://www.allrecipes.com/recipe/233429/farm-fresh-zucchini-cranberry-nut-muffins/",
+    "ingredients": [
+      {
+        "text": "6 tablespoons flour"
+      },
+      {
+        "text": "1/4 bup brown sugar"
+      },
+      {
+        "text": "2 tablespoons butter"
+      },
+      {
+        "text": "1 cup white sugar"
+      },
+      {
+        "text": "0.5 cup margarine, softened"
+      },
+      {
+        "text": "1 egg"
+      },
+      {
+        "text": "1.5 teaspoons vanilla extract"
+      },
+      {
+        "text": "1.5 cups all-purpose flour"
+      },
+      {
+        "text": "1.5 teaspoons baking powder"
+      },
+      {
+        "text": "0.5 teaspoon baking soda"
+      },
+      {
+        "text": "0.25 teaspoon salt"
+      },
+      {
+        "text": "1 cup grated zucchini"
+      },
+      {
+        "text": "1 cup cranberries"
+      },
+      {
+        "text": "0.5 cup walnut pieces"
+      }
+    ],
+    "instructions": [
+      {
+        "stepNumber": 1,
+        "text": "Preheat the oven to 375 degrees F (190 degrees C)."
+      },
+      {
+        "stepNumber": 2,
+        "text": "Line a 12-cup muffin tin with liners."
+      },
+      {
+        "stepNumber": 3,
+        "text": "Mix flour and brown sugar together in a medium bowl."
+      },
+      {
+        "stepNumber": 4,
+        "text": "Cut in butter until mixture forms coarse crumbs."
+      },
+      {
+        "stepNumber": 5,
+        "text": "Set topping aside."
+      },
+      {
+        "stepNumber": 6,
+        "text": "Beat white sugar and butter in a large bowl with an electric mixer until light and fluffy."
+      },
+      {
+        "stepNumber": 7,
+        "text": "Beat in egg and vanilla."
+      },
+      {
+        "stepNumber": 8,
+        "text": "Mix flour, baking powder, baking soda, and salt together in a separate bowl; gradually beat into butter mixture."
+      },
+      {
+        "stepNumber": 9,
+        "text": "Fold in zucchini, cranberries, and walnuts."
+      },
+      {
+        "stepNumber": 10,
+        "text": "Spoon batter into the prepared muffin cups, filling almost to top."
+      },
+      {
+        "stepNumber": 11,
+        "text": "Sprinkle topping over each muffin."
+      },
+      {
+        "stepNumber": 12,
+        "text": "Bake in the preheated oven until a toothpick inserted into the center comes out clean, about 25 minutes."
+      }
+    ],
+    "imageUrl": "https://www.allrecipes.com/thmb/FX9S_5P_V4p9WIQmk9_Q7Gq79Us=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/1029468-8ef08304005c4f1bb38edb05846b50e8.jpg",
+    "prepTime": "PT20M",
+    "cookTime": "PT25M",
+    "totalTime": "PT45M",
+    "servings": "12",
+    "notes": [
+      "This farm-fresh zucchini-cranberry-nut muffins recipe is studded with loads of walnuts and cranberries for big flavors and textures in one treat."
+    ]
+  },
+  "ErrorMessage": "",
+  "ValidationErrors": null
+}

@@ -82,8 +82,8 @@ const PARSER_TEST_CATALOG = [
   },
   {
     site: "food-and-wine",
-    url: "https://www.foodandwine.com/recipes/classic-french-onion-soup",
-    expected: "French Onion Soup",
+    url: "https://www.foodandwine.com/recipes/fried-chicken-tomato-gravy",
+    expected: "Fried Chicken",
     minIngredients: 6,
     minInstructions: 4,
   },
@@ -103,8 +103,8 @@ const PARSER_TEST_CATALOG = [
   },
   {
     site: "lemonsandzest",
-    url: "https://lemonsandzest.com/best-chocolate-cake/",
-    expected: "Chocolate Cake",
+    url: "https://lemonsandzest.com/coconut-chocolate-chip-banana-bread-recipe/",
+    expected: "Coconut Banana Bread",
     minIngredients: 10,
     minInstructions: 6,
   },

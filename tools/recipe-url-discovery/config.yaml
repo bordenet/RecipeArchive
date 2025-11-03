@@ -1,0 +1,144 @@
+# Configuration for recipe URL discovery
+# DO NOT modify minIngredients/minInstructions without consulting test suite
+
+sites:
+  allrecipes:
+    domain: allrecipes.com
+    sitemapUrl: https://www.allrecipes.com/sitemap.xml
+    parserName: AllRecipesParser
+    minIngredients: 6
+    minInstructions: 3
+    currentTestUrl: https://www.allrecipes.com/recipe/21014/good-old-fashioned-pancakes/
+    status: passing
+
+  epicurious:
+    domain: epicurious.com
+    sitemapUrl: https://www.epicurious.com/sitemap.xml
+    parserName: EpicuriousParser
+    minIngredients: 4
+    minInstructions: 2
+    currentTestUrl: https://www.epicurious.com/recipes/food/views/pasta-with-no-cook-tomato-sauce-and-fresh-mozzarella
+    status: failing
+    issue: URL returns 404
+
+  food52:
+    domain: food52.com
+    sitemapUrl: https://food52.com/sitemap.xml
+    parserName: Food52Parser
+    minIngredients: 8
+    minInstructions: 4
+    currentTestUrl: https://food52.com/recipes/confit-red-pepper-and-tomato-sauce-with-pasta
+    status: failing
+    issue: Parser extracts title but 0 ingredients
+
+  foodnetwork:
+    domain: foodnetwork.com
+    sitemapUrl: https://www.foodnetwork.com/sitemap.xml
+    parserName: FoodNetworkParser
+    minIngredients: 5
+    minInstructions: 5
+    currentTestUrl: https://www.foodnetwork.com/recipes/alton-brown/good-eats-roast-turkey-recipe-1950271
+    status: failing
+    issue: Parser extracts title but 0 ingredients
+
+  seriouseats:
+    domain: seriouseats.com
+    sitemapUrl: https://www.seriouseats.com/sitemap.xml
+    parserName: SeriousEatsParser
+    minIngredients: 10
+    minInstructions: 4
+    currentTestUrl: https://www.seriouseats.com/the-best-black-bean-burger-recipe
+    status: passing
+
+  smittenkitchen:
+    domain: smittenkitchen.com
+    sitemapUrl: https://smittenkitchen.com/sitemap.xml
+    parserName: SmittenKitchenParser
+    minIngredients: 8
+    minInstructions: 5
+    currentTestUrl: https://smittenkitchen.com/2016/06/the-consummate-chocolate-chip-cookie-revisited/
+    status: passing
+
+  nytcooking:
+    domain: cooking.nytimes.com
+    sitemapUrl: https://cooking.nytimes.com/sitemap.xml
+    parserName: NYTCookingParser
+    minIngredients: 8
+    minInstructions: 4
+    currentTestUrl: https://cooking.nytimes.com/recipes/1015819-chocolate-chip-cookies
+    status: passing
+
+  damndelicious:
+    domain: damndelicious.net
+    sitemapUrl: https://damndelicious.net/sitemap.xml
+    parserName: DamnDeliciousParser
+    minIngredients: 8
+    minInstructions: 3
+    currentTestUrl: https://damndelicious.net/2013/07/07/korean-beef-bowl/
+    status: passing
+
+  foodandwine:
+    domain: foodandwine.com
+    sitemapUrl: https://www.foodandwine.com/sitemap.xml
+    parserName: FoodAndWineParser
+    minIngredients: 6
+    minInstructions: 4
+    currentTestUrl: https://www.foodandwine.com/recipes/classic-french-onion-soup
+    status: failing
+    issue: Empty title extraction
+
+  alexandraskitchen:
+    domain: alexandracooks.com
+    sitemapUrl: https://alexandracooks.com/sitemap.xml
+    parserName: AlexandrasKitchenParser
+    minIngredients: 3
+    minInstructions: 5
+    currentTestUrl: https://alexandracooks.com/2017/10/24/artisan-sourdough-made-simple-sourdough-bread-demystified-a-beginners-guide-to-sourdough-baking/
+    status: passing
+
+  loveandlemons:
+    domain: loveandlemons.com
+    sitemapUrl: https://www.loveandlemons.com/sitemap.xml
+    parserName: LoveAndLemonsParser
+    minIngredients: 6
+    minInstructions: 3
+    currentTestUrl: https://www.loveandlemons.com/hummus-recipe/
+    status: passing
+
+  lemonsandzest:
+    domain: lemonsandzest.com
+    sitemapUrl: https://lemonsandzest.com/sitemap.xml
+    parserName: LemonsAndZestParser
+    minIngredients: 10
+    minInstructions: 6
+    currentTestUrl: https://lemonsandzest.com/best-chocolate-cake/
+    status: failing
+    issue: Empty title extraction
+
+  washingtonpost:
+    domain: washingtonpost.com
+    sitemapUrl: https://www.washingtonpost.com/sitemap.xml
+    parserName: WashingtonPostParser
+    minIngredients: 6
+    minInstructions: 4
+    currentTestUrl: https://www.washingtonpost.com/recipes/classic-tomato-soup/
+    status: failing
+    issue: HTTP/2 protocol error (site blocking)
+
+# Quality scoring weights
+qualityScoring:
+  hasTitle: 10
+  hasIngredients: 20
+  hasInstructions: 20
+  hasImage: 10
+  hasTimings: 10
+  ingredientCountWeight: 2  # 2 points per ingredient, max 10
+  instructionCountWeight: 2  # 2 points per instruction, max 10
+  minQualityScore: 70       # URLs must score >= 70 to be candidates
+
+# Rate limiting (be respectful!)
+rateLimiting:
+  requestsPerSecond: 1
+  delayBetweenSites: 5000  # milliseconds
+  respectRobotsTxt: true
+  userAgent: "RecipeArchive-URLDiscovery/1.0 (Educational Project)"
