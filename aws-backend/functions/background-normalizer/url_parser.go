@@ -74,7 +74,11 @@ func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch URL: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				fmt.Printf("WARN: Failed to close HTTP response body: %v\n", closeErr)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("HTTP error: %d %s", resp.StatusCode, resp.Status)
@@ -438,7 +442,7 @@ func extractSmittenKitchen(doc *html.Node, recipe *Recipe) error {
 	fmt.Println("🍳 Using Smitten Kitchen-specific parser...")
 
 	// First try microdata for basic data (title, ingredients, servings)
-	extractMicrodata(doc, recipe)
+	_ = extractMicrodata(doc, recipe) // Ignore error, this is best-effort extraction
 
 	// Now handle the custom instruction format
 	var traverse func(*html.Node)

@@ -3,37 +3,14 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
-
-// Simple in-memory cache for OpenAI responses
-var (
-	responseCache = make(map[string]*NormalizationResponse)
-	cacheMutex    sync.RWMutex
-)
-
-// generateContentHash creates a hash of recipe content for caching
-func generateContentHash(recipe *Recipe) string {
-	content := fmt.Sprintf("%s|%d|%d", recipe.Title, len(recipe.Ingredients), len(recipe.Instructions))
-	for _, ing := range recipe.Ingredients {
-		content += "|" + ing.Text
-	}
-	for _, inst := range recipe.Instructions {
-		content += "|" + inst.Text
-	}
-
-	hash := sha256.Sum256([]byte(content))
-	return hex.EncodeToString(hash[:])
-}
 
 // normalizeRecipeWithOpenAI normalizes recipe using OpenAI API
 func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, error) {
@@ -136,7 +113,11 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	if err != nil {
 		return nil, fmt.Errorf("OpenAI API call failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	var openaiResp OpenAIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&openaiResp); err != nil {

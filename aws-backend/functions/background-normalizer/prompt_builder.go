@@ -53,7 +53,7 @@ INSTRUCTION NORMALIZATION (CRITICAL - ENHANCED RULES):
 - Use imperative voice ("Mix flour" not "You should mix flour")
 - ABSOLUTE PRESERVATION RULE: NEVER oversimplify or collapse detailed instructions into generic steps
 - MAINTAIN COMPLETE STEP SEQUENCES: Keep all preparation, setup, monitoring, and finishing steps exactly as detailed in original
-- INSTRUCTION PRESERVATION MANDATE: Maintain at least 90% of original instruction detail - if original has specific timing, temperatures, visual cues, preserve them ALL
+- INSTRUCTION PRESERVATION MANDATE: Maintain at least 90%% of original instruction detail - if original has specific timing, temperatures, visual cues, preserve them ALL
 - ANTI-SIMPLIFICATION: If original says "Simmer on low until beans are tender, about 2 1/2 to 3 hours. Stir occasionally" do NOT reduce to "Cook until done"
 - CRITICAL TIMING PRESERVATION: NEVER change specific cooking times like "2 1/2 to 3 hours" to generic times like "20 minutes"
 - HEAT LEVEL PRESERVATION: ALWAYS preserve heat specifications like "on low", "high heat", "medium-low", etc.
