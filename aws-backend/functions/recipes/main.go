@@ -118,7 +118,11 @@ func fetchHTMLFromURL(ctx context.Context, urlStr string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch URL: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	// Check for paywalls / auth required
 	if resp.StatusCode == 403 {
@@ -523,7 +527,11 @@ func downloadAndUploadImage(ctx context.Context, imageURL string, userID string,
 	if err != nil {
 		return "", fmt.Errorf("failed to download image: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("image download failed with status: %d", resp.StatusCode)
@@ -1685,7 +1693,11 @@ func normalizeRecipeContent(ctx context.Context, recipeData models.CreateRecipeR
 	if err != nil {
 		return nil, fmt.Errorf("content normalizer request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("content normalizer returned status %d", resp.StatusCode)
