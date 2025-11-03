@@ -126,6 +126,15 @@ EOF
     exit 0
 }
 
+# Initialize variables
+MODE=""
+BUILD_TYPE=""
+TARGET=""
+OUTPUT_TYPE="apk"
+VERSION=""
+RUN_AFTER_BUILD=false
+CLEAN_BUILD=false
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
