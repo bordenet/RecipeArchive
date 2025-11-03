@@ -1,6 +1,6 @@
 # RecipeArchive Mobile PWA
 
-A Progressive Web App (PWA) that brings RecipeArchive functionality to iPhone, iPad, and Android devices.
+A Progressive Web App (PWA) that brings RecipeArchive functionality to iPhone, iPad, and Android devices without bothering with native app installation.
 
 ## 🚀 Quick Start
 
