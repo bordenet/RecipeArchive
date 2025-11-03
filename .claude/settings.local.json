@@ -30,7 +30,9 @@
       "Bash(timeout 180 ./validate-monorepo.sh:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(timeout 360 git commit -m \"fix(lint): clean up all linting errors across Lambda functions\")"
+      "Bash(timeout 360 git commit -m \"fix(lint): clean up all linting errors across Lambda functions\")",
+      "Bash(timeout 300 ./validate-monorepo.sh:*)",
+      "Bash(./scripts/android/build.sh:*)"
     ],
     "deny": [],
     "ask": []
