@@ -1635,6 +1635,27 @@ func handleDeleteRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	return response, nil
 }
 
+func parseSearchArray(value string) []string {
+	if value == "" {
+		return nil
+	}
+
+	// Split on commas, "and", and "or" (case-insensitive)
+	// First replace logical delimiters with commas for uniform processing
+	normalizedValue := strings.ToLower(value)
+	normalizedValue = strings.ReplaceAll(normalizedValue, " and ", ",")
+	normalizedValue = strings.ReplaceAll(normalizedValue, " or ", ",")
+	parts := strings.Split(normalizedValue, ",")
+
+	var result []string
+	for _, part := range parts {
+		if trimmed := strings.ToLower(strings.TrimSpace(part)); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
 // matchesSearchCriteria performs cost-efficient in-memory recipe filtering
 func matchesSearchCriteria(recipe models.Recipe, searchQuery string,
 	maxPrepTime, maxCookTime *int,
