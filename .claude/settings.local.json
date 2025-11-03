@@ -1,13 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(scripts/ios/setup.sh)",
-      "Bash(scripts/ios/build.sh:*)",
-      "Bash(scripts/android/build.sh:*)",
-      "Bash(timeout 300 ./recipe-url-discovery:*)",
-      "Bash(timeout 180 ./recipe-url-discovery:*)",
-      "Bash(curl:*)"
+      "Bash(./scripts/extensions/helper.sh:*)",
+      "Bash(./scripts/test-all-scripts.sh:*)"
     ],
     "deny": [],
     "ask": []

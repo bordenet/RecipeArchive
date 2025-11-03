@@ -8,8 +8,8 @@
 | Validate Quick | `./validate-monorepo.sh --p1` |
 | Validate Medium | `./validate-monorepo.sh --med` |
 | Validate Mobile | `./validate-monorepo.sh --mobile` |
-| Deploy All (AWS + Web) | `./scripts/aws-deploy-all.sh` |
-| Deploy Lambda Functions | `./scripts/aws-deploy-lambda.sh --all` |
+| Deploy All (AWS + Web) | `./scripts/aws/all.sh` |
+| Deploy Lambda Functions | `./scripts/aws/lambda.sh --all` |
 | Deploy Web App | `./scripts/web/deploy.sh` |
 | Build Extensions | `npm run build:extensions` |
 | Package Extensions | `./scripts/extensions/package.sh` |

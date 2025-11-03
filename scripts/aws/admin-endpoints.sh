@@ -12,10 +12,10 @@
 #   - Deploys changes to production stage
 #
 # USAGE:
-#   ./scripts/aws-deploy-admin-endpoints.sh
+#   ./scripts/aws/admin-endpoints.sh
 #
 # EXAMPLES:
-#   ./scripts/aws-deploy-admin-endpoints.sh
+#   ./scripts/aws/admin-endpoints.sh
 #
 # DEPENDENCIES:
 #   - AWS CLI

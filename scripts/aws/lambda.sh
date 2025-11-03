@@ -12,14 +12,14 @@
 #   - Verifies deployment
 #
 # USAGE:
-#   ./scripts/aws-deploy-lambda.sh <function-name>
-#   ./scripts/aws-deploy-lambda.sh --all
-#   ./scripts/aws-deploy-lambda.sh --list
+#   ./scripts/aws/lambda.sh <function-name>
+#   ./scripts/aws/lambda.sh --all
+#   ./scripts/aws/lambda.sh --list
 #
 # EXAMPLES:
-#   ./scripts/aws-deploy-lambda.sh recipes
-#   ./scripts/aws-deploy-lambda.sh analytics
-#   ./scripts/aws-deploy-lambda.sh --all
+#   ./scripts/aws/lambda.sh recipes
+#   ./scripts/aws/lambda.sh analytics
+#   ./scripts/aws/lambda.sh --all
 #
 # DEPENDENCIES:
 #   - AWS CLI
@@ -195,10 +195,10 @@ print_usage() {
     echo "🚀 RecipeArchive Lambda Deployment Tool"
     echo ""
     echo "Usage:"
-    echo "  ./scripts/aws-deploy-lambda.sh <function-name>  # Deploy specific function"
-    echo "  ./scripts/aws-deploy-lambda.sh --all            # Deploy all functions"
-    echo "  ./scripts/aws-deploy-lambda.sh --list           # List available functions"
-    echo "  ./scripts/aws-deploy-lambda.sh --dry-run        # Show what would be deployed"
+    echo "  ./scripts/aws/lambda.sh <function-name>  # Deploy specific function"
+    echo "  ./scripts/aws/lambda.sh --all            # Deploy all functions"
+    echo "  ./scripts/aws/lambda.sh --list           # List available functions"
+    echo "  ./scripts/aws/lambda.sh --dry-run        # Show what would be deployed"
     echo ""
     echo "Available functions:"
     for func in $(get_available_functions);
