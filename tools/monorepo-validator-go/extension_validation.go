@@ -37,7 +37,7 @@ func validateExtensionDownloads(projectRoot string) bool {
 		fmt.Printf("❌ Failed to fetch versions.json: %v\n", err)
 		return false
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		fmt.Printf("❌ versions.json returned HTTP %d\n", resp.StatusCode)
@@ -86,7 +86,7 @@ func validateExtensionURL(url, platform, version string) bool {
 		fmt.Printf("❌ %s v%s download failed: %v\n", platform, version, err)
 		return false
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != 200 {
 		fmt.Printf("❌ %s v%s download returned HTTP %d\n", platform, version, resp.StatusCode)

@@ -230,7 +230,7 @@ func loadConfig(configPath string) (*Config, error) {
 func saveToCacheFile(siteName string, result *validators.ValidationResult) {
 	// Create cache directory if it doesn't exist
 	if _, err := os.Stat("cache"); os.IsNotExist(err) {
-		os.Mkdir("cache", 0755)
+		_ = os.Mkdir("cache", 0755)
 	}
 
 	filePath := filepath.Join("cache", fmt.Sprintf("%s.json", siteName))

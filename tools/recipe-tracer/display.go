@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // DisplayTrace formats and displays the complete trace
@@ -129,7 +130,7 @@ func displaySQSEvents(events []SQSEvent) {
 		fmt.Printf("%s %s %s on %s\n",
 			formatTimestamp(event.Timestamp),
 			actionIcon,
-			strings.Title(event.Action),
+			toTitle(event.Action),
 			event.QueueName,
 		)
 
@@ -301,4 +302,14 @@ func truncateURL(url string) string {
 		return url
 	}
 	return url[:47] + "..."
+}
+
+// toTitle converts a string to title case (replacement for deprecated strings.Title)
+func toTitle(s string) string {
+	if s == "" {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }

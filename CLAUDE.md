@@ -314,6 +314,37 @@ If Android Studio fails with "Cannot run program '/opt/homebrew/share/flutter/bi
 
 **Why this matters:** Build toolchain issues often have known solutions in the community. Spending 30+ minutes on trial-and-error wastes time when a 2-minute search would reveal the answer.
 
+### Go Code Quality Protocol - CRITICAL
+
+**MANDATORY: Always run compilation checks before declaring Go work complete.**
+
+When fixing linting errors or modifying Go code:
+
+1. **Fix the reported linting errors** using golangci-lint output
+2. **IMMEDIATELY run `go build`** in the affected directory to check for:
+   - Unused imports (especially after removing functions)
+   - Type errors
+   - Compilation failures
+3. **Only declare work complete** after both linting AND compilation pass
+
+**Common Gotcha:** Removing unused functions often leaves behind unused imports. The `go build` check will catch this immediately.
+
+**Example Workflow:**
+```bash
+# Fix linting errors
+golangci-lint run ./...
+
+# CRITICAL: Check compilation
+go build
+
+# If imports are unused, remove them
+# Then re-run both checks
+golangci-lint run ./...
+go build
+```
+
+**Why this matters:** Unused imports are compilation errors in Go, not just linting warnings. Declaring work complete without running `go build` wastes the user's time with broken code.
+
 ### AWS Environment Setup
 
 The project uses environment variables from `.env` for AWS authentication and bucket names:

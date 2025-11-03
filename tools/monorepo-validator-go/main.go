@@ -313,6 +313,7 @@ func getMobileValidations() []ValidationTask {
 		{"iOS Build & Lint Validation", runIOSValidation, false},
 		{"Android Build & Lint Validation", runAndroidValidation, false},
 		{"Web Build Validation", runWebValidation, false},
+		{"Web Extension Linting", runWebExtensionLinting, false},
 	}
 }
 
@@ -336,6 +337,7 @@ func getAllValidations() []ValidationTask {
 		ValidationTask{"iOS Build & Lint Validation", runIOSValidation, false},        // Sequential, takes time
 		ValidationTask{"Android Build & Lint Validation", runAndroidValidation, false}, // Sequential, takes time
 		ValidationTask{"Web Build Validation", runWebValidation, false},                // Sequential, takes time
+		ValidationTask{"Web Extension Linting", runWebExtensionLinting, false},         // Sequential, takes time
 		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, false},      // Sequential, takes time
 		ValidationTask{"Go Lint Validation", runGoLintValidation, false},               // Sequential, takes time
 		ValidationTask{"AWS Infrastructure Tests", runAwsInfrastructureTests, true},

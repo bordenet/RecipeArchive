@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 )
 
@@ -172,86 +171,4 @@ func validateDeploymentInfrastructure(projectRoot string) bool {
 	}
 
 	return allPassed
-}
-
-// validateAPIEndpoints checks for the presence and configuration of critical API endpoints
-func validateAPIEndpoints(projectRoot string, apiGatewayID string) bool {
-	// Define critical path parts that should exist
-	requiredPathParts := []struct {
-		pathPart    string
-		description string
-	}{
-		{"recipes", "Recipe management endpoint"},
-		{"invitations", "Admin invitations endpoint"},
-		{"{invitationId}", "Individual invitation endpoint"},
-		{"summary", "Analytics summary endpoint"},
-		{"events", "Analytics events endpoint"},
-	}
-
-	allValid := true
-
-	for _, endpoint := range requiredPathParts {
-		// Check if the resource exists in API Gateway
-		out, err := runCommand(projectRoot, "aws", "apigateway", "get-resources",
-			"--rest-api-id", apiGatewayID,
-			"--query", fmt.Sprintf("items[?pathPart=='%s'].id", endpoint.pathPart),
-			"--output", "text")
-
-		if err != nil || strings.TrimSpace(out) == "" || strings.TrimSpace(out) == "None" {
-			fmt.Printf("\n    ⚠ %s (%s) - resource not found", endpoint.description, endpoint.pathPart)
-			allValid = false
-		}
-	}
-
-	// Check for CORS configuration on recipes endpoint
-	recipesResourceID := getResourceID(projectRoot, apiGatewayID, "recipes")
-	if recipesResourceID != "" {
-		_, err := runCommand(projectRoot, "aws", "apigateway", "get-method",
-			"--rest-api-id", apiGatewayID,
-			"--resource-id", recipesResourceID,
-			"--http-method", "OPTIONS",
-			"--query", "httpMethod",
-			"--output", "text")
-
-		if err != nil {
-			fmt.Printf("\n    ⚠ CORS not configured for recipes endpoint")
-			allValid = false
-		}
-	} else {
-		fmt.Printf("\n    ⚠ Recipes resource not found")
-		allValid = false
-	}
-
-	return allValid
-}
-
-// getLastPathSegment extracts the last path segment for API Gateway resource lookup
-func getLastPathSegment(path string) string {
-	if path == "/" {
-		return ""
-	}
-	// Remove leading slash and split by slash
-	path = strings.TrimPrefix(path, "/")
-	parts := strings.Split(path, "/")
-	if len(parts) > 0 {
-		return parts[len(parts)-1]
-	}
-	return path
-}
-
-// getResourceID gets the resource ID for a given path part
-func getResourceID(projectRoot string, apiGatewayID string, pathPart string) string {
-	out, err := runCommand(projectRoot, "aws", "apigateway", "get-resources",
-		"--rest-api-id", apiGatewayID,
-		"--query", fmt.Sprintf("items[?pathPart=='%s'].id", pathPart),
-		"--output", "text")
-
-	if err != nil {
-		return ""
-	}
-	out = strings.TrimSpace(out)
-	if out == "" || out == "None" {
-		return ""
-	}
-	return out
 }

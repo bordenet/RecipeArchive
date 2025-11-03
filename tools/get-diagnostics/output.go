@@ -13,7 +13,7 @@ import (
 func outputJSON(diagnostics []DiagnosticEntry) {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	encoder.Encode(diagnostics)
+	_ = encoder.Encode(diagnostics)
 }
 
 // outputFormatted outputs diagnostics in a human-readable formatted table

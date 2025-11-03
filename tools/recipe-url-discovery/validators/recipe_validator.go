@@ -114,8 +114,8 @@ const fs = require('fs');
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
-	defer os.Remove(tmpfile.Name())
-	defer tmpfile.Close()
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
+	defer func() { _ = tmpfile.Close() }()
 
 	if _, err := tmpfile.WriteString(scriptContent); err != nil {
 		return nil, fmt.Errorf("failed to write script to temp file: %w", err)

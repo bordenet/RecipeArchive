@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/fatih/color"
 )
 
@@ -201,36 +200,4 @@ func listS3Files(ctx context.Context, client *s3.Client, bucket, prefix string, 
 	}
 
 	return files, nil
-}
-
-// listS3FilesWithMetadata returns detailed info about S3 files (for potential future use)
-func listS3FilesWithMetadata(ctx context.Context, client *s3.Client, bucket, prefix string, cutoffTime time.Time) ([]types.Object, error) {
-	var objects []types.Object
-
-	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
-		Bucket: aws.String(bucket),
-		Prefix: aws.String(prefix),
-	})
-
-	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list objects: %w", err)
-		}
-
-		for _, obj := range page.Contents {
-			if obj.Key == nil || strings.HasSuffix(*obj.Key, "/") {
-				continue
-			}
-
-			// Check if object is within time window
-			if obj.LastModified != nil && obj.LastModified.Before(cutoffTime) {
-				continue
-			}
-
-			objects = append(objects, obj)
-		}
-	}
-
-	return objects, nil
 }

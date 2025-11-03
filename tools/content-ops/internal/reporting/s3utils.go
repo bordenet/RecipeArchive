@@ -48,7 +48,7 @@ func (r *Reporter) getS3Object(key string, target interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to get object %s: %w", key, err)
 	}
-	defer result.Body.Close()
+	defer func() { _ = result.Body.Close() }()
 
 	decoder := json.NewDecoder(result.Body)
 	if err := decoder.Decode(target); err != nil {

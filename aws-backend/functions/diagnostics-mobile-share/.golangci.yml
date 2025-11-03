@@ -1,3 +1,6 @@
-linters-settings:
-  staticcheck:
-    checks: ["all", "-SA1019"]  # Ignore deprecation warnings (AWS SDK v1)
+version: "2"
+
+linters:
+  settings:
+    staticcheck:
+      checks: ["all", "-SA1019"]  # Ignore deprecation warnings (AWS SDK v1)

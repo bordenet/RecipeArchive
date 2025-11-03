@@ -256,10 +256,7 @@ func extractFileBaseName(key string) string {
 	if len(parts) > 0 {
 		filename := parts[len(parts)-1]
 		// Remove .json extension if present
-		if strings.HasSuffix(filename, ".json") {
-			filename = filename[:len(filename)-5]
-		}
-		return filename
+		return strings.TrimSuffix(filename, ".json")
 	}
 	return key
 }
