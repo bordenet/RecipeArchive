@@ -1,1 +1,7 @@
+#!/usr/bin/env bash
+
+# Check for compiled binaries
+.husky/check-binaries
+
+# Run standard tests
 npm test
