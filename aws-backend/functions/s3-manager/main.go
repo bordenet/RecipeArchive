@@ -121,7 +121,10 @@ func cleanupAllObjects(ctx context.Context, bucketName string, dryRun bool) erro
 	if !dryRun {
 		fmt.Print("⚠️ WARNING: This will DELETE ALL OBJECTS in the bucket. Continue? (y/N): ")
 		var response string
-		fmt.Scanln(&response)
+		if _, err := fmt.Scanln(&response); err != nil {
+			fmt.Printf("Failed to read response: %v\n", err)
+			return err
+		}
 		if response != "y" && response != "Y" {
 			fmt.Println("Operation cancelled")
 			return nil

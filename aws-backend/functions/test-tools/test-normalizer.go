@@ -219,7 +219,11 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *models.Recipe) (*mod
 	if err != nil {
 		return nil, fmt.Errorf("OpenAI API call failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	var openaiResp OpenAIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&openaiResp); err != nil {

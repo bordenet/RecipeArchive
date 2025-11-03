@@ -305,7 +305,9 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 			fmt.Printf("DEBUG: Email index exists but invitation not found, cleaning up stale index\n")
 			// Clean up stale email index
 			emailIndexKey := fmt.Sprintf("invitations/by-email/%s.json", emailKey)
-			deleteFromS3(ctx, emailIndexKey)
+			if err := deleteFromS3(ctx, emailIndexKey); err != nil {
+				fmt.Printf("WARN: Failed to clean up stale email index: %v\n", err)
+			}
 		}
 	} else {
 		fmt.Printf("DEBUG: No existing email index found for %s, proceeding with invitation creation\n", req.Email)
@@ -539,7 +541,11 @@ func getJSONFromS3(ctx context.Context, key string, target interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to get object from S3: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() {
+		if closeErr := result.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close S3 response body: %v\n", closeErr)
+		}
+	}()
 
 	body, err := io.ReadAll(result.Body)
 	if err != nil {
