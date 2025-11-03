@@ -292,12 +292,8 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *models.Recipe) (*mod
 	if normResponse.InferredMetadata.DifficultyLevel != "" {
 		result.Tags = append(result.Tags, normResponse.InferredMetadata.DifficultyLevel)
 	}
-	for _, method := range normResponse.InferredMetadata.CookingMethods {
-		result.Tags = append(result.Tags, method)
-	}
-	for _, diet := range normResponse.InferredMetadata.DietaryInfo {
-		result.Tags = append(result.Tags, diet)
-	}
+	result.Tags = append(result.Tags, normResponse.InferredMetadata.CookingMethods...)
+	result.Tags = append(result.Tags, normResponse.InferredMetadata.DietaryInfo...)
 
 	// Apply search metadata for intelligent recipe discovery
 	result.SearchMetadata = &normResponse.SearchMetadata

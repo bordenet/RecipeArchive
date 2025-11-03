@@ -449,7 +449,11 @@ func getJSONFromS3(ctx context.Context, key string, target interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to get object from S3: %w", err)
 	}
-	defer result.Body.Close()
+	defer func() {
+		if closeErr := result.Body.Close(); closeErr != nil {
+			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+		}
+	}()
 
 	body, err := io.ReadAll(result.Body)
 	if err != nil {
