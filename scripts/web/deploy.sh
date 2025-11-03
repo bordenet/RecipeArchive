@@ -41,7 +41,7 @@ readonly REPO_ROOT="$(get_repo_root)"
 readonly APP_DIR="$REPO_ROOT/recipe_archive"
 
 # Load environment variables
-source "$SCRIPT_DIR/../lib/load-env.sh" || die "Failed to load environment variables"
+source "$SCRIPT_DIR/../load-env.sh" || die "Failed to load environment variables"
 
 # Configuration from environment variables
 readonly DISTRIBUTION_ID="${CLOUDFRONT_DISTRIBUTION_ID:-E1D19F7SLOJM5H}"
