@@ -74,7 +74,9 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 ### Supported Recipe Sites (14)
 
 ✅ Smitten Kitchen • Food Network • NYT Cooking • Food52 • AllRecipes • Epicurious
+
 ✅ Serious Eats • Love & Lemons • Washington Post • Food & Wine • Damn Delicious
+
 ✅ Alexandra's Kitchen • Lemons and Zest • The Anthony Kitchen
 
 ## Outstanding Work
@@ -96,14 +98,23 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 ## Core Capabilities
 
 ✅ Recipe capture from 14+ websites with intelligent parsing
+
 ✅ OpenAI-powered recipe normalization (ingredients, instructions, metadata)
+
 ✅ Cross-platform authentication (AWS Cognito) - iOS, Android, Web
+
 ✅ Real-time synchronization across devices
+
 ✅ Multi-tenant invitation system with secure sharing
+
 ✅ Diagnostic telemetry and error tracking (CloudWatch)
+
 ✅ Security validation and monitoring
+
 ✅ iOS native share extension (WKWebView-based capture)
+
 ✅ Screen wakelock for hands-free cooking
+
 ✅ Yield scaling and unit conversion (metric ↔ imperial)
 
 ## Documentation
