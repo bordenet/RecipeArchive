@@ -203,6 +203,54 @@ fi
 # Mobile Development Setup
 print_info "Setting up mobile development environment..."
 
+# Java Development Kit (required for Android)
+# MUST be installed BEFORE any Android SDK operations
+# Check if Java is actually working, not just if the command exists (macOS has a stub)
+java_working=false
+if java -version &> /dev/null; then
+  java_working=true
+fi
+
+if [ "$java_working" = false ]; then
+  print_info "Installing Java Development Kit (required for Android)..."
+  brew install openjdk@17
+
+  # Add Java to PATH
+  JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+  export JAVA_HOME
+  export PATH="$JAVA_HOME/bin:$PATH"
+
+  # Add to shell profile
+  SHELL_PROFILE=""
+  if [ -n "$ZSH_VERSION" ]; then
+    SHELL_PROFILE="$HOME/.zshrc"
+  elif [ -n "$BASH_VERSION" ]; then
+    SHELL_PROFILE="$HOME/.bash_profile"
+  fi
+
+  if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+    if ! grep -q "JAVA_HOME" "$SHELL_PROFILE"; then
+      cat >> "$SHELL_PROFILE" <<EOF
+
+# Java Development
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+export PATH=\$JAVA_HOME/bin:\$PATH
+EOF
+      print_success "Added Java environment variables to $SHELL_PROFILE"
+    fi
+  fi
+
+  print_success "Java Development Kit installed"
+else
+  print_success "Java already installed: $(java -version 2>&1 | head -1)"
+
+  # Ensure JAVA_HOME is set even if Java is already installed
+  if [ -z "${JAVA_HOME:-}" ] && [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
+    export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+    export PATH="$JAVA_HOME/bin:$PATH"
+  fi
+fi
+
 # Flutter SDK Installation
 if ! command -v flutter &> /dev/null; then
   if timed_confirm "Flutter SDK is required for mobile app development. Install? (Large download ~1GB)"; then
@@ -237,11 +285,17 @@ if ! command -v flutter &> /dev/null; then
   fi
 else
   print_success "Flutter already installed: $(flutter --version | head -1)"
-  
+
   # Ensure Flutter is configured correctly even if already installed
   FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
   export PATH="$FLUTTER_PATH:$PATH"
-  flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
+
+  # Set ANDROID_HOME if it exists
+  ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+  if [ -d "$ANDROID_HOME" ]; then
+    export ANDROID_HOME
+    flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
+  fi
 fi
 
 # Android Development Setup
@@ -494,41 +548,6 @@ if [ "$ios_setup_needed" = true ]; then
   fi
 else
   print_success "iOS development environment already configured"
-fi
-
-# Java Development Kit (required for Android)
-if ! command -v java &> /dev/null; then
-  print_info "Installing Java Development Kit..."
-  brew install openjdk@17
-  
-  # Add Java to PATH
-  JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
-  export JAVA_HOME
-  export PATH="$JAVA_HOME/bin:$PATH"
-  
-  # Add to shell profile
-  SHELL_PROFILE=""
-  if [ -n "$ZSH_VERSION" ]; then
-    SHELL_PROFILE="$HOME/.zshrc"
-  elif [ -n "$BASH_VERSION" ]; then
-    SHELL_PROFILE="$HOME/.bash_profile"
-  fi
-  
-  if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-    if ! grep -q "JAVA_HOME" "$SHELL_PROFILE"; then
-      cat >> "$SHELL_PROFILE" <<EOF
-
-# Java Development
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
-export PATH=\$JAVA_HOME/bin:\$PATH
-EOF
-      print_success "Added Java environment variables to $SHELL_PROFILE"
-    fi
-  fi
-  
-  print_success "Java Development Kit installed"
-else
-  print_success "Java already installed: $(java -version 2>&1 | head -1)"
 fi
 
 # AWS CLI
