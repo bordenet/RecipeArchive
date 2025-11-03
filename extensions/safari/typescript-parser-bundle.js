@@ -44,6 +44,42 @@
     }
   });
 
+  // parser-registry.ts
+  var _ParserRegistry = class _ParserRegistry {
+    constructor() {
+      this.parsers = [];
+    }
+    static getInstance() {
+      if (!_ParserRegistry.instance) {
+        _ParserRegistry.instance = new _ParserRegistry();
+      }
+      return _ParserRegistry.instance;
+    }
+    registerParser(urlPattern, parserClass) {
+      const parser = new parserClass();
+      this.parsers.push(parser);
+    }
+    async parseRecipe(html3, url) {
+      const parser = this.parsers.find((p) => p.canParse(url));
+      if (!parser) {
+        console.warn(`No parser found for URL: ${url}`);
+        return null;
+      }
+      try {
+        const recipe = await parser.parse(html3, url);
+        return recipe;
+      } catch (err) {
+        console.error(`Error parsing recipe from ${url}:`, err);
+        return null;
+      }
+    }
+    getParserForUrl(url) {
+      return this.parsers.find((p) => p.canParse(url)) || null;
+    }
+  };
+  _ParserRegistry.instance = null;
+  var ParserRegistry = _ParserRegistry;
+
   // ../node_modules/cheerio/dist/browser/static.js
   var static_exports = {};
   __export(static_exports, {
@@ -15180,9 +15216,6 @@
       return url.includes("foodnetwork.com");
     }
     async parse(html3, url) {
-      if (html3.includes("Page Not Found | Food Network") || html3.includes("The page you're looking for seems to have disappeared!")) {
-        throw new Error(`[FoodNetwork] 404 page detected for URL: ${url}`);
-      }
       const $2 = load(html3);
       const jsonLd = this.extractJsonLD(html3);
       if (jsonLd) {
@@ -15384,6 +15417,251 @@
     }
   };
 
+  // sites/food52.ts
+  var Food52Parser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("food52.com");
+    }
+    async parse(html3, url) {
+      const jsonLd = this.extractJsonLD(html3);
+      let recipe;
+      if (jsonLd) {
+        let author = void 0;
+        if (typeof jsonLd.author === "string") {
+          author = this.sanitizeText(jsonLd.author);
+        } else if (jsonLd.author && typeof jsonLd.author === "object" && jsonLd.author.name) {
+          author = this.sanitizeText(jsonLd.author.name);
+        }
+        let tags = void 0;
+        if (jsonLd.keywords) {
+          if (Array.isArray(jsonLd.keywords)) {
+            tags = jsonLd.keywords.map(
+              (k) => this.sanitizeText(k)
+            );
+          } else if (typeof jsonLd.keywords === "string") {
+            tags = jsonLd.keywords.split(/,|;/).map((k) => this.sanitizeText(k)).filter(Boolean);
+          }
+        }
+        if (jsonLd.recipeCategory) {
+          if (!tags) tags = [];
+          if (Array.isArray(jsonLd.recipeCategory)) {
+            tags.push(
+              ...jsonLd.recipeCategory.map(
+                (c) => this.sanitizeText(c)
+              )
+            );
+          } else if (typeof jsonLd.recipeCategory === "string") {
+            tags.push(
+              ...jsonLd.recipeCategory.split(/,|;/).map((c) => this.sanitizeText(c)).filter(Boolean)
+            );
+          }
+        }
+        recipe = {
+          title: this.sanitizeText(jsonLd.name),
+          source: url,
+          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
+            text: this.sanitizeText(i).replace(/\bundefined\s+/g, "").replace(/\s+undefined\b/g, "").trim()
+          })),
+          instructions: this.processInstructions(
+            (jsonLd.recipeInstructions || []).map(
+              (i) => typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+            ).filter((text3) => typeof text3 === "string" && text3.length > 0)
+          ),
+          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
+          prepTime: jsonLd.prepTime,
+          cookTime: jsonLd.cookTime,
+          totalTime: jsonLd.totalTime,
+          servings: jsonLd.recipeYield?.toString(),
+          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0,
+          author,
+          tags
+        };
+      } else {
+        const $2 = load(html3);
+        const title = $2("h1").first().text().trim();
+        const ingredients = [];
+        $2('h2:contains("Ingredients")').nextAll("ul").first().find("li").each((_, el) => {
+          const text3 = $2(el).text().trim().replace(/\bundefined\s+/g, "").replace(/\s+undefined\b/g, "").trim();
+          if (text3) ingredients.push({ text: text3 });
+        });
+        const instructions = [];
+        $2('h2:contains("Directions")').nextAll("ul").first().find("li").each((i, el) => {
+          const text3 = $2(el).find("p").text().trim();
+          if (text3) instructions.push({ stepNumber: i + 1, text: text3 });
+        });
+        let imageUrl = $2("img").first().attr("src");
+        const ogImage = $2('meta[property="og:image"]').attr("content");
+        if (ogImage) imageUrl = ogImage;
+        let author = void 0;
+        const authorEl = $2('a[href*="/author/"]').first();
+        if (authorEl.length) {
+          author = authorEl.text().trim();
+        }
+        let tags = void 0;
+        const tagEls = $2(
+          'span.text-approved, .tags, meta[property="og:keywords"]'
+        );
+        if (tagEls.length) {
+          tags = [];
+          tagEls.each((_, el) => {
+            const t = $2(el).text().trim();
+            if (tags && t) tags.push(t);
+          });
+        }
+        recipe = {
+          title,
+          source: url,
+          ingredients,
+          instructions,
+          imageUrl,
+          notes: void 0,
+          author,
+          tags
+        };
+      }
+      const validation = this.validateRecipe(recipe);
+      if (!validation.isValid) {
+        throw new Error(
+          `[Food52] Contract validation failed: ${JSON.stringify(validation)}`
+        );
+      }
+      return recipe;
+    }
+  };
+
+  // sites/serious-eats.ts
+  var SeriousEatsParser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("seriouseats.com");
+    }
+    async parse(html3, url) {
+      const $2 = load(html3);
+      const jsonLd = this.extractJsonLD(html3);
+      if (jsonLd) {
+        const recipe2 = {
+          title: this.sanitizeText(jsonLd.name),
+          source: url,
+          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name,
+          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
+            text: this.sanitizeText(i)
+          })),
+          instructions: this.processInstructions(
+            (jsonLd.recipeInstructions || []).map(
+              (i) => typeof i === "string" ? i : i.text
+            )
+          ),
+          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
+          prepTime: jsonLd.prepTime,
+          cookTime: jsonLd.cookTime,
+          totalTime: jsonLd.totalTime,
+          servings: jsonLd.recipeYield?.toString(),
+          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
+        };
+        const validation = this.validateRecipe(recipe2);
+        if (validation.isValid) {
+          return recipe2;
+        }
+      }
+      const title = this.sanitizeText(
+        $2("h1.heading-1, h1.recipe-title, h1").first().text() || ""
+      );
+      const author = this.sanitizeText(
+        $2(".recipe-author, .author-name, [data-author], .by-author").first().text().replace(/^by\s*/i, "") || ""
+      );
+      let ingredients = [];
+      const ingredientSelectors = [
+        ".structured-ingredients__list-item",
+        ".recipe-ingredients li",
+        ".ingredients li",
+        ".mntl-structured-ingredients__list-item",
+        'section[data-module="StructuredIngredients"] li',
+        ".recipe-ingredient-group li"
+      ];
+      for (const selector of ingredientSelectors) {
+        const found = $2(selector).map((_, el) => ({
+          text: this.sanitizeText($2(el).text())
+        })).get();
+        if (found.length > 0) {
+          ingredients = found;
+          break;
+        }
+      }
+      let instructions = [];
+      const instructionSelectors = [
+        ".structured-instructions__list-item",
+        ".recipe-instructions li",
+        ".instructions li",
+        ".mntl-sc-block-group--LI .mntl-sc-block",
+        'section[data-module="StructuredInstructions"] li',
+        ".recipe-instruction-group li"
+      ];
+      for (const selector of instructionSelectors) {
+        const found = $2(selector).map((i, el) => ({
+          stepNumber: i + 1,
+          text: this.sanitizeText($2(el).text())
+        })).get();
+        if (found.length > 0) {
+          instructions = found;
+          break;
+        }
+      }
+      if (instructions.length === 0) {
+        const instructionBlocks = $2(".mntl-sc-block-html");
+        if (instructionBlocks.length > 0) {
+          instructions = instructionBlocks.map((i, el) => {
+            const text3 = this.sanitizeText($2(el).text());
+            return text3 && text3.length > 10 ? { stepNumber: i + 1, text: text3 } : null;
+          }).get().filter(Boolean);
+        }
+      }
+      let imageUrl = $2(".recipe-image img, .primary-image img, .hero-image img").first().attr("src");
+      if (!imageUrl) {
+        imageUrl = $2('meta[property="og:image"]').attr("content");
+      }
+      const prepTime = this.sanitizeText(
+        $2(
+          '.recipe-prep-time, .prep-time, [data-prep-time], [itemprop="prepTime"]'
+        ).first().text()
+      );
+      const cookTime = this.sanitizeText(
+        $2(
+          '.recipe-cook-time, .cook-time, [data-cook-time], [itemprop="cookTime"]'
+        ).first().text()
+      );
+      const totalTime = this.sanitizeText(
+        $2(
+          '.recipe-total-time, .total-time, [data-total-time], [itemprop="totalTime"]'
+        ).first().text()
+      );
+      const servings = this.sanitizeText(
+        $2(
+          '.recipe-servings, .servings, .recipe-yield, [data-servings], [itemprop="recipeYield"]'
+        ).first().text()
+      );
+      const notes = [];
+      $2(".recipe-notes li, .chef-note, .recipe-tips li").each((_, el) => {
+        const noteText = this.sanitizeText($2(el).text());
+        if (noteText && noteText.length > 0) {
+          notes.push(noteText);
+        }
+      });
+      const recipe = {
+        title,
+        source: url,
+        author: author || void 0,
+        ingredients,
+        instructions,
+        imageUrl: imageUrl || void 0,
+        prepTime: prepTime || void 0,
+        cookTime: cookTime || void 0,
+        totalTime: totalTime || void 0,
+        servings: servings || void 0,
+        notes: notes.length > 0 ? notes : void 0
+      };
+      return recipe;
+    }
+  };
+
   // sites/allrecipes.ts
   var AllRecipesParser = class extends BaseParser {
     canParse(url) {
@@ -15514,182 +15792,12 @@
     }
   };
 
-  // sites/loveandlemons.ts
-  var LoveAndLemonsParser = class extends BaseParser {
-    canParse(url) {
-      return url.includes("loveandlemons.com");
-    }
-    async parse(html3, url) {
-      const $2 = load(html3);
-      const pageTitle = $2("title").text();
-      const ogTitle = $2('meta[property="og:title"]').attr("content");
-      if (pageTitle && pageTitle.toLowerCase().includes("page not found") || ogTitle && ogTitle.toLowerCase().includes("page not found")) {
-        throw new Error("Love and Lemons: 404 or error page detected");
-      }
-      const jsonLd = this.extractJsonLD(html3);
-      if (jsonLd) {
-        const recipe2 = {
-          title: this.sanitizeText(jsonLd.name),
-          source: url,
-          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
-            text: this.sanitizeText(i)
-          })),
-          instructions: this.processInstructions(
-            (jsonLd.recipeInstructions || []).map(
-              (i) => typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
-            ).filter((text3) => typeof text3 === "string" && text3.length > 0)
-          ),
-          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
-          prepTime: jsonLd.prepTime,
-          cookTime: jsonLd.cookTime,
-          totalTime: jsonLd.totalTime,
-          servings: jsonLd.recipeYield?.toString(),
-          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
-        };
-        const validation = this.validateRecipe(recipe2);
-        if (validation.isValid) return recipe2;
-      }
-      const title = this.sanitizeText($2("h1.entry-title").first().text() || "");
-      const ingredients = $2(".wprm-recipe-ingredient").map((_, el) => ({ text: this.sanitizeText($2(el).text()) })).get();
-      const instructions = $2(".wprm-recipe-instruction-text").map((_, el) => ({
-        stepNumber: _ + 1,
-        text: this.sanitizeText($2(el).text())
-      })).get();
-      const recipe = {
-        title,
-        source: url,
-        ingredients,
-        instructions
-      };
-      return recipe;
-    }
-  };
-
-  // sites/food52.ts
-  var Food52Parser = class extends BaseParser {
-    canParse(url) {
-      return url.includes("food52.com");
-    }
-    async parse(html3, url) {
-      const isLocalFixture = url.endsWith(".html") || url.startsWith("tests/fixtures/html-samples/");
-      if (!isLocalFixture && html3.includes("Apologies, that page cannot be found.")) {
-        throw new Error(`[Food52] 404 page detected for URL: ${url}`);
-      }
-      const jsonLd = this.extractJsonLD(html3);
-      let recipe;
-      if (jsonLd) {
-        let author = void 0;
-        if (typeof jsonLd.author === "string") {
-          author = this.sanitizeText(jsonLd.author);
-        } else if (jsonLd.author && typeof jsonLd.author === "object" && jsonLd.author.name) {
-          author = this.sanitizeText(jsonLd.author.name);
-        }
-        let tags = void 0;
-        if (jsonLd.keywords) {
-          if (Array.isArray(jsonLd.keywords)) {
-            tags = jsonLd.keywords.map(
-              (k) => this.sanitizeText(k)
-            );
-          } else if (typeof jsonLd.keywords === "string") {
-            tags = jsonLd.keywords.split(/,|;/).map((k) => this.sanitizeText(k)).filter(Boolean);
-          }
-        }
-        if (jsonLd.recipeCategory) {
-          if (!tags) tags = [];
-          if (Array.isArray(jsonLd.recipeCategory)) {
-            tags.push(
-              ...jsonLd.recipeCategory.map(
-                (c) => this.sanitizeText(c)
-              )
-            );
-          } else if (typeof jsonLd.recipeCategory === "string") {
-            tags.push(
-              ...jsonLd.recipeCategory.split(/,|;/).map((c) => this.sanitizeText(c)).filter(Boolean)
-            );
-          }
-        }
-        recipe = {
-          title: this.sanitizeText(jsonLd.name),
-          source: url,
-          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
-            text: this.sanitizeText(i).replace(/\bundefined\s+/g, "").replace(/\s+undefined\b/g, "").trim()
-          })),
-          instructions: this.processInstructions(
-            (jsonLd.recipeInstructions || []).map(
-              (i) => typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
-            ).filter((text3) => typeof text3 === "string" && text3.length > 0)
-          ),
-          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
-          prepTime: jsonLd.prepTime,
-          cookTime: jsonLd.cookTime,
-          totalTime: jsonLd.totalTime,
-          servings: jsonLd.recipeYield?.toString(),
-          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0,
-          author,
-          tags
-        };
-      } else {
-        const $2 = load(html3);
-        const title = $2("h1").first().text().trim();
-        const ingredients = [];
-        $2('h2:contains("Ingredients")').nextAll("ul").first().find("li").each((_, el) => {
-          const text3 = $2(el).text().trim().replace(/\bundefined\s+/g, "").replace(/\s+undefined\b/g, "").trim();
-          if (text3) ingredients.push({ text: text3 });
-        });
-        const instructions = [];
-        $2('h2:contains("Directions")').nextAll("ul").first().find("li").each((i, el) => {
-          const text3 = $2(el).find("p").text().trim();
-          if (text3) instructions.push({ stepNumber: i + 1, text: text3 });
-        });
-        let imageUrl = $2("img").first().attr("src");
-        const ogImage = $2('meta[property="og:image"]').attr("content");
-        if (ogImage) imageUrl = ogImage;
-        let author = void 0;
-        const authorEl = $2('a[href*="/author/"]').first();
-        if (authorEl.length) {
-          author = authorEl.text().trim();
-        }
-        let tags = void 0;
-        const tagEls = $2(
-          'span.text-approved, .tags, meta[property="og:keywords"]'
-        );
-        if (tagEls.length) {
-          tags = [];
-          tagEls.each((_, el) => {
-            const t = $2(el).text().trim();
-            if (tags && t) tags.push(t);
-          });
-        }
-        recipe = {
-          title,
-          source: url,
-          ingredients,
-          instructions,
-          imageUrl,
-          notes: void 0,
-          author,
-          tags
-        };
-      }
-      const validation = this.validateRecipe(recipe);
-      if (!validation.isValid) {
-        throw new Error(
-          `[Food52] Contract validation failed: ${JSON.stringify(validation)}`
-        );
-      }
-      return recipe;
-    }
-  };
-
   // sites/epicurious.ts
   var EpicuriousParser = class extends BaseParser {
     canParse(url) {
       return url.includes("epicurious.com");
     }
     async parse(html3, url) {
-      if (html3.includes("Page Not Found | Epicurious")) {
-        throw new Error(`[Epicurious] 404 page detected for URL: ${url}`);
-      }
       const $2 = load(html3);
       const jsonLd = this.extractJsonLD(html3);
       if (jsonLd) {
@@ -15776,6 +15884,316 @@
       );
       const servings = this.sanitizeText(
         $2('.servings, .recipe-yield, [data-testid="Yield"]').first().text()
+      );
+      const recipe = {
+        title,
+        source: url,
+        author: author || void 0,
+        ingredients,
+        instructions,
+        imageUrl: imageUrl || void 0,
+        prepTime: prepTime || void 0,
+        cookTime: cookTime || void 0,
+        totalTime: totalTime || void 0,
+        servings: servings || void 0
+      };
+      return recipe;
+    }
+  };
+
+  // sites/damn-delicious.ts
+  var DamnDeliciousParser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("damndelicious.net");
+    }
+    async parse(html3, url) {
+      const $2 = load(html3);
+      const jsonLd = this.extractJsonLD(html3);
+      if (jsonLd) {
+        const recipe2 = {
+          title: this.sanitizeText(jsonLd.name),
+          source: url,
+          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name || "Chungah Rhee",
+          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
+            text: this.sanitizeText(i)
+          })),
+          instructions: this.processInstructions(
+            (jsonLd.recipeInstructions || []).map(
+              (i) => typeof i === "string" ? i : i?.text || ""
+            )
+          ),
+          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
+          prepTime: jsonLd.prepTime,
+          cookTime: jsonLd.cookTime,
+          totalTime: jsonLd.totalTime,
+          servings: jsonLd.recipeYield?.toString(),
+          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
+        };
+        const validation = this.validateRecipe(recipe2);
+        if (validation.isValid) {
+          return recipe2;
+        }
+      }
+      const title = this.sanitizeText(
+        $2("h1.entry-title, h1.post-title, h1").first().text() || ""
+      );
+      const author = this.sanitizeText(
+        $2(".author, .by-author").first().text() || "Chungah Rhee"
+      );
+      let ingredients = [];
+      const ingredientSelectors = [
+        ".recipe-card-ingredients li",
+        ".wp-block-recipe-card-ingredients li",
+        ".ingredients li",
+        ".recipe-ingredients li",
+        ".entry-content ul li",
+        'h3:contains("Ingredients") + ul li, h3:contains("INGREDIENTS") + ul li'
+      ];
+      for (const selector of ingredientSelectors) {
+        if (selector.includes(":contains")) {
+          const headerSelectors = [
+            'h3:contains("Ingredients")',
+            'h3:contains("INGREDIENTS")'
+          ];
+          for (const headerSelector of headerSelectors) {
+            const headerElements = $2(headerSelector.split(":contains")[0]).filter(
+              (_, el) => $2(el).text().toLowerCase().includes("ingredients")
+            );
+            if (headerElements.length > 0) {
+              const ingredientsList = headerElements.next("ul").find("li");
+              if (ingredientsList.length > 0) {
+                ingredients = ingredientsList.map((_, el) => ({
+                  text: this.sanitizeText($2(el).text())
+                })).get();
+                break;
+              }
+            }
+          }
+        } else {
+          const found = $2(selector).map((_, el) => ({
+            text: this.sanitizeText($2(el).text())
+          })).get();
+          if (found.length > 0) {
+            ingredients = found;
+            break;
+          }
+        }
+      }
+      let instructions = [];
+      const instructionSelectors = [
+        ".recipe-card-directions li",
+        ".wp-block-recipe-card-directions li",
+        ".instructions ol li",
+        ".recipe-instructions ol li",
+        ".entry-content ol li",
+        'h3:contains("Directions") + ol li, h3:contains("DIRECTIONS") + ol li'
+      ];
+      for (const selector of instructionSelectors) {
+        if (selector.includes(":contains")) {
+          const headerSelectors = [
+            'h3:contains("Directions")',
+            'h3:contains("DIRECTIONS")'
+          ];
+          for (const headerSelector of headerSelectors) {
+            const headerElements = $2(headerSelector.split(":contains")[0]).filter(
+              (_, el) => $2(el).text().toLowerCase().includes("directions")
+            );
+            if (headerElements.length > 0) {
+              const instructionsList = headerElements.next("ol").find("li");
+              if (instructionsList.length > 0) {
+                instructions = instructionsList.map((i, el) => ({
+                  stepNumber: i + 1,
+                  text: this.sanitizeText($2(el).text())
+                })).get();
+                break;
+              }
+            }
+          }
+        } else {
+          const found = $2(selector).map((i, el) => ({
+            stepNumber: i + 1,
+            text: this.sanitizeText($2(el).text())
+          })).get();
+          if (found.length > 0) {
+            instructions = found;
+            break;
+          }
+        }
+      }
+      let imageUrl = $2(
+        ".recipe-card-image img, .post-thumbnail img, .wp-post-image"
+      ).first().attr("src");
+      if (!imageUrl) {
+        imageUrl = $2('meta[property="og:image"]').attr("content");
+      }
+      const prepTime = this.sanitizeText(
+        $2('.recipe-card-prep-time, .prep-time, [itemprop="prepTime"]').first().text()
+      );
+      const cookTime = this.sanitizeText(
+        $2('.recipe-card-cook-time, .cook-time, [itemprop="cookTime"]').first().text()
+      );
+      const totalTime = this.sanitizeText(
+        $2('.recipe-card-total-time, .total-time, [itemprop="totalTime"]').first().text()
+      );
+      const servings = this.sanitizeText(
+        $2('.recipe-card-servings, .servings, [itemprop="recipeYield"]').first().text()
+      );
+      const recipe = {
+        title,
+        source: url,
+        author,
+        ingredients,
+        instructions,
+        imageUrl: imageUrl || void 0,
+        prepTime: prepTime || void 0,
+        cookTime: cookTime || void 0,
+        totalTime: totalTime || void 0,
+        servings: servings || void 0
+      };
+      return recipe;
+    }
+  };
+
+  // sites/loveandlemons.ts
+  var LoveAndLemonsParser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("loveandlemons.com");
+    }
+    async parse(html3, url) {
+      const $2 = load(html3);
+      const pageTitle = $2("title").text();
+      const ogTitle = $2('meta[property="og:title"]').attr("content");
+      if (pageTitle && pageTitle.toLowerCase().includes("page not found") || ogTitle && ogTitle.toLowerCase().includes("page not found")) {
+        throw new Error("Love and Lemons: 404 or error page detected");
+      }
+      const jsonLd = this.extractJsonLD(html3);
+      if (jsonLd) {
+        const recipe2 = {
+          title: this.sanitizeText(jsonLd.name),
+          source: url,
+          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
+            text: this.sanitizeText(i)
+          })),
+          instructions: this.processInstructions(
+            (jsonLd.recipeInstructions || []).map(
+              (i) => typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+            ).filter((text3) => typeof text3 === "string" && text3.length > 0)
+          ),
+          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
+          prepTime: jsonLd.prepTime,
+          cookTime: jsonLd.cookTime,
+          totalTime: jsonLd.totalTime,
+          servings: jsonLd.recipeYield?.toString(),
+          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
+        };
+        const validation = this.validateRecipe(recipe2);
+        if (validation.isValid) return recipe2;
+      }
+      const title = this.sanitizeText($2("h1.entry-title").first().text() || "");
+      const ingredients = $2(".wprm-recipe-ingredient").map((_, el) => ({ text: this.sanitizeText($2(el).text()) })).get();
+      const instructions = $2(".wprm-recipe-instruction-text").map((_, el) => ({
+        stepNumber: _ + 1,
+        text: this.sanitizeText($2(el).text())
+      })).get();
+      const recipe = {
+        title,
+        source: url,
+        ingredients,
+        instructions
+      };
+      return recipe;
+    }
+  };
+
+  // sites/food-and-wine.ts
+  var FoodAndWineParser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("foodandwine.com");
+    }
+    async parse(html3, url) {
+      const $2 = load(html3);
+      const jsonLd = this.extractJsonLD(html3);
+      if (jsonLd) {
+        const recipe2 = {
+          title: this.sanitizeText(jsonLd.name),
+          source: url,
+          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name,
+          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
+            text: this.sanitizeText(i)
+          })),
+          instructions: this.processInstructions(
+            (jsonLd.recipeInstructions || []).map(
+              (i) => typeof i === "string" ? i : i.text
+            )
+          ),
+          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
+          prepTime: jsonLd.prepTime,
+          cookTime: jsonLd.cookTime,
+          totalTime: jsonLd.totalTime,
+          servings: jsonLd.recipeYield?.toString(),
+          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
+        };
+        const validation = this.validateRecipe(recipe2);
+        if (validation.isValid) {
+          return recipe2;
+        }
+      }
+      const title = this.sanitizeText(
+        $2("h1.headline, h1.recipe-title, h1").first().text() || ""
+      );
+      const author = this.sanitizeText(
+        $2('.author-name, .by-author, .recipe-author, [rel="author"]').first().text().replace(/^by\s*/i, "") || ""
+      );
+      let ingredients = [];
+      const ingredientSelectors = [
+        ".recipe-ingredients li",
+        ".ingredients li",
+        ".recipe-ingredient",
+        ".mntl-structured-ingredients__list-item",
+        ".structured-ingredients li"
+      ];
+      for (const selector of ingredientSelectors) {
+        const found = $2(selector).map((_, el) => ({
+          text: this.sanitizeText($2(el).text())
+        })).get();
+        if (found.length > 0) {
+          ingredients = found;
+          break;
+        }
+      }
+      let instructions = [];
+      const instructionSelectors = [
+        ".recipe-instructions li",
+        ".instructions li",
+        ".recipe-instruction",
+        ".mntl-sc-block-group--LI .mntl-sc-block",
+        ".recipe-directions li"
+      ];
+      for (const selector of instructionSelectors) {
+        const found = $2(selector).map((i, el) => ({
+          stepNumber: i + 1,
+          text: this.sanitizeText($2(el).text())
+        })).get();
+        if (found.length > 0) {
+          instructions = found;
+          break;
+        }
+      }
+      let imageUrl = $2(".recipe-image img, .hero-image img, .primary-image img").first().attr("src");
+      if (!imageUrl) {
+        imageUrl = $2('meta[property="og:image"]').attr("content");
+      }
+      const prepTime = this.sanitizeText(
+        $2('.prep-time, .recipe-prep-time, [itemprop="prepTime"]').first().text()
+      );
+      const cookTime = this.sanitizeText(
+        $2('.cook-time, .recipe-cook-time, [itemprop="cookTime"]').first().text()
+      );
+      const totalTime = this.sanitizeText(
+        $2('.total-time, .recipe-total-time, [itemprop="totalTime"]').first().text()
+      );
+      const servings = this.sanitizeText(
+        $2('.servings, .recipe-servings, .recipe-yield, [itemprop="recipeYield"]').first().text()
       );
       const recipe = {
         title,
@@ -16022,398 +16440,6 @@
     }
   };
 
-  // sites/food-and-wine.ts
-  var FoodAndWineParser = class extends BaseParser {
-    canParse(url) {
-      return url.includes("foodandwine.com");
-    }
-    async parse(html3, url) {
-      const $2 = load(html3);
-      const jsonLd = this.extractJsonLD(html3);
-      if (jsonLd) {
-        const recipe2 = {
-          title: this.sanitizeText(jsonLd.name),
-          source: url,
-          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name,
-          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
-            text: this.sanitizeText(i)
-          })),
-          instructions: this.processInstructions(
-            (jsonLd.recipeInstructions || []).map(
-              (i) => typeof i === "string" ? i : i.text
-            )
-          ),
-          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
-          prepTime: jsonLd.prepTime,
-          cookTime: jsonLd.cookTime,
-          totalTime: jsonLd.totalTime,
-          servings: jsonLd.recipeYield?.toString(),
-          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
-        };
-        const validation = this.validateRecipe(recipe2);
-        if (validation.isValid) {
-          return recipe2;
-        }
-      }
-      const title = this.sanitizeText(
-        $2("h1.headline, h1.recipe-title, h1").first().text() || ""
-      );
-      const author = this.sanitizeText(
-        $2('.author-name, .by-author, .recipe-author, [rel="author"]').first().text().replace(/^by\s*/i, "") || ""
-      );
-      let ingredients = [];
-      const ingredientSelectors = [
-        ".recipe-ingredients li",
-        ".ingredients li",
-        ".recipe-ingredient",
-        ".mntl-structured-ingredients__list-item",
-        ".structured-ingredients li"
-      ];
-      for (const selector of ingredientSelectors) {
-        const found = $2(selector).map((_, el) => ({
-          text: this.sanitizeText($2(el).text())
-        })).get();
-        if (found.length > 0) {
-          ingredients = found;
-          break;
-        }
-      }
-      let instructions = [];
-      const instructionSelectors = [
-        ".recipe-instructions li",
-        ".instructions li",
-        ".recipe-instruction",
-        ".mntl-sc-block-group--LI .mntl-sc-block",
-        ".recipe-directions li"
-      ];
-      for (const selector of instructionSelectors) {
-        const found = $2(selector).map((i, el) => ({
-          stepNumber: i + 1,
-          text: this.sanitizeText($2(el).text())
-        })).get();
-        if (found.length > 0) {
-          instructions = found;
-          break;
-        }
-      }
-      let imageUrl = $2(".recipe-image img, .hero-image img, .primary-image img").first().attr("src");
-      if (!imageUrl) {
-        imageUrl = $2('meta[property="og:image"]').attr("content");
-      }
-      const prepTime = this.sanitizeText(
-        $2('.prep-time, .recipe-prep-time, [itemprop="prepTime"]').first().text()
-      );
-      const cookTime = this.sanitizeText(
-        $2('.cook-time, .recipe-cook-time, [itemprop="cookTime"]').first().text()
-      );
-      const totalTime = this.sanitizeText(
-        $2('.total-time, .recipe-total-time, [itemprop="totalTime"]').first().text()
-      );
-      const servings = this.sanitizeText(
-        $2('.servings, .recipe-servings, .recipe-yield, [itemprop="recipeYield"]').first().text()
-      );
-      const recipe = {
-        title,
-        source: url,
-        author: author || void 0,
-        ingredients,
-        instructions,
-        imageUrl: imageUrl || void 0,
-        prepTime: prepTime || void 0,
-        cookTime: cookTime || void 0,
-        totalTime: totalTime || void 0,
-        servings: servings || void 0
-      };
-      return recipe;
-    }
-  };
-
-  // sites/damn-delicious.ts
-  var DamnDeliciousParser = class extends BaseParser {
-    canParse(url) {
-      return url.includes("damndelicious.net");
-    }
-    async parse(html3, url) {
-      const $2 = load(html3);
-      const jsonLd = this.extractJsonLD(html3);
-      if (jsonLd) {
-        const recipe2 = {
-          title: this.sanitizeText(jsonLd.name),
-          source: url,
-          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name || "Chungah Rhee",
-          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
-            text: this.sanitizeText(i)
-          })),
-          instructions: this.processInstructions(
-            (jsonLd.recipeInstructions || []).map(
-              (i) => typeof i === "string" ? i : i?.text || ""
-            )
-          ),
-          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
-          prepTime: jsonLd.prepTime,
-          cookTime: jsonLd.cookTime,
-          totalTime: jsonLd.totalTime,
-          servings: jsonLd.recipeYield?.toString(),
-          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
-        };
-        const validation = this.validateRecipe(recipe2);
-        if (validation.isValid) {
-          return recipe2;
-        }
-      }
-      const title = this.sanitizeText(
-        $2("h1.entry-title, h1.post-title, h1").first().text() || ""
-      );
-      const author = this.sanitizeText(
-        $2(".author, .by-author").first().text() || "Chungah Rhee"
-      );
-      let ingredients = [];
-      const ingredientSelectors = [
-        ".recipe-card-ingredients li",
-        ".wp-block-recipe-card-ingredients li",
-        ".ingredients li",
-        ".recipe-ingredients li",
-        ".entry-content ul li",
-        'h3:contains("Ingredients") + ul li, h3:contains("INGREDIENTS") + ul li'
-      ];
-      for (const selector of ingredientSelectors) {
-        if (selector.includes(":contains")) {
-          const headerSelectors = [
-            'h3:contains("Ingredients")',
-            'h3:contains("INGREDIENTS")'
-          ];
-          for (const headerSelector of headerSelectors) {
-            const headerElements = $2(headerSelector.split(":contains")[0]).filter(
-              (_, el) => $2(el).text().toLowerCase().includes("ingredients")
-            );
-            if (headerElements.length > 0) {
-              const ingredientsList = headerElements.next("ul").find("li");
-              if (ingredientsList.length > 0) {
-                ingredients = ingredientsList.map((_, el) => ({
-                  text: this.sanitizeText($2(el).text())
-                })).get();
-                break;
-              }
-            }
-          }
-        } else {
-          const found = $2(selector).map((_, el) => ({
-            text: this.sanitizeText($2(el).text())
-          })).get();
-          if (found.length > 0) {
-            ingredients = found;
-            break;
-          }
-        }
-      }
-      let instructions = [];
-      const instructionSelectors = [
-        ".recipe-card-directions li",
-        ".wp-block-recipe-card-directions li",
-        ".instructions ol li",
-        ".recipe-instructions ol li",
-        ".entry-content ol li",
-        'h3:contains("Directions") + ol li, h3:contains("DIRECTIONS") + ol li'
-      ];
-      for (const selector of instructionSelectors) {
-        if (selector.includes(":contains")) {
-          const headerSelectors = [
-            'h3:contains("Directions")',
-            'h3:contains("DIRECTIONS")'
-          ];
-          for (const headerSelector of headerSelectors) {
-            const headerElements = $2(headerSelector.split(":contains")[0]).filter(
-              (_, el) => $2(el).text().toLowerCase().includes("directions")
-            );
-            if (headerElements.length > 0) {
-              const instructionsList = headerElements.next("ol").find("li");
-              if (instructionsList.length > 0) {
-                instructions = instructionsList.map((i, el) => ({
-                  stepNumber: i + 1,
-                  text: this.sanitizeText($2(el).text())
-                })).get();
-                break;
-              }
-            }
-          }
-        } else {
-          const found = $2(selector).map((i, el) => ({
-            stepNumber: i + 1,
-            text: this.sanitizeText($2(el).text())
-          })).get();
-          if (found.length > 0) {
-            instructions = found;
-            break;
-          }
-        }
-      }
-      let imageUrl = $2(
-        ".recipe-card-image img, .post-thumbnail img, .wp-post-image"
-      ).first().attr("src");
-      if (!imageUrl) {
-        imageUrl = $2('meta[property="og:image"]').attr("content");
-      }
-      const prepTime = this.sanitizeText(
-        $2('.recipe-card-prep-time, .prep-time, [itemprop="prepTime"]').first().text()
-      );
-      const cookTime = this.sanitizeText(
-        $2('.recipe-card-cook-time, .cook-time, [itemprop="cookTime"]').first().text()
-      );
-      const totalTime = this.sanitizeText(
-        $2('.recipe-card-total-time, .total-time, [itemprop="totalTime"]').first().text()
-      );
-      const servings = this.sanitizeText(
-        $2('.recipe-card-servings, .servings, [itemprop="recipeYield"]').first().text()
-      );
-      const recipe = {
-        title,
-        source: url,
-        author,
-        ingredients,
-        instructions,
-        imageUrl: imageUrl || void 0,
-        prepTime: prepTime || void 0,
-        cookTime: cookTime || void 0,
-        totalTime: totalTime || void 0,
-        servings: servings || void 0
-      };
-      return recipe;
-    }
-  };
-
-  // sites/serious-eats.ts
-  var SeriousEatsParser = class extends BaseParser {
-    canParse(url) {
-      return url.includes("seriouseats.com");
-    }
-    async parse(html3, url) {
-      const $2 = load(html3);
-      const jsonLd = this.extractJsonLD(html3);
-      if (jsonLd) {
-        const recipe2 = {
-          title: this.sanitizeText(jsonLd.name),
-          source: url,
-          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name,
-          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
-            text: this.sanitizeText(i)
-          })),
-          instructions: this.processInstructions(
-            (jsonLd.recipeInstructions || []).map(
-              (i) => typeof i === "string" ? i : i.text
-            )
-          ),
-          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
-          prepTime: jsonLd.prepTime,
-          cookTime: jsonLd.cookTime,
-          totalTime: jsonLd.totalTime,
-          servings: jsonLd.recipeYield?.toString(),
-          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
-        };
-        const validation = this.validateRecipe(recipe2);
-        if (validation.isValid) {
-          return recipe2;
-        }
-      }
-      const title = this.sanitizeText(
-        $2("h1.heading-1, h1.recipe-title, h1").first().text() || ""
-      );
-      const author = this.sanitizeText(
-        $2(".recipe-author, .author-name, [data-author], .by-author").first().text().replace(/^by\s*/i, "") || ""
-      );
-      let ingredients = [];
-      const ingredientSelectors = [
-        ".structured-ingredients__list-item",
-        ".recipe-ingredients li",
-        ".ingredients li",
-        ".mntl-structured-ingredients__list-item",
-        'section[data-module="StructuredIngredients"] li',
-        ".recipe-ingredient-group li"
-      ];
-      for (const selector of ingredientSelectors) {
-        const found = $2(selector).map((_, el) => ({
-          text: this.sanitizeText($2(el).text())
-        })).get();
-        if (found.length > 0) {
-          ingredients = found;
-          break;
-        }
-      }
-      let instructions = [];
-      const instructionSelectors = [
-        ".structured-instructions__list-item",
-        ".recipe-instructions li",
-        ".instructions li",
-        ".mntl-sc-block-group--LI .mntl-sc-block",
-        'section[data-module="StructuredInstructions"] li',
-        ".recipe-instruction-group li"
-      ];
-      for (const selector of instructionSelectors) {
-        const found = $2(selector).map((i, el) => ({
-          stepNumber: i + 1,
-          text: this.sanitizeText($2(el).text())
-        })).get();
-        if (found.length > 0) {
-          instructions = found;
-          break;
-        }
-      }
-      if (instructions.length === 0) {
-        const instructionBlocks = $2(".mntl-sc-block-html");
-        if (instructionBlocks.length > 0) {
-          instructions = instructionBlocks.map((i, el) => {
-            const text3 = this.sanitizeText($2(el).text());
-            return text3 && text3.length > 10 ? { stepNumber: i + 1, text: text3 } : null;
-          }).get().filter(Boolean);
-        }
-      }
-      let imageUrl = $2(".recipe-image img, .primary-image img, .hero-image img").first().attr("src");
-      if (!imageUrl) {
-        imageUrl = $2('meta[property="og:image"]').attr("content");
-      }
-      const prepTime = this.sanitizeText(
-        $2(
-          '.recipe-prep-time, .prep-time, [data-prep-time], [itemprop="prepTime"]'
-        ).first().text()
-      );
-      const cookTime = this.sanitizeText(
-        $2(
-          '.recipe-cook-time, .cook-time, [data-cook-time], [itemprop="cookTime"]'
-        ).first().text()
-      );
-      const totalTime = this.sanitizeText(
-        $2(
-          '.recipe-total-time, .total-time, [data-total-time], [itemprop="totalTime"]'
-        ).first().text()
-      );
-      const servings = this.sanitizeText(
-        $2(
-          '.recipe-servings, .servings, .recipe-yield, [data-servings], [itemprop="recipeYield"]'
-        ).first().text()
-      );
-      const notes = [];
-      $2(".recipe-notes li, .chef-note, .recipe-tips li").each((_, el) => {
-        const noteText = this.sanitizeText($2(el).text());
-        if (noteText && noteText.length > 0) {
-          notes.push(noteText);
-        }
-      });
-      const recipe = {
-        title,
-        source: url,
-        author: author || void 0,
-        ingredients,
-        instructions,
-        imageUrl: imageUrl || void 0,
-        prepTime: prepTime || void 0,
-        cookTime: cookTime || void 0,
-        totalTime: totalTime || void 0,
-        servings: servings || void 0,
-        notes: notes.length > 0 ? notes : void 0
-      };
-      return recipe;
-    }
-  };
-
   // sites/alexandras-kitchen.ts
   var AlexandrasKitchenParser = class extends BaseParser {
     canParse(url) {
@@ -16597,112 +16623,6 @@
       return recipe;
     }
   };
-
-  // sites/anthony-kitchen.ts
-  var AnthonyKitchenParser = class extends BaseParser {
-    canParse(url) {
-      return url.includes("theanthonykitchen.com");
-    }
-    async parse(html3, url) {
-      const $2 = load(html3);
-      const jsonLd = this.extractJsonLD(html3);
-      if (jsonLd) {
-        const recipe2 = {
-          title: this.sanitizeText(jsonLd.name),
-          source: url,
-          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
-            text: this.sanitizeText(i)
-          })),
-          instructions: this.processInstructions(
-            (jsonLd.recipeInstructions || []).flatMap((section) => {
-              if (typeof section === "string") {
-                return [this.sanitizeText(section)];
-              }
-              if (section.itemListElement && Array.isArray(section.itemListElement)) {
-                return section.itemListElement.map(
-                  (step) => typeof step === "string" ? this.sanitizeText(step) : this.sanitizeText(step.text || step.name || "")
-                );
-              }
-              return [this.sanitizeText(section.text || section.name || "")];
-            }).filter((text3) => typeof text3 === "string" && text3.length > 0)
-          ),
-          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
-          prepTime: jsonLd.prepTime,
-          cookTime: jsonLd.cookTime,
-          totalTime: jsonLd.totalTime,
-          servings: jsonLd.recipeYield?.toString(),
-          notes: jsonLd.description ? [this.sanitizeText(jsonLd.description)] : void 0
-        };
-        const validation = this.validateRecipe(recipe2);
-        if (validation.isValid) return recipe2;
-      }
-      const title = this.sanitizeText($2("h1.entry-title, h1.wp-block-post-title").first().text() || "");
-      const ingredients = $2(".wp-block-recipe-ingredient, .recipe-ingredient").map((_, el) => ({ text: this.sanitizeText($2(el).text()) })).get();
-      const instructions = $2(".wp-block-recipe-instruction, .recipe-instruction").map((_, el) => ({
-        stepNumber: _ + 1,
-        text: this.sanitizeText($2(el).text())
-      })).get();
-      const recipe = {
-        title,
-        source: url,
-        ingredients,
-        instructions
-      };
-      return recipe;
-    }
-  };
-
-  // parser-registry.ts
-  var _ParserRegistry = class _ParserRegistry {
-    constructor() {
-      this.parsers = [];
-      this.parsers.push(
-        new SmittenKitchenParser(),
-        new FoodNetworkParser(),
-        new NYTCookingParser(),
-        new AllRecipesParser(),
-        new LoveAndLemonsParser(),
-        new Food52Parser(),
-        new EpicuriousParser(),
-        new WashingtonPostParser(),
-        new FoodAndWineParser(),
-        new DamnDeliciousParser(),
-        new SeriousEatsParser(),
-        new AlexandrasKitchenParser(),
-        new LemonsAndZestParser(),
-        new AnthonyKitchenParser()
-      );
-    }
-    static getInstance() {
-      if (!_ParserRegistry.instance) {
-        _ParserRegistry.instance = new _ParserRegistry();
-      }
-      return _ParserRegistry.instance;
-    }
-    registerParser(urlPattern, parserClass) {
-      const parser = new parserClass();
-      this.parsers.push(parser);
-    }
-    async parseRecipe(html3, url) {
-      const parser = this.parsers.find((p) => p.canParse(url));
-      if (!parser) {
-        console.warn(`No parser found for URL: ${url}`);
-        return null;
-      }
-      try {
-        const recipe = await parser.parse(html3, url);
-        return recipe;
-      } catch (err) {
-        console.error(`Error parsing recipe from ${url}:`, err);
-        return null;
-      }
-    }
-    getParserForUrl(url) {
-      return this.parsers.find((p) => p.canParse(url)) || null;
-    }
-  };
-  _ParserRegistry.instance = null;
-  var ParserRegistry = _ParserRegistry;
 
   // index.ts
   var registry = ParserRegistry.getInstance();
