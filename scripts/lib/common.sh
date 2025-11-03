@@ -262,6 +262,18 @@ print_usage_from_header() {
 }
 
 ################################################################################
+# iOS Simulator Management
+################################################################################
+
+# Get the UDID of the standard iPhone simulator (iPhone 17 Pro Max)
+# Returns the UDID or empty string if not found
+get_standard_ios_simulator() {
+    local udid
+    udid=$(xcrun simctl list devices available 2>/dev/null | grep "iPhone 17 Pro Max" | head -1 | grep -o '([A-F0-9-]\{36\})' | tr -d '()' || true)
+    echo "$udid"
+}
+
+################################################################################
 # Initialization
 ################################################################################
 

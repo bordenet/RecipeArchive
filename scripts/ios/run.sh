@@ -56,36 +56,29 @@ if [[ ! -f ".env" ]]; then
     log_debug "Created .env file"
 fi
 
-# Try to find a shutdown simulator
+# Use standard iPhone 17 Pro Max simulator
 log_section "Finding iOS Simulator"
 
-SIMULATOR_ID=$(xcrun simctl list devices iPhone | grep -E "iPhone [0-9]+" | grep "Shutdown" | head -1 | grep -o '[A-F0-9-]\{36\}' || true)
+SIMULATOR_ID=$(get_standard_ios_simulator)
 
 if [[ -z "$SIMULATOR_ID" ]]; then
-    # Try any iPhone simulator
-    SIMULATOR_ID=$(xcrun simctl list devices | grep "Shutdown" | grep "iPhone" | head -1 | grep -o '[A-F0-9-]\{36\}' || true)
+    die "iPhone 17 Pro Max simulator not found. Please create it in Xcode."
 fi
 
-if [[ -n "$SIMULATOR_ID" ]]; then
-    log_info "Booting iOS simulator: $SIMULATOR_ID"
-    xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || log_debug "Simulator already booted or boot failed"
-    open -a Simulator
+log_info "Using iPhone 17 Pro Max: $SIMULATOR_ID"
+xcrun simctl boot "$SIMULATOR_ID" 2>/dev/null || log_debug "Simulator already booted"
+open -a Simulator
 
-    log_info "Waiting for simulator to be ready (5 seconds)..."
-    sleep 5
+log_info "Waiting for simulator to be ready (5 seconds)..."
+sleep 5
 
-    log_section "Launching App"
-    if flutter devices | grep -q "iOS Simulator"; then
-        if ! flutter run -d "iOS Simulator"; then
-            die "Flutter run failed"
-        fi
-    else
-        log_warning "Flutter not detecting simulator yet. Trying direct run..."
-        if ! flutter run; then
-            die "Flutter run failed"
-        fi
-    fi
-else
+log_section "Launching App"
+if ! flutter run -d "$SIMULATOR_ID"; then
+    die "Flutter run failed"
+fi
+
+if false; then
+    # Dead code branch - keeping for reference but never executed
     log_warning "No shutdown iOS simulator found"
     log_info "Opening Simulator app..."
     open -a Simulator

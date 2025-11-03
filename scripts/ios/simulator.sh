@@ -49,34 +49,27 @@ require_command "flutter" "brew install flutter"
 require_command "xcrun" "xcode-select --install"
 
 if [[ -z "$UDID" ]]; then
-    # Auto-detect simulator
-    log_section "Auto-detecting Simulator"
-    log_info "Opening iOS Simulator app..."
+    # Use standard iPhone 17 Pro Max simulator
+    log_section "Launching iPhone 17 Pro Max Simulator"
+    UDID=$(get_standard_ios_simulator)
 
-    open -a Simulator
-
-    log_info "Waiting for Simulator to initialize (8 seconds)..."
-    sleep 8
-
-    log_info "Running Flutter app on auto-detected simulator..."
-    if ! flutter run -d ios-simulator --no-sound-null-safety; then
-        die "Failed to launch app on simulator"
+    if [[ -z "$UDID" ]]; then
+        die "iPhone 17 Pro Max simulator not found. Please create it in Xcode."
     fi
-else
-    # Target specific simulator
-    log_section "Launching Specific Simulator"
-    log_info "Targeting simulator with UDID: $UDID"
 
-    xcrun simctl boot "$UDID" 2>/dev/null || log_debug "Simulator already booted or boot failed"
-    open -a Simulator
+    log_info "Using iPhone 17 Pro Max: $UDID"
+fi
 
-    log_info "Waiting for simulator to initialize (8 seconds)..."
-    sleep 8
+# Boot and launch
+xcrun simctl boot "$UDID" 2>/dev/null || log_debug "Simulator already booted"
+open -a Simulator
 
-    log_info "Running Flutter app on $UDID..."
-    if ! flutter run -d "$UDID"; then
-        die "Failed to launch app on simulator"
-    fi
+log_info "Waiting for simulator to initialize (8 seconds)..."
+sleep 8
+
+log_info "Running Flutter app on iPhone 17 Pro Max..."
+if ! flutter run -d "$UDID"; then
+    die "Failed to launch app on simulator"
 fi
 
 log_success "iOS app launched successfully!"

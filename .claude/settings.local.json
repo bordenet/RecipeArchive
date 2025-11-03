@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(./scripts/extensions/helper.sh:*)",
-      "Bash(./scripts/test-all-scripts.sh:*)"
+      "Bash(./scripts/test-all-scripts.sh:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash(source:*)",
+      "Bash(get_standard_ios_simulator)",
+      "Bash(xcrun simctl:*)"
     ],
     "deny": [],
     "ask": []
