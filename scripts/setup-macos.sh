@@ -1338,7 +1338,7 @@ print_info "Setup completed! Summary and next steps..."
 # Installation summary (use while loop with echo -e to interpret ANSI escape sequences)
 while IFS= read -r line || [ -n "$line" ]; do echo -e "$line"; done <<EOM
 
-${GREEN}✅ INSTALLATION SUMMARY${NC}
+${COLOR_GREEN}✅ INSTALLATION SUMMARY${COLOR_RESET}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🛠️  Core Tools Installed:
@@ -1381,60 +1381,60 @@ ${GREEN}✅ INSTALLATION SUMMARY${NC}
    • All npm dependencies installed
    • Extension packages created
 
-${YELLOW}📋 MANUAL STEPS REQUIRED${NC}
+${COLOR_YELLOW}📋 MANUAL STEPS REQUIRED${COLOR_RESET}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. ${BLUE}Load Chrome Extension:${NC}
+1. ${COLOR_BLUE}Load Chrome Extension:${COLOR_RESET}
    • Open Chrome → chrome://extensions/
    • Enable "Developer Mode"
    • Click "Load unpacked" → select extensions/chrome/
 
-2. ${BLUE}Load Safari Extension:${NC}
+2. ${COLOR_BLUE}Load Safari Extension:${COLOR_RESET}
    • Open Safari → Preferences → Extensions
    • Enable Developer Extensions
    • Load extensions/safari/ (may require Xcode build)
 
-3. ${BLUE}Configure AWS Credentials:${NC}
+3. ${COLOR_BLUE}Configure AWS Credentials:${COLOR_RESET}
    • Run: aws configure
    • Enter AWS Access Key, Secret Key, Region (us-west-2)
    • Verify: aws sts get-caller-identity
 
-4. ${BLUE}Deploy AWS Infrastructure:${NC}
+4. ${COLOR_BLUE}Deploy AWS Infrastructure:${COLOR_RESET}
    • Navigate: cd aws-backend/infrastructure
    • Deploy: npm run deploy
    • Note the outputs (API Gateway URL, Cognito User Pool ID)
 
-5. ${BLUE}Test Monorepo Setup:${NC}
+5. ${COLOR_BLUE}Test Monorepo Setup:${COLOR_RESET}
    • Restart terminal to load environment variables
    • Run: npm run lint (should pass)
    • Run: npm run type-check (should pass)
    • Run: npm run build (should build shared types)
 
-6. ${BLUE}Test Extensions:${NC}
+6. ${COLOR_BLUE}Test Extensions:${COLOR_RESET}
    • Run Chrome tests: cd extensions/chrome && npm test
    • Run Safari tests: cd extensions/safari && npm test
    • Run compatibility: npm run test (from root)
 
-7. ${BLUE}MCP Server Setup:${NC}
+7. ${COLOR_BLUE}MCP Server Setup:${COLOR_RESET}
    • Claude Desktop: Add GitHub Personal Access Token to config file
    • Claude Desktop: Restart application to load MCP servers
    • Claude Code: Set GITHUB_TOKEN environment variable for authentication
    • Test MCP functionality: "List my GitHub repositories"
    • Optional: Install AWS MCP servers with Python/uvx
 
-8. ${BLUE}Mobile Development Setup:${NC}
+8. ${COLOR_BLUE}Mobile Development Setup:${COLOR_RESET}
    • Complete Android Studio setup (install SDK, accept licenses)
    • Install Xcode from App Store (~15GB download)
    • Configure Apple Developer account in Xcode
    • Run: flutter doctor (should show no issues)
    • Test mobile validation: ./validate-monorepo.sh --mobile
 
-9. ${BLUE}Mobile Environment Variables:${NC}
+9. ${COLOR_BLUE}Mobile Environment Variables:${COLOR_RESET}
    • Update .env with actual Android SDK paths
    • Add iOS development team ID and bundle identifier
    • Configure mobile app signing certificates
 
-${GREEN}🚀 QUICK START COMMANDS${NC}
+${COLOR_GREEN}🚀 QUICK START COMMANDS${COLOR_RESET}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Test monorepo setup
@@ -1465,7 +1465,7 @@ npm run format
 cp extensions/chrome/config.sample.json extensions/chrome/config.json
 cp extensions/safari/config.sample.json extensions/safari/config.json
 
-${BLUE}📖 Documentation:${NC}
+${COLOR_BLUE}📖 Documentation:${COLOR_RESET}
 • Project guide: ../docs/development/claude-context.md
 • Chrome extension: ./extensions/chrome/README.md  
 • Safari extension: ./extensions/safari/README.md
