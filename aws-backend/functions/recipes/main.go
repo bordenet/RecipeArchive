@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,10 +35,19 @@ var (
 	sqsClient  *sqs.Client
 	s3Client   *s3.Client
 	bucketName string
+	logger     *slog.Logger
 
 	initOnce sync.Once
 	initErr  error
 )
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // NormalizationMessage represents an SQS message for async recipe normalization
 type NormalizationMessage struct {
@@ -120,7 +129,9 @@ func fetchHTMLFromURL(ctx context.Context, urlStr string) (string, error) {
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+			logger.Warn("failed to close response body",
+				"error", closeErr,
+			)
 		}
 	}()
 
@@ -192,7 +203,7 @@ func queueRecipeNormalization(ctx context.Context, userID, recipeID string) erro
 		return fmt.Errorf("failed to send normalization message: %w", err)
 	}
 
-	fmt.Printf("📤 Queued normalization job for recipe %s\n", recipeID)
+	logger.Info("queued normalization job", "recipeID", recipeID)
 	return nil
 }
 
@@ -391,7 +402,7 @@ func main() {
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Initialize AWS clients lazily (only on first invocation, cached afterwards)
 	if err := initAWSClients(ctx); err != nil {
-		log.Printf("ERROR: Failed to initialize AWS clients: %v", err)
+		logger.Error("failed to initialize AWS clients", "error", err)
 		response, _ := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "INITIALIZATION_ERROR",
@@ -460,12 +471,12 @@ func getUserIDFromRequest(request events.APIGatewayProxyRequest) string {
 	// Use enhanced tenant validation for better security
 	validation, err := utils.ValidateTenantAccessSimple(request)
 	if err != nil {
-		fmt.Printf("Tenant validation error: %v\n", err)
+		logger.Error("tenant validation error", "error", err)
 		return ""
 	}
 
 	if !validation.Valid {
-		fmt.Printf("Tenant validation failed: %s\n", validation.Error)
+		logger.Error("tenant validation failed", "error", validation.Error)
 		return ""
 	}
 
@@ -529,7 +540,7 @@ func downloadAndUploadImage(ctx context.Context, imageURL string, userID string,
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+			logger.Warn("failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -711,7 +722,7 @@ func handleListRecipes(ctx context.Context, userID string, queryParams map[strin
 	// Get all recipes for user from S3
 	allRecipes, err := recipeDB.ListRecipes(userID)
 	if err != nil {
-		log.Printf("ERROR: Failed to list recipes for user %s: %v\n", userID, err)
+		logger.Error("failed to list recipes", "userID", userID, "error", err)
 		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "INTERNAL_ERROR",
@@ -949,7 +960,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	hasValidURL := recipeData.SourceURL != "" && (strings.HasPrefix(recipeData.SourceURL, "http://") || strings.HasPrefix(recipeData.SourceURL, "https://"))
 
 	if len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 && !hasHTML && !hasValidURL {
-		log.Printf("ERROR: ERROR: Rejected recipe submission with 0 ingredients AND 0 instructions and no HTML/URL from %s\n", recipeData.SourceURL)
+		logger.Error("rejected recipe submission with no content", "sourceURL", recipeData.SourceURL)
 		response, responseErr := utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":      "VALIDATION_ERROR",
@@ -965,19 +976,19 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	}
 
 	if hasHTML && len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 {
-		fmt.Printf("📄 INFO: Empty recipe with HTML provided - will attempt backend parsing from %s\n", recipeData.SourceURL)
+		logger.Info("empty recipe with HTML provided", "sourceURL", recipeData.SourceURL)
 	}
 
 	if !hasHTML && hasValidURL && len(recipeData.Ingredients) == 0 && len(recipeData.Instructions) == 0 {
-		fmt.Printf("🌐 INFO: Empty recipe with valid URL - will fetch and parse HTML from %s\n", recipeData.SourceURL)
+		logger.Info("empty recipe with valid URL", "sourceURL", recipeData.SourceURL)
 	}
 
 	// Warn about incomplete recipes but allow them (bookmarks or partial data)
 	if len(recipeData.Ingredients) == 0 {
-		log.Printf("WARN: WARN: Recipe has 0 ingredients (may be bookmark): %s\n", recipeData.SourceURL)
+		logger.Warn("recipe has zero ingredients", "sourceURL", recipeData.SourceURL)
 	}
 	if len(recipeData.Instructions) == 0 {
-		log.Printf("WARN: WARN: Recipe has 0 instructions (may be bookmark): %s\n", recipeData.SourceURL)
+		logger.Warn("recipe has zero instructions", "sourceURL", recipeData.SourceURL)
 	}
 
 	// Check for existing recipe with same source URL (de-duplication)
@@ -1010,13 +1021,13 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	// If HTML is not provided (Chrome/Firefox via Share Extension), attempt to fetch it
 	var htmlContent string
 	if recipeData.WebArchiveHTML == nil || *recipeData.WebArchiveHTML == "" {
-		fmt.Printf("📡 [BEST-EFFORT] No HTML provided, attempting to fetch from %s\n", sourceURL)
+		logger.Info("attempting best-effort HTML fetch", "sourceURL", sourceURL)
 
 		html, err := fetchHTMLFromURL(ctx, sourceURL)
 		if err != nil {
 			// Fetch failed - this is expected for paywalled sites
-			log.Printf("WARN: [BEST-EFFORT] Failed to fetch HTML: %v\n", err)
-			log.Printf("INFO: [BEST-EFFORT] Saving as bookmark - use Safari Web Extension for full parsing\n")
+			logger.Warn("best-effort HTML fetch failed", "error", err)
+			logger.Info("saving as bookmark")
 
 			// Update title to indicate bookmark status
 			domain := getDomainFromURL(sourceURL)
@@ -1024,24 +1035,24 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 			// Don't parse HTML - just save as bookmark
 		} else {
 			// Successfully fetched HTML
-			log.Printf("INFO: [BEST-EFFORT] HTML fetched successfully (%d bytes)\n", len(html))
+			logger.Info("HTML fetched successfully", "bytes", len(html))
 			htmlContent = html
 			recipeData.WebArchiveHTML = &html
 		}
 	} else {
 		// HTML was provided (Safari Web Extension premium path)
-		fmt.Printf("🌟 [PREMIUM] HTML provided by client (%d bytes) - Safari Web Extension path\n", len(*recipeData.WebArchiveHTML))
+		logger.Info("HTML provided by client", "bytes", len(*recipeData.WebArchiveHTML), "source", "web_extension")
 		htmlContent = *recipeData.WebArchiveHTML
 	}
 
 	// PARSE HTML TO EXTRACT RECIPE DATA
 	// If we have HTML content and recipe is missing ingredients/instructions, parse it
 	if htmlContent != "" && (len(recipeData.Ingredients) == 0 || len(recipeData.Instructions) == 0) {
-		fmt.Printf("🔍 Attempting to parse HTML for recipe data...\n")
+		logger.Info("attempting to parse HTML")
 		parsedRecipe, err := parseHTMLToRecipe(htmlContent, sourceURL)
 		if err != nil {
-			log.Printf("WARN: HTML parsing failed: %v\n", err)
-			log.Printf("INFO: Continuing with existing recipe data (may be incomplete)\n")
+			logger.Warn("HTML parsing failed", "error", err)
+			logger.Info("continuing with existing recipe data")
 		} else {
 			// Merge parsed data with existing data (existing data takes precedence if present)
 			// Update title if it's empty, a bookmark, or a placeholder from iOS
@@ -1074,9 +1085,10 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 				recipeData.Servings = parsedRecipe.Servings
 			}
 
-			log.Printf("INFO: HTML parsing successful - merged data into recipe\n")
-			fmt.Printf("📊 Recipe data: %d ingredients, %d instructions\n",
-				len(recipeData.Ingredients), len(recipeData.Instructions))
+			logger.Info("HTML parsing successful")
+			logger.Info("recipe data merged",
+				"ingredients", len(recipeData.Ingredients),
+				"instructions", len(recipeData.Instructions))
 		}
 	}
 
@@ -1088,36 +1100,36 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	// If MainPhotoURL is null but we have Web Archive images, use the first one
 	if (recipeData.MainPhotoURL == nil || *recipeData.MainPhotoURL == "") &&
 		recipeData.WebArchiveImages != nil && len(*recipeData.WebArchiveImages) > 0 {
-		fmt.Printf("📦 MainPhotoURL is null, but found %d Web Archive images - using first image\n", len(*recipeData.WebArchiveImages))
+		logger.Info("using first Web Archive image", "count", len(*recipeData.WebArchiveImages))
 		firstImage := (*recipeData.WebArchiveImages)[0]
 		imageURL := firstImage.URL
 		recipeData.MainPhotoURL = &imageURL
-		log.Printf("INFO: Set MainPhotoURL from Web Archive: %s\n", imageURL)
+		logger.Info("set MainPhotoURL from Web Archive", "imageURL", imageURL)
 	}
 
 	if recipeData.MainPhotoURL != nil && *recipeData.MainPhotoURL != "" {
 		imageURL := *recipeData.MainPhotoURL
-		fmt.Printf("🔍 Processing image URL: %s\n", imageURL)
+		logger.Info("processing image URL", "imageURL", imageURL)
 
 		// Check if it's already an S3 URL
 		if err := validateImageURL(recipeData.MainPhotoURL); err != nil {
 			// External URL - check if we have it in Web Archive images first
 			var webArchiveImageData *models.WebArchiveImage
 			if recipeData.WebArchiveImages != nil && len(*recipeData.WebArchiveImages) > 0 {
-				fmt.Printf("📦 Checking %d Web Archive images for match...\n", len(*recipeData.WebArchiveImages))
+				logger.Info("checking Web Archive images", "count", len(*recipeData.WebArchiveImages))
 
 				// Try exact URL match first
 				for _, img := range *recipeData.WebArchiveImages {
 					if img.URL == imageURL {
 						webArchiveImageData = &img
-						log.Printf("INFO: Found exact URL match in Web Archive: %s\n", imageURL)
+						logger.Info("found exact URL match in Web Archive", "imageURL", imageURL)
 						break
 					}
 				}
 
 				// If no exact match, select BEST image (largest, skip icons/logos)
 				if webArchiveImageData == nil {
-					log.Printf("INFO: No exact URL match - selecting best Web Archive image\n")
+					logger.Info("selecting best Web Archive image")
 
 					var largestImage *models.WebArchiveImage
 					var largestSize int
@@ -1126,7 +1138,7 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 						// Skip tiny images (likely icons/logos)
 						dataSize := len(img.Data)
 						if dataSize < 5000 { // Skip images < 5KB (too small for recipe photos)
-							fmt.Printf("   Skipping image %d: too small (%d bytes)\n", i+1, dataSize)
+							logger.Debug("skipping small image", "index", i+1, "bytes", dataSize)
 							continue
 						}
 
@@ -1140,18 +1152,18 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 							if !isPNG || largestImage == nil {
 								largestImage = &(*recipeData.WebArchiveImages)[i]
 								largestSize = dataSize
-								fmt.Printf("   Image %d: %s (%d bytes) - current best\n", i+1, img.MimeType, dataSize)
+								logger.Debug("candidate image", "index", i+1, "mimeType", img.MimeType, "bytes", dataSize)
 							}
 						}
 					}
 
 					if largestImage != nil {
 						webArchiveImageData = largestImage
-						log.Printf("INFO: Selected largest image (%d bytes, %s)\n", largestSize, webArchiveImageData.MimeType)
-						fmt.Printf("   Parsed URL:  %s\n", imageURL)
-						fmt.Printf("   Archive URL: %s\n", webArchiveImageData.URL)
+						logger.Info("selected largest image", "bytes", largestSize, "mimeType", webArchiveImageData.MimeType)
+						logger.Debug("parsed URL", "url", imageURL)
+						logger.Debug("archive URL", "url", webArchiveImageData.URL)
 					} else {
-						log.Printf("WARN: No suitable images found (all too small)\n")
+						logger.Warn("no suitable images found")
 					}
 				}
 			}
@@ -1161,35 +1173,35 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 
 			if webArchiveImageData != nil {
 				// Upload from Web Archive data (avoids CDN restrictions)
-				fmt.Printf("📤 Uploading image from Web Archive data (%s)\n", webArchiveImageData.MimeType)
+				logger.Info("uploading image from Web Archive", "mimeType", webArchiveImageData.MimeType)
 				s3URL, uploadErr := uploadWebArchiveImage(ctx, webArchiveImageData, userID, tempRecipeID)
 				if uploadErr != nil {
-					log.Printf("WARN: Web Archive image upload failed: %s - recipe will save without image\n", uploadErr.Error())
+					logger.Warn("Web Archive image upload failed", "error", uploadErr.Error())
 					recipeData.MainPhotoURL = nil
 				} else {
-					log.Printf("INFO: Image uploaded to S3 from Web Archive: %s\n", s3URL)
+					logger.Info("image uploaded from Web Archive", "s3URL", s3URL)
 					recipeData.MainPhotoURL = &s3URL
 				}
 			} else {
 				// Fallback: Download from external URL (only if no Web Archive images available)
-				fmt.Printf("📥 No Web Archive images - downloading external image from: %s\n", imageURL)
+				logger.Info("downloading external image", "imageURL", imageURL)
 				s3URL, downloadErr := downloadAndUploadImage(ctx, imageURL, userID, tempRecipeID)
 				if downloadErr != nil {
-					log.Printf("WARN: Image download/upload failed: %s - recipe will save without image\n", downloadErr.Error())
+					logger.Warn("image download failed", "error", downloadErr.Error())
 					recipeData.MainPhotoURL = nil
 				} else {
-					log.Printf("INFO: Image uploaded to S3: %s\n", s3URL)
+					logger.Info("image uploaded to S3", "s3URL", s3URL)
 					recipeData.MainPhotoURL = &s3URL
 				}
 			}
 		} else {
-			log.Printf("INFO: Image URL is already from S3, keeping as-is\n")
+			logger.Info("image already in S3")
 		}
 	}
 
 	if existingRecipe != nil {
 		// Recipe with same URL exists - overwrite it with new data
-		fmt.Printf("Recipe with URL %s already exists, overwriting with new data", sourceURL)
+		logger.Info("recipe with URL already exists, overwriting", "sourceURL", sourceURL)
 
 		// Store recipe immediately with raw data - normalization will happen asynchronously
 		now := time.Now().UTC()
@@ -1235,21 +1247,21 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 		hasContent := len(updatedRecipe.Ingredients) > 0 || len(updatedRecipe.Instructions) > 0
 		if hasContent {
 			if err := queueRecipeNormalization(ctx, userID, updatedRecipe.ID); err != nil {
-				log.Printf("WARN: Failed to queue normalization for updated recipe %s: %v\n", updatedRecipe.ID, err)
+				logger.Warn("failed to queue normalization for updated recipe", "recipeID", updatedRecipe.ID, "error", err)
 				// Fallback: Apply basic normalization immediately
 				if normalizedRecipe, err := applyBasicNormalization(updatedRecipe); err == nil {
 					if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
-						log.Printf("INFO: Applied fallback normalization for updated recipe %s\n", updatedRecipe.ID)
+						logger.Info("applied fallback normalization for updated recipe", "recipeID", updatedRecipe.ID)
 						updatedRecipe = normalizedRecipe
 					} else {
-						log.Printf("WARN: Failed to save normalized updated recipe: %v\n", err)
+						logger.Warn("failed to save normalized updated recipe", "error", err)
 					}
 				} else {
-					log.Printf("WARN: Fallback normalization failed for update: %v\n", err)
+					logger.Warn("fallback normalization failed for update", "error", err)
 				}
 			}
 		} else {
-			fmt.Printf("⏭️  Skipping normalization for bookmark (0 ingredients, 0 instructions)\n")
+			logger.Info("skipping normalization for bookmark")
 		}
 
 		// Return the updated recipe
@@ -1314,21 +1326,21 @@ func handleCreateRecipe(ctx context.Context, request events.APIGatewayProxyReque
 	hasContent := len(recipe.Ingredients) > 0 || len(recipe.Instructions) > 0
 	if hasContent {
 		if err := queueRecipeNormalization(ctx, userID, recipe.ID); err != nil {
-			log.Printf("WARN: Failed to queue normalization for recipe %s: %v\n", recipe.ID, err)
+			logger.Warn("failed to queue normalization for recipe", "recipeID", recipe.ID, "error", err)
 			// Fallback: Apply basic normalization immediately
 			if normalizedRecipe, err := applyBasicNormalization(recipe); err == nil {
 				if err := recipeDB.CreateRecipe(&normalizedRecipe); err == nil {
-					log.Printf("INFO: Applied fallback normalization for recipe %s\n", recipe.ID)
+					logger.Info("applied fallback normalization for recipe", "recipeID", recipe.ID)
 					recipe = normalizedRecipe
 				} else {
-					log.Printf("WARN: Failed to save normalized recipe: %v\n", err)
+					logger.Warn("failed to save normalized recipe", "error", err)
 				}
 			} else {
-				log.Printf("WARN: Fallback normalization failed: %v\n", err)
+				logger.Warn("fallback normalization failed", "error", err)
 			}
 		}
 	} else {
-		fmt.Printf("⏭️  Skipping normalization for bookmark (0 ingredients, 0 instructions)\n")
+		logger.Info("skipping normalization for bookmark")
 	}
 
 	response, responseErr := utils.NewAPIResponse(http.StatusCreated, map[string]interface{}{
