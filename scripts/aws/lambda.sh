@@ -171,21 +171,8 @@ get_available_functions() {
     done
 }
 
-log_info() {
-    log_info "ℹ️  $1"
-}
-
-log_success() {
-    log_success "✅ $1"
-}
-
-log_warning() {
-    log_warning "⚠️  $1"
-}
-
-log_error() {
-    log_error "❌ $1"
-}
+# Note: log_info, log_success, log_warning, log_error are provided by common.sh
+# No need to redefine them here
 
 print_usage() {
     echo "🚀 RecipeArchive Lambda Deployment Tool"
