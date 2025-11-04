@@ -121,19 +121,41 @@ timed_confirm() {
 
     print_warning "$message"
     local prompt_options="[y/N]"
-    if [ "$default_response" = "Y" ]; then
+    if [ "$default_response" = "Y" ] || [ "$default_response" = "y" ]; then
         prompt_options="[Y/n]"
     fi
     echo -n "Continue? ${prompt_options} (auto-${default_response} in ${timeout}s): "
 
     if read -t "$timeout" -r response; then
+        # Handle empty response (user just pressed Enter)
+        if [ -z "$response" ]; then
+            if [ "$default_response" = "Y" ] || [ "$default_response" = "y" ]; then
+                print_info "Using default: YES"
+                return 0
+            else
+                print_info "Using default: NO"
+                return 1
+            fi
+        fi
+
+        # Handle explicit user response
         case "$response" in
             [yY]|[yY][eE][sS]) return 0 ;;
-            *) return 1 ;;
+            [nN]|[nN][oO]) return 1 ;;
+            *)
+                # Invalid response - use default
+                if [ "$default_response" = "Y" ] || [ "$default_response" = "y" ]; then
+                    print_warning "Invalid response, using default: YES"
+                    return 0
+                else
+                    print_warning "Invalid response, using default: NO"
+                    return 1
+                fi
+                ;;
         esac
     else
         echo ""
-        if [ "$default_response" = "Y" ]; then
+        if [ "$default_response" = "Y" ] || [ "$default_response" = "y" ]; then
             print_info "Timed out, defaulting to YES"
             return 0
         else
@@ -359,7 +381,15 @@ fi
 if [ "$android_setup_needed" = true ]; then
   if timed_confirm "Set up Android development environment?"; then
   print_info "Setting up Android development..."
-  
+
+  # CRITICAL: Verify Java is available before proceeding with Android SDK
+  if ! java -version &> /dev/null; then
+    print_error "Java is required for Android development but is not available"
+    print_error "This is a critical setup error - Java should have been installed earlier"
+    die "Java installation failed - cannot proceed with Android setup"
+  fi
+  print_success "Java is available for Android SDK operations"
+
   # Install Android Studio
   if [ ! -d "/Applications/Android Studio.app" ]; then
     if timed_confirm "Install Android Studio? (Large download ~2GB)"; then
@@ -441,10 +471,15 @@ else
 
   # Update Android SDK components (default YES)
   if command -v sdkmanager &> /dev/null; then
-    # Set up environment for sdkmanager
-    ANDROID_HOME="$HOME/Library/Android/sdk"
-    export ANDROID_HOME
-    export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+    # CRITICAL: Verify Java is available before running SDK operations
+    if ! java -version &> /dev/null; then
+      print_warning "Java is not available - skipping Android SDK updates"
+      print_info "Install Java to enable Android SDK updates: brew install openjdk@17"
+    else
+      # Set up environment for sdkmanager
+      ANDROID_HOME="$HOME/Library/Android/sdk"
+      export ANDROID_HOME
+      export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
 
     # Fix cmdline-tools path inconsistency BEFORE prompting (Android Studio upgrade issue)
     CMDLINE_DIR="$ANDROID_HOME/cmdline-tools"
@@ -480,22 +515,23 @@ else
       fi
     fi
 
-    # Now prompt for SDK updates (default to YES)
-    if timed_confirm "Update Android SDK components?" 10 "Y"; then
-      print_info "Updating Android SDK components..."
+      # Now prompt for SDK updates (default to YES)
+      if timed_confirm "Update Android SDK components?" 10 "Y"; then
+        print_info "Updating Android SDK components..."
 
-      # Update SDK manager itself
-      timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
+        # Update SDK manager itself
+        timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
 
-      # Update platform-tools, build-tools, and latest platform
-      print_info "Updating platform-tools and build-tools..."
-      yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" || true
+        # Update platform-tools, build-tools, and latest platform
+        print_info "Updating platform-tools and build-tools..."
+        yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" || true
 
-      # Update emulator
-      print_info "Updating Android emulator..."
-      timeout 120 sdkmanager "emulator" 2>&1 | grep -v "=" || true
+        # Update emulator
+        print_info "Updating Android emulator..."
+        timeout 120 sdkmanager "emulator" 2>&1 | grep -v "=" || true
 
-      print_success "Android SDK components updated"
+        print_success "Android SDK components updated"
+      fi
     fi
   fi
 fi
@@ -1018,14 +1054,34 @@ fi
 
 # Environment variable setup for testing
 print_info "Setting up testing environment..."
-if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-  print_info "Creating .env file from .env.example..."
-  cp .env.example .env
-  print_success ".env file created."
+if [ ! -f ".env" ]; then
+  if [ -f ".env.example" ]; then
+    print_info "Creating .env file from .env.example..."
+    cp .env.example .env
+    print_success ".env file created from template."
+    print_warning "IMPORTANT: Edit .env and configure your AWS credentials and other settings"
+  else
+    print_warning ".env file not found and no .env.example template available"
+    print_info "The .env file is optional for basic setup but required for:"
+    print_info "  - AWS deployment and testing"
+    print_info "  - Multi-tenant testing"
+    print_info "  - Production deployments"
+    print_info "You can create one later by copying .env.example"
+  fi
 fi
 
-print_info "Loading environment variables from .env file..."
-source "$REPO_ROOT/scripts/load-env.sh"
+# Try to load environment variables if .env exists
+if [ -f ".env" ]; then
+  print_info "Loading environment variables from .env file..."
+  if source "$REPO_ROOT/scripts/load-env.sh"; then
+    print_success "Environment variables loaded successfully"
+  else
+    print_warning "Failed to load .env file - some features may not work"
+    print_info "Edit .env to fix any syntax errors or missing required variables"
+  fi
+else
+  print_info "Skipping .env load (file not present) - basic development will work"
+fi
 
 # MCP Server Setup for Claude Desktop
 print_info "Setting up MCP (Model Context Protocol) servers for Claude Desktop..."
