@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -33,7 +33,16 @@ var (
 	baseURL   string
 	initOnce  sync.Once
 	initErr   error
+	logger    *slog.Logger
 )
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // S3-based invitation system - COST OPTIMIZED
 type InvitationToken struct {
@@ -118,7 +127,7 @@ func initAWSClients(ctx context.Context) error {
 			baseURL = "https://d1jcaphz4458q7.cloudfront.net"
 		}
 
-		log.Printf("INFO: S3-Based Invitation Manager initialized [bucket=%s, baseURL=%s]\n", utils.GetS3BucketName(), baseURL)
+		logger.Info("S3-Based Invitation Manager initialized", "bucket", utils.GetS3BucketName(), "baseURL", baseURL)
 	})
 	return initErr
 }
@@ -129,7 +138,7 @@ func main() {
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	if err := initAWSClients(ctx); err != nil {
-		log.Printf("ERROR: Failed to initialize AWS clients: %v", err)
+		logger.Error("failed to initialize AWS clients", "error", err)
 		return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "INITIALIZATION_ERROR",
@@ -138,7 +147,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		})
 	}
 
-	log.Printf("INFO: S3 Invitation Manager invoked [method=%s, path=%s]\n", request.HTTPMethod, request.Path)
+	logger.Info("S3 Invitation Manager invoked", "method", request.HTTPMethod, "path", request.Path)
 
 	// Handle CORS preflight requests
 	if request.HTTPMethod == "OPTIONS" {
@@ -168,7 +177,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 
 	adminUserID := validation.UserID
-	fmt.Printf("🔧 Admin User ID: %s\n", adminUserID)
+	logger.Info("Admin User ID", "value", adminUserID)
 
 	// Route requests
 	switch request.HTTPMethod {
@@ -204,10 +213,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			pathParts := strings.Split(request.Path, "/")
 			if len(pathParts) >= 4 && pathParts[len(pathParts)-2] == "invitations" {
 				token := pathParts[len(pathParts)-1]
-				fmt.Printf("🔧 Extracted token from path: %s\n", token)
+				logger.Info("Extracted token from path", "value", token)
 				return revokeInvitation(ctx, token, adminUserID)
 			}
-			log.Printf("ERROR: Invalid DELETE path format: %s\n", request.Path)
+			logger.Error("invalid DELETE path format", "path", request.Path)
 		}
 		return utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
 			"error": map[string]interface{}{
@@ -227,12 +236,12 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 }
 
 func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest, adminUserID string) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("🔧 Creating invitation - Admin: %s\n", adminUserID)
-	fmt.Printf("DEBUG: Request body: %s\n", request.Body)
+	logger.Info("Creating invitation - Admin", "value", adminUserID)
+	logger.Debug("Request body", "value", request.Body)
 
 	var req CreateInvitationRequest
 	if err := json.Unmarshal([]byte(request.Body), &req); err != nil {
-		fmt.Printf("ERROR: JSON unmarshaling failed: %v\n", err)
+		logger.Error("JSON unmarshaling failed", "error", err)
 		return utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "INVALID_JSON",
@@ -241,11 +250,11 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 		})
 	}
 
-	fmt.Printf("DEBUG: Parsed request - Email: %s, ExpiryDays: %d\n", req.Email, req.ExpiryDays)
+	logger.Debug("Parsed request - Email", "Parsed request - EmailVal", req.Email, "ExpiryDays", req.ExpiryDays)
 
 	// Validate email
 	if req.Email == "" {
-		fmt.Printf("ERROR: Email is empty\n")
+		logger.Error("Email is empty")
 		return utils.NewAPIResponse(http.StatusBadRequest, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "VALIDATION_ERROR",
@@ -261,22 +270,20 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 
 	// Check if email already has pending invitation
 	emailKey := base64.URLEncoding.EncodeToString([]byte(req.Email))
-	fmt.Printf("DEBUG: Checking for existing invitation for email: %s (key: %s)\n", req.Email, emailKey)
+	logger.Debug("Checking for existing invitation for email: %s", "email", req.Email, "key", emailKey)
 
 	if existingEmailIndex, err := getEmailIndex(ctx, emailKey); err == nil && existingEmailIndex != nil {
-		fmt.Printf("DEBUG: Found email index for %s, TokenID: %s\n", req.Email, existingEmailIndex.TokenID)
+		logger.Debug("found email index", "email", req.Email, "tokenID", existingEmailIndex.TokenID)
 		// An email index exists, now get the full invitation token
 		if existingInvitation, err := getInvitationByID(ctx, existingEmailIndex.TokenID); err == nil && existingInvitation != nil {
 			currentTime := time.Now().Unix()
-			fmt.Printf("DEBUG: Found invitation - Status: %s, ExpiresAt: %d, CurrentTime: %d, Email: %s\n",
-				existingInvitation.Status, existingInvitation.ExpiresAt, currentTime, existingInvitation.Email)
+			logger.Debug("found invitation", "status", existingInvitation.Status, "expiresAt", existingInvitation.ExpiresAt, "currentTime", currentTime, "email", existingInvitation.Email)
 
 			// Delete expired invitations OR non-pending invitations (expired, used, cancelled) OR overwrite pending invitations
 			if existingInvitation.ExpiresAt < currentTime || existingInvitation.Status != "pending" {
-				fmt.Printf("INFO: Found %s invitation for email %s (ID: %s). Deleting it to allow new invitation.\n",
-					existingInvitation.Status, req.Email, existingInvitation.ID)
+				logger.Info("Found %s invitation for email - deleting to allow new invitation", "status", existingInvitation.Status, "email", req.Email, "ID", existingInvitation.ID)
 				if err := deleteExpiredInvitation(ctx, existingInvitation); err != nil {
-					fmt.Printf("ERROR: Failed to delete existing invitation: %v\n", err)
+					logger.Error("Failed to delete existing invitation", "error", err)
 					return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 						"error": map[string]interface{}{
 							"code":    "INVITATION_DELETION_FAILED",
@@ -284,13 +291,12 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 						},
 					})
 				}
-				fmt.Printf("INFO: Previous invitation for email %s deleted successfully. Proceeding to create new invitation.\n", req.Email)
+				logger.Info("Previous invitation for email deleted successfully", "email", req.Email)
 				// Continue to create a new invitation
 			} else if existingInvitation.Status == "pending" {
-				fmt.Printf("INFO: User already has a pending invitation for email: %s (Status: %s). Overwriting with new invitation.\n",
-					req.Email, existingInvitation.Status)
+				logger.Info("User already has a pending invitation for email - overwriting", "email", req.Email, "status", existingInvitation.Status)
 				if err := deleteExpiredInvitation(ctx, existingInvitation); err != nil {
-					fmt.Printf("ERROR: Failed to delete existing pending invitation: %v\n", err)
+					logger.Error("Failed to delete existing pending invitation", "error", err)
 					return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 						"error": map[string]interface{}{
 							"code":    "INVITATION_DELETION_FAILED",
@@ -298,19 +304,19 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 						},
 					})
 				}
-				fmt.Printf("INFO: Previous pending invitation for email %s deleted successfully. Proceeding to create new invitation.\n", req.Email)
+				logger.Info("Previous pending invitation for email deleted successfully", "email", req.Email)
 				// Continue to create a new invitation
 			}
 		} else {
-			fmt.Printf("DEBUG: Email index exists but invitation not found, cleaning up stale index\n")
+			logger.Debug("Email index exists but invitation not found, cleaning up stale index")
 			// Clean up stale email index
 			emailIndexKey := fmt.Sprintf("invitations/by-email/%s.json", emailKey)
 			if err := deleteFromS3(ctx, emailIndexKey); err != nil {
-				fmt.Printf("WARN: Failed to clean up stale email index: %v\n", err)
+				logger.Warn("Failed to clean up stale email index", "error", err)
 			}
 		}
 	} else {
-		fmt.Printf("DEBUG: No existing email index found for %s, proceeding with invitation creation\n", req.Email)
+		logger.Debug("no existing email index found", "email", req.Email)
 	}
 
 	// Generate secure token and ID
@@ -337,11 +343,11 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 		Metadata:  req.Metadata,
 	}
 
-	fmt.Printf("🔧 Creating invitation: ID=%s, Email=%s, Token=%s\n", tokenID, req.Email, token)
+	logger.Info("Creating invitation", "ID", tokenID, "email", req.Email, "token", token)
 
 	// Store main invitation record in S3
 	if err := putJSONToS3(ctx, fmt.Sprintf("invitations/tokens/%s.json", tokenID), invitation); err != nil {
-		log.Printf("ERROR: Failed to store invitation: %v\n", err)
+		logger.Error("Failed to store invitation", "error", err)
 		return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "INVITATION_CREATION_FAILED",
@@ -358,26 +364,26 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 		LastUpdated: time.Now().Unix(),
 	}
 	if err := putJSONToS3(ctx, fmt.Sprintf("invitations/by-email/%s.json", emailKey), emailIndex); err != nil {
-		log.Printf("ERROR: Failed to update email index: %v\n", err)
+		logger.Error("Failed to update email index", "error", err)
 		// Continue - this is not critical
 	}
 
 	// Update admin index
 	if err := updateAdminIndex(ctx, adminUserID, tokenID, req.Email, "pending"); err != nil {
-		log.Printf("ERROR: Failed to update admin index: %v\n", err)
+		logger.Error("Failed to update admin index", "error", err)
 		// Continue - this is not critical
 	}
 
 	// Update active tokens index
 	if err := updateActiveTokensIndex(ctx, tokenID, "add"); err != nil {
-		log.Printf("ERROR: Failed to update active tokens index: %v\n", err)
+		logger.Error("Failed to update active tokens index", "error", err)
 		// Continue - this is not critical
 	}
 
 	// Send invitation email (if SES is configured)
 	invitationLink := fmt.Sprintf("%s/auth/register?token=%s", baseURL, token)
 	if err := sendInvitationEmail(ctx, req.Email, invitationLink, req.Message); err != nil {
-		log.Printf("WARN: Failed to send invitation email: %v\n", err)
+		logger.Warn("Failed to send invitation email", "error", err)
 		// Don't fail the request - invitation was created successfully
 	}
 
@@ -388,17 +394,17 @@ func createInvitation(ctx context.Context, request events.APIGatewayProxyRequest
 		ExpiresAt:      invitation.ExpiresAt,
 	}
 
-	log.Printf("INFO: Invitation created successfully: %s\n", tokenID)
+	logger.Info("Invitation created successfully", "value", tokenID)
 	return utils.NewAPIResponse(http.StatusCreated, response)
 }
 
 func listInvitations(ctx context.Context, adminUserID string) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("🔧 Listing invitations for admin: %s\n", adminUserID)
+	logger.Info("Listing invitations for admin", "value", adminUserID)
 
 	// Get admin's invitation index
 	adminIndex, err := getAdminIndex(ctx, adminUserID)
 	if err != nil {
-		log.Printf("ERROR: Failed to get admin index: %v\n", err)
+		logger.Error("Failed to get admin index", "error", err)
 		return utils.NewAPIResponse(http.StatusOK, ListInvitationsResponse{Invitations: []InvitationToken{}, Count: 0})
 	}
 
@@ -408,7 +414,7 @@ func listInvitations(ctx context.Context, adminUserID string) (events.APIGateway
 		if invitation, err := getInvitationByID(ctx, indexEntry.TokenID); err == nil {
 			invitations = append(invitations, *invitation)
 		} else {
-			log.Printf("WARN: Failed to fetch invitation %s: %v\n", indexEntry.TokenID, err)
+			logger.Warn("failed to fetch invitation", "tokenID", indexEntry.TokenID, "error", err)
 		}
 	}
 
@@ -417,16 +423,16 @@ func listInvitations(ctx context.Context, adminUserID string) (events.APIGateway
 		Count:       len(invitations),
 	}
 
-	log.Printf("INFO: Found %d invitations for admin %s\n", len(invitations), adminUserID)
+	logger.Info("found invitations", "count", len(invitations), "adminUserID", adminUserID)
 	return utils.NewAPIResponse(http.StatusOK, response)
 }
 
 func getInvitation(ctx context.Context, token string) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("🔧 Getting invitation by token: %s\n", token)
+	logger.Info("Getting invitation by token", "value", token)
 
 	invitation, err := getInvitationByToken(ctx, token)
 	if err != nil {
-		log.Printf("ERROR: Failed to get invitation: %v\n", err)
+		logger.Error("Failed to get invitation", "error", err)
 		return utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "NOT_FOUND",
@@ -438,9 +444,9 @@ func getInvitation(ctx context.Context, token string) (events.APIGatewayProxyRes
 	// Check if expired
 	currentTime := time.Now().Unix()
 	if invitation.ExpiresAt < currentTime {
-		fmt.Printf("INFO: Invitation with ID %s for email %s is expired. Deleting it.\n", invitation.ID, invitation.Email)
+		logger.Info("invitation expired - deleting", "invitationID", invitation.ID, "email", invitation.Email)
 		if err := deleteExpiredInvitation(ctx, invitation); err != nil {
-			fmt.Printf("ERROR: Failed to delete expired invitation during get: %v\n", err)
+			logger.Error("Failed to delete expired invitation during get", "error", err)
 			return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 				"error": map[string]interface{}{
 					"code":    "INVITATION_DELETION_FAILED",
@@ -448,7 +454,7 @@ func getInvitation(ctx context.Context, token string) (events.APIGatewayProxyRes
 				},
 			})
 		}
-		fmt.Printf("INFO: Expired invitation with ID %s deleted successfully. Returning 404.\n", invitation.ID)
+		logger.Info("expired invitation deleted successfully", "invitationID", invitation.ID)
 		return utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "NOT_FOUND",
@@ -457,17 +463,17 @@ func getInvitation(ctx context.Context, token string) (events.APIGatewayProxyRes
 		})
 	}
 
-	log.Printf("INFO: Found invitation: %s (Status: %s)\n", invitation.ID, invitation.Status)
+	logger.Info("found invitation", "invitationID", invitation.ID, "status", invitation.Status)
 	return utils.NewAPIResponse(http.StatusOK, invitation)
 }
 
 func revokeInvitation(ctx context.Context, token, adminUserID string) (events.APIGatewayProxyResponse, error) {
-	fmt.Printf("🔧 Deleting invitation with token: %s by admin: %s\n", token, adminUserID)
+	logger.Info("deleting invitation with token", "token", token, "adminUserID", adminUserID)
 
 	// Find invitation by token
 	invitation, err := getInvitationByToken(ctx, token)
 	if err != nil {
-		log.Printf("ERROR: Failed to find invitation: %v\n", err)
+		logger.Error("Failed to find invitation", "error", err)
 		return utils.NewAPIResponse(http.StatusNotFound, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "NOT_FOUND",
@@ -488,7 +494,7 @@ func revokeInvitation(ctx context.Context, token, adminUserID string) (events.AP
 
 	// Delete invitation from S3 completely
 	if err := deleteFromS3(ctx, fmt.Sprintf("invitations/tokens/%s.json", invitation.ID)); err != nil {
-		log.Printf("ERROR: Failed to delete invitation from S3: %v\n", err)
+		logger.Error("Failed to delete invitation from S3", "error", err)
 		return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "DELETION_FAILED",
@@ -499,15 +505,15 @@ func revokeInvitation(ctx context.Context, token, adminUserID string) (events.AP
 
 	// Remove from active tokens index
 	if err := updateActiveTokensIndex(ctx, invitation.ID, "remove"); err != nil {
-		log.Printf("WARN: Failed to update active tokens index: %v\n", err)
+		logger.Warn("Failed to update active tokens index", "error", err)
 	}
 
 	// Remove from admin index completely
 	if err := removeFromAdminIndex(ctx, adminUserID, invitation.ID); err != nil {
-		log.Printf("WARN: Failed to remove from admin index: %v\n", err)
+		logger.Warn("Failed to remove from admin index", "error", err)
 	}
 
-	log.Printf("INFO: Invitation deleted successfully: %s\n", invitation.ID)
+	logger.Info("Invitation deleted successfully", "value", invitation.ID)
 	return utils.NewAPIResponse(http.StatusOK, map[string]string{"message": "Invitation deleted successfully"})
 }
 
@@ -529,7 +535,7 @@ func putJSONToS3(ctx context.Context, key string, data interface{}) error {
 		return fmt.Errorf("failed to put object to S3: %w", err)
 	}
 
-	fmt.Printf("📦 Stored to S3: %s\n", key)
+	logger.Info("stored to S3", "key", key)
 	return nil
 }
 
@@ -543,7 +549,7 @@ func getJSONFromS3(ctx context.Context, key string, target interface{}) error {
 	}
 	defer func() {
 		if closeErr := result.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close S3 response body: %v\n", closeErr)
+			logger.Warn("Failed to close S3 response body", "error", closeErr)
 		}
 	}()
 
@@ -718,7 +724,7 @@ func deleteFromS3(ctx context.Context, key string) error {
 		return fmt.Errorf("failed to delete object from S3: %w", err)
 	}
 
-	fmt.Printf("🗑️ Deleted S3 object: %s\n", key)
+	logger.Info("deleted S3 object", "key", key)
 	return nil
 }
 
@@ -744,7 +750,7 @@ func removeFromAdminIndex(ctx context.Context, adminID, invitationID string) err
 
 // deleteExpiredInvitation deletes an invitation record from S3, the email index, and the admin index.
 func deleteExpiredInvitation(ctx context.Context, invitation *InvitationToken) error {
-	fmt.Printf("INFO: Deleting expired invitation with ID: %s, Email: %s, AdminID: %s\n", invitation.ID, invitation.Email, invitation.InvitedBy)
+	logger.Info("deleting expired invitation", "invitationID", invitation.ID, "email", invitation.Email, "adminID", invitation.InvitedBy)
 
 	// 1. Delete main invitation record from S3
 	if err := deleteFromS3(ctx, fmt.Sprintf("invitations/tokens/%s.json", invitation.ID)); err != nil {
@@ -756,19 +762,19 @@ func deleteExpiredInvitation(ctx context.Context, invitation *InvitationToken) e
 	emailIndexKey := fmt.Sprintf("invitations/by-email/%s.json", emailKey)
 	if err := deleteFromS3(ctx, emailIndexKey); err != nil {
 		// Log but don't fail, as the main invitation is already deleted.
-		log.Printf("WARN: Failed to delete email index for %s: %v\n", invitation.Email, err)
+		logger.Warn("failed to delete email index", "email", invitation.Email, "error", err)
 	}
 
 	// 3. Remove from admin index
 	if err := removeFromAdminIndex(ctx, invitation.InvitedBy, invitation.ID); err != nil {
-		log.Printf("WARN: Failed to remove from admin index for admin %s, invitation %s: %v\n", invitation.InvitedBy, invitation.ID, err)
+		logger.Warn("Failed to remove from admin index for admin %s, invitation %s", "error", invitation.InvitedBy, invitation.ID, err)
 	}
 
 	// 4. Remove from active tokens index
 	if err := updateActiveTokensIndex(ctx, invitation.ID, "remove"); err != nil {
-		log.Printf("WARN: Failed to update active tokens index for invitation %s: %v\n", invitation.ID, err)
+		logger.Warn("failed to update active tokens index", "invitationID", invitation.ID, "error", err)
 	}
 
-	fmt.Printf("INFO: Successfully deleted expired invitation with ID: %s\n", invitation.ID)
+	logger.Info("successfully deleted expired invitation", "invitationID", invitation.ID)
 	return nil
 }
