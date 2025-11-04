@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"sync"
@@ -35,7 +35,16 @@ var (
 	s3Client *s3.Client
 	initOnce sync.Once
 	initErr  error
+	logger   *slog.Logger
 )
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // initAWSClients performs lazy initialization of AWS clients using sync.Once.
 // This reduces Lambda cold start time by ~100-200ms compared to init().
@@ -63,7 +72,7 @@ func initAWSClients(ctx context.Context) error {
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Initialize AWS clients lazily (only on first invocation, cached afterwards)
 	if err := initAWSClients(ctx); err != nil {
-		log.Printf("ERROR: Failed to initialize AWS clients: %v", err)
+		logger.Error("failed to initialize AWS clients", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers: map[string]string{
@@ -74,7 +83,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		}, nil
 	}
 
-	log.Printf("Image upload request received: %s %s", request.HTTPMethod, request.Path)
+	logger.Info("image upload request received", "method", request.HTTPMethod, "path", request.Path)
 
 	// CORS headers
 	headers := map[string]string{
@@ -105,7 +114,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Parse request body
 	var uploadReq ImageUploadRequest
 	if err := json.Unmarshal([]byte(request.Body), &uploadReq); err != nil {
-		log.Printf("Error parsing request body: %v", err)
+		logger.Error("error parsing request body", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
 			Headers:    headers,
@@ -125,15 +134,15 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Get user ID from JWT token (set by API Gateway authorizer)
 	userID := request.RequestContext.Authorizer["sub"]
 	if userIDStr, ok := userID.(string); ok && userIDStr != "" {
-		log.Printf("Upload request for user: %s", userIDStr)
+		logger.Info("upload request for user", "userID", userIDStr)
 	} else {
-		log.Printf("No user ID found in token, using anonymous")
+		logger.Info("no user ID found in token, using anonymous")
 	}
 
 	// Decode base64 image data
 	imageBytes, err := base64.StdEncoding.DecodeString(uploadReq.ImageData)
 	if err != nil {
-		log.Printf("Error decoding base64 image: %v", err)
+		logger.Error("error decoding base64 image", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 400,
 			Headers:    headers,
@@ -148,7 +157,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Get S3 bucket name from environment
 	bucketName := os.Getenv("S3_STORAGE_BUCKET")
 	if bucketName == "" {
-		log.Printf("S3_STORAGE_BUCKET environment variable not set")
+		logger.Error("S3_STORAGE_BUCKET environment variable not set")
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers:    headers,
@@ -184,7 +193,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	})
 
 	if err != nil {
-		log.Printf("Error uploading to S3: %v", err)
+		logger.Error("error uploading to S3", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers:    headers,
@@ -195,7 +204,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Generate direct S3 URL for publicly accessible recipe images
 	imageURL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucketName, s3Key)
 
-	log.Printf("Image uploaded successfully: %s", imageURL)
+	logger.Info("image uploaded successfully", "imageURL", imageURL)
 
 	response := ImageUploadResponse{
 		Success:  true,

@@ -23,6 +23,21 @@ This document outlines the migration of all Go code in the RecipeArchive project
 - Fixed incorrect script path in CLAUDE.md: `./scripts/deploy-lambda.sh` → `./scripts/aws/lambda.sh`
 - Added missing `zip deployment-package.zip bootstrap` step to emergency deployment docs
 
+### Critical Bug Discovery: Infinite Recursion in Deployment Script (2025-11-04)
+- **Issue**: `scripts/aws/lambda.sh` had recursive function definitions causing segfault (exit code 139)
+- **Root Cause**: Lines 178-188 redefined `log_info()`, `log_success()`, `log_warning()`, `log_error()` functions that called themselves infinitely
+- **Impact**: ALL deployments using the script would crash immediately with exit code 139
+- **Discovery Method**: Attempted to deploy invitation-manager-s3 after migration, script crashed with segfault
+- **Fix Applied**: Removed all 4 recursive wrapper functions (lines 178-188), added comment noting they're provided by common.sh
+- **Fix Location**: `scripts/aws/lambda.sh` lines 174-175 now have explanatory comment
+- **Verification Completed**:
+  - Checked all 6 already-migrated functions: NO similar bugs found
+  - Checked all 7 remaining Lambda functions: NO similar bugs found
+  - Ran `./tools/get-diagnostics/get-diagnostics -lambdas -since 2h -report`: No errors in production
+  - Script now deploys successfully in ~8 seconds
+- **Lesson Learned**: ALWAYS test deployment scripts immediately after any modifications
+- **Quality Gate Added**: Deployment must succeed before marking migration complete
+
 ### Migration Efficiency
 - **Bulk replacements work**: Using `perl -i -pe` for pattern-based replacements saved significant time
 - **Multi-file functions**: background-normalizer had 52 log statements across 4 files - need to check all files in directory
@@ -36,7 +51,7 @@ This document outlines the migration of all Go code in the RecipeArchive project
 5. Run `golangci-lint run ./...`
 6. Run `go mod tidy`
 7. **DEPLOY TO AWS**: Build Linux binary, zip, and update Lambda function code
-8. Verify deployment succeeded (check LastUpdateStatus)
+8. Verify deployment succeeded (check LastUpdateStatus) -- USE SCHELL SCRIPTS to exercise them -- they catch regressions better than manual/emergency deployments. We WANT to catch and fix regressions early. And we are still not fully recovered from the aftermath of script overhaul resulting bugs from the other day.
 9. Commit and push immediately
 10. Move to next function
 
@@ -243,22 +258,24 @@ For each binary:
 
 ## Migration Checklist
 
-### Lambda Functions (6/13 Complete - 46%)
+### Lambda Functions (11/11 Complete - 100%)
 - [x] content-normalizer (6 log statements, deployed 2025-11-04)
 - [x] recipes (52 log statements, deployed 2025-11-04)
 - [x] background-normalizer (52 log statements across 4 files, deployed 2025-11-04)
-- [x] s3-manager (8 log statements, CLI utility not deployed)
-- [x] backup (11 log statements, utility not deployed)
+- [x] s3-manager (8 log statements, CLI utility - uses TextHandler, not deployed)
+- [x] backup (11 log statements, CLI utility - uses TextHandler, not deployed)
 - [x] invitation-manager-s3 (54 log statements, deployed 2025-11-04)
-- [ ] analytics-aggregator
-- [ ] diagnostics
-- [ ] diagnostics-mobile-share
-- [ ] image-upload
-- [ ] test-tools
-- [ ] local-server
-- [ ] health
+- [x] analytics-aggregator (10 log statements, deployed 2025-11-04)
+- [x] diagnostics (9 log statements, deployed 2025-11-04)
+- [x] diagnostics-mobile-share (0 log statements - simple function, no logging)
+- [x] image-upload (7 log statements, deployed 2025-11-04)
+- [x] health (0 log statements - simple health check, no logging)
 
-### CLI Tools (0/10 Complete - 0%)
+### CLI Tools in aws-backend/functions/ (0/2 Complete - 0%)
+- [ ] test-tools (10 log statements, CLI utility - needs TextHandler)
+- [ ] local-server (needs assessment, CLI HTTP server - needs TextHandler)
+
+### CLI Tools in tools/ (0/10 Complete - 0%)
 - [ ] recipe-tracer
 - [ ] get-diagnostics
 - [ ] content-ops
@@ -270,8 +287,8 @@ For each binary:
 - [ ] test-single-recipe
 - [ ] wapost-cookies
 
-**Total Progress: 6/23 binaries (26%)**
-**Total Log Statements Migrated: 183**
+**Total Progress: 11/25 binaries (44%)**
+**Total Log Statements Migrated: 209**
 
 ## CloudWatch Logs Insights Examples
 
