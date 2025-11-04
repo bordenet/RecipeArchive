@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -18,17 +18,28 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-var cwClient *cloudwatch.Client
+var (
+	cwClient *cloudwatch.Client
+	logger   *slog.Logger
+)
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // handler processes SQS messages to normalize recipes in background.
 // Each message contains a recipe ID and user ID for normalization.
 func handler(ctx context.Context, event events.SQSEvent) error {
-	log.Printf("INFO: Background normalizer invoked [messageCount=%d]", len(event.Records))
+	logger.Info("background normalizer invoked", "messageCount", len(event.Records))
 
 	// Initialize S3 and CloudWatch clients
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Printf("ERROR: Failed to load AWS config: %v", err)
+		logger.Error("failed to load AWS config", "error", err)
 		return fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
@@ -37,19 +48,19 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 	bucketName := os.Getenv("S3_STORAGE_BUCKET")
 
 	if bucketName == "" {
-		log.Printf("ERROR: S3_STORAGE_BUCKET environment variable not set")
+		logger.Error("S3_STORAGE_BUCKET environment variable not set")
 		return fmt.Errorf("S3_STORAGE_BUCKET environment variable not set")
 	}
-	log.Printf("INFO: AWS clients initialized [bucket=%s]", bucketName)
+	logger.Info("AWS clients initialized", "bucket", bucketName)
 
 	// Process each SQS message
 	for _, record := range event.Records {
-		log.Printf("INFO: Processing SQS message [messageId=%s]", record.MessageId)
+		logger.Info("processing SQS message", "messageId", record.MessageId)
 
 		// Parse the message
 		var message NormalizationMessage
 		if err := json.Unmarshal([]byte(record.Body), &message); err != nil {
-			log.Printf("ERROR: Failed to parse SQS message [messageId=%s]: %v", record.MessageId, err)
+			logger.Error("failed to parse SQS message", "messageId", record.MessageId, "error", err)
 			continue // Skip this message but don't fail the whole batch
 		}
 
@@ -59,13 +70,15 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 				requestID = str
 			}
 		}
-		log.Printf("INFO: Normalizing recipe [recipeID=%s, userID=%s, requestID=%s]",
-			message.RecipeID, message.UserID, requestID)
+		logger.Info("normalizing recipe",
+			"recipeID", message.RecipeID,
+			"userID", message.UserID,
+			"requestID", requestID)
 
 		// Get the recipe from S3
 		recipe, err := getRecipeFromS3(ctx, s3Client, bucketName, message.UserID, message.RecipeID)
 		if err != nil {
-			log.Printf("ERROR: Failed to get recipe from S3 [recipeID=%s]: %v", message.RecipeID, err)
+			logger.Error("failed to get recipe from S3", "recipeID", message.RecipeID, "error", err)
 			continue
 		}
 
@@ -75,8 +88,11 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 
 		if ingredientCount == 0 && instructionCount == 0 {
 			// This is GARBAGE - reject normalization and log ERROR
-			log.Printf("ERROR: Refusing to normalize garbage recipe [recipeID=%s, ingredients=0, instructions=0, sourceURL=%s]",
-				message.RecipeID, recipe.SourceURL)
+			logger.Error("refusing to normalize garbage recipe",
+				"recipeID", message.RecipeID,
+				"ingredients", 0,
+				"instructions", 0,
+				"sourceURL", recipe.SourceURL)
 			publishMetric(ctx, "GarbageRecipes", 1.0, map[string]string{
 				"Source": extractDomain(recipe.SourceURL),
 				"Stage":  "PreNormalization",
@@ -90,8 +106,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 
 		// Warn about low-quality recipes but proceed with normalization
 		if ingredientCount == 0 || instructionCount == 0 {
-			log.Printf("WARN: Recipe has incomplete content [recipeID=%s, ingredients=%d, instructions=%d]",
-				message.RecipeID, ingredientCount, instructionCount)
+			logger.Warn("recipe has incomplete content", "recipeID", message.RecipeID, "ingredients", ingredientCount, "instructions", instructionCount)
 			publishMetric(ctx, "RecipeQuality", 1.0, map[string]string{
 				"Quality": "POOR",
 				"Source":  extractDomain(recipe.SourceURL),
@@ -99,24 +114,21 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 		}
 
 		// Always normalize the recipe with OpenAI, preserving cookingMethods structure
-		log.Printf("INFO: Normalizing recipe with OpenAI [recipeID=%s]", message.RecipeID)
+		logger.Info("normalizing recipe with OpenAI", "recipeID", message.RecipeID)
 		normalizedRecipe, err := normalizeRecipeWithOpenAI(ctx, recipe)
 		if err != nil {
-			log.Printf("ERROR: Failed to normalize recipe with OpenAI [recipeID=%s]: %v", message.RecipeID, err)
+			logger.Error("failed to normalize recipe with OpenAI", "recipeID", message.RecipeID, "error", err)
 			// Fallback to simple title normalization
 			originalTitle := recipe.Title
 			recipe.Title = normalizeTitle(recipe.Title)
 			if recipe.Title != originalTitle {
 				if err := saveRecipeToS3(ctx, s3Client, bucketName, recipe); err != nil {
-					log.Printf("ERROR: Failed to update recipe with fallback normalization [recipeID=%s]: %v",
-						message.RecipeID, err)
+					logger.Error("failed to update recipe with fallback normalization", "recipeID", message.RecipeID, "error", err)
 					continue
 				}
-				log.Printf("INFO: Fallback normalized recipe title [recipeID=%s, oldTitle=%q, newTitle=%q]",
-					message.RecipeID, originalTitle, recipe.Title)
+				logger.Info("fallback normalized recipe title", "recipeID", message.RecipeID, "oldTitle", originalTitle, "newTitle", recipe.Title)
 			} else {
-				log.Printf("INFO: Recipe title already normalized [recipeID=%s, title=%q]",
-					message.RecipeID, recipe.Title)
+				logger.Info("recipe title already normalized", "recipeID", message.RecipeID, "title", recipe.Title)
 			}
 			continue
 		}
@@ -126,11 +138,11 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 
 		// Always save the recipe (even if only metadata was added)
 		if err := saveRecipeToS3(ctx, s3Client, bucketName, recipe); err != nil {
-			log.Printf("ERROR: Failed to save normalized recipe to S3 [recipeID=%s]: %v", message.RecipeID, err)
+			logger.Error("failed to save normalized recipe to S3", "recipeID", message.RecipeID, "error", err)
 			continue
 		}
 
-		log.Printf("INFO: Successfully normalized recipe with enhanced metadata [recipeID=%s]", message.RecipeID)
+		logger.Info("successfully normalized recipe with enhanced metadata", "recipeID", message.RecipeID)
 
 		// Publish quality metrics after normalization (reuse variables from above)
 		publishMetric(ctx, "RecipeQuality", 1.0, map[string]string{
@@ -140,7 +152,7 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 
 		if ingredientCount == 0 && instructionCount == 0 {
 			// This is GARBAGE - log ERROR not INFO
-			log.Printf("ERROR: Recipe has 0 ingredients and 0 instructions: %s", message.URL)
+			logger.Error("recipe has zero ingredients and instructions", "url", message.URL)
 			publishMetric(ctx, "GarbageRecipes", 1.0, map[string]string{
 				"Source": extractDomain(message.URL),
 			})
@@ -169,7 +181,7 @@ func publishMetric(ctx context.Context, metricName string, value float64, dimens
 		},
 	})
 	if err != nil {
-		log.Printf("WARN: Failed to publish CloudWatch metric [metric=%s]: %v", metricName, err)
+		logger.Warn("failed to publish CloudWatch metric", "metric", metricName, "error", err)
 	}
 }
 

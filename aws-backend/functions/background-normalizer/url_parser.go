@@ -39,21 +39,21 @@ func isPlaceholderRecipe(recipe *Recipe) bool {
 // parseRecipeFromURL extracts recipe data from a URL using multiple parsing strategies
 // If providedHTML is supplied, it will be used instead of fetching the URL
 func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (*Recipe, error) {
-	fmt.Printf("🌐 Parsing recipe from URL: %s\n", url)
+	logger.Info("parsing recipe from URL", "url", url)
 
 	var doc *html.Node
 	var err error
 
 	// Use provided HTML if available (mobile share or web extension)
 	if providedHTML != nil && len(*providedHTML) > 0 {
-		fmt.Printf("✅ Using provided HTML (%d characters) - skipping URL fetch\n", len(*providedHTML))
+		logger.Info("using provided HTML", "chars", len(*providedHTML))
 		doc, err = html.Parse(strings.NewReader(*providedHTML))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse provided HTML: %w", err)
 		}
 	} else {
 		// Fallback: Fetch HTML from URL (existing code path)
-		fmt.Printf("📡 No HTML provided - fetching from URL\n")
+		logger.Info("fetching HTML from URL")
 
 		// Create HTTP request with timeout
 		client := &http.Client{
@@ -76,7 +76,7 @@ func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (
 		}
 		defer func() {
 			if closeErr := resp.Body.Close(); closeErr != nil {
-				fmt.Printf("WARN: Failed to close HTTP response body: %v\n", closeErr)
+				logger.Warn("failed to close HTTP response body", "error", closeErr)
 			}
 		}()
 
@@ -99,36 +99,36 @@ func parseRecipeFromURL(ctx context.Context, url string, providedHTML *string) (
 
 	// Look for JSON-LD structured data first
 	if err := extractJSONLD(doc, recipe); err == nil && recipe.Title != "" {
-		fmt.Printf("✅ Successfully extracted recipe using JSON-LD: %s\n", recipe.Title)
+		logger.Info("successfully extracted recipe using JSON-LD", "title", recipe.Title)
 		return recipe, nil
 	} else {
-		fmt.Printf("⚠️ JSON-LD extraction failed: %v\n", err)
+		logger.Warn("JSON-LD extraction failed", "error", err)
 	}
 
 	// Try microdata extraction
 	if err := extractMicrodata(doc, recipe); err == nil && recipe.Title != "" {
-		fmt.Printf("✅ Successfully extracted recipe using microdata: %s\n", recipe.Title)
+		logger.Info("successfully extracted recipe using microdata", "title", recipe.Title)
 		return recipe, nil
 	} else {
-		fmt.Printf("⚠️ Microdata extraction failed: %v\n", err)
+		logger.Warn("microdata extraction failed", "error", err)
 	}
 
 	// Try Smitten Kitchen specific extraction
 	if strings.Contains(recipe.SourceURL, "smittenkitchen.com") {
 		if err := extractSmittenKitchen(doc, recipe); err == nil && recipe.Title != "" {
-			fmt.Printf("✅ Successfully extracted recipe using Smitten Kitchen parser: %s\n", recipe.Title)
+			logger.Info("successfully extracted recipe using Smitten Kitchen parser", "title", recipe.Title)
 			return recipe, nil
 		} else {
-			fmt.Printf("⚠️ Smitten Kitchen extraction failed: %v\n", err)
+			logger.Warn("Smitten Kitchen extraction failed", "error", err)
 		}
 	}
 
 	// Fall back to common selectors
 	if err := extractCommonSelectors(doc, recipe); err == nil && recipe.Title != "" {
-		fmt.Printf("✅ Successfully extracted recipe using common selectors: %s\n", recipe.Title)
+		logger.Info("successfully extracted recipe using common selectors", "title", recipe.Title)
 		return recipe, nil
 	} else {
-		fmt.Printf("⚠️ Common selectors extraction failed: %v\n", err)
+		logger.Warn("common selectors extraction failed", "error", err)
 	}
 
 	return nil, fmt.Errorf("no recipe data found using any extraction method")
@@ -516,5 +516,5 @@ func extractSmittenKitchenInstructions(container *html.Node, recipe *Recipe) {
 		}
 	}
 
-	fmt.Printf("✅ Extracted %d Smitten Kitchen instructions\n", len(recipe.Instructions))
+	logger.Info("extracted Smitten Kitchen instructions", "count", len(recipe.Instructions))
 }
