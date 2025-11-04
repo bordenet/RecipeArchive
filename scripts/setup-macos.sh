@@ -1006,12 +1006,6 @@ if [ -d "extensions/safari" ]; then
   if [ -f "package.json" ]; then
     timeout 180 npm install
     print_success "Safari extension dependencies installed"
-
-    # Run tests to verify setup
-    if timed_confirm "Run Safari extension tests to verify setup?" 10 "Y"; then
-      npm test || print_warning "Some tests may have failed - check configuration"
-      npm run lint || print_warning "Linting issues found - run 'npm run lint:fix' to resolve"
-    fi
   fi
 
   cd - > /dev/null
@@ -1019,37 +1013,18 @@ else
   print_warning "Safari extension directory not found - skipping Safari setup"
 fi
 
-# Run extension unit tests (located in extensions/tests/safari)
+# Install extension test dependencies (do not run tests - that's for validate-monorepo.sh)
 if [ -d "extensions/tests/safari" ]; then
-  print_info "Running extension unit tests..."
   cd extensions/tests/safari
 
   # Install test dependencies if needed
   if [ -f "package.json" ] && [ ! -d "node_modules" ]; then
-    print_info "Installing test dependencies..."
+    print_info "Installing extension test dependencies..."
     timeout 180 npm install > /dev/null 2>&1
-  fi
-
-  # Run the actual extension tests
-  if timed_confirm "Run extension parser and integration tests?" 10 "Y"; then
-    if npm test 2>&1 | tee /tmp/extension-tests.log; then
-      print_success "Extension tests passed"
-    else
-      print_warning "Some extension tests failed - check /tmp/extension-tests.log for details"
-    fi
+    print_success "Extension test dependencies installed"
   fi
 
   cd - > /dev/null
-else
-  print_warning "Extension test directory not found - skipping extension tests"
-fi
-
-# Run cross-platform compatibility test
-if [ -f "test-payload-compatibility.js" ]; then
-  if timed_confirm "Run cross-platform payload compatibility test?" 10 "Y"; then
-    print_info "Running payload compatibility test..."
-    node test-payload-compatibility.js || print_warning "Payload compatibility test failed - check extension implementations"
-  fi
 fi
 
 # Environment variable setup for testing
@@ -1102,8 +1077,8 @@ if [ -d "/Applications/Claude.app" ]; then
   # Install MCP servers globally
   print_info "Installing MCP servers for development workflow..."
 
-  # Install core MCP servers with timeout (including Xcode MCP for iOS development)
-  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework xcode-mcp --force || print_warning "MCP server installation timed out or failed"
+  # Install core MCP servers with timeout
+  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
 
   print_success "MCP servers installation completed"
 
@@ -1171,13 +1146,6 @@ if [ -d "/Applications/Claude.app" ]; then
       "command": "npx",
       "args": ["-y", "browser-mcp"],
       "env": {}
-    },
-    "xcode-mcp": {
-      "command": "npx",
-      "args": ["-y", "xcode-mcp"],
-      "env": {
-        "XCODE_DEVELOPER_PATH": "/Applications/Xcode.app/Contents/Developer"
-      }
     }
   }
 }
@@ -1201,7 +1169,6 @@ EOF
     echo "  ✅ NPM Commands MCP - Package management automation"
     echo "  ✅ Jest MCP - Testing framework integration"
     echo "  ✅ Browser MCP - Browser automation for web development"
-    echo "  ✅ Xcode MCP - iOS/macOS development and build tools"
 
     print_warning "IMPORTANT: Add your GitHub Personal Access Token to the configuration:"
     print_info "1. Generate token at: https://github.com/settings/personal-access-tokens"
@@ -1219,7 +1186,7 @@ else
 
   # Install MCP servers anyway for when Claude Desktop is installed
   print_info "Installing MCP servers globally..."
-  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework xcode-mcp --force || print_warning "MCP server installation timed out or failed"
+  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
   print_success "MCP servers installation completed"
 
   print_info "To complete MCP setup after installing Claude Desktop:"
@@ -1347,21 +1314,12 @@ if command -v claude &> /dev/null; then
     print_success "Flutter MCP server already configured"
   fi
 
-  # Add Xcode MCP server
-  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "xcode"; then
-    print_info "Adding Xcode MCP server..."
-    timeout 30 claude mcp add xcode npx xcode-mcp --scope user 2>/dev/null || print_warning "Xcode MCP server setup failed"
-  else
-    print_success "Xcode MCP server already configured"
-  fi
-
   print_success "Claude Code MCP servers configured"
   print_info "Configured MCP servers for Claude Code:"
   echo "  ✅ GitHub - Repository operations and issue management"
   echo "  ✅ Filesystem - Project file operations"
   echo "  ✅ ESLint - Code quality and linting"
   echo "  ✅ Flutter - Dart/Flutter development tools"
-  echo "  ✅ Xcode - iOS/macOS development and build tools"
 
   print_warning "IMPORTANT: Set up GitHub authentication:"
   print_info "1. Generate a GitHub Personal Access Token"
@@ -1376,7 +1334,6 @@ else
   print_info "4. Run: claude mcp add filesystem npx @modelcontextprotocol/server-filesystem \$(pwd) --scope user"
   print_info "5. Run: claude mcp add eslint npx @eslint/mcp --scope user"
   print_info "6. Run: claude mcp add flutter npx flutter-mcp --scope user"
-  print_info "7. Run: claude mcp add xcode npx xcode-mcp --scope user"
 fi
 
 # Final setup summary and manual steps
@@ -1415,7 +1372,7 @@ ${GREEN}✅ INSTALLATION SUMMARY${NC}
 
 🤖 MCP Servers for AI Development:
    • Claude Desktop: GitHub, ESLint, Flutter/Dart, Jest, Browser, NPM Commands
-   • Claude Code: GitHub, Filesystem, ESLint, Flutter integration
+   • Claude Code: GitHub, Filesystem, ESLint, Flutter
    • Cross-platform AI-powered development workflow
    • Repository management and code quality automation
 
@@ -1519,19 +1476,9 @@ ${BLUE}📖 Documentation:${NC}
 
 EOM
 
-# Mobile Development Validation
-if command -v flutter &> /dev/null; then
-  print_info "Running Flutter doctor to validate mobile setup..."
-  timeout 60 flutter doctor || print_warning "Flutter doctor found issues or timed out - see output above"
-
-  # Run mobile validation if available
-  if [ -f "$REPO_ROOT/validate-monorepo.sh" ]; then
-    print_info "Running mobile app validation..."
-    timeout 120 "$REPO_ROOT/validate-monorepo.sh" --mobile || print_warning "Mobile validation found issues or timed out"
-  fi
-fi
-
 print_success "🎉 RecipeArchive development environment setup complete!"
+print_info ""
+print_info "To validate your setup, run: ./validate-monorepo.sh --all"
 
 print_info ""
 print_info "🔧 Next Steps for AWS Setup:"
