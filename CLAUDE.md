@@ -103,7 +103,7 @@ These conventions ensure consistent, maintainable, production-grade automation a
 - **Build operations**: Use shell scripts with production-grade error handling
 - **Clean builds**: Dedicated scripts (not ad-hoc commands)
 - **Deployment**: Simulator/device deployments via scripts
-- **AWS operations**: Backend interactions via scripts (see `deploy-lambda.sh`)
+- **AWS operations**: Backend interactions via scripts (see `scripts/aws/lambda.sh`)
 - **CRITICAL: Single Scripts Directory**:
   - **ALL scripts MUST live in `./scripts/` at repository root**
   - **NEVER create scripts directories inside subdirectories** (e.g., recipe_archive/scripts/)
@@ -402,12 +402,13 @@ IMPORTANT: `get-diagnostics` tool location TBD - tool may not exist yet. Use Clo
 
 ```bash
 # Preferred method
-./scripts/deploy-lambda.sh recipes
-./scripts/deploy-lambda.sh --all
+./scripts/aws/lambda.sh recipes
+./scripts/aws/lambda.sh --all
 
 # Emergency only
 cd aws-backend/functions/[name]
 GOOS=linux GOARCH=amd64 go build -o bootstrap *.go
+zip deployment-package.zip bootstrap
 aws lambda update-function-code --function-name [NAME] --zip-file fileb://deployment-package.zip
 ```
 
