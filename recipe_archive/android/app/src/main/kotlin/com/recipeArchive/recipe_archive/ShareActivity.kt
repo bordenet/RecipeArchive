@@ -4,54 +4,52 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import java.util.UUID
 
 class ShareActivity : Activity() {
     companion object {
-        private const val TAG = "ShareActivity"
         private const val PREFS_NAME = "recipe_queue"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "ShareActivity onCreate")
+        AppLogger.ShareExtension.info("Share Extension launched")
         handleIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        Log.d(TAG, "ShareActivity onNewIntent")
+        AppLogger.ShareExtension.debug("Share Extension received new intent")
         setIntent(intent)
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
-        Log.d(TAG, "ShareActivity handleIntent - action: ${intent?.action}")
+        AppLogger.ShareExtension.debug("Handling intent - action: ${intent?.action}")
 
         if (intent?.action == Intent.ACTION_SEND) {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-            Log.d(TAG, "Received shared text: $sharedText")
+            AppLogger.ShareExtension.debug("Received shared text: $sharedText")
 
             if (sharedText != null) {
                 val url = extractUrl(sharedText)
                 if (url != null && isValidWebUrl(url)) {
-                    Log.d(TAG, "Valid URL detected: $url")
+                    AppLogger.ShareExtension.info("Valid URL detected: $url")
                     // Load HTML via WebView
                     WebViewContentLoader(this, url) { html, images ->
                         saveToSharedPreferences(url, html, images)
                         openMainApp()
                     }
                 } else {
-                    Log.w(TAG, "Invalid URL: $sharedText")
+                    AppLogger.ShareExtension.warning("Invalid URL: $sharedText")
                     finish()
                 }
             } else {
-                Log.w(TAG, "No text in share intent")
+                AppLogger.ShareExtension.warning("No text in share intent")
                 finish()
             }
         } else {
-            Log.w(TAG, "Not a SEND action: ${intent?.action}")
+            AppLogger.ShareExtension.warning("Not a SEND action: ${intent?.action}")
             finish()
         }
     }
@@ -76,6 +74,8 @@ class ShareActivity : Activity() {
         val timestamp = System.currentTimeMillis()
         val uuid = UUID.randomUUID().toString().take(8)
         val key = "recipe_${timestamp}_${uuid}"
+
+        AppLogger.ShareExtension.info("Enqueueing recipe. URL: $url, HTML: ${if (html != null) "${html.length} bytes" else "none"}, Images: ${images?.size ?: 0}")
 
         val payload = buildString {
             append("{")
@@ -102,8 +102,9 @@ class ShareActivity : Activity() {
             append("}")
         }
 
-        Log.d(TAG, "Saving to SharedPreferences with key: $key")
+        AppLogger.Storage.debug("Saving recipe to SharedPreferences with key: $key")
         prefs.edit().putString(key, payload).apply()
+        AppLogger.Storage.info("Successfully enqueued recipe")
     }
 
     private fun escapeJson(str: String): String {
@@ -126,11 +127,13 @@ class ShareActivity : Activity() {
     }
 
     private fun openMainApp() {
-        Log.d(TAG, "Opening main app")
+        AppLogger.ShareExtension.debug("Opening main app")
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
         if (launchIntent != null) {
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             startActivity(launchIntent)
+        } else {
+            AppLogger.ShareExtension.error("Failed to get launch intent for main app")
         }
         finish()
     }

@@ -7,6 +7,7 @@
 
 import WebKit
 import UIKit
+import os
 
 /// Loads web content using an off-screen WKWebView and extracts HTML and images
 @MainActor
@@ -42,6 +43,8 @@ public final class WebViewContentLoader: NSObject {
     // MARK: - Private Methods - Setup
 
     private func setupWebView() {
+        AppLogger.webView.debug("Setting up WebView for URL: \(self.url.absoluteString, privacy: .public)")
+
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent() // Don't save cookies/data
         config.setURLSchemeHandler(self, forURLScheme: "recipe-image")
@@ -59,6 +62,7 @@ public final class WebViewContentLoader: NSObject {
     }
 
     private func startLoading() {
+        AppLogger.webView.info("Starting WebView load for URL: \(self.url.absoluteString, privacy: .public)")
         webView?.load(URLRequest(url: url))
     }
 
@@ -69,6 +73,8 @@ public final class WebViewContentLoader: NSObject {
         hasCompleted = true
         loadTimeout?.invalidate()
         webView = nil
+
+        AppLogger.webView.info("WebView load completed successfully. HTML length: \(html.count) bytes, Images: \(self.imageData.count)")
         completion(html, imageData.isEmpty ? nil : imageData)
     }
 
@@ -77,10 +83,13 @@ public final class WebViewContentLoader: NSObject {
         hasCompleted = true
         loadTimeout?.invalidate()
         webView = nil
+
+        AppLogger.webView.error("WebView load failed for URL: \(self.url.absoluteString, privacy: .public)")
         completion(nil, nil)
     }
 
     private func handleTimeout() {
+        AppLogger.webView.warning("WebView load timed out after \(self.timeout) seconds for URL: \(self.url.absoluteString, privacy: .public)")
         completeWithError()
     }
 }
@@ -90,14 +99,17 @@ public final class WebViewContentLoader: NSObject {
 extension WebViewContentLoader: WKNavigationDelegate {
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        AppLogger.webView.debug("WebView navigation finished, extracting content")
         extractContentFromPage()
     }
 
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        AppLogger.webView.error("WebView navigation failed: \(error.localizedDescription)")
         completeWithError()
     }
 
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        AppLogger.webView.error("WebView provisional navigation failed: \(error.localizedDescription)")
         completeWithError()
     }
 
@@ -126,34 +138,62 @@ extension WebViewContentLoader: WKNavigationDelegate {
         webView?.evaluateJavaScript(script) { [weak self] result, error in
             guard let self = self, !self.hasCompleted else { return }
 
+            if let error = error {
+                AppLogger.webView.error("JavaScript evaluation failed: \(error.localizedDescription)")
+                self.completeWithError()
+                return
+            }
+
             if let result = result as? [String: Any],
                let html = result["html"] as? String,
                let imageUrls = result["images"] as? [String] {
+                AppLogger.webView.debug("Extracted HTML (\(html.count) bytes) and \(imageUrls.count) image URLs")
                 self.downloadImages(imageUrls) {
                     self.completeWithSuccess(html: html)
                 }
             } else {
+                AppLogger.webView.warning("Failed to extract HTML or images from page")
                 self.completeWithError()
             }
         }
     }
 
     private func downloadImages(_ imageUrls: [String], completion: @escaping () -> Void) {
+        guard !imageUrls.isEmpty else {
+            AppLogger.webView.debug("No images to download")
+            completion()
+            return
+        }
+
+        AppLogger.webView.info("Starting download of \(imageUrls.count) images")
         let group = DispatchGroup()
 
         for imageUrlString in imageUrls {
-            guard let imageUrl = URL(string: imageUrlString) else { continue }
+            guard let imageUrl = URL(string: imageUrlString) else {
+                AppLogger.webView.warning("Invalid image URL: \(imageUrlString, privacy: .public)")
+                continue
+            }
 
             group.enter()
             URLSession.shared.dataTask(with: imageUrl) { [weak self] data, response, error in
                 defer { group.leave() }
+
+                if let error = error {
+                    AppLogger.webView.warning("Failed to download image: \(error.localizedDescription)")
+                    return
+                }
+
                 if let data = data {
+                    AppLogger.webView.debug("Downloaded image (\(data.count) bytes) from: \(imageUrlString, privacy: .public)")
                     self?.imageData[imageUrlString] = data
                 }
             }.resume()
         }
 
-        group.notify(queue: .main, execute: completion)
+        group.notify(queue: .main) {
+            AppLogger.webView.info("Image download completed. Successfully downloaded: \(self.imageData.count) images")
+            completion()
+        }
     }
 }
 
