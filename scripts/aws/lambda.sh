@@ -36,15 +36,11 @@
 
 # Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/../lib/common.sh"
 init_script
 
 # Script variables
 readonly REPO_ROOT="$(get_repo_root)"
-
-# Get script directory and repo root
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Load environment variables from repo root
 if [ -f "$REPO_ROOT/.env" ]; then
