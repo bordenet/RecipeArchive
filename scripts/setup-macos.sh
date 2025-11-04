@@ -40,6 +40,41 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 init_script
 
+# Global variable for auto-yes functionality
+AUTO_YES=false
+
+# Function to display usage information
+usage() {
+    echo "Usage: $(basename "$0") [OPTIONS]"
+    echo "Automates the setup of a comprehensive macOS development environment for RecipeArchive."
+    echo ""
+    echo "Options:"
+    echo "  -y, --yes    Automatically confirm all prompts (non-interactive mode)."
+    echo "  -h, --help   Display this help message and exit."
+    echo ""
+    echo "Example:"
+    echo "  $(basename "$0") --yes"
+    exit 0
+}
+
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        -y|--yes)
+        AUTO_YES=true
+        shift # past argument
+        ;;
+        -h|--help)
+        usage
+        ;;
+        *)
+        print_error "Unknown option: $1"
+        usage
+        ;;
+    esac
+done
+
 # Map color variables for summary
 readonly GREEN="${COLOR_GREEN}"
 readonly YELLOW="${COLOR_YELLOW}"
@@ -72,18 +107,25 @@ print_error() {
 }
 
 # Function for timed confirmation (15 seconds default to 'N')
+AUTO_YES=false
+
 timed_confirm() {
     local message="$1"
     local timeout="${2:-15}"
-    local default="${3:-N}"
-    
+    local default_response="${3:-N}"
+
+    if [ "$AUTO_YES" = true ]; then
+        print_info "$message (Auto-accepting: YES)"
+        return 0
+    fi
+
     print_warning "$message"
     local prompt_options="[y/N]"
-    if [ "$default" = "Y" ]; then
+    if [ "$default_response" = "Y" ]; then
         prompt_options="[Y/n]"
     fi
-    echo -n "Continue? ${prompt_options} (auto-${default} in ${timeout}s): "
-    
+    echo -n "Continue? ${prompt_options} (auto-${default_response} in ${timeout}s): "
+
     if read -t "$timeout" -r response; then
         case "$response" in
             [yY]|[yY][eE][sS]) return 0 ;;
@@ -91,7 +133,7 @@ timed_confirm() {
         esac
     else
         echo ""
-        if [ "$default" = "Y" ]; then
+        if [ "$default_response" = "Y" ]; then
             print_info "Timed out, defaulting to YES"
             return 0
         else
@@ -382,7 +424,7 @@ EOF
     timeout 30 sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
 
     print_info "Accepting Android SDK licenses..."
-    timeout 60 bash -c "yes | flutter doctor --android-licenses" > /dev/null 2>&1 || print_warning "'flutter doctor --android-licenses' timed out or failed. Please run it manually."
+    yes | flutter doctor --android-licenses || print_warning "Failed to accept Android licenses. Please run 'flutter doctor --android-licenses' manually."
     print_success "Android SDK setup completed"
   fi
   
@@ -447,7 +489,7 @@ else
 
       # Update platform-tools, build-tools, and latest platform
       print_info "Updating platform-tools and build-tools..."
-      timeout 180 sdkmanager "platform-tools" "build-tools;36.1.0" "platforms;android-36" 2>&1 | grep -v "=" || true
+      yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" || true
 
       # Update emulator
       print_info "Updating Android emulator..."
@@ -510,12 +552,13 @@ if [ "$ios_setup_needed" = true ]; then
     else
       print_success "Modern Ruby already installed via Homebrew"
       export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-    fi
+
     
     # Install CocoaPods with modern Ruby
     if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
       if timed_confirm "Install CocoaPods for iOS development?"; then
         print_info "Installing CocoaPods with modern Ruby..."
+        sudo gem install cocoapods
         /opt/homebrew/opt/ruby/bin/gem install cocoapods
         print_success "CocoaPods installed"
 
@@ -553,12 +596,11 @@ if [ "$ios_setup_needed" = true ]; then
     print_info "3. Add your Apple ID"
     print_info "4. Select your development team"
   fi
-  else
-    print_warning "Skipping iOS setup - iOS development will not be available"
   fi
-else
-  print_success "iOS development environment already configured"
 fi
+fi
+
+
 
 # AWS CLI
 if ! aws --version &> /dev/null; then
@@ -610,10 +652,29 @@ else
   print_success "Visual Studio Code already installed"
 fi
 
-# VS Code Extensions (if VS Code is available)
+
+
+# Install VS Code extensions
 if command -v code &> /dev/null; then
+  if timed_confirm "Install VS Code extensions from .vscode/extensions.txt?"; then
+    print_info "Installing VS Code extensions..."
+    if [ -f ".vscode/extensions.txt" ]; then
+      while IFS= read -r extension; do
+        if [ -n "$extension" ]; then
+          # Use 'code --install-extension' but ignore the 'v8::ToLocalChecked Empty MaybeLocal' error
+          # that causes it to crash by running in a subshell and suppressing stderr.
+          (code --install-extension "$extension" 2>/dev/null) || print_warning "Failed to install $extension or encountered non-fatal error"
+        fi
+      done < ".vscode/extensions.txt"
+      print_success "VS Code extensions installation attempted."
+    else
+      print_warning "No .vscode/extensions.txt found. Skipping extension installation."
+    fi
+  fi
+fi
+
   print_info "Installing comprehensive VS Code extensions..."
-  
+
   # Essential extensions for our tech stack
   declare -a extensions=(
     "golang.go"                                    # Go language support
@@ -633,7 +694,7 @@ if command -v code &> /dev/null; then
     "hbenl.vscode-test-explorer"                  # Test explorer
     "ms-playwright.playwright"                    # Playwright test support
   )
-  
+
   for extension in "${extensions[@]}"; do
     if ! code --list-extensions | grep -q "$extension"; then
       print_info "Installing $extension..."
@@ -646,11 +707,9 @@ if command -v code &> /dev/null; then
       print_success "$extension already installed"
     fi
   done
-  
+
   print_success "VS Code extensions installation complete"
-else
-  print_warning "VS Code not available - skipping extensions"
-fi
+
 
 # Install browser automation tools
 print_info "Setting up browser automation and testing tools..."
