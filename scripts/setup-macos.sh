@@ -515,23 +515,21 @@ else
       fi
     fi
 
-      # Now prompt for SDK updates (default to YES)
-      if timed_confirm "Update Android SDK components?" 10 "Y"; then
-        print_info "Updating Android SDK components..."
+      # Automatically update SDK components
+      print_info "Updating Android SDK components..."
 
-        # Update SDK manager itself
-        timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
+      # Update SDK manager itself
+      timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
 
-        # Update platform-tools, build-tools, and latest platform
-        print_info "Updating platform-tools and build-tools..."
-        yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" || true
+      # Update platform-tools, build-tools, and latest platform
+      print_info "Updating platform-tools and build-tools..."
+      yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" || true
 
-        # Update emulator
-        print_info "Updating Android emulator..."
-        timeout 120 sdkmanager "emulator" 2>&1 | grep -v "=" || true
+      # Update emulator
+      print_info "Updating Android emulator..."
+      timeout 120 sdkmanager "emulator" 2>&1 | grep -v "=" || true
 
-        print_success "Android SDK components updated"
-      fi
+      print_success "Android SDK components updated"
     fi
   fi
 fi

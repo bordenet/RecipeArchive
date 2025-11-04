@@ -34,9 +34,6 @@ open_url() {
         Darwin)
             open "$1"
             ;;
-        Linux)
-            xdg-open "$1"
-            ;;
         *)
             echo "Unsupported operating system: $(uname -s)"
             ;;
@@ -144,9 +141,6 @@ echo "🌐 Launching Chrome with extension..."
 case "$(uname -s)" in
     Darwin)
         open -a 'Google Chrome' --args --load-extension="$EXTENSION_PATH" --new-window
-        ;;
-    Linux)
-        google-chrome --load-extension="$EXTENSION_PATH" --new-window
         ;;
     *)
         echo "Unsupported operating system: $(uname -s)"

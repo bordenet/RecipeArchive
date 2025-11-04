@@ -54,9 +54,6 @@ else
         Darwin)
             echo "💡 Launch with: open -a 'Google Chrome' --args --load-extension='$EXTENSION_PATH'"
             ;;
-        Linux)
-            echo "💡 Launch with: google-chrome --load-extension='$EXTENSION_PATH'"
-            ;;
         *)
             echo "Unsupported operating system: $(uname -s)"
             ;;

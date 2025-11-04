@@ -1,6 +1,6 @@
 # Swift Structured Logging Migration Plan
 
-**Target**: RecipeArchive iOS/macOS app
+**Target**: RecipeArchive iOS app
 **Framework**: Apple's native `os.Logger` (iOS 14+, macOS 11+)
 **Status**: Planning phase
 

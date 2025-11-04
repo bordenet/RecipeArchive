@@ -40,10 +40,7 @@ class SecurityScanner {
       'package-extensions.sh',
       // Exclude Flutter build artifacts and ephemeral files (false positives)
       'recipe_archive/.dart_tool',
-      'recipe_archive/linux/flutter/ephemeral',
-      'recipe_archive/windows/flutter/ephemeral',
       'recipe_archive/ios/Flutter/ephemeral',
-      'recipe_archive/macos/Flutter/ephemeral',
       // Exclude test files with mock data
       'test-jwt',
       'security-features.test.js',
