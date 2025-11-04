@@ -11,6 +11,37 @@ This document outlines the migration of all Go code in the RecipeArchive project
 3. **Better Debugging**: Structured fields for filtering and aggregation
 4. **No Regressions**: Test and validate each binary before proceeding to the next
 
+## Lessons Learned (Session 1 - 2025-11-04)
+
+### Critical Discovery: Deployment Testing Required
+- **Issue**: Migration without deployment testing would have broken production
+- **Solution**: Deploy each Lambda function immediately after migration
+- **Process**: Build → Lint → Deploy → Test → Commit → Push
+- **Emergency Deployment**: `cd function/ && GOOS=linux GOARCH=amd64 go build -o bootstrap *.go && zip deployment-package.zip bootstrap && aws lambda update-function-code --function-name [NAME] --zip-file fileb://deployment-package.zip`
+
+### Documentation Fixes Needed
+- Fixed incorrect script path in CLAUDE.md: `./scripts/deploy-lambda.sh` → `./scripts/aws/lambda.sh`
+- Added missing `zip deployment-package.zip bootstrap` step to emergency deployment docs
+
+### Migration Efficiency
+- **Bulk replacements work**: Using `perl -i -pe` for pattern-based replacements saved significant time
+- **Multi-file functions**: background-normalizer had 52 log statements across 4 files - need to check all files in directory
+- **Multiline statements**: Some `log.Printf` calls span multiple lines - use `perl -0777` for multiline regex
+
+### Testing Protocol That Works
+1. Replace imports: `log` → `log/slog`
+2. Add logger initialization with JSONHandler
+3. Bulk replace log statements with perl
+4. Run `go build -o bootstrap *.go` to catch unused imports
+5. Run `golangci-lint run ./...`
+6. Run `go mod tidy`
+7. **DEPLOY TO AWS**: Build Linux binary, zip, and update Lambda function code
+8. Verify deployment succeeded (check LastUpdateStatus)
+9. Commit and push immediately
+10. Move to next function
+
+**CRITICAL**: Do not skip deployment step - compilation success does not guarantee runtime success
+
 ## Implementation Strategy
 
 ### Phase 1: Lambda Functions (Critical Path)
@@ -212,10 +243,10 @@ For each binary:
 
 ## Migration Checklist
 
-### Lambda Functions
-- [ ] content-normalizer
-- [ ] recipes
-- [ ] background-normalizer
+### Lambda Functions (3/13 Complete - 23%)
+- [x] content-normalizer (6 log statements, deployed 2025-11-04)
+- [x] recipes (52 log statements, deployed 2025-11-04)
+- [x] background-normalizer (52 log statements across 4 files, deployed 2025-11-04)
 - [ ] s3-manager
 - [ ] backup
 - [ ] invitation-manager-s3
@@ -227,7 +258,7 @@ For each binary:
 - [ ] local-server
 - [ ] health
 
-### CLI Tools
+### CLI Tools (0/10 Complete - 0%)
 - [ ] recipe-tracer
 - [ ] get-diagnostics
 - [ ] content-ops
@@ -238,6 +269,9 @@ For each binary:
 - [ ] recipe-extract-test
 - [ ] test-single-recipe
 - [ ] wapost-cookies
+
+**Total Progress: 3/23 binaries (13%)**
+**Total Log Statements Migrated: 110**
 
 ## CloudWatch Logs Insights Examples
 
