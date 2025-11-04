@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"sync"
@@ -19,7 +19,15 @@ var (
 	s3Client *s3.Client
 	initOnce sync.Once
 	initErr  error
+	logger   *slog.Logger
 )
+
+func init() {
+	// Text handler for CLI tools (human-readable)
+	logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+}
 
 // initAWSClient performs lazy initialization of S3 client using sync.Once.
 func initAWSClient(ctx context.Context) error {
@@ -47,7 +55,9 @@ func main() {
 	flag.Parse()
 
 	if *bucketName == "" {
-		log.Fatal("Bucket name is required (-bucket flag)")
+		logger.Error("bucket name required")
+		fmt.Fprintln(os.Stderr, "Bucket name is required (-bucket flag)")
+		os.Exit(1)
 	}
 
 	if *action == "" {
@@ -66,14 +76,18 @@ func main() {
 
 	ctx := context.Background()
 	if err := initAWSClient(ctx); err != nil {
-		log.Fatalf("Failed to initialize AWS client: %v", err)
+		logger.Error("failed to initialize AWS client", "error", err)
+		fmt.Fprintf(os.Stderr, "Failed to initialize AWS client: %v\n", err)
+		os.Exit(1)
 	}
 
 	switch *action {
 	case "cleanup-all":
 		err := cleanupAllObjects(ctx, *bucketName, *dryRun)
 		if err != nil {
-			log.Fatalf("Failed to cleanup all objects: %v", err)
+			logger.Error("failed to cleanup all objects", "error", err)
+			fmt.Fprintf(os.Stderr, "Failed to cleanup all objects: %v\n", err)
+			os.Exit(1)
 		}
 		if *dryRun {
 			fmt.Println("🔍 Dry run completed - no changes made")
@@ -83,28 +97,37 @@ func main() {
 
 	case "cleanup-user":
 		if *userID == "" {
-			log.Fatal("User ID is required for cleanup-user action (-user-id flag)")
+			logger.Error("user ID required for cleanup-user action")
+			fmt.Fprintln(os.Stderr, "User ID is required for cleanup-user action (-user-id flag)")
+			os.Exit(1)
 		}
 		err := cleanupUserObjects(ctx, *bucketName, *userID, *dryRun)
 		if err != nil {
-			log.Fatalf("Failed to cleanup user objects: %v", err)
+			logger.Error("failed to cleanup user objects", "userID", *userID, "error", err)
+			fmt.Fprintf(os.Stderr, "Failed to cleanup user objects: %v\n", err)
+			os.Exit(1)
 		}
 		if *dryRun {
 			fmt.Printf("🔍 Dry run completed for user %s - no changes made\\n", *userID)
 		} else {
-			log.Printf("INFO: User %s objects cleaned up successfully\\n", *userID)
+			logger.Info("user objects cleaned up successfully", "userID", *userID)
+			fmt.Printf("✅ User %s objects cleaned up successfully\n", *userID)
 		}
 
 	case "list-objects":
 		err := listAllObjects(ctx, *bucketName)
 		if err != nil {
-			log.Fatalf("Failed to list objects: %v", err)
+			logger.Error("failed to list objects", "error", err)
+			fmt.Fprintf(os.Stderr, "Failed to list objects: %v\n", err)
+			os.Exit(1)
 		}
 
 	case "create-test-objects":
 		err := createTestObjects(ctx, *bucketName)
 		if err != nil {
-			log.Fatalf("Failed to create test objects: %v", err)
+			logger.Error("failed to create test objects", "error", err)
+			fmt.Fprintf(os.Stderr, "Failed to create test objects: %v\n", err)
+			os.Exit(1)
 		}
 		fmt.Println("✅ Test objects created successfully")
 
