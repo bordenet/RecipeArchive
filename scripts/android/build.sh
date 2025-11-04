@@ -49,6 +49,7 @@ readonly REPO_ROOT="$(get_repo_root)"
 readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
 readonly ANDROID_DIR="$FLUTTER_DIR/android"
 readonly UNIFIED_BUILD_DIR="$REPO_ROOT/build"
+readonly BUILD_DIR="$FLUTTER_DIR/build"
 
 # Helper functions
 print_header() {
