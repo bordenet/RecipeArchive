@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import os
 
 /// Protocol for managing recipe queue operations
 public protocol RecipeQueueManaging {
@@ -56,6 +57,8 @@ public final class RecipeQueueService: RecipeQueueManaging {
 
     /// Enqueues a recipe for processing
     public func enqueue(url: URL, html: String?, images: [[String: Any]]) throws {
+        AppLogger.storage.debug("Enqueueing recipe: \(url.absoluteString, privacy: .public)")
+
         let containerURL = try getContainerURL()
         let queueURL = containerURL.appendingPathComponent("recipe_queue")
 
@@ -68,6 +71,8 @@ public final class RecipeQueueService: RecipeQueueManaging {
         let filename = "recipe_\(Int(timestamp))_\(uuid).json"
         let fileURL = queueURL.appendingPathComponent(filename)
 
+        AppLogger.storage.debug("Writing recipe to queue file: \(filename)")
+
         // Build payload
         var payload: [String: Any] = [
             "url": url.absoluteString,
@@ -75,6 +80,7 @@ public final class RecipeQueueService: RecipeQueueManaging {
         ]
         if let html = html {
             payload["html"] = html
+            AppLogger.storage.debug("Including HTML (\(html.count) bytes)")
         }
 
         // Serialize images if present
@@ -92,23 +98,30 @@ public final class RecipeQueueService: RecipeQueueManaging {
                 }
             }
             payload["images"] = serializableImages
+            AppLogger.storage.debug("Including \(serializableImages.count) images")
         }
 
         // Serialize and write to file
         guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+            AppLogger.storage.error("Failed to serialize recipe payload")
             throw RecipeQueueError.serializationFailed
         }
 
         do {
             try data.write(to: fileURL, options: [.atomic])
+            AppLogger.storage.info("Successfully enqueued recipe to: \(filename)")
         } catch {
+            AppLogger.storage.error("Failed to write recipe file: \(error.localizedDescription)")
             throw RecipeQueueError.fileWriteFailed(error)
         }
     }
 
     /// Dequeues the next recipe from the queue (FIFO)
     public func dequeueNext() -> RecipeQueueItem? {
+        AppLogger.storage.debug("Attempting to dequeue next recipe from queue")
+
         guard let containerURL = try? getContainerURL() else {
+            AppLogger.storage.error("Failed to get App Group container URL")
             return nil
         }
 
@@ -120,6 +133,7 @@ public final class RecipeQueueService: RecipeQueueManaging {
             includingPropertiesForKeys: [.creationDateKey],
             options: .skipsHiddenFiles
         ) else {
+            AppLogger.storage.debug("No files in queue directory or directory doesn't exist")
             return nil
         }
 
@@ -132,8 +146,11 @@ public final class RecipeQueueService: RecipeQueueManaging {
             }
 
         guard let firstFile = recipeFiles.first else {
+            AppLogger.storage.debug("Queue is empty, no recipes to dequeue")
             return nil
         }
+
+        AppLogger.storage.debug("Dequeuing recipe from file: \(firstFile.lastPathComponent)")
 
         // Read and parse file
         do {
@@ -141,6 +158,7 @@ public final class RecipeQueueService: RecipeQueueManaging {
             guard let payload = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                   let urlString = payload["url"] as? String else {
                 // Invalid file, remove it
+                AppLogger.storage.warning("Invalid recipe file format, removing: \(firstFile.lastPathComponent)")
                 try? fileManager.removeItem(at: firstFile)
                 return nil
             }
@@ -148,12 +166,15 @@ public final class RecipeQueueService: RecipeQueueManaging {
             let html = payload["html"] as? String
             let images = payload["images"] as? [[String: Any]]
 
+            AppLogger.storage.info("Successfully dequeued recipe: \(urlString, privacy: .public)")
+
             // Delete the file after reading
             try? fileManager.removeItem(at: firstFile)
 
             return RecipeQueueItem(url: urlString, html: html, images: images)
         } catch {
             // Remove corrupted file
+            AppLogger.storage.error("Failed to read recipe file, removing: \(firstFile.lastPathComponent) - \(error.localizedDescription)")
             try? fileManager.removeItem(at: firstFile)
             return nil
         }
@@ -165,6 +186,7 @@ public final class RecipeQueueService: RecipeQueueManaging {
         guard let containerURL = fileManager.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupIdentifier
         ) else {
+            AppLogger.storage.error("App Group container unavailable for identifier: \(self.appGroupIdentifier)")
             throw RecipeQueueError.appGroupUnavailable
         }
         return containerURL

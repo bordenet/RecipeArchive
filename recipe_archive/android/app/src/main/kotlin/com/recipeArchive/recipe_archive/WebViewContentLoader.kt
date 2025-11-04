@@ -3,7 +3,6 @@ package com.recipeArchive.recipe_archive
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import kotlinx.coroutines.*
@@ -19,7 +18,6 @@ class WebViewContentLoader(
     private val callback: (String?, Map<String, ByteArray>?) -> Unit
 ) {
     companion object {
-        private const val TAG = "WebViewContentLoader"
         private const val TIMEOUT_MS = 30000L
         private const val IMAGE_DOWNLOAD_TIMEOUT_MS = 10000L
     }
@@ -30,7 +28,7 @@ class WebViewContentLoader(
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     init {
-        Log.d(TAG, "Starting WebView load for URL: $url")
+        AppLogger.WebView.info("Starting WebView load for URL: $url")
 
         // Create WebView on main thread
         Handler(Looper.getMainLooper()).post {
@@ -40,7 +38,7 @@ class WebViewContentLoader(
         // Set timeout
         Handler(Looper.getMainLooper()).postDelayed({
             if (!completed) {
-                Log.w(TAG, "WebView load timed out after ${TIMEOUT_MS}ms")
+                AppLogger.WebView.warning("WebView load timed out after ${TIMEOUT_MS}ms")
                 completeWithError()
             }
         }, TIMEOUT_MS)
@@ -48,6 +46,7 @@ class WebViewContentLoader(
 
     private fun setupWebView() {
         try {
+            AppLogger.WebView.debug("Setting up WebView for URL: $url")
             webView = WebView(context).apply {
                 settings.apply {
                     javaScriptEnabled = true
@@ -58,7 +57,7 @@ class WebViewContentLoader(
 
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        Log.d(TAG, "Page finished loading: $url")
+                        AppLogger.WebView.debug("WebView navigation finished, extracting content")
                         extractHtmlAndImages()
                     }
 
@@ -68,7 +67,7 @@ class WebViewContentLoader(
                         description: String?,
                         failingUrl: String?
                     ) {
-                        Log.e(TAG, "WebView error: $description (code: $errorCode)")
+                        AppLogger.WebView.error("WebView error: $description (code: $errorCode)")
                         completeWithError()
                     }
                 }
@@ -76,7 +75,7 @@ class WebViewContentLoader(
                 loadUrl(this@WebViewContentLoader.url)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error setting up WebView", e)
+            AppLogger.WebView.error("Error setting up WebView", e)
             completeWithError()
         }
     }
@@ -137,7 +136,7 @@ class WebViewContentLoader(
                     val html = data.optString("html", null)
                     val imageUrlsArray = data.optJSONArray("images")
 
-                    Log.d(TAG, "Extracted HTML (${html?.length ?: 0} chars) and ${imageUrlsArray?.length() ?: 0} image URLs")
+                    AppLogger.WebView.debug("Extracted HTML (${html?.length ?: 0} bytes) and ${imageUrlsArray?.length() ?: 0} image URLs")
 
                     if (imageUrlsArray != null && imageUrlsArray.length() > 0) {
                         val imageUrls = mutableListOf<String>()
@@ -151,11 +150,11 @@ class WebViewContentLoader(
                         complete(html, null)
                     }
                 } else {
-                    Log.w(TAG, "JavaScript returned null or empty result")
+                    AppLogger.WebView.warning("JavaScript returned null or empty result")
                     completeWithError()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error parsing JavaScript result", e)
+                AppLogger.WebView.error("Error parsing JavaScript result", e)
                 completeWithError()
             }
         }
@@ -170,7 +169,7 @@ class WebViewContentLoader(
         var remainingDownloads = urls.size
         val maxImages = 10 // Limit to first 10 images
 
-        Log.d(TAG, "Starting download of ${urls.take(maxImages).size} images")
+        AppLogger.WebView.info("Starting download of ${urls.take(maxImages).size} images")
 
         urls.take(maxImages).forEach { imageUrl ->
             val request = Request.Builder()
@@ -187,16 +186,16 @@ class WebViewContentLoader(
                                     synchronized(imageData) {
                                         imageData[imageUrl] = bytes
                                     }
-                                    Log.d(TAG, "Downloaded image: $imageUrl (${bytes.size} bytes)")
+                                    AppLogger.WebView.debug("Downloaded image (${bytes.size} bytes) from: $imageUrl")
                                 } else {
-                                    Log.w(TAG, "Image too large, skipping: $imageUrl (${bytes.size} bytes)")
+                                    AppLogger.WebView.warning("Image too large, skipping: $imageUrl (${bytes.size} bytes)")
                                 }
                             }
                         } else {
-                            Log.w(TAG, "Failed to download image: $imageUrl (${response.code})")
+                            AppLogger.WebView.warning("Failed to download image: $imageUrl (${response.code})")
                         }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error processing image response: $imageUrl", e)
+                        AppLogger.WebView.error("Error processing image response: $imageUrl", e)
                     } finally {
                         synchronized(this@WebViewContentLoader) {
                             remainingDownloads--
@@ -210,7 +209,7 @@ class WebViewContentLoader(
                 }
 
                 override fun onFailure(call: Call, e: IOException) {
-                    Log.e(TAG, "Failed to download image: $imageUrl", e)
+                    AppLogger.WebView.warning("Failed to download image: $imageUrl - ${e.message}")
                     synchronized(this@WebViewContentLoader) {
                         remainingDownloads--
                         if (remainingDownloads == 0) {
@@ -227,7 +226,7 @@ class WebViewContentLoader(
     private fun complete(html: String?, images: Map<String, ByteArray>?) {
         if (!completed) {
             completed = true
-            Log.d(TAG, "Completing with HTML and ${images?.size ?: 0} images")
+            AppLogger.WebView.info("WebView load completed successfully. HTML: ${html?.length ?: 0} bytes, Images: ${images?.size ?: 0}")
             cleanup()
             callback(html, images)
         }
@@ -236,7 +235,7 @@ class WebViewContentLoader(
     private fun completeWithError() {
         if (!completed) {
             completed = true
-            Log.w(TAG, "Completing with error - falling back to URL-only mode")
+            AppLogger.WebView.warning("WebView load failed, falling back to URL-only mode")
             cleanup()
             callback(null, null)
         }
