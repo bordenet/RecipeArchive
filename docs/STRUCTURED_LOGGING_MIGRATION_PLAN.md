@@ -243,13 +243,13 @@ For each binary:
 
 ## Migration Checklist
 
-### Lambda Functions (3/13 Complete - 23%)
+### Lambda Functions (6/13 Complete - 46%)
 - [x] content-normalizer (6 log statements, deployed 2025-11-04)
 - [x] recipes (52 log statements, deployed 2025-11-04)
 - [x] background-normalizer (52 log statements across 4 files, deployed 2025-11-04)
-- [ ] s3-manager
-- [ ] backup
-- [ ] invitation-manager-s3
+- [x] s3-manager (8 log statements, CLI utility not deployed)
+- [x] backup (11 log statements, utility not deployed)
+- [x] invitation-manager-s3 (54 log statements, deployed 2025-11-04)
 - [ ] analytics-aggregator
 - [ ] diagnostics
 - [ ] diagnostics-mobile-share
@@ -270,8 +270,8 @@ For each binary:
 - [ ] test-single-recipe
 - [ ] wapost-cookies
 
-**Total Progress: 3/23 binaries (13%)**
-**Total Log Statements Migrated: 110**
+**Total Progress: 6/23 binaries (26%)**
+**Total Log Statements Migrated: 183**
 
 ## CloudWatch Logs Insights Examples
 
