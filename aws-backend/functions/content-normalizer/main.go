@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -15,6 +15,16 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
+
+var logger *slog.Logger
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // RecipeData represents the input recipe structure
 type RecipeData struct {
@@ -148,12 +158,22 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		}, nil
 	}
 
-	fmt.Printf("🧠 Normalizing recipe: %s from %s\n", normRequest.OriginalRecipe.Title, normRequest.SourceUrl)
+	// Create request-scoped logger with context
+	requestLogger := logger.With(
+		"requestID", request.RequestContext.RequestID,
+		"recipeTitle", normRequest.OriginalRecipe.Title,
+		"sourceUrl", normRequest.SourceUrl,
+		"userID", normRequest.UserId,
+	)
+
+	requestLogger.Info("starting recipe normalization")
 
 	// Call OpenAI API for normalization
 	normalizedResponse, err := normalizeWithOpenAI(ctx, normRequest.OriginalRecipe, normRequest.PageHtml)
 	if err != nil {
-		log.Printf("ERROR: OpenAI normalization failed: %v\n", err)
+		requestLogger.Error("openai normalization failed",
+			"error", err,
+		)
 		// Fallback: return original recipe with basic cleanup
 		fallbackRecipe := basicNormalization(normRequest.OriginalRecipe)
 		responseBody, _ := json.Marshal(map[string]interface{}{
@@ -179,6 +199,9 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		"fallbackUsed":       false,
 	})
 	if err != nil {
+		requestLogger.Error("failed to marshal response",
+			"error", err,
+		)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Headers:    headers,
@@ -186,7 +209,9 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		}, nil
 	}
 
-	log.Printf("INFO: Recipe normalization completed with quality score: %.1f\n", normalizedResponse.QualityScore)
+	requestLogger.Info("recipe normalization completed",
+		"qualityScore", normalizedResponse.QualityScore,
+	)
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
@@ -212,7 +237,9 @@ func normalizeWithOpenAI(ctx context.Context, recipe RecipeData, pageHtml string
 	stage2Response, err := performStage2Normalization(ctx, openaiApiKey, recipe, stage1Response)
 	if err != nil {
 		// If stage 2 fails, return stage 1 results (degraded but functional)
-		log.Printf("WARN: Stage 2 failed, using stage 1 results: %v\n", err)
+		logger.Warn("stage 2 normalization failed, using stage 1 results",
+			"error", err,
+		)
 		return stage1Response, nil
 	}
 
@@ -407,7 +434,9 @@ func makeOpenAICall(ctx context.Context, apiKey, prompt string, timeout time.Dur
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+			logger.Warn("failed to close response body",
+				"error", closeErr,
+			)
 		}
 	}()
 
