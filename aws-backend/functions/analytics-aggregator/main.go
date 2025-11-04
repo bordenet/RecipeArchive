@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -26,7 +26,16 @@ var (
 	s3Client *s3.Client
 	initOnce sync.Once
 	initErr  error
+	logger   *slog.Logger
 )
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // S3-based analytics system for unified cross-device insights
 // Cost: ~$0.10-0.50/month for all users combined
@@ -112,7 +121,7 @@ func initAWSClients(ctx context.Context) error {
 		}
 
 		s3Client = s3.NewFromConfig(cfg)
-		log.Printf("INFO: S3-Based Analytics Aggregator initialized [bucket=%s]\n", utils.GetS3BucketName())
+		logger.Info("S3-Based Analytics Aggregator initialized", "bucket", utils.GetS3BucketName())
 	})
 	return initErr
 }
@@ -123,7 +132,7 @@ func main() {
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	if err := initAWSClients(ctx); err != nil {
-		log.Printf("ERROR: Failed to initialize AWS clients: %v", err)
+		logger.Error("failed to initialize AWS clients", "error", err)
 		return utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
 			"error": map[string]interface{}{
 				"code":    "INITIALIZATION_ERROR",
@@ -132,7 +141,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		})
 	}
 
-	log.Printf("INFO: Analytics Aggregator invoked [method=%s, path=%s]\n", request.HTTPMethod, request.Path)
+	logger.Info("analytics aggregator invoked", "method", request.HTTPMethod, "path", request.Path)
 
 	// Handle CORS preflight requests
 	if request.HTTPMethod == "OPTIONS" {
@@ -162,7 +171,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 
 	userID := validation.UserID
-	log.Printf("INFO: Analytics request [userID=%s]\n", userID)
+	logger.Info("analytics request", "userID", userID)
 
 	// Route requests
 	switch request.HTTPMethod {
@@ -185,12 +194,12 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 }
 
 func submitAnalyticsEvents(ctx context.Context, request events.APIGatewayProxyRequest, userID string) (events.APIGatewayProxyResponse, error) {
-	log.Printf("INFO: Submitting analytics events [userID=%s, bodyLength=%d]\n", userID, len(request.Body))
+	logger.Info("submitting analytics events", "userID", userID, "bodyLength", len(request.Body))
 
 	var req BatchAnalyticsRequest
 	if err := json.Unmarshal([]byte(request.Body), &req); err != nil {
-		log.Printf("ERROR: JSON unmarshaling error: %v\n", err)
-		log.Printf("ERROR: Request body: %s\n", request.Body)
+		logger.Error("JSON unmarshaling error", "error", err)
+		logger.Error("request body", "body", request.Body)
 		return utils.NewAPIResponse(http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
 	}
 
@@ -217,22 +226,22 @@ func submitAnalyticsEvents(ctx context.Context, request events.APIGatewayProxyRe
 		enrichedEvents = append(enrichedEvents, event)
 	}
 
-	log.Printf("INFO: Processing analytics events [userID=%s, eventCount=%d]\n", userID, len(enrichedEvents))
+	logger.Info("processing analytics events", "userID", userID, "eventCount", len(enrichedEvents))
 
 	// Store raw events for current month
 	currentMonth := time.Now().Format("2006-01")
 	if err := storeRawEvents(ctx, userID, currentMonth, enrichedEvents); err != nil {
-		log.Printf("ERROR: Failed to store raw events: %v\n", err)
+		logger.Error("failed to store raw events", "error", err)
 		return utils.NewAPIResponse(http.StatusInternalServerError, map[string]string{"error": "Failed to store events"})
 	}
 
 	// Update monthly summary
 	if err := updateMonthlySummary(ctx, userID, currentMonth, enrichedEvents); err != nil {
-		log.Printf("WARN: Failed to update summary (non-critical): %v\n", err)
+		logger.Warn("failed to update summary (non-critical)", "error", err)
 		// Don't fail the request - raw events are stored
 	}
 
-	log.Printf("INFO: Successfully processed %d analytics events\n", len(enrichedEvents))
+	logger.Info("successfully processed analytics events", "eventCount", len(enrichedEvents))
 
 	return utils.NewAPIResponse(http.StatusOK, map[string]interface{}{
 		"message":    "Analytics events processed successfully",
@@ -243,7 +252,7 @@ func submitAnalyticsEvents(ctx context.Context, request events.APIGatewayProxyRe
 }
 
 func getAnalyticsSummary(ctx context.Context, userID, month string) (events.APIGatewayProxyResponse, error) {
-	log.Printf("INFO: Getting analytics summary [userID=%s, month=%s]\n", userID, month)
+	logger.Info("getting analytics summary", "userID", userID, "month", month)
 
 	// Default to current month if not specified
 	if month == "" {
@@ -253,7 +262,7 @@ func getAnalyticsSummary(ctx context.Context, userID, month string) (events.APIG
 	// Get monthly summary
 	summary, err := getMonthlySummary(ctx, userID, month)
 	if err != nil {
-		log.Printf("ERROR: Failed to get monthly summary: %v\n", err)
+		logger.Error("failed to get monthly summary", "userID", userID, "month", month, "error", err)
 		// Return empty summary instead of error
 		emptySummary := MonthlyAnalyticsSummary{
 			UserID:              userID,
@@ -271,7 +280,7 @@ func getAnalyticsSummary(ctx context.Context, userID, month string) (events.APIG
 		return utils.NewAPIResponse(http.StatusOK, emptySummary)
 	}
 
-	log.Printf("INFO: Retrieved analytics summary: %d searches, %d clicks\n", summary.TotalSearches, summary.TotalClicks)
+	logger.Info("retrieved analytics summary", "userID", userID, "month", month, "totalSearches", summary.TotalSearches, "totalClicks", summary.TotalClicks)
 	return utils.NewAPIResponse(http.StatusOK, summary)
 }
 
@@ -437,7 +446,7 @@ func putJSONToS3(ctx context.Context, key string, data interface{}) error {
 		return fmt.Errorf("failed to put object to S3: %w", err)
 	}
 
-	log.Printf("INFO: Stored analytics to S3 [key=%s]\n", key)
+	logger.Info("stored analytics to S3", "key", key)
 	return nil
 }
 
@@ -451,7 +460,7 @@ func getJSONFromS3(ctx context.Context, key string, target interface{}) error {
 	}
 	defer func() {
 		if closeErr := result.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+			logger.Warn("failed to close response body", "error", closeErr)
 		}
 	}()
 

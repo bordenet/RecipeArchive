@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -26,7 +26,16 @@ var (
 	cwClient *cloudwatch.Client
 	initOnce sync.Once
 	initErr  error
+	logger   *slog.Logger
 )
+
+func init() {
+	// JSON handler for Lambda functions (CloudWatch Logs Insights compatible)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level:     slog.LevelInfo,
+		AddSource: true, // Include source file/line for errors
+	}))
+}
 
 // initAWSClients performs lazy initialization of AWS clients using sync.Once.
 // This reduces Lambda cold start time by ~100-200ms compared to init().
@@ -73,7 +82,7 @@ type DiagnosticRequest struct {
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	if err := initAWSClients(ctx); err != nil {
-		log.Printf("ERROR: Failed to initialize AWS clients: %v", err)
+		logger.Error("failed to initialize AWS clients", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Headers: map[string]string{
@@ -133,20 +142,20 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	}
 
 	// Log diagnostic information
-	log.Printf("INFO: Received diagnostic errors [count=%d, dataSize=%d]\n", len(diagnosticRequest.Errors), len(request.Body))
+	logger.Info("received diagnostic errors", "count", len(diagnosticRequest.Errors), "dataSize", len(request.Body))
 
 	var s3StorageResults []string
 	processedCount := 0
 
 	// Process each error
 	for i, diagnosticData := range diagnosticRequest.Errors {
-		log.Printf("INFO: Processing diagnostic error [index=%d, url=%s, errorType=%s]\n", i+1, diagnosticData.URL, diagnosticData.ErrorType)
+		logger.Info("processing diagnostic error", "index", i+1, "url", diagnosticData.URL, "errorType", diagnosticData.ErrorType)
 
 		// Store ALL diagnostic data in S3 for analysis
 		if s3Client != nil {
 			bucketName := os.Getenv("S3_FAILED_PARSING_BUCKET")
 			if bucketName == "" {
-				log.Printf("WARN: S3_FAILED_PARSING_BUCKET not configured, skipping S3 storage\n")
+				logger.Warn("S3_FAILED_PARSING_BUCKET not configured, skipping S3 storage")
 			} else {
 				// Create filename from URL and timestamp
 				timestamp := time.Now().Format("2006-01-02_15-04-05")
@@ -175,10 +184,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 				})
 
 				if err != nil {
-					log.Printf("WARN: Failed to store diagnostic data in S3: %v\n", err)
+					logger.Warn("failed to store diagnostic data in S3", "error", err)
 					s3StorageResults = append(s3StorageResults, "failed")
 				} else {
-					log.Printf("INFO: Stored diagnostic data in S3: %s\n", jsonFilename)
+					logger.Info("stored diagnostic data in S3", "filename", jsonFilename)
 					s3StorageResults = append(s3StorageResults, jsonFilename)
 				}
 
@@ -200,9 +209,9 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 					})
 
 					if err != nil {
-						log.Printf("WARN: Failed to store HTML in S3: %v\n", err)
+						logger.Warn("failed to store HTML in S3", "error", err)
 					} else {
-						log.Printf("INFO: Stored HTML content in S3: %s\n", htmlFilename)
+						logger.Info("stored HTML content in S3", "filename", htmlFilename)
 					}
 				}
 			}
@@ -253,7 +262,7 @@ func publishMetric(ctx context.Context, metricName string, value float64, errorT
 		},
 	})
 	if err != nil {
-		log.Printf("WARN: Failed to publish metric: %v\n", err)
+		logger.Warn("failed to publish metric", "metricName", metricName, "error", err)
 	}
 }
 
