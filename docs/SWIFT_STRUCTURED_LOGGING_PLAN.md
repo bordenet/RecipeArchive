@@ -27,12 +27,12 @@ The Swift codebase uses mix of logging approaches:
 ```swift
 // Centralized logger factory
 enum AppLogger {
-    static let shareExtension = Logger(subsystem: "com.bordenet.RecipeArchive", category: "ShareExtension")
-    static let webView = Logger(subsystem: "com.bordenet.RecipeArchive", category: "WebView")
-    static let network = Logger(subsystem: "com.bordenet.RecipeArchive", category: "Network")
-    static let parser = Logger(subsystem: "com.bordenet.RecipeArchive", category: "Parser")
-    static let storage = Logger(subsystem: "com.bordenet.RecipeArchive", category: "Storage")
-    static let auth = Logger(subsystem: "com.bordenet.RecipeArchive", category: "Auth")
+    static let shareExtension = Logger(subsystem: "com.RecipeArchive", category: "ShareExtension")
+    static let webView = Logger(subsystem: "com.RecipeArchive", category: "WebView")
+    static let network = Logger(subsystem: "com.RecipeArchive", category: "Network")
+    static let parser = Logger(subsystem: "com.RecipeArchive", category: "Parser")
+    static let storage = Logger(subsystem: "com.RecipeArchive", category: "Storage")
+    static let auth = Logger(subsystem: "com.RecipeArchive", category: "Auth")
 }
 ```
 
@@ -273,19 +273,19 @@ After migration, these queries will work:
 
 ```bash
 # All Share Extension activity
-log show --predicate 'subsystem == "com.bordenet.RecipeArchive" AND category == "ShareExtension"' --last 1h
+log show --predicate 'subsystem == "com.RecipeArchive" AND category == "ShareExtension"' --last 1h
 
 # WebView errors only
-log show --predicate 'subsystem == "com.bordenet.RecipeArchive" AND category == "WebView" AND eventType == error' --last 1h
+log show --predicate 'subsystem == "com.RecipeArchive" AND category == "WebView" AND eventType == error' --last 1h
 
 # Network requests with duration
-log show --predicate 'subsystem == "com.bordenet.RecipeArchive" AND category == "Network"' --info --last 1h
+log show --predicate 'subsystem == "com.RecipeArchive" AND category == "Network"' --info --last 1h
 
 # Authentication events
-log show --predicate 'subsystem == "com.bordenet.RecipeArchive" AND category == "Auth"' --last 24h
+log show --predicate 'subsystem == "com.RecipeArchive" AND category == "Auth"' --last 24h
 
 # Performance: Share Extension load times
-log show --predicate 'subsystem == "com.bordenet.RecipeArchive" AND category == "ShareExtension" AND eventMessage CONTAINS "duration"' --last 1h
+log show --predicate 'subsystem == "com.RecipeArchive" AND category == "ShareExtension" AND eventMessage CONTAINS "duration"' --last 1h
 ```
 
 ## CloudWatch Integration
