@@ -23,7 +23,7 @@ func getRecipeFromS3(ctx context.Context, s3Client *s3.Client, bucketName, userI
 	}
 	defer func() {
 		if closeErr := result.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close S3 response body: %v\n", closeErr)
+			logger.Warn("failed to close S3 response body", "error", closeErr)
 		}
 	}()
 

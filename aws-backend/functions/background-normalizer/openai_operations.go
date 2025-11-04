@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -24,36 +23,36 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	instructionCount := len(recipe.Instructions)
 
 	if ingredientCount == 0 && instructionCount == 0 {
-		log.Printf("❌ BROKEN RECIPE DETECTED: Recipe %s has 0 ingredients and 0 instructions", recipe.ID)
-		log.Printf("   Title: %s", recipe.Title)
-		log.Printf("   Source: %s", recipe.SourceURL)
+		logger.Error("broken recipe detected", "recipeID", recipe.ID, "ingredients", 0, "instructions", 0)
+		logger.Error("recipe details", "title", recipe.Title)
+		logger.Error("recipe details", "source", recipe.SourceURL)
 		return nil, fmt.Errorf("recipe has no content (0 ingredients, 0 instructions) - scraper likely failed")
 	}
 
 	if ingredientCount == 0 {
-		log.Printf("⚠️ WARNING: Recipe %s has 0 ingredients (but has %d instructions)", recipe.ID, instructionCount)
+		logger.Warn("recipe has zero ingredients", "recipeID", recipe.ID, "instructions", instructionCount)
 	}
 
 	if instructionCount == 0 {
-		log.Printf("⚠️ WARNING: Recipe %s has 0 instructions (but has %d ingredients)", recipe.ID, ingredientCount)
+		logger.Warn("recipe has zero instructions", "recipeID", recipe.ID, "ingredients", ingredientCount)
 	}
 
 	// Check if this is a placeholder recipe that needs URL parsing first
 	if isPlaceholderRecipe(recipe) {
-		fmt.Printf("🔍 Detected placeholder recipe, parsing content\n")
+		logger.Info("detected placeholder recipe, parsing content")
 
 		// Check if we have webArchiveHtml from mobile share or web extension
 		var htmlPtr *string
 		if recipe.WebArchiveHTML != nil && len(*recipe.WebArchiveHTML) > 0 {
 			htmlPtr = recipe.WebArchiveHTML
-			fmt.Printf("✅ Using provided HTML from client (%d characters)\n", len(*recipe.WebArchiveHTML))
+			logger.Info("using provided HTML from client", "chars", len(*recipe.WebArchiveHTML))
 		} else {
-			fmt.Printf("📡 No HTML provided - will fetch from URL: %s\n", recipe.SourceURL)
+			logger.Info("no HTML provided, fetching from URL", "url", recipe.SourceURL)
 		}
 
 		parsedRecipe, err := parseRecipeFromURL(ctx, recipe.SourceURL, htmlPtr)
 		if err != nil {
-			fmt.Printf("⚠️ Failed to parse content, proceeding with placeholder values: %v\n", err)
+			logger.Warn("failed to parse content, proceeding with placeholder values", "error", err)
 		} else {
 			// Use parsed content but preserve ID, UserID, and other metadata
 			parsedRecipe.ID = recipe.ID
@@ -62,17 +61,17 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 			parsedRecipe.UpdatedAt = recipe.UpdatedAt
 			parsedRecipe.Version = recipe.Version
 			recipe = parsedRecipe
-			fmt.Printf("✅ Successfully parsed recipe: %s\n", recipe.Title)
+			logger.Info("successfully parsed recipe", "title", recipe.Title)
 		}
 	}
 
 	// CACHE DISABLED: Always call OpenAI to ensure fresh normalization
 	// The cache was causing broken recipes to persist across re-ingestions
-	fmt.Printf("📝 Cache disabled - calling OpenAI for fresh normalization\n")
+	logger.Info("calling OpenAI for normalization")
 
 	// Build normalization prompt
 	prompt := buildNormalizationPrompt(recipe)
-	fmt.Printf("🔍 RECIPE DATA BEING SENT TO OPENAI:\n  Title: %s\n  Ingredients Count: %d\n  Instructions Count: %d\n", recipe.Title, len(recipe.Ingredients), len(recipe.Instructions))
+	logger.Info("sending recipe data to OpenAI", "title", recipe.Title, "ingredients", len(recipe.Ingredients), "instructions", len(recipe.Instructions))
 
 	// Prepare OpenAI API request
 	openaiRequest := OpenAIRequest{
@@ -115,7 +114,7 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			fmt.Printf("WARN: Failed to close response body: %v\n", closeErr)
+			logger.Warn("failed to close response body", "error", closeErr)
 		}
 	}()
 
@@ -137,17 +136,17 @@ func normalizeRecipeWithOpenAI(ctx context.Context, recipe *Recipe) (*Recipe, er
 	content := strings.TrimSpace(openaiResp.Choices[0].Message.Content)
 
 	// DEBUG: Log the OpenAI response to see what we're getting
-	fmt.Printf("🐛 OpenAI Response for debugging: %s\n", content)
+	logger.Debug("OpenAI response", "content", content)
 
 	if err := json.Unmarshal([]byte(content), &normResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse OpenAI JSON response: %w", err)
 	}
 
 	// DEBUG: Log the parsed cookingMethods to see if they exist
-	fmt.Printf("🐛 Parsed cookingMethods count: %d\n", len(normResponse.CookingMethods))
+	logger.Debug("parsed cookingMethods", "count", len(normResponse.CookingMethods))
 
 	// CACHE DISABLED - not storing response
-	fmt.Printf("📝 OpenAI normalization complete (cache disabled)\n")
+	logger.Info("OpenAI normalization complete")
 
 	return applyNormalization(recipe, &normResponse)
 }
@@ -256,20 +255,24 @@ func applyNormalization(recipe *Recipe, normResponse *NormalizationResponse) (*R
 
 		result.CookingMethodOptions = normResponse.CookingMethods
 		result.Instructions = extractSharedInstructions(normResponse.NormalizedInstructions)
-		fmt.Printf("🎯 Multi-method recipe: %d cooking methods, %d shared prep steps\n",
-			len(result.CookingMethodOptions), len(result.Instructions))
+		logger.Info("multi-method recipe",
+			"cookingMethods", len(result.CookingMethodOptions),
+			"sharedPrepSteps", len(result.Instructions))
 	} else {
 		// Single-method recipe: use normalizedInstructions as the main instructions
 		result.Instructions = normResponse.NormalizedInstructions
 		result.CookingMethodOptions = []CookingMethod{} // Ensure empty array
-		fmt.Printf("📋 Single-method recipe: %d instructions\n", len(normResponse.NormalizedInstructions))
+		logger.Info("single-method recipe", "instructions", len(normResponse.NormalizedInstructions))
 	}
 
 	result = applyTimeAndServings(result, normResponse)
 	result = applyTags(result, normResponse)
 
-	fmt.Printf("✨ Enhanced recipe %s with search metadata: %d semantic tags, %d primary ingredients, %s complexity\n",
-		result.ID, len(normResponse.SearchMetadata.SemanticTags), len(normResponse.SearchMetadata.PrimaryIngredients), normResponse.SearchMetadata.Complexity)
+	logger.Info("enhanced recipe with search metadata",
+		"recipeID", result.ID,
+		"semanticTags", len(normResponse.SearchMetadata.SemanticTags),
+		"primaryIngredients", len(normResponse.SearchMetadata.PrimaryIngredients),
+		"complexity", normResponse.SearchMetadata.Complexity)
 
 	return &result, nil
 }
