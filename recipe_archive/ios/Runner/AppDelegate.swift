@@ -8,6 +8,7 @@
 import Flutter
 import UIKit
 import Shared
+import os
 
 @main
 @objc final class AppDelegate: FlutterAppDelegate {
@@ -66,7 +67,7 @@ import Shared
     // MARK: - Private Methods - Notification Handling
 
     @objc private func handleWebExtensionNotification() {
-        print("DEBUG AppDelegate: Received Web Extension notification")
+        AppLogger.flutter.info("Web Extension notification received")
         flutterBridge.notifyFlutterOfSharedUrl()
     }
 }
