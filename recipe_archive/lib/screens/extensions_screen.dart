@@ -167,7 +167,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                       const SizedBox(height: 12),
 
                       Text(
-                        'Mobile browsers don\'t support the web extensions needed to import recipes from websites. Recipe Archive requires a desktop browser (Chrome for Windows/Linux/macOS or Safari for macOS) with our extension installed:',
+                        'Mobile browsers don\'t support the web extensions needed to import recipes from websites. Recipe Archive requires a desktop browser (Chrome or Safari for macOS) with our extension installed:',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
@@ -586,7 +586,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
                     const SizedBox(height: 8),
                     Text(
                       PlatformDetection.isMobile
-                        ? 'Mobile browsers have limited web extension capabilities. Recipe Archive currently requires a desktop web browser (Chrome for Windows/Linux/macOS or Safari for macOS) with our browser extension installed to import recipes from websites.'
+                        ? 'Mobile browsers have limited web extension capabilities. Recipe Archive currently requires a desktop web browser (Chrome or Safari for macOS) with our browser extension installed to import recipes from websites.'
                         : 'Capture recipes directly from your browser while browsing your favorite recipe websites. Choose your browser below to download the extension.',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.green[700],
