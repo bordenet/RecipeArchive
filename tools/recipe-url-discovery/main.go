@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -13,6 +13,15 @@ import (
 	"github.com/gemini-cli/recipe-url-discovery/validators"
 	"gopkg.in/yaml.v3"
 )
+
+var logger *slog.Logger
+
+func init() {
+	// Text handler for CLI tools (human-readable)
+	logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+}
 
 // Config structs from config.yaml
 type Config struct {
@@ -63,7 +72,7 @@ func main() {
 	// Get project root (tool is in tools/recipe-url-discovery)
 	projectRoot, err := filepath.Abs("../..")
 	if err != nil {
-		log.Fatalf("Failed to get project root: %v", err)
+		logger.Error("failed to get project root", "error", err); os.Exit(1)
 	}
 
 	parserBundlePath := filepath.Join(projectRoot, "extensions/chrome/typescript-parser-bundle.js")
@@ -73,7 +82,7 @@ func main() {
 	// Load config
 	config, err := loadConfig(configPath)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		logger.Error("failed to load config", "error", err); os.Exit(1)
 	}
 
 	// Create components
@@ -103,13 +112,13 @@ func discoverForSite(siteName string, config *Config, discoverer *discoverers.Si
 	validator *validators.RecipeValidator, maxURLs int) {
 	siteConfig, ok := config.Sites[siteName]
 	if !ok {
-		log.Fatalf("Site %s not found in config", siteName)
+		logger.Error("site not found in config", "site", siteName); os.Exit(1)
 	}
 
 	fmt.Printf("📡 Fetching sitemap from %s...\n", siteConfig.SitemapURL)
 	urls, err := discoverer.DiscoverURLs(siteConfig.SitemapURL, siteConfig.Domain)
 	if err != nil {
-		log.Fatalf("Failed to discover URLs: %v", err)
+		logger.Error("failed to discover URLs", "error", err); os.Exit(1)
 	}
 
 	fmt.Printf("Found %d potential recipe URLs\n", len(urls))
@@ -186,28 +195,28 @@ func updateTestCatalog(config *Config, catalogUpdater *updater.CatalogUpdater) {
 		if siteConfig.Status == "failing" {
 			cachePath := filepath.Join("cache", fmt.Sprintf("%s.json", siteName))
 			if _, err := os.Stat(cachePath); os.IsNotExist(err) {
-				log.Printf("No cache file found for %s, skipping update. Run discovery first.", siteName)
+				logger.Info("no cache file found, skipping update - run discovery first", "site", siteName)
 				continue
 			}
 
 			data, err := os.ReadFile(cachePath)
 			if err != nil {
-				log.Printf("Failed to read cache file for %s: %v", siteName, err)
+				logger.Error("failed to read cache file", "site", siteName, "error", err)
 				continue
 			}
 
 			var result validators.ValidationResult
 			if err := json.Unmarshal(data, &result); err != nil {
-				log.Printf("Failed to parse cache file for %s: %v", siteName, err)
+				logger.Error("failed to parse cache file", "site", siteName, "error", err)
 				continue
 			}
 
 			if result.IsValid {
 				if err := catalogUpdater.UpdateURL(siteName, siteConfig.CurrentTestURL, result.URL); err != nil {
-					log.Printf("Failed to update test catalog for %s: %v", siteName, err)
+					logger.Error("failed to update test catalog", "site", siteName, "error", err)
 				}
 			} else {
-				log.Printf("Cached result for %s is not valid, skipping update.", siteName)
+				logger.Info("cached result not valid, skipping update", "site", siteName)
 			}
 		}
 	}
@@ -236,11 +245,11 @@ func saveToCacheFile(siteName string, result *validators.ValidationResult) {
 	filePath := filepath.Join("cache", fmt.Sprintf("%s.json", siteName))
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
-		log.Printf("Failed to marshal cache data for %s: %v", siteName, err)
+		logger.Error("failed to marshal cache data", "site", siteName, "error", err)
 		return
 	}
 
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		log.Printf("Failed to write cache file for %s: %v", siteName, err)
+		logger.Error("failed to write cache file", "site", siteName, "error", err)
 	}
 }

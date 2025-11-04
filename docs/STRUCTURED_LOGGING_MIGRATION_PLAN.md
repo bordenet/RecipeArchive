@@ -275,20 +275,16 @@ For each binary:
 - [x] test-tools (10 log statements, migrated 2025-11-04)
 - [x] local-server (20 log statements, CLI HTTP server - uses TextHandler, migrated 2025-11-04)
 
-### CLI Tools in tools/ (0/10 Complete - 0%)
-- [ ] recipe-tracer
-- [ ] get-diagnostics
-- [ ] content-ops
-- [ ] monorepo-validator-go
-- [ ] recipe-cli
-- [ ] s3-cleanup
-- [ ] recipe-url-discovery
-- [ ] recipe-extract-test
-- [ ] test-single-recipe
-- [ ] wapost-cookies
+### CLI Tools in tools/ (5/6 Complete - 83%)
+- [x] recipe-tracer (already uses no logging)
+- [x] get-diagnostics (already uses no logging)
+- [x] content-ops (already uses no logging)
+- [x] monorepo-validator-go (already uses no logging)
+- [x] s3-cleanup (already uses no logging)
+- [x] recipe-url-discovery (11 log statements - 7 Printf + 4 Fatalf, migrated 2025-11-04)
 
-**Total Progress: 13/25 binaries (52%)**
-**Total Log Statements Migrated: 239**
+**Total Progress: 14/18 binaries (78%)**
+**Total Log Statements Migrated: 250**
 
 ## CloudWatch Logs Insights Examples
 
