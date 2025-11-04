@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log/slog"
 	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,6 +24,15 @@ import (
 )
 
 // Recipe represents a recipe model
+var logger *slog.Logger
+
+func init() {
+	// Text handler for CLI tools (human-readable)
+	logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+}
+
 type Recipe struct {
 	ID           string    `json:"id"`
 	UserID       string    `json:"user_id"`
@@ -91,7 +101,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 		"service":  "recipe-archive-local",
 		"database": "local-in-memory",
 	}); err != nil {
-		log.Printf("WARN: Failed to encode health response: %v\n", err)
+		logger.Warn("failed to encode health response", "error", err)
 	}
 }
 
@@ -170,13 +180,13 @@ func testPageHandler(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>
 		`)); writeErr != nil {
-			log.Printf("WARN: Failed to write fallback HTML: %v\n", writeErr)
+			logger.Warn("failed to write fallback HTML", "error", writeErr)
 		}
 		return
 	}
 
 	if _, err := w.Write(content); err != nil {
-		log.Printf("WARN: Failed to write test page: %v\n", err)
+		logger.Warn("failed to write test page", "error", err)
 	}
 }
 
@@ -238,10 +248,10 @@ func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 			})
 
 			if err != nil {
-				log.Printf("WARN:  Failed to store HTML in S3: %v\n", err)
+				logger.Warn("failed to store HTML in S3", "error", err)
 				s3StorageResult = fmt.Sprintf("Failed to store HTML: %v", err)
 			} else {
-				log.Printf("INFO: Stored failed parsing HTML: %s\n", filename)
+				logger.Info("stored failed parsing HTML", "filename", filename)
 				s3StorageResult = fmt.Sprintf("HTML stored as: %s", filename)
 			}
 		}
@@ -263,7 +273,7 @@ func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("WARN: Failed to encode diagnostics response: %v\n", err)
+		logger.Warn("failed to encode diagnostics response", "error", err)
 	}
 }
 
@@ -283,7 +293,7 @@ func listRecipesHandler(w http.ResponseWriter, r *http.Request) {
 		"recipes": userRecipes,
 		"count":   len(userRecipes),
 	}); err != nil {
-		log.Printf("WARN: Failed to encode list recipes response: %v\n", err)
+		logger.Warn("failed to encode list recipes response", "error", err)
 	}
 }
 
@@ -319,7 +329,7 @@ func createRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Recipe created successfully",
 		"recipe":  recipe,
 	}); err != nil {
-		log.Printf("WARN: Failed to encode create recipe response: %v\n", err)
+		logger.Warn("failed to encode create recipe response", "error", err)
 	}
 }
 
@@ -339,7 +349,7 @@ func getRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"recipe": recipe,
 	}); err != nil {
-		log.Printf("WARN: Failed to encode get recipe response: %v\n", err)
+		logger.Warn("failed to encode get recipe response", "error", err)
 	}
 }
 
@@ -410,7 +420,7 @@ func updateRecipeHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Recipe updated successfully",
 		"recipe":  recipe,
 	}); err != nil {
-		log.Printf("WARN: Failed to encode update recipe response: %v\n", err)
+		logger.Warn("failed to encode update recipe response", "error", err)
 	}
 }
 
@@ -434,7 +444,7 @@ func deleteRecipeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Recipe deleted successfully",
 	}); err != nil {
-		log.Printf("WARN: Failed to encode delete recipe response: %v\n", err)
+		logger.Warn("failed to encode delete recipe response", "error", err)
 	}
 }
 
@@ -514,7 +524,7 @@ func createBackupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	manifestData, _ := json.MarshalIndent(manifest, "", "  ")
 	if _, err := manifestWriter.Write(manifestData); err != nil {
-		log.Printf("WARN: Failed to write manifest to zip: %v\n", err)
+		logger.Warn("failed to write manifest to zip", "error", err)
 	}
 
 	// Add README to zip
@@ -539,7 +549,7 @@ Created: %s
 Recipe Count: %d
 `, manifest.CreatedAt.Format("2006-01-02 15:04:05 UTC"), len(activeRecipes), backupID, manifest.CreatedAt.Format("2006-01-02 15:04:05 UTC"), len(activeRecipes))
 	if _, err := readmeWriter.Write([]byte(readme)); err != nil {
-		log.Printf("WARN: Failed to write README to zip: %v\n", err)
+		logger.Warn("failed to write README to zip", "error", err)
 	}
 
 	// Add individual recipe files
@@ -552,12 +562,12 @@ Recipe Count: %d
 		}
 		recipeData, _ := json.MarshalIndent(recipe, "", "  ")
 		if _, err := recipeWriter.Write(recipeData); err != nil {
-			log.Printf("WARN: Failed to write recipe %s to zip: %v\n", recipe.Title, err)
+			logger.Warn("failed to write recipe to zip", "title", recipe.Title, "error", err)
 		}
 	}
 
 	if err := zipWriter.Close(); err != nil {
-		log.Printf("WARN: Failed to close zip writer: %v\n", err)
+		logger.Warn("failed to close zip writer", "error", err)
 	}
 
 	// For local testing, we'll return a mock download URL
@@ -572,7 +582,7 @@ Recipe Count: %d
 		"recipeCount": len(activeRecipes),
 		"sizeBytes":   int64(buf.Len()),
 	}); err != nil {
-		log.Printf("WARN: Failed to encode backup response: %v\n", err)
+		logger.Warn("failed to encode backup response", "error", err)
 	}
 }
 
@@ -601,7 +611,7 @@ func listBackupsHandler(w http.ResponseWriter, r *http.Request) {
 		"backups": mockBackups,
 		"total":   len(mockBackups),
 	}); err != nil {
-		log.Printf("WARN: Failed to encode backups response: %v\n", err)
+		logger.Warn("failed to encode backups response", "error", err)
 	}
 }
 
@@ -614,7 +624,7 @@ func main() {
 	// Initialize S3 client for failed parsing storage
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		log.Printf("WARN:  Failed to load AWS config (S3 storage disabled): %v\n", err)
+		logger.Warn("failed to load AWS config (S3 storage disabled)", "error", err)
 	} else {
 		s3Client = s3.NewFromConfig(cfg)
 		fmt.Println("✅ S3 client initialized for failed parsing storage")
@@ -668,7 +678,7 @@ func main() {
 	}
 
 	fmt.Printf("🚀 Recipe Archive Local Server starting on port %s\n", port)
-	log.Printf("INFO: Health check: http://localhost:%s/health\n", port)
+	logger.Info("health check endpoint", "url", fmt.Sprintf("http://localhost:%s/health", port))
 	fmt.Printf("🔐 API endpoints:\n")
 	fmt.Printf("   - Recipes: http://localhost:%s/api/recipes\n", port)
 	fmt.Printf("   - Backup: http://localhost:%s/api/backup/create\n", port)
@@ -677,7 +687,7 @@ func main() {
 	fmt.Printf("🔧 Mock authentication enabled (use any Bearer token)\n")
 
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Printf("ERROR: Server failed to start: %v\n", err)
+		logger.Error("server failed to start", "error", err)
 		os.Exit(1)
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
@@ -25,7 +25,15 @@ var (
 	bucketName string
 	initOnce   sync.Once
 	initErr    error
+	logger     *slog.Logger
 )
+
+func init() {
+	// Text handler for CLI tools (human-readable)
+	logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+}
 
 // initAWSClient performs lazy initialization of AWS client using sync.Once.
 func initAWSClient(ctx context.Context) error {
@@ -62,7 +70,7 @@ func main() {
 
 	ctx := context.Background()
 	if err := initAWSClient(ctx); err != nil {
-		log.Fatalf("Failed to initialize AWS client: %v", err)
+		logger.Error("failed to initialize AWS client", "error", err); os.Exit(1)
 	}
 
 	if *action == "" {
@@ -83,34 +91,34 @@ func main() {
 	case "load-test-data":
 		err := loadTestData(ctx, *testDataFile)
 		if err != nil {
-			log.Fatalf("Failed to load test data: %v", err)
+			logger.Error("Failed to load test data: %v", "error", err); os.Exit(1)
 		}
 		fmt.Println("✅ Test data loaded successfully")
 
 	case "cleanup-s3":
 		err := cleanupS3(ctx)
 		if err != nil {
-			log.Fatalf("Failed to cleanup S3: %v", err)
+			logger.Error("Failed to cleanup S3: %v", "error", err); os.Exit(1)
 		}
 		fmt.Println("✅ S3 bucket cleaned successfully")
 
 	case "validate-crud":
 		err := validateCRUD(ctx, *userID)
 		if err != nil {
-			log.Fatalf("CRUD validation failed: %v", err)
+			logger.Error("CRUD validation failed: %v", "error", err); os.Exit(1)
 		}
 		fmt.Println("✅ All CRUD operations validated successfully")
 
 	case "list-recipes":
 		err := listRecipes(ctx, *userID)
 		if err != nil {
-			log.Fatalf("Failed to list recipes: %v", err)
+			logger.Error("Failed to list recipes: %v", "error", err); os.Exit(1)
 		}
 
 	case "cleanup-duplicates":
 		err := cleanupDuplicateRecipes(ctx, *userID)
 		if err != nil {
-			log.Fatalf("Failed to cleanup duplicates: %v", err)
+			logger.Error("Failed to cleanup duplicates: %v", "error", err); os.Exit(1)
 		}
 
 	case "test-url-overwrite":
@@ -122,7 +130,7 @@ func main() {
 	case "test-normalizer":
 		err := testNormalizer()
 		if err != nil {
-			log.Fatalf("Normalizer test failed: %v", err)
+			logger.Error("Normalizer test failed: %v", "error", err); os.Exit(1)
 		}
 
 	default:
@@ -146,7 +154,7 @@ func loadTestData(ctx context.Context, filePath string) error {
 		return fmt.Errorf("failed to parse test data: %w", err)
 	}
 
-	log.Printf("INFO: Found %d test recipes to load\\n", len(recipes))
+	logger.Info("found test recipes to load", "count", len(recipes))
 
 	// Load each recipe using S3 storage
 	for i, recipe := range recipes {
@@ -324,9 +332,9 @@ func listRecipes(ctx context.Context, userID string) error {
 		testRecipeID := "3f94d5c1-aa0f-48dd-8d1a-3fd5ebd67988"
 		recipe, err := recipeDB.GetRecipe(userID, testRecipeID)
 		if err != nil {
-			log.Printf("ERROR: DEBUG: GetRecipe failed for %s: %v\n", testRecipeID, err)
+			logger.Error("GetRecipe failed", "recipeID", testRecipeID, "error", err)
 		} else {
-			log.Printf("INFO: DEBUG: GetRecipe succeeded for %s: %s\n", testRecipeID, recipe.Title)
+			logger.Info("GetRecipe succeeded", "recipeID", testRecipeID, "title", recipe.Title)
 		}
 	}
 

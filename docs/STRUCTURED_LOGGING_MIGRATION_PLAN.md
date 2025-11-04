@@ -271,9 +271,9 @@ For each binary:
 - [x] image-upload (7 log statements, deployed 2025-11-04)
 - [x] health (0 log statements - simple health check, no logging)
 
-### CLI Tools in aws-backend/functions/ (0/2 Complete - 0%)
-- [ ] test-tools (10 log statements, CLI utility - needs TextHandler)
-- [ ] local-server (needs assessment, CLI HTTP server - needs TextHandler)
+### CLI Tools in aws-backend/functions/ (2/2 Complete - 100%)
+- [x] test-tools (10 log statements, migrated 2025-11-04)
+- [x] local-server (20 log statements, CLI HTTP server - uses TextHandler, migrated 2025-11-04)
 
 ### CLI Tools in tools/ (0/10 Complete - 0%)
 - [ ] recipe-tracer
@@ -287,8 +287,8 @@ For each binary:
 - [ ] test-single-recipe
 - [ ] wapost-cookies
 
-**Total Progress: 11/25 binaries (44%)**
-**Total Log Statements Migrated: 209**
+**Total Progress: 13/25 binaries (52%)**
+**Total Log Statements Migrated: 239**
 
 ## CloudWatch Logs Insights Examples
 
