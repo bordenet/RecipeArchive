@@ -360,13 +360,8 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 	close(resultChan)
 	<-progressDone // Wait for ALL results to be processed
 
-	// Final dashboard render - move up based on current dashboard size
-	linesToMoveUp := countLines(lastDashboard)
-	finalDashboard := dashboard.View()
-
-	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", linesToMoveUp) // Move to dashboard start
-	_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear everything below
-	_, _ = fmt.Fprintln(originalStdout, finalDashboard)            // Print final dashboard
+	// Dashboard is already rendered by the goroutine, just add newline for spacing
+	_, _ = fmt.Fprintln(originalStdout)
 
 	// Print all errors in final summary
 	hasErrors := false

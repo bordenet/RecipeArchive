@@ -33,9 +33,16 @@ class QualityGate {
       if (tsFiles.length === 0) return;
 
       // Run TypeScript compiler check
-      execSync('npx tsc --noEmit --skipLibCheck', { stdio: 'inherit' });
+      // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
+      const output = execSync('npx tsc --noEmit --skipLibCheck', {
+        stdio: 'pipe',
+        encoding: 'utf8',
+      });
+      if (output) console.log(output);
       this.log(GREEN, '✅ TypeScript compilation: PASSED');
     } catch (error) {
+      if (error.stdout) console.log(error.stdout);
+      if (error.stderr) console.error(error.stderr);
       this.errors.push('TypeScript compilation failed');
       this.log(RED, '❌ TypeScript compilation: FAILED');
     }
@@ -47,9 +54,16 @@ class QualityGate {
       // Check if Flutter project exists
       if (!this.fileExists('recipe_archive/pubspec.yaml')) return;
 
-      execSync('cd recipe_archive && flutter analyze', { stdio: 'inherit' });
+      // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
+      const output = execSync('cd recipe_archive && flutter analyze', {
+        stdio: 'pipe',
+        encoding: 'utf8',
+      });
+      if (output) console.log(output);
       this.log(GREEN, '✅ Flutter analyze: PASSED');
     } catch (error) {
+      if (error.stdout) console.log(error.stdout);
+      if (error.stderr) console.error(error.stderr);
       this.errors.push('Flutter analyze failed');
       this.log(RED, '❌ Flutter analyze: FAILED');
     }
