@@ -28,6 +28,7 @@ external-references/
 # Temporary files
 test-results/
 test-results/*
+.validation-logs/
 wget-log
 
 # Backup files and development artifacts

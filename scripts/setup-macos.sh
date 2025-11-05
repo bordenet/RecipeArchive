@@ -273,7 +273,9 @@ print_info "Setting up mobile development environment..."
 # MUST be installed BEFORE any Android SDK operations
 # Check if Java is actually working, not just if the command exists (macOS has a stub)
 java_working=false
-if java -version &> /dev/null; then
+# The macOS stub at /usr/bin/java returns 0 but outputs an error message
+# Real Java outputs version info without errors
+if java -version 2>&1 | grep -q "openjdk\|java version"; then
   java_working=true
 fi
 

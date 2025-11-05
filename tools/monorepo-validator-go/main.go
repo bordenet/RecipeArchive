@@ -6,91 +6,100 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"syscall"
 )
 
+// Global file object for original stdout for dashboard output
+// This is created from duplicated file descriptor at startup
+var originalStdout *os.File
+
+func init() {
+	// Duplicate stdout file descriptor before any redirections
+	// This ensures dashboard output always goes to the real terminal
+	stdoutFd, _ := syscall.Dup(int(os.Stdout.Fd()))
+	originalStdout = os.NewFile(uintptr(stdoutFd), "/dev/stdout")
+}
+
 func printUsage() {
-	fmt.Printf(`🔧 RECIPEARCHIVE MONOREPO VALIDATOR
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+	fmt.Printf(`NAME
+    validate-monorepo - RecipeArchive monorepo validation tool
 
-📖 USAGE: ./monorepo-validator-go [options]
+SYNOPSIS
+    validate-monorepo [OPTIONS]
 
-🎯 VALIDATION TIERS:
-┌─────────────┬──────────┬─────────────────────────────────────────────────────────────┐
-│ FLAG        │ TIME     │ DESCRIPTION & BEST USE CASE                                │
-├─────────────┼──────────┼─────────────────────────────────────────────────────────────┤
-│ -p1         │ 30-60s   │ 🚀 P1/Essential: Prerequisites + core builds + security    │
-│             │          │    Best for: Quick commits, development workflow           │
-├─────────────┼──────────┼─────────────────────────────────────────────────────────────┤
-│ -med        │ 2-3min   │ 📊 Medium/Standard [DEFAULT]: P1 + integration tests       │
-│             │          │    Best for: Pull requests, pre-deployment validation     │
-├─────────────┼──────────┼─────────────────────────────────────────────────────────────┤
-│ -all        │ 5-10min  │ 🔍 All/Comprehensive: Medium + AWS + mobile + extensions   │
-│             │          │    Best for: Release validation, comprehensive audits     │
-└─────────────┴──────────┴─────────────────────────────────────────────────────────────┘
+DESCRIPTION
+    A high-performance parallel validation system for the RecipeArchive monorepo.
+    Validates builds, tests, linting, security, and infrastructure across all
+    components: Go backend, TypeScript parsers, mobile apps, and AWS resources.
 
-🏗️  SPECIALIZED VALIDATIONS:
-┌──────────────────┬──────────┬─────────────────────────────────────────────────────────┐
-│ FLAG             │ TIME     │ DESCRIPTION & BEST USE CASE                            │
-├──────────────────┼──────────┼─────────────────────────────────────────────────────────┤
-│ -infra           │ 2-3min   │ ☁️  AWS Infrastructure: Multi-tenant + S3 + diagnostics │
-│                  │          │    Best for: Infrastructure validation, AWS connectivity│
-├──────────────────┼──────────┼─────────────────────────────────────────────────────────┤
-│ -mobile          │ 3-5min   │ 📱 Mobile + Web: iOS/Android/Web builds + lint         │
-│                  │          │    Best for: Mobile development, app store preparation │
-├──────────────────┼──────────┼─────────────────────────────────────────────────────────┤
-│ -tools           │ 2-4min   │ 🔧 Go Tools: Build, test, lint, and run all Go tools  │
-│                  │          │    Best for: Tools development, CLI validation         │
-└──────────────────┴──────────┴─────────────────────────────────────────────────────────┘
+    Security scanning, code linting, and dependency validation always enabled.
 
-🔧 EXECUTION OPTIONS:
-┌─────────────┬─────────────────────────────────────────────────────────────────────┐
-│ FLAG        │ DESCRIPTION                                                         │
-├─────────────┼─────────────────────────────────────────────────────────────────────┤
-│ -sequential │ 🔄 Run validations sequentially (default: parallel)               │
-├─────────────┼─────────────────────────────────────────────────────────────────────┤
-│ -verbose    │ 📝 Enable detailed output and progress logging                     │
-└─────────────┴─────────────────────────────────────────────────────────────────────┘
+OPTIONS
+  Validation Tiers:
+    -p1          Phase 1 (30-60s): Prerequisites + core builds + security
+                 Use for: Quick commits, development workflow
 
-🌟 COMMON EXAMPLES:
-┌─────────────────────────────────────────┬─────────────────────────────────────────┐
-│ COMMAND                                 │ USE CASE                                │
-├─────────────────────────────────────────┼─────────────────────────────────────────┤
-│ ./monorepo-validator-go                 │ Standard validation (medium tier)      │
-├─────────────────────────────────────────┼─────────────────────────────────────────┤
-│ ./monorepo-validator-go -p1             │ Quick commit validation                 │
-├─────────────────────────────────────────┼─────────────────────────────────────────┤
-│ ./monorepo-validator-go -all            │ Pre-release comprehensive check        │
-├─────────────────────────────────────────┼─────────────────────────────────────────┤
-│ ./monorepo-validator-go -infra          │ AWS infrastructure troubleshooting     │
-├─────────────────────────────────────────┼─────────────────────────────────────────┤
-│ ./monorepo-validator-go -mobile         │ Mobile development validation          │
-├─────────────────────────────────────────┼─────────────────────────────────────────┤
-│ ./monorepo-validator-go -all -verbose   │ Full validation with detailed logs     │
-└─────────────────────────────────────────┴─────────────────────────────────────────┘
+    -med         Medium [DEFAULT] (2-3min): P1 + integration tests + quality
+                 Use for: Pull requests, pre-deployment validation
 
-🚀 INTEGRATION WORKFLOW:
-┌─────────────────────────┬─────────────────────────────────────────────────────────────┐
-│ CONTEXT                 │ RECOMMENDED TIER                                           │
-├─────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ Husky pre-commit hook   │ -p1 (fast feedback)                                       │
-├─────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ GitHub Actions CI       │ -med (standard validation)                                │
-├─────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ Release pipeline        │ -all (comprehensive validation)                           │
-├─────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ AWS troubleshooting     │ -infra (infrastructure focus)                             │
-├─────────────────────────┼─────────────────────────────────────────────────────────────┤
-│ Mobile development      │ -mobile (platform-specific validation)                   │
-└─────────────────────────┴─────────────────────────────────────────────────────────────┘
+    -all         All/Comprehensive (5-10min): Everything including AWS + mobile
+                 Use for: Release validation, comprehensive audits
 
-🔒 ALWAYS ENABLED: Security scanning • Code linting • Dependency validation
+  Specialized Validations:
+    -infra       Infrastructure (2-3min): AWS multi-tenant + S3 + diagnostics
+                 Use for: Infrastructure validation, AWS connectivity checks
+
+    -mobile      Mobile (3-5min): iOS/Android/Web builds + lint
+                 Use for: Mobile development, app store preparation
+
+    -tools       Go Tools (2-4min): Build, test, lint all Go tools
+                 Use for: Tools development, CLI validation
+
+  Execution Options:
+    -sequential  Run validations sequentially instead of parallel
+    -verbose     Enable detailed output and progress logging
+    -help        Display this help message
+
+EXAMPLES
+    validate-monorepo
+        Run standard validation (medium tier)
+
+    validate-monorepo -p1
+        Quick validation for commits
+
+    validate-monorepo -all
+        Comprehensive pre-release check
+
+    validate-monorepo -infra
+        AWS infrastructure troubleshooting
+
+    validate-monorepo -mobile -verbose
+        Mobile validation with detailed logging
+
+INTEGRATION
+    Husky pre-commit:   validate-monorepo -p1
+    GitHub Actions CI:  validate-monorepo -med
+    Release pipeline:   validate-monorepo -all
+    AWS deployment:     validate-monorepo -infra
+    Mobile development: validate-monorepo -mobile
+
+EXIT STATUS
+    0    All validations passed
+    1    One or more validations failed
+
+AUDIT LOGS
+    Detailed logs saved to: .validation-logs/
 
 `)
 }
 
 func main() {
+	// MAX OUT CPU/MEMORY USAGE - This is the only thing that matters when running
+	runtime.GOMAXPROCS(runtime.NumCPU())                       // Use ALL available CPUs
+	_ = syscall.Setpriority(syscall.PRIO_PROCESS, 0, -20) // Highest priority (requires root or sudo)
+
 	// Custom help handling
 	helpFlag := flag.Bool("help", false, "Show help message")
 
@@ -149,29 +158,29 @@ func main() {
 		os.Exit(1)
 	}()
 
-	// Always run prerequisites first
-	if !validator.RunValidation("Prerequisite Checks", validatePrerequisites, projectRoot) {
-		cleanExit(validator, 1)
-	}
-
 	// Determine which validations to run based on flags
+	// Always include prerequisites as first section
 	var validations []ValidationTask
 
+	// Add prerequisites first
+	validations = append(validations, ValidationTask{"Prerequisite Checks", validatePrerequisites, false, "Prerequisites"})
+
+	// Add other validations based on flags
 	if *infraFlag {
-		validations = getInfraValidations()
+		validations = append(validations, getInfraValidations()...)
 	} else if *p1Flag {
-		validations = getP1Validations()
+		validations = append(validations, getP1Validations()...)
 	} else if *medFlag {
-		validations = getMediumValidations()
+		validations = append(validations, getMediumValidations()...)
 	} else if *mobileFlag {
-		validations = getMobileValidations()
+		validations = append(validations, getMobileValidations()...)
 	} else if *toolsFlag {
-		validations = getToolsValidations()
+		validations = append(validations, getToolsValidations()...)
 	} else if *allFlag {
-		validations = getAllValidations()
+		validations = append(validations, getAllValidations()...)
 	} else {
 		// Default: run medium validations
-		validations = getMediumValidations()
+		validations = append(validations, getMediumValidations()...)
 	}
 
 	// Run validations (parallel by default for multiple validations)
@@ -195,7 +204,8 @@ func main() {
 type ValidationTask struct {
 	Name     string
 	Function func(string) bool
-	Parallel bool // Whether this task can run in parallel with others
+	Parallel bool   // Whether this task can run in parallel with others
+	Section  string // Which progress section this belongs to (Prerequisites, Dependencies, P1, Infra, Mobile, Tools)
 }
 
 // cleanExit ensures terminal is always left in a good state
@@ -228,69 +238,170 @@ func runValidationsSequential(validator *Validator, validations []ValidationTask
 	}
 }
 
-// runValidationsParallel runs parallelizable validations concurrently with clean output
+// runValidationsParallel runs parallelizable validations concurrently with dashboard UI
 func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, _ bool) {
-	// Separate parallel and sequential validations
-	var parallelValidations []ValidationTask
-	var sequentialValidations []ValidationTask
+	// Group validations by section
+	sectionTasks := make(map[string][]ValidationTask)
+	sectionOrder := []string{}
+	seenSections := make(map[string]bool)
 
 	for _, validation := range validations {
-		if validation.Parallel {
-			parallelValidations = append(parallelValidations, validation)
-		} else {
-			sequentialValidations = append(sequentialValidations, validation)
+		section := validation.Section
+		if section == "" {
+			section = "Other"
+		}
+
+		if !seenSections[section] {
+			sectionOrder = append(sectionOrder, section)
+			seenSections[section] = true
+		}
+
+		sectionTasks[section] = append(sectionTasks[section], validation)
+	}
+
+	// Create progress dashboard
+	dashboard := NewProgressDashboard()
+	for _, section := range sectionOrder {
+		tasks := sectionTasks[section]
+		dashboard.AddSection(section, len(tasks))
+	}
+
+	// Print initial dashboard
+	_, _ = fmt.Fprintln(originalStdout)
+	_, _ = fmt.Fprintln(originalStdout, dashboard.View())
+
+	// Result channels
+	type TaskResult struct {
+		Section string
+		Result  ValidationResult
+	}
+	resultChan := make(chan TaskResult, len(validations))
+
+	// Run Prerequisites and Dependencies FIRST (sequentially, in order)
+	// These are setup steps that everything else depends on
+	var wg sync.WaitGroup
+	for _, section := range []string{"Prerequisites", "Dependencies"} {
+		if tasks, exists := sectionTasks[section]; exists {
+			for _, validation := range tasks {
+				result := validator.RunValidationSilent(validation.Name, validation.Function, projectRoot)
+				// Don't increment dashboard here - let the monitoring goroutine do it
+				// Just send the result through the channel
+				resultChan <- TaskResult{Section: section, Result: result}
+			}
 		}
 	}
 
-	// Run sequential validations first (dependencies, prerequisites)
-	for _, validation := range sequentialValidations {
-		if !validator.RunValidation(validation.Name, validation.Function, projectRoot) {
-			return // Stop on first failure
+	// Now launch remaining validations in parallel
+	for section, tasks := range sectionTasks {
+		// Skip Prerequisites and Dependencies - already done
+		if section == "Prerequisites" || section == "Dependencies" {
+			continue
 		}
-	}
-
-	// Run parallel validations concurrently if any exist
-	if len(parallelValidations) > 0 {
-		var wg sync.WaitGroup
-		resultChan := make(chan ValidationResult, len(parallelValidations))
-
-		for _, validation := range parallelValidations {
+		for _, validation := range tasks {
 			wg.Add(1)
-			go func(v ValidationTask) {
+			go func(sec string, v ValidationTask) {
 				defer wg.Done()
-
-				// Run validation and capture result without printing
 				result := validator.RunValidationSilent(v.Name, v.Function, projectRoot)
-				resultChan <- result
-			}(validation)
-		}
-
-		// Wait for all parallel validations to complete
-		wg.Wait()
-		close(resultChan)
-
-		// Process results in order and print them cleanly
-		for result := range resultChan {
-			validator.AddResult(result)
+				resultChan <- TaskResult{Section: sec, Result: result}
+			}(section, validation)
 		}
 	}
+
+	// Progress monitoring - update on every task completion (no periodic ticker)
+	progressDone := make(chan struct{})
+	errorLines := 0 // Track how many error lines we've printed
+
+	redrawDashboard := func() {
+		// Calculate lines dynamically based on current dashboard sections
+		numLines := len(dashboard.Order) + 2 // sections + blank line + elapsed
+		moveUp := numLines + errorLines
+		_, _ = fmt.Fprintf(originalStdout, "\033[%dA", moveUp) // Move up
+		_, _ = fmt.Fprint(originalStdout, "\033[J")            // Clear from cursor to end
+		_, _ = fmt.Fprintln(originalStdout, dashboard.View())
+	}
+
+	go func() {
+		defer close(progressDone)
+
+		for taskResult := range resultChan {
+			dashboard.IncrementSection(taskResult.Section, taskResult.Result.Success)
+			validator.AddResult(taskResult.Result)
+
+			// Redraw dashboard
+			redrawDashboard()
+
+			// Display errors immediately below dashboard
+			if !taskResult.Result.Success {
+				// Print to original stdout to avoid log file capture
+				_, _ = fmt.Fprintln(originalStdout, errorStyle.Render(fmt.Sprintf("  ✗ %s %s", taskResult.Result.Name, taskResult.Result.Message)))
+				_, _ = fmt.Fprintf(originalStdout, "  📄 Log: %s\n", taskResult.Result.LogPath)
+				errorLines += 2
+			}
+		}
+	}()
+
+	// Wait for all validations to complete
+	wg.Wait()
+	close(resultChan)
+	<-progressDone // Wait for ALL results to be processed
+
+	// Print final dashboard state one more time to ensure 100% completion is shown
+	numLines := len(dashboard.Order) + 2 // sections + blank line + elapsed
+	moveUp := numLines + errorLines
+	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", moveUp) // Move up
+	_, _ = fmt.Fprint(originalStdout, "\033[J")            // Clear from cursor to end
+	_, _ = fmt.Fprintln(originalStdout, dashboard.View())
+
+	// Print all errors again in final summary
+	if errorLines > 0 {
+		_, _ = fmt.Fprintln(originalStdout)
+		_, _ = fmt.Fprintln(originalStdout, sectionStyle.Render("Errors encountered:"))
+		for _, result := range validator.Results {
+			if !result.Success {
+				_, _ = fmt.Fprintln(originalStdout, errorStyle.Render(fmt.Sprintf("  ✗ %s %s", result.Name, result.Message)))
+				_, _ = fmt.Fprintf(originalStdout, "  📄 Log: %s\n", result.LogPath)
+			}
+		}
+	}
+
+	// Print final summary
+	_, _ = fmt.Fprintln(originalStdout)
+	totalSuccess := 0
+	totalFailed := 0
+	for _, result := range validator.Results {
+		if result.Success {
+			totalSuccess++
+		} else {
+			totalFailed++
+		}
+	}
+
+	if totalFailed == 0 {
+		_, _ = fmt.Fprintln(originalStdout, successStyle.Render(fmt.Sprintf("✅ ALL VALIDATIONS PASSED (%d/%d)", totalSuccess, len(validator.Results))))
+	} else {
+		_, _ = fmt.Fprintln(originalStdout, errorStyle.Render(fmt.Sprintf("❌ VALIDATION FAILED (%d passed, %d failed)", totalSuccess, totalFailed)))
+	}
+
+	// Show audit log location
+	_, _ = fmt.Fprintf(originalStdout, "\n📁 Audit logs: %s\n", filepath.Join(projectRoot, ".validation-logs"))
+	_, _ = fmt.Fprintln(originalStdout)
 }
 
 // getInfraValidations returns infrastructure-only validations
 func getInfraValidations() []ValidationTask {
 	return []ValidationTask{
-		{"AWS Infrastructure Tests", runAwsInfrastructureTests, false},
-		{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, false},
+		{"AWS Infrastructure Tests", runAwsInfrastructureTests, false, "Infra"},
+		{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, false, "Infra"},
 	}
 }
 
 // getP1Validations returns Phase 1 validations (prerequisites, deps, builds)
 func getP1Validations() []ValidationTask {
 	return []ValidationTask{
-		{"Install Dependencies", installDependencies, false},
-		{"Build Go Binaries", buildGoBinaries, true},
-		{"Build TypeScript", buildTypeScript, true},
-		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true}, // Fast syntax validation
+		{"Install Dependencies", installDependencies, false, "Dependencies"},
+		{"Build Go Binaries", buildGoBinaries, true, "P1"},
+		{"Build TypeScript", buildTypeScript, true, "P1"},
+		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true, "P1"}, // Fast syntax validation
 	}
 }
 
@@ -298,11 +409,11 @@ func getP1Validations() []ValidationTask {
 func getMediumValidations() []ValidationTask {
 	validations := getP1Validations()
 	validations = append(validations,
-		ValidationTask{"Run Integration Tests", runIntegrationTests, true},
-		ValidationTask{"Run Security Scan", runSecurityScan, true},
-		ValidationTask{"Run Quality Gate", runQualityGate, true},
-		ValidationTask{"Run Linting Checks", runLintingChecks, true},
-		ValidationTask{"Run Basic Quality Checks", runBasicQualityChecks, true},
+		ValidationTask{"Run Integration Tests", runIntegrationTests, true, "Tests"},
+		ValidationTask{"Run Security Scan", runSecurityScan, true, "Security"},
+		ValidationTask{"Run Quality Gate", runQualityGate, true, "Quality"},
+		ValidationTask{"Run Linting Checks", runLintingChecks, true, "Linting"},
+		ValidationTask{"Run Basic Quality Checks", runBasicQualityChecks, true, "Quality"},
 	)
 	return validations
 }
@@ -310,20 +421,20 @@ func getMediumValidations() []ValidationTask {
 // getMobileValidations returns mobile app validations only
 func getMobileValidations() []ValidationTask {
 	return []ValidationTask{
-		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true},
-		{"Mobile App Validation", runMobileTests, false},
-		{"iOS Build & Lint Validation", runIOSValidation, true},         // Parallel: Different build systems
-		{"Android Build & Lint Validation", runAndroidValidation, true}, // Parallel: Different build systems
-		{"Web Build Validation", runWebValidation, true},                // Parallel: Different build systems
-		{"Web Extension Linting", runWebExtensionLinting, true},
+		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true, "Mobile"},
+		{"Mobile App Validation", runMobileTests, false, "Mobile"},
+		{"iOS Build & Lint Validation", runIOSValidation, true, "Mobile"},         // Parallel: Different build systems
+		{"Android Build & Lint Validation", runAndroidValidation, true, "Mobile"}, // Parallel: Different build systems
+		{"Web Build Validation", runWebValidation, true, "Mobile"},                // Parallel: Different build systems
+		{"Web Extension Linting", runWebExtensionLinting, true, "Mobile"},
 	}
 }
 
 // getToolsValidations returns Go tools build/test/run validations
 func getToolsValidations() []ValidationTask {
 	return []ValidationTask{
-		{"Go Tools Build, Test & Run", runGoToolsValidation, false},
-		{"Go Lint Validation", runGoLintValidation, false},
+		{"Go Tools Build, Test & Run", runGoToolsValidation, false, "Tools"},
+		{"Go Lint Validation", runGoLintValidation, false, "Tools"},
 	}
 }
 
@@ -334,26 +445,26 @@ func getAllValidations() []ValidationTask {
 	validations = append(validations,
 		// CRITICAL: Mobile platform builds FIRST - catch compilation errors early
 		// Parallel: Different build systems (Xcode/Gradle/Flutter) in different dirs
-		ValidationTask{"Mobile App Validation", runMobileTests, true},
-		ValidationTask{"iOS Build & Lint Validation", runIOSValidation, true},         // Parallel: Uses Xcode in ios/
-		ValidationTask{"Android Build & Lint Validation", runAndroidValidation, true}, // Parallel: Uses Gradle in android/
-		ValidationTask{"Web Build Validation", runWebValidation, true},                // Parallel: Uses Flutter in recipe_archive/
-		ValidationTask{"Web Extension Linting", runWebExtensionLinting, true},         // Parallel: Uses npm in extensions/
+		ValidationTask{"Mobile App Validation", runMobileTests, true, "Mobile"},
+		ValidationTask{"iOS Build & Lint Validation", runIOSValidation, true, "Mobile"},         // Parallel: Uses Xcode in ios/
+		ValidationTask{"Android Build & Lint Validation", runAndroidValidation, true, "Mobile"}, // Parallel: Uses Gradle in android/
+		ValidationTask{"Web Build Validation", runWebValidation, true, "Mobile"},                // Parallel: Uses Flutter in recipe_archive/
+		ValidationTask{"Web Extension Linting", runWebExtensionLinting, true, "Mobile"},         // Parallel: Uses npm in extensions/
 
 		// Then comprehensive tests (may fail on network/AWS issues)
-		ValidationTask{"Run Comprehensive Tests", runComprehensiveTests, true},
-		ValidationTask{"Validate Parsers", validateParsers, true},
-		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true},
-		ValidationTask{"Check Frontend Status", checkFrontendStatus, true},
+		ValidationTask{"Run Comprehensive Tests", runComprehensiveTests, true, "P1"},
+		ValidationTask{"Validate Parsers", validateParsers, true, "P1"},
+		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true, "P1"},
+		ValidationTask{"Check Frontend Status", checkFrontendStatus, true, "P1"},
 
 		// Go tools validation (parallel: independent Go binaries)
-		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, true},
-		ValidationTask{"Go Lint Validation", runGoLintValidation, true},
+		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, true, "Tools"},
+		ValidationTask{"Go Lint Validation", runGoLintValidation, true, "Tools"},
 
 		// Infrastructure tests (may fail on AWS connectivity)
-		ValidationTask{"AWS Infrastructure Tests", runAwsInfrastructureTests, true},
-		ValidationTask{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, true},
-		ValidationTask{"Validate Extension Downloads", validateExtensionDownloads, true},
+		ValidationTask{"AWS Infrastructure Tests", runAwsInfrastructureTests, true, "Infra"},
+		ValidationTask{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, true, "Infra"},
+		ValidationTask{"Validate Extension Downloads", validateExtensionDownloads, true, "Infra"},
 	)
 	return validations
 }

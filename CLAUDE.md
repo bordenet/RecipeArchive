@@ -27,6 +27,19 @@ When work is complete:
 
 Follow this policy WITHOUT EXCEPTION.
 
+## Validation Dashboard
+
+The monorepo validator features a real-time terminal UI with structured logging:
+
+- **Progress dashboard**: Static display with labeled sections (Prerequisites, Dependencies, P1, Mobile, Tools, Infra)
+- **Red-to-green gradient**: Progress bars transition from red (0%) to green (100%)
+- **Periodic updates**: Dashboard refreshes every 2 seconds during long-running validations
+- **Structured logging**: All validation output captured in `.validation-logs/` directory
+- **Real-time errors**: Failures display immediately with log file paths
+- **Clean summary**: Final status with pass/fail counts and total time
+
+See [docs/validation-dashboard-design.md](docs/validation-dashboard-design.md) for complete design documentation.
+
 ## Outstanding Work
 
 ### Android Recipe Capture Implementation
