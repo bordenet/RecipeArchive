@@ -75,12 +75,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Map color variables for summary
-readonly GREEN="${COLOR_GREEN}"
-readonly YELLOW="${COLOR_YELLOW}"
-readonly BLUE="${COLOR_BLUE}"
-readonly NC="${COLOR_RESET}"
-
 readonly REPO_ROOT="$(get_repo_root)"
 
 log_header "macOS Development Environment Setup"
