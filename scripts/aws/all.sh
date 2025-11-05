@@ -429,9 +429,9 @@ main() {
                     echo "   • $function_key: ${LAMBDA_FUNCTIONS[$function_key]}"
                 done
                 echo ""
-                log_info "📱 Flutter app would be deployed to:${NC} ${S3_BUCKET}"
-                log_info "🌐 CloudFront distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
-                log_info "🔗 Final URL:${NC} ${CLOUDFRONT_URL}"
+                log_info "📱 Flutter app would be deployed to: ${S3_BUCKET}"
+                log_info "🌐 CloudFront distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
+                log_info "🔗 Final URL: ${CLOUDFRONT_URL}"
                 exit 0
                 ;; 
             -h|--help)
@@ -476,16 +476,16 @@ main() {
     if $DEPLOY_BACKEND;
     then
         log_header "Validating API Gateway Integrations"
-        if ./scripts/manage-api-routes.sh validate; then
+        if "$REPO_ROOT/scripts/manage-api-routes.sh" validate; then
             log_success "✅ All API Gateway integrations are valid"
         else
             log_warning "⚠️ API Gateway integration issues detected. Attempting automatic fix..."
-            if ./scripts/manage-api-routes.sh fix; then
+            if "$REPO_ROOT/scripts/manage-api-routes.sh" fix; then
                 log_success "✅ API Gateway integrations fixed successfully"
             else
                 log_error "❌ Failed to fix API Gateway integrations. Manual intervention required."
-                log_warning "💡 Run: ./scripts/manage-api-routes.sh validate"
-                log_warning "💡 Then: ./scripts/manage-api-routes.sh fix"
+                log_warning "💡 Run: $REPO_ROOT/scripts/manage-api-routes.sh validate"
+                log_warning "💡 Then: $REPO_ROOT/scripts/manage-api-routes.sh fix"
             fi
         fi
     fi
@@ -511,9 +511,9 @@ main() {
     log_header "Deployment Summary"
     log_success "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
     echo ""
-    log_info "📱 App URL:${NC} ${CLOUDFRONT_URL}"
-    log_info "🗂️  S3 Bucket:${NC} ${S3_BUCKET}"
-    log_info "🌐 CloudFront Distribution:${NC} ${CLOUDFRONT_DISTRIBUTION_ID}"
+    log_info "📱 App URL: ${CLOUDFRONT_URL}"
+    log_info "🗂️  S3 Bucket: ${S3_BUCKET}"
+    log_info "🌐 CloudFront Distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
     
     if $DEPLOY_BACKEND;
     then
