@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -13,19 +15,25 @@ type ValidationResult struct {
 	Duration  time.Duration
 	Message   string
 	StartTime time.Time
+	LogPath   string // Path to detailed log file
 }
 
 // Validator manages a collection of validation results and provides summary reporting.
 // It's thread-safe for concurrent validations.
 type Validator struct {
-	Results []ValidationResult
-	mutex   sync.Mutex
+	Results   []ValidationResult
+	mutex     sync.Mutex
+	semaphore chan struct{} // Limits concurrent output redirection
 }
 
 // NewValidator creates and returns a new Validator instance.
 func NewValidator() *Validator {
+	// Allow up to 16 concurrent validations to redirect output
+	// Maximizes parallelism while maintaining output capture reliability
+	semaphore := make(chan struct{}, 16)
 	return &Validator{
-		Results: make([]ValidationResult, 0),
+		Results:   make([]ValidationResult, 0),
+		semaphore: semaphore,
 	}
 }
 
@@ -41,24 +49,19 @@ func (v *Validator) AddResult(result ValidationResult) {
 func (v *Validator) RunValidation(name string, validationFunc func(projectRoot string) bool, projectRoot string) bool {
 	start := time.Now()
 
-	fmt.Printf("  %s... ", name)
+	PrintSection(name)
 
 	success := validationFunc(projectRoot)
 	duration := time.Since(start)
 
-	var statusIcon, statusColor, message string
+	var message string
 	if success {
-		statusIcon = "✅"
-		statusColor = ColorGreen
-		message = fmt.Sprintf("Completed successfully in %s", formatDuration(duration))
+		message = fmt.Sprintf("(%s)", FormatDuration(duration))
+		PrintSuccess(fmt.Sprintf("%s %s", name, message))
 	} else {
-		statusIcon = "❌"
-		statusColor = ColorRed
-		message = fmt.Sprintf("Failed after %s", formatDuration(duration))
+		message = fmt.Sprintf("(failed after %s)", FormatDuration(duration))
+		PrintError(fmt.Sprintf("%s %s", name, message))
 	}
-
-	fmt.Printf("%s%s %s%s%s %s(%s)%s\n",
-		statusColor, statusIcon, ColorBold, name, ColorReset, ColorDim, formatDuration(duration), ColorReset)
 
 	v.AddResult(ValidationResult{
 		Name:      name,
@@ -72,16 +75,74 @@ func (v *Validator) RunValidation(name string, validationFunc func(projectRoot s
 }
 
 // RunValidationSilent executes a validation function and returns the result without printing
+// Captures stdout/stderr to log files for debugging while keeping dashboard clean
 func (v *Validator) RunValidationSilent(name string, validationFunc func(projectRoot string) bool, projectRoot string) ValidationResult {
 	start := time.Now()
+
+	// Create logs directory if it doesn't exist
+	logsDir := filepath.Join(projectRoot, ".validation-logs")
+	_ = os.MkdirAll(logsDir, 0755)
+
+	// Create log file for this validation
+	timestamp := start.Format("20060102-150405")
+	logFileName := fmt.Sprintf("%s_%s.log", timestamp, sanitizeFilename(name))
+	logPath := filepath.Join(logsDir, logFileName)
+
+	logFile, err := os.Create(logPath)
+	if err != nil {
+		// If we can't create log file, just run without logging
+		success := validationFunc(projectRoot)
+		duration := time.Since(start)
+		return ValidationResult{
+			Name:      name,
+			Success:   success,
+			Duration:  duration,
+			Message:   fmt.Sprintf("(%s)", FormatDuration(duration)),
+			StartTime: start,
+		}
+	}
+	defer func() { _ = logFile.Close() }()
+
+	// Write header to log
+	_, _ = fmt.Fprintf(logFile, "=== Validation: %s ===\n", name)
+	_, _ = fmt.Fprintf(logFile, "Started: %s\n", start.Format(time.RFC3339))
+	_, _ = fmt.Fprintf(logFile, "======================\n\n")
+
+	// Acquire semaphore slot to limit concurrent output redirection
+	v.semaphore <- struct{}{}
+	defer func() { <-v.semaphore }()
+
+	// Redirect stdout and stderr to log file
+	// Use simple Go-level redirection - child processes will inherit these
+	oldStdout := os.Stdout
+	oldStderr := os.Stderr
+
+	os.Stdout = logFile
+	os.Stderr = logFile
+
+	// Run the validation
 	success := validationFunc(projectRoot)
+
+	// Flush any buffered output to log file before restoring
+	_ = logFile.Sync()
+
+	// Restore stdout and stderr
+	os.Stdout = oldStdout
+	os.Stderr = oldStderr
+
 	duration := time.Since(start)
+
+	// Write footer to log
+	_, _ = fmt.Fprintf(logFile, "\n======================\n")
+	_, _ = fmt.Fprintf(logFile, "Completed: %s\n", time.Now().Format(time.RFC3339))
+	_, _ = fmt.Fprintf(logFile, "Duration: %s\n", FormatDuration(duration))
+	_, _ = fmt.Fprintf(logFile, "Success: %v\n", success)
 
 	var message string
 	if success {
-		message = fmt.Sprintf("(%s)", formatDuration(duration))
+		message = fmt.Sprintf("(%s)", FormatDuration(duration))
 	} else {
-		message = fmt.Sprintf("(failed after %s)", formatDuration(duration))
+		message = fmt.Sprintf("(failed after %s)", FormatDuration(duration))
 	}
 
 	return ValidationResult{
@@ -90,33 +151,31 @@ func (v *Validator) RunValidationSilent(name string, validationFunc func(project
 		Duration:  duration,
 		Message:   message,
 		StartTime: start,
+		LogPath:   logPath,
 	}
+}
+
+// sanitizeFilename removes characters that aren't safe for filenames
+func sanitizeFilename(name string) string {
+	// Replace spaces and special characters with underscores
+	result := ""
+	for _, r := range name {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			result += string(r)
+		} else if r == ' ' {
+			result += "_"
+		}
+	}
+	return result
 }
 
 // PrintValidationResult prints a single validation result
 func (v *Validator) PrintValidationResult(result ValidationResult) {
-	var statusIcon, statusColor string
 	if result.Success {
-		statusIcon = "✅"
-		statusColor = ColorGreen
+		PrintSuccess(fmt.Sprintf("%s %s", result.Name, result.Message))
 	} else {
-		statusIcon = "❌"
-		statusColor = ColorRed
+		PrintError(fmt.Sprintf("%s %s", result.Name, result.Message))
 	}
-
-	fmt.Printf("%s%s %s%s%s %s(%s)%s\n",
-		statusColor, statusIcon, ColorBold, result.Name, ColorReset,
-		ColorDim, formatDuration(result.Duration), ColorReset)
-}
-
-// formatDuration formats a duration in a human-readable way
-func formatDuration(d time.Duration) string {
-	if d < time.Second {
-		return fmt.Sprintf("%dms", d.Nanoseconds()/1000000)
-	} else if d < time.Minute {
-		return fmt.Sprintf("%.1fs", d.Seconds())
-	}
-	return fmt.Sprintf("%.1fm", d.Minutes())
 }
 
 // PrintSummary prints a summary of all validation results with enhanced formatting.
@@ -125,60 +184,68 @@ func (v *Validator) PrintSummary() {
 	defer v.mutex.Unlock()
 
 	if len(v.Results) == 0 {
-		fmt.Printf("\n%s📋 No validations were run%s\n", ColorYellow, ColorReset)
+		PrintWarning("No validations were run")
 		return
 	}
 
-	fmt.Printf("\n%s%s═══ VALIDATION SUMMARY ═══%s\n", ColorBlue, ColorBold, ColorReset)
+	fmt.Println() // Spacing
 
 	totalSuccess := 0
 	totalFailed := 0
 	totalDuration := time.Duration(0)
 
-	// Sort results by success status (failures first for visibility)
-	successResults := []ValidationResult{}
+	// Collect failures for visibility
 	failureResults := []ValidationResult{}
 
 	for _, result := range v.Results {
 		totalDuration += result.Duration
 		if result.Success {
 			totalSuccess++
-			successResults = append(successResults, result)
 		} else {
 			totalFailed++
 			failureResults = append(failureResults, result)
 		}
 	}
 
-	// Print failures first (more important)
-	for _, result := range failureResults {
-		fmt.Printf("%s❌ %-45s %s%s%s\n",
-			ColorRed, result.Name, ColorDim, result.Message, ColorReset)
+	// Build summary lines for the box
+	summaryLines := []string{}
+
+	// Add failures first (more important)
+	if len(failureResults) > 0 {
+		summaryLines = append(summaryLines, "")
+		summaryLines = append(summaryLines, errorStyle.Render("FAILURES:"))
+		for _, result := range failureResults {
+			line := fmt.Sprintf("  ✗ %s %s", result.Name, result.Message)
+			summaryLines = append(summaryLines, errorStyle.Render(line))
+			if result.LogPath != "" {
+				logLine := fmt.Sprintf("    📄 %s", result.LogPath)
+				summaryLines = append(summaryLines, infoStyle.Render(logLine))
+			}
+		}
+		summaryLines = append(summaryLines, "")
 	}
 
-	// Then print successes
-	for _, result := range successResults {
-		fmt.Printf("%s✅ %-45s %s%s%s\n",
-			ColorGreen, result.Name, ColorDim, result.Message, ColorReset)
-	}
-
-	// Print summary statistics
-	fmt.Printf("\n%s┌─ RESULTS ─────────────────────────────────────┐%s\n", ColorBlue, ColorReset)
-	fmt.Printf("%s│%s %sTotal: %d%s  %sPassed: %d%s  %sFailed: %d%s  %sTime: %s%s %s│%s\n",
-		ColorBlue, ColorReset,
-		ColorBold, len(v.Results), ColorReset,
-		ColorGreen, totalSuccess, ColorReset,
-		ColorRed, totalFailed, ColorReset,
-		ColorCyan, formatDuration(totalDuration), ColorReset,
-		ColorBlue, ColorReset)
-	fmt.Printf("%s└───────────────────────────────────────────────┘%s\n", ColorBlue, ColorReset)
-
-	// Print final status with appropriate emoji and color
+	// Statistics
+	summaryLines = append(summaryLines, "RESULTS:")
+	summaryLines = append(summaryLines, fmt.Sprintf("  Total:  %d validations", len(v.Results)))
+	summaryLines = append(summaryLines, successStyle.Render(fmt.Sprintf("  Passed: %d", totalSuccess)))
 	if totalFailed > 0 {
-		fmt.Printf("\n%s💥 VALIDATION FAILED! %s(%d/%d failed)%s\n",
-			ColorRed, ColorBold, totalFailed, len(v.Results), ColorReset)
-	} else {
-		fmt.Printf("\n%s🎉 ALL VALIDATIONS PASSED! %s(%d/%d successful)%s\n",
-			ColorGreen, ColorBold, totalSuccess, len(v.Results), ColorReset)
+		summaryLines = append(summaryLines, errorStyle.Render(fmt.Sprintf("  Failed: %d", totalFailed)))
 	}
+
+	// Add time and log directory link
+	timeAndLogs := fmt.Sprintf("  Time:   %s  📄 Logs: .validation-logs/", FormatDuration(totalDuration))
+	summaryLines = append(summaryLines, infoStyle.Render(timeAndLogs))
+
+	// Print the styled summary box
+	PrintSummaryBox("VALIDATION SUMMARY", summaryLines)
+
+	// Print final status
+	fmt.Println()
+	if totalFailed > 0 {
+		PrintError(fmt.Sprintf("VALIDATION FAILED! (%d/%d failed)", totalFailed, len(v.Results)))
+	} else {
+		PrintSuccess(fmt.Sprintf("ALL VALIDATIONS PASSED! (%d/%d successful)", totalSuccess, len(v.Results)))
+	}
+	fmt.Println()
 }

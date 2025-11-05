@@ -237,7 +237,26 @@ log_info "Version:${COLOR_RESET}       ${COLOR_GREEN}$VERSION"
 # Validate environment
 print_status "Validating environment..."
 command -v flutter &>/dev/null || error_exit "Flutter not found."
-command -v java &>/dev/null || error_exit "Java not found. Install OpenJDK."
+
+# Check for Java - try Homebrew installation first
+JAVA_HOME_DETECTED=""
+if [ -d "/opt/homebrew/opt/openjdk" ]; then
+    JAVA_HOME_DETECTED="/opt/homebrew/opt/openjdk"
+elif [ -d "/usr/local/opt/openjdk" ]; then
+    JAVA_HOME_DETECTED="/usr/local/opt/openjdk"
+elif [ -n "$JAVA_HOME" ]; then
+    JAVA_HOME_DETECTED="$JAVA_HOME"
+fi
+
+if [ -n "$JAVA_HOME_DETECTED" ]; then
+    export JAVA_HOME="$JAVA_HOME_DETECTED"
+    export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+# Verify Java is accessible
+if ! command -v java &>/dev/null; then
+    error_exit "Java not found. Install OpenJDK via: brew install openjdk"
+fi
 
 # Check for Android SDK
 ANDROID_SDK_ROOT=""
@@ -330,23 +349,37 @@ TIMEOUT_DURATION=600
 
 if [ "$MODE" = "dev" ]; then
     # Development mode: Quick build
-    print_status "Running: ./gradlew $GRADLE_TASK"
+    print_status "Running: ./gradlew $GRADLE_TASK --no-daemon"
 
-    if timeout "$TIMEOUT_DURATION" ./gradlew "$GRADLE_TASK" --stacktrace 2>&1 | grep -E "BUILD|SUCCESSFUL|FAILED|> Task" || true; then
-        BUILD_EXIT_CODE=${PIPESTATUS[0]}
+    # Run build and capture output to temp file while preserving exit code
+    # Use --no-daemon to prevent Gradle daemon from hanging waiting for input
+    TEMP_OUTPUT=$(mktemp)
+    if timeout "$TIMEOUT_DURATION" ./gradlew "$GRADLE_TASK" --no-daemon --stacktrace > "$TEMP_OUTPUT" 2>&1; then
+        BUILD_EXIT_CODE=0
     else
-        BUILD_EXIT_CODE=1
+        BUILD_EXIT_CODE=$?
     fi
+
+    # Display relevant build output
+    grep -E "BUILD|SUCCESSFUL|FAILED|> Task" "$TEMP_OUTPUT" || cat "$TEMP_OUTPUT"
+    rm -f "$TEMP_OUTPUT"
 else
     # Production mode: Signed release build
-    print_status "Running: ./gradlew $GRADLE_TASK"
+    print_status "Running: ./gradlew $GRADLE_TASK --no-daemon"
     print_warning "Note: Requires signing configuration in android/key.properties"
 
-    if timeout "$TIMEOUT_DURATION" ./gradlew "$GRADLE_TASK" --stacktrace 2>&1 | grep -E "BUILD|SUCCESSFUL|FAILED|> Task" || true; then
-        BUILD_EXIT_CODE=${PIPESTATUS[0]}
+    # Run build and capture output to temp file while preserving exit code
+    # Use --no-daemon to prevent Gradle daemon from hanging waiting for input
+    TEMP_OUTPUT=$(mktemp)
+    if timeout "$TIMEOUT_DURATION" ./gradlew "$GRADLE_TASK" --no-daemon --stacktrace > "$TEMP_OUTPUT" 2>&1; then
+        BUILD_EXIT_CODE=0
     else
-        BUILD_EXIT_CODE=1
+        BUILD_EXIT_CODE=$?
     fi
+
+    # Display relevant build output
+    grep -E "BUILD|SUCCESSFUL|FAILED|> Task" "$TEMP_OUTPUT" || cat "$TEMP_OUTPUT"
+    rm -f "$TEMP_OUTPUT"
 fi
 
 cd ..

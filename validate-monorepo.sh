@@ -90,7 +90,7 @@ show_help() {
 
     # Check if we need to build the validator
     if [ ! -f "$VALIDATOR_BINARY" ] || [ "$VALIDATOR_DIR" -nt "$VALIDATOR_BINARY" ] || find "$VALIDATOR_DIR" -name "*.go" -newer "$VALIDATOR_BINARY" 2>/dev/null | grep -q .; then
-        echo "🔨 Building monorepo validator..."
+        #echo "🔨 Building monorepo validator..."
         cd "$VALIDATOR_DIR" || {
             echo "❌ Error: Cannot access $VALIDATOR_DIR"
             exit 1
@@ -796,7 +796,28 @@ run_linting_checks() {
         print_warning "Flutter app directory not found - skipping"
         mark_passed
     fi
-    
+
+    print_step "Android build test"
+    add_operation
+    if [ -d "recipe_archive/android" ]; then
+        if command -v java &> /dev/null && [ -f "scripts/android/build.sh" ]; then
+            # Test Android build without running (just compilation check)
+            if timeout 300 bash scripts/android/build.sh --dev > /dev/null 2>&1; then
+                print_success
+                echo "    Android debug APK builds successfully"
+            else
+                print_error
+                echo "    Android build failed - run './scripts/android/build.sh --dev' for details"
+            fi
+        else
+            print_warning "Java or build script not found - skipping Android build test"
+            mark_passed
+        fi
+    else
+        print_warning "Android directory not found - skipping"
+        mark_passed
+    fi
+
     print_step "Go code formatting"
     add_operation
     # Apply gofmt to all Go files excluding node_modules and template files
@@ -1441,10 +1462,6 @@ show_summary() {
 
 # Main execution - builds and calls Go validator
 main() {
-    echo -e "${BLUE}RecipeArchive Monorepo Validation${NC}"
-    echo "Building Go validator and passing through to monorepo-validator-go..."
-    echo
-
     # Source .env file to get PROJECT_ROOT if it exists
     if [ -f .env ]; then
         set -o allexport
@@ -1453,18 +1470,13 @@ main() {
     fi
 
     # Always build the Go validator (Go's build system is smart and fast if nothing changed)
-    echo -e "${BLUE}🔨 Building Go validator...${NC}"
-
     pushd tools/monorepo-validator-go > /dev/null
-    if ! go build -o monorepo-validator-go; then
-        echo -e "${RED}❌ Failed to build Go validator${NC}"
-        echo -e "${YELLOW}💡 Try: cd tools/monorepo-validator-go && go mod tidy && go build${NC}"
+    if ! go build -o monorepo-validator-go 2>/dev/null; then
+        echo -e "${RED}❌ Failed to build validator${NC}"
         popd > /dev/null
         exit 1
     fi
     popd > /dev/null
-
-    echo -e "${GREEN}✅ Go validator built successfully${NC}"
 
     # Map shell script arguments to Go app arguments
     GO_ARGS=""
@@ -1490,9 +1502,8 @@ main() {
     esac
 
     # Run the Go validator with the mapped arguments
-    echo -e "${BLUE}Running Go validator...${NC}"
-    # Execute the Go validator with mapped arguments
-    tools/monorepo-validator-go/monorepo-validator-go $GO_ARGS
+    # Redirect stderr to stdout to prevent TTY blocking issues
+    tools/monorepo-validator-go/monorepo-validator-go $GO_ARGS 2>&1
 }
 
 # Handle interruption
