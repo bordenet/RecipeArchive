@@ -360,6 +360,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
       {'name': 'Food & Wine', 'url': 'https://foodandwine.com'},
       {'name': 'Damn Delicious', 'url': 'https://damndelicious.net'},
       {'name': 'The Anthony Kitchen', 'url': 'https://theanthonykitchen.com'},
+      {'name': 'Laura in the Kitchen', 'url': 'https://laurainthekitchen.com'},
     ];
 
     return Wrap(
@@ -468,7 +469,7 @@ class _ExtensionsScreenState extends State<ExtensionsScreen> {
             
             Text(
               platform == 'Chrome' 
-                ? 'Capture recipes from supported websites directly in Chrome. Works with 14+ recipe sites including Smitten Kitchen, Food52, Alexandra\'s Kitchen, and more.'
+                ? 'Capture recipes from supported websites directly in Chrome. Works with 15+ recipe sites including Smitten Kitchen, Food52, Alexandra\'s Kitchen, Laura in the Kitchen, and more.'
                 : 'Native Safari extension for seamless recipe capturing. Optimized for Safari\'s privacy features and performance.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

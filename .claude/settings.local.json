@@ -88,7 +88,8 @@
       "Bash(npx ts-node:*)",
       "Bash(node tools/test-parser.mjs:*)",
       "Bash(npm run lint:*)",
-      "Bash(node tools/build-parser-bundle.cjs:*)"
+      "Bash(node tools/build-parser-bundle.cjs:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
