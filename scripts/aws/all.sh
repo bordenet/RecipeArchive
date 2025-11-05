@@ -280,23 +280,38 @@ deploy_flutter() {
     
     INVALIDATION_ID=$(echo $INVALIDATION_OUTPUT | jq -r '.Invalidation.Id')
     log_success "CloudFront invalidation created: $INVALIDATION_ID"
-    
-    # Wait for invalidation
+
+    # Wait for invalidation (with timeout)
     log_info "Waiting for invalidation to complete..."
-    while true; do
-        STATUS=$(aws cloudfront get-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --id ${INVALIDATION_ID} --query 'Invalidation.Status' --output text)
-        
+    local max_attempts=60  # 10 minutes maximum
+    local attempt=0
+
+    while [ $attempt -lt $max_attempts ]; do
+        STATUS=$(aws cloudfront get-invalidation --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} --id ${INVALIDATION_ID} --query 'Invalidation.Status' --output text 2>/dev/null || echo "ERROR")
+
+        # Trim whitespace
+        STATUS=$(echo "$STATUS" | tr -d '[:space:]')
+
         if [ "$STATUS" = "Completed" ]; then
             log_success "CloudFront invalidation completed!"
             break
         elif [ "$STATUS" = "InProgress" ]; then
-            log_info "Invalidation in progress... waiting 10 seconds"
+            attempt=$((attempt + 1))
+            log_info "Invalidation in progress... waiting 10 seconds ($attempt/$max_attempts)"
             sleep 10
+        elif [ "$STATUS" = "ERROR" ]; then
+            log_error "Failed to check invalidation status"
+            break
         else
             log_warning "Unexpected invalidation status: $STATUS"
             break
         fi
     done
+
+    if [ $attempt -ge $max_attempts ]; then
+        log_warning "Invalidation timeout reached (10 minutes). Check AWS Console for status."
+        log_warning "Invalidation ID: $INVALIDATION_ID"
+    fi
     
     echo ""
 }
