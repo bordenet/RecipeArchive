@@ -107,8 +107,6 @@ print_error() {
 }
 
 # Function for timed confirmation (15 seconds default to 'N')
-AUTO_YES=false
-
 timed_confirm() {
     local message="$1"
     local timeout="${2:-15}"
