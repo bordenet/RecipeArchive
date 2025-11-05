@@ -11,6 +11,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["*.ts", "sites/**/*.ts"],
+  "include": ["base-parser.ts", "parser-registry.ts", "types.ts", "validation.ts", "sites/**/*.ts"],
   "exclude": ["dist", "node_modules", "**/*.test.ts", "tests/**"]
 }

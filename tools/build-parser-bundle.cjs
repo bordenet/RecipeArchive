@@ -109,7 +109,13 @@ try {
   // Run esbuild to create bundle, explicitly setting working directory to parsers
   console.log('⚙️  Building bundle with esbuild...');
   const command = `npx esbuild "${entryFile}" --bundle --format=iife --outfile="${chromeBundle}" --platform=browser --target=es2020 --loader:.ts=ts`;
-  execSync(command, { cwd: parsersDir, stdio: 'inherit' });
+  // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
+  const output = execSync(command, {
+    cwd: parsersDir,
+    stdio: 'pipe',
+    encoding: 'utf8',
+  });
+  if (output) console.log(output);
 
   // Copy to Safari extension
   console.log('📋 Copying bundle to Safari extension...');
@@ -123,6 +129,8 @@ try {
   fs.unlinkSync(entryFile);
 } catch (error) {
   console.error('❌ Bundle build failed:', error.message);
+  if (error.stdout) console.log(error.stdout);
+  if (error.stderr) console.error(error.stderr);
   // Clean up entry file on error
   if (fs.existsSync(entryFile)) {
     fs.unlinkSync(entryFile);
