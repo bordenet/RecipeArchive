@@ -23,13 +23,15 @@ type ValidationResult struct {
 type Validator struct {
 	Results      []ValidationResult
 	mutex        sync.Mutex
-	redirectMux  sync.Mutex // Serializes stdout/stderr redirection to prevent race conditions
+	writeMux     sync.Mutex // Serializes stdout/stderr redirection (performance trade-off for correctness)
+	StartTime    time.Time  // Wall clock start time for accurate total duration
 }
 
 // NewValidator creates and returns a new Validator instance.
 func NewValidator() *Validator {
 	return &Validator{
-		Results: make([]ValidationResult, 0),
+		Results:   make([]ValidationResult, 0),
+		StartTime: time.Now(),
 	}
 }
 
@@ -112,22 +114,22 @@ func (v *Validator) RunValidationSilent(name string, validationFunc func(project
 	_, _ = fmt.Fprintf(logFile, "║   Re-run failed commands in their working directory for debugging.\n")
 	_, _ = fmt.Fprintf(logFile, "╚════════════════════════════════════════════════════════════════════════╝\n\n")
 
-	// CRITICAL SECTION: Must serialize entire redirect → execute → restore sequence
-	// os.Stdout and os.Stderr are global variables shared across all goroutines
-	// If we allow concurrent access, output gets mixed up between different log files
-	v.redirectMux.Lock()
-	defer v.redirectMux.Unlock()
+	// CRITICAL: Serialize stdout/stderr redirection to prevent race conditions
+	// os.Stdout/os.Stderr are global - concurrent modifications corrupt output
+	// Performance trade-off: Correctness over parallelism
+	v.writeMux.Lock()
+	defer v.writeMux.Unlock()
 
-	// Redirect stdout and stderr to log file for this validation
+	// Redirect stdout and stderr to this validation's log file
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
 	os.Stdout = logFile
 	os.Stderr = logFile
 
-	// Run the validation with redirected output
+	// Run validation with redirected output
 	success := validationFunc(projectRoot)
 
-	// Flush and restore stdout and stderr
+	// Flush and restore
 	_ = logFile.Sync()
 	os.Stdout = oldStdout
 	os.Stderr = oldStderr
@@ -194,13 +196,14 @@ func (v *Validator) PrintSummary() {
 
 	totalSuccess := 0
 	totalFailed := 0
-	totalDuration := time.Duration(0)
+
+	// Use wall clock time, not sum of durations (which overcounts when serialized)
+	wallClockDuration := time.Since(v.StartTime)
 
 	// Collect failures for visibility
 	failureResults := []ValidationResult{}
 
 	for _, result := range v.Results {
-		totalDuration += result.Duration
 		if result.Success {
 			totalSuccess++
 		} else {
@@ -235,8 +238,8 @@ func (v *Validator) PrintSummary() {
 		summaryLines = append(summaryLines, errorStyle.Render(fmt.Sprintf("  Failed: %d", totalFailed)))
 	}
 
-	// Add time and log directory link
-	timeAndLogs := fmt.Sprintf("  Time:   %s  📄 Logs: .validation-logs/", FormatDuration(totalDuration))
+	// Add wall clock time and log directory link
+	timeAndLogs := fmt.Sprintf("  Time:   %s  📄 Logs: .validation-logs/", FormatDuration(wallClockDuration))
 	summaryLines = append(summaryLines, infoStyle.Render(timeAndLogs))
 
 	// Print the styled summary box
