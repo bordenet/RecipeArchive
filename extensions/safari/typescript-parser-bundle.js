@@ -16624,6 +16624,102 @@
     }
   };
 
+  // sites/laurainthekitchen.com.ts
+  var LauraInTheKitchenParser = class extends BaseParser {
+    canParse(url) {
+      return url.includes("laurainthekitchen.com/recipes");
+    }
+    async parse(html3, url) {
+      const $2 = load(html3);
+      const jsonLd = this.extractJsonLD(html3);
+      if (jsonLd) {
+        const recipe2 = {
+          title: this.sanitizeText(jsonLd.name),
+          source: url,
+          author: typeof jsonLd.author === "string" ? jsonLd.author : jsonLd.author?.name || "Laura Vitale",
+          ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
+            text: this.sanitizeText(i)
+          })),
+          instructions: this.processInstructions(
+            (jsonLd.recipeInstructions || []).map(
+              (i) => typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
+            )
+          ),
+          imageUrl: typeof jsonLd.image === "string" ? jsonLd.image : Array.isArray(jsonLd.image) ? typeof jsonLd.image[0] === "string" ? jsonLd.image[0] : jsonLd.image[0]?.url : jsonLd.image?.url,
+          prepTime: jsonLd.prepTime,
+          cookTime: jsonLd.cookTime,
+          totalTime: jsonLd.totalTime,
+          servings: jsonLd.recipeYield?.toString()
+        };
+        const validation = this.validateRecipe(recipe2);
+        if (validation.isValid) return recipe2;
+      }
+      const title = this.sanitizeText($2(".cs-page-title h1").first().text());
+      const author = "Laura Vitale";
+      const imageUrl = $2('meta[property="og:image"]').attr("content") || "";
+      let prepTime;
+      let cookTime;
+      let totalTime;
+      let servings = "";
+      $2(".cs-recipe-details > div").each((_, el) => {
+        const fullText = $2(el).text();
+        const spanText = $2(el).find("span").text().toLowerCase();
+        if (spanText.includes("preparation")) {
+          const match = fullText.match(/(\d+)\s*minutes?/i);
+          if (match) prepTime = `PT${match[1]}M`;
+        } else if (spanText.includes("cook")) {
+          const match = fullText.match(/(\d+)\s*(hours?)?\s*(\d+)?\s*minutes?/i);
+          if (match) {
+            const hours = match[1] ? parseInt(match[1], 10) : 0;
+            const mins = match[3] ? parseInt(match[3], 10) : 0;
+            cookTime = hours > 0 ? `PT${hours}H${mins}M` : `PT${mins}M`;
+          }
+        } else if (spanText.includes("servings")) {
+          servings = fullText.replace(/servings/i, "").trim();
+        }
+      });
+      if (prepTime && cookTime) {
+        const prepMins = prepTime.match(/PT(\d+)M/) ? parseInt(RegExp.$1, 10) : 0;
+        const cookMatch = cookTime.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+        const cookHours = cookMatch && cookMatch[1] ? parseInt(cookMatch[1], 10) : 0;
+        const cookMins = cookMatch && cookMatch[2] ? parseInt(cookMatch[2], 10) : 0;
+        const totalMins = prepMins + cookHours * 60 + cookMins;
+        const hours = Math.floor(totalMins / 60);
+        const mins = totalMins % 60;
+        totalTime = hours > 0 ? `PT${hours}H${mins}M` : `PT${mins}M`;
+      }
+      const ingredients = [];
+      $2(".cs-ingredients-check-list li").each((_, el) => {
+        const text3 = this.sanitizeText($2(el).text());
+        if (text3) {
+          ingredients.push({ text: text3 });
+        }
+      });
+      const instructions = [];
+      const instructionText = $2(".cs-recipe-single-preparation ul").text();
+      const steps = instructionText.split(/\d+\)/).filter((s) => s.trim().length > 0);
+      steps.forEach((step, idx) => {
+        const text3 = this.sanitizeText(step);
+        if (text3) {
+          instructions.push({ stepNumber: idx + 1, text: text3 });
+        }
+      });
+      const recipe = {
+        title,
+        source: url,
+        author,
+        imageUrl: imageUrl || void 0,
+        prepTime,
+        cookTime,
+        totalTime,
+        servings: servings || void 0,
+        ingredients,
+        instructions
+      };
+      return recipe;
+    }
+  };
+
   // index.ts
   var registry = ParserRegistry.getInstance();
   registry.registerParser("smittenkitchen.com", SmittenKitchenParser);
@@ -16639,6 +16735,7 @@
   registry.registerParser("washingtonpost.com", WashingtonPostParser);
   registry.registerParser("alexandracooks.com", AlexandrasKitchenParser);
   registry.registerParser("lemonsandzest.com", LemonsAndZestParser);
+  registry.registerParser("laurainthekitchen.com", LauraInTheKitchenParser);
   if (typeof window !== "undefined") {
     window.RecipeArchiveParserRegistry = registry;
     window.TypeScriptParser = {
