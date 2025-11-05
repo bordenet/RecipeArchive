@@ -406,13 +406,13 @@ main() {
             # Validate API Gateway integrations after deployment
             echo ""
             log_info "Validating API Gateway integrations..."
-            if ./scripts/manage-api-routes.sh validate > /tmp/api-gateway-validation.log 2>&1; then
+            if "$REPO_ROOT/scripts/manage-api-routes.sh" validate > /tmp/api-gateway-validation.log 2>&1; then
                 log_success "✅ All API Gateway integrations are valid"
             else
                 log_warning "⚠️ API Gateway integration issues detected"
                 log_info "Validation output:"
                 cat /tmp/api-gateway-validation.log
-                log_warning "💡 Run: ./scripts/manage-api-routes.sh fix"
+                log_warning "💡 Run: $REPO_ROOT/scripts/manage-api-routes.sh fix"
             fi
 
             local end_time=$(date +%s)
