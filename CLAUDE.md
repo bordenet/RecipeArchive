@@ -4,14 +4,28 @@
 
 ## CRITICAL: Git Workflow Policy
 
-**NEVER run `git add`, `git commit`, or `git push` commands yourself.**
+The git workflow differs based on the environment:
+
+### Claude Code / Web (Web Interface)
+**DO create pull requests yourself.**
 
 When work is complete:
-1. **Show the user what commands to run** - provide the exact git commands as copyable text
+1. **Commit your changes** - stage files, create commits with clear messages
+2. **Push to the feature branch** - use the designated branch from task instructions
+3. **Create the pull request** - use `gh pr create` with detailed summary and test plan
+4. **Return the PR URL** - provide the link so the user can review
+
+### VS Code Agent Mode (CLI)
+**NEVER run git commands yourself.**
+
+When work is complete:
+1. **Show the user what commands to run** - provide exact git commands as copyable text
 2. **Let the user execute them** - they want to learn and save Claude Pro tokens
 3. **Do NOT stage files or create commits** - the user will do this themselves
 
-This has been requested SIX times. Follow this policy WITHOUT EXCEPTION.
+**How to identify the environment:** Claude Code / Web sessions include task instructions with designated feature branches. VS Code agent mode sessions are conversational without task context.
+
+Follow this policy WITHOUT EXCEPTION.
 
 ## Outstanding Work
 
