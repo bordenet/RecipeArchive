@@ -318,8 +318,18 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 
 	// Progress monitoring - update on every task completion
 	progressDone := make(chan struct{})
-	// Fixed: track initial dashboard size (title + blank + sections + blank + elapsed)
-	dashboardLines := len(dashboard.Order) + 4 // title, blank, sections..., blank, elapsed
+
+	// Helper to count lines in rendered dashboard
+	countLines := func(s string) int {
+		if s == "" {
+			return 0
+		}
+		return strings.Count(s, "\n") + 1
+	}
+
+	// Track last dashboard output for calculating cursor movement
+	var lastDashboard string
+	lastDashboard = dashboard.View()
 
 	go func() {
 		defer close(progressDone)
@@ -328,11 +338,19 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 			dashboard.IncrementSection(taskResult.Section, taskResult.Result.Success)
 			validator.AddResult(taskResult.Result)
 
-			// FIXED: Safe redraw - move up exactly dashboardLines, clear, and redraw
-			_, _ = fmt.Fprintf(originalStdout, "\033[%dA", dashboardLines) // Move up to dashboard start
+			// Calculate how many lines to move up based on last dashboard size
+			linesToMoveUp := countLines(lastDashboard)
+
+			// Render new dashboard
+			newDashboard := dashboard.View()
+
+			// Move up, clear, and redraw
+			_, _ = fmt.Fprintf(originalStdout, "\033[%dA", linesToMoveUp) // Move up to dashboard start
 			_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear from cursor to end
-			_, _ = fmt.Fprintln(originalStdout, dashboard.View())          // Print updated dashboard
-			// Note: Errors will be printed at the end to avoid complexity of tracking cursor position
+			_, _ = fmt.Fprintln(originalStdout, newDashboard)              // Print updated dashboard
+
+			// Update last dashboard for next iteration
+			lastDashboard = newDashboard
 		}
 	}()
 
@@ -341,10 +359,13 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 	close(resultChan)
 	<-progressDone // Wait for ALL results to be processed
 
-	// FIXED: Final dashboard render - move up only by dashboard lines
-	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", dashboardLines) // Move to dashboard start
+	// Final dashboard render - move up based on current dashboard size
+	linesToMoveUp := countLines(lastDashboard)
+	finalDashboard := dashboard.View()
+
+	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", linesToMoveUp) // Move to dashboard start
 	_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear everything below
-	_, _ = fmt.Fprintln(originalStdout, dashboard.View())          // Print final dashboard
+	_, _ = fmt.Fprintln(originalStdout, finalDashboard)            // Print final dashboard
 
 	// Print all errors in final summary
 	hasErrors := false
