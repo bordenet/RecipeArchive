@@ -49,6 +49,7 @@ type ProgressDashboard struct {
 	Sections  map[string]*SectionProgress
 	Order     []string // Display order
 	StartTime time.Time
+	Title     string // Dashboard title (e.g., "Monorepo Validator (--p1)")
 }
 
 // NewProgressDashboard creates a new multi-section progress dashboard
@@ -104,6 +105,12 @@ func (pd *ProgressDashboard) Elapsed() time.Duration {
 // View renders all progress bars in a clean dashboard
 func (pd *ProgressDashboard) View() string {
 	var lines []string
+
+	// Add title if set
+	if pd.Title != "" {
+		lines = append(lines, titleStyle.Render(pd.Title))
+		lines = append(lines, "") // Blank line after title
+	}
 
 	for _, label := range pd.Order {
 		section := pd.Sections[label]

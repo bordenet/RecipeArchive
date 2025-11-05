@@ -161,6 +161,7 @@ func main() {
 	// Determine which validations to run based on flags
 	// Always include prerequisites as first section
 	var validations []ValidationTask
+	var tierName string
 
 	// Add prerequisites first
 	validations = append(validations, ValidationTask{"Prerequisite Checks", validatePrerequisites, false, "Prerequisites"})
@@ -168,19 +169,26 @@ func main() {
 	// Add other validations based on flags
 	if *infraFlag {
 		validations = append(validations, getInfraValidations()...)
+		tierName = "--infra"
 	} else if *p1Flag {
 		validations = append(validations, getP1Validations()...)
+		tierName = "--p1"
 	} else if *medFlag {
 		validations = append(validations, getMediumValidations()...)
+		tierName = "--med"
 	} else if *mobileFlag {
 		validations = append(validations, getMobileValidations()...)
+		tierName = "--mobile"
 	} else if *toolsFlag {
 		validations = append(validations, getToolsValidations()...)
+		tierName = "--tools"
 	} else if *allFlag {
 		validations = append(validations, getAllValidations()...)
+		tierName = "--all"
 	} else {
 		// Default: run medium validations
 		validations = append(validations, getMediumValidations()...)
+		tierName = "--med"
 	}
 
 	// Run validations (parallel by default for multiple validations)
@@ -191,7 +199,7 @@ func main() {
 	}
 
 	if useParallel {
-		runValidationsParallel(validator, validations, projectRoot, *verboseFlag)
+		runValidationsParallel(validator, validations, projectRoot, tierName, *verboseFlag)
 	} else {
 		runValidationsSequential(validator, validations, projectRoot)
 	}
@@ -239,7 +247,7 @@ func runValidationsSequential(validator *Validator, validations []ValidationTask
 }
 
 // runValidationsParallel runs parallelizable validations concurrently with dashboard UI
-func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, _ bool) {
+func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, tierName string, _ bool) {
 	// Group validations by section
 	sectionTasks := make(map[string][]ValidationTask)
 	sectionOrder := []string{}
@@ -259,8 +267,9 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 		sectionTasks[section] = append(sectionTasks[section], validation)
 	}
 
-	// Create progress dashboard
+	// Create progress dashboard with title
 	dashboard := NewProgressDashboard()
+	dashboard.Title = fmt.Sprintf("Monorepo Validator (%s)", tierName)
 	for _, section := range sectionOrder {
 		tasks := sectionTasks[section]
 		dashboard.AddSection(section, len(tasks))
@@ -309,7 +318,8 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 
 	// Progress monitoring - update on every task completion
 	progressDone := make(chan struct{})
-	dashboardLines := len(dashboard.Order) + 2 // Fixed: track initial dashboard size
+	// Fixed: track initial dashboard size (title + blank + sections + blank + elapsed)
+	dashboardLines := len(dashboard.Order) + 4 // title, blank, sections..., blank, elapsed
 
 	go func() {
 		defer close(progressDone)
