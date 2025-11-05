@@ -69,40 +69,13 @@ readonly REPO_ROOT="$(get_repo_root)"
 #
 ################################################################################
 
-# API Gateway Route Management Script for RecipeArchive
-# Centralizes all API Gateway changes to prevent manual inconsistencies
-# Cross-platform compatible: Linux and macOS
-
-set -e
-
-# Check runtime environment
-if [[ "$(uname)" == "Darwin" ]]; then
-    PLATFORM="macOS"
-elif [[ "$(uname)" == "Linux" ]]; then
-    PLATFORM="Linux"
-else
-    echo "❌ Unsupported platform: $(uname)"
-    die "Command failed"
-fi
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
 # Load environment variables from repo root using the proper load script
 if [ -f "$REPO_ROOT/.env" ]; then
-    echo "🔧 Loading environment variables..."
+    log_info "Loading environment variables..."
     source "$REPO_ROOT/scripts/load-env.sh"
 else
-    echo "❌ .env file not found in repo root. Please create one from .env.example"
-    die "Command failed"
+    die ".env file not found in repo root. Please create one from .env.example"
 fi
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
 
 # Configuration (from existing infrastructure)
 # Production API Gateway (secure stack)
@@ -113,11 +86,6 @@ DEV_API_ID=${DEV_API_GATEWAY_ID:-"4eprojzbrc"}
 API_ID=${API_GATEWAY_ID:-$SECURE_API_ID}
 REGION=${AWS_REGION:-"us-west-2"}
 STAGE_NAME="prod"
-
-log_info() { log_info "ℹ️  $1${NC}"; }
-log_success() { log_success "✅ $1${NC}"; }
-log_warning() { log_warning "⚠️  $1${NC}"; }
-log_error() { log_error "❌ $1${NC}"; }
 
 # Get parent resource ID by path
 get_resource_id() {
