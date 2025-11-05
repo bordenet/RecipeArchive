@@ -297,6 +297,28 @@ print_status "Getting Flutter dependencies..."
 flutter pub get
 print_success "Dependencies fetched"
 
+# Step 1.5: Ensure Gradle wrapper exists
+if [ ! -f "$ANDROID_DIR/gradlew" ]; then
+    print_warning "Gradle wrapper not found - generating..."
+    # Flutter will generate the wrapper when building with --config-only
+    if ! flutter build apk --config-only > /dev/null 2>&1; then
+        print_warning "Flutter config-only failed, trying direct gradle wrapper generation..."
+        cd "$ANDROID_DIR"
+        if command -v gradle > /dev/null 2>&1; then
+            gradle wrapper --gradle-version 8.3
+        else
+            error_exit "Gradle wrapper missing and cannot be generated. Install gradle or run 'flutter build apk --config-only' manually."
+        fi
+        cd ..
+    fi
+    if [ -f "$ANDROID_DIR/gradlew" ]; then
+        chmod +x "$ANDROID_DIR/gradlew"
+        print_success "Gradle wrapper generated"
+    else
+        error_exit "Failed to generate Gradle wrapper"
+    fi
+fi
+
 # Step 2: Gradle build
 print_header "Gradle Build"
 print_status "Building with Gradle..."
