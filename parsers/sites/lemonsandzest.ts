@@ -36,7 +36,7 @@ export class LemonsAndZestParser extends BaseParser {
               // Handle direct HowToStep objects
               return [this.sanitizeText(section.text || section.name || '')];
             })
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -61,10 +61,10 @@ export class LemonsAndZestParser extends BaseParser {
     // Fallback selectors if JSON-LD is not available or invalid
     const title = this.sanitizeText($('h1.entry-title').first().text() || '');
     const ingredients = $('.wprm-recipe-ingredient')
-      .map((_, el) => ({ text: this.sanitizeText($(el).text()) }))
+      .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
       .get();
     const instructions = $('.wprm-recipe-instruction-text')
-      .map((_, el) => ({
+      .map((_: any, el: any) => ({
         stepNumber: _ + 1,
         text: this.sanitizeText($(el).text()),
       }))

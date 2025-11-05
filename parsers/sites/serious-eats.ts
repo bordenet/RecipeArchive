@@ -76,7 +76,7 @@ export class SeriousEatsParser extends BaseParser {
 
     for (const selector of ingredientSelectors) {
       const found = $(selector)
-        .map((_, el) => ({
+        .map((_: any, el: any) => ({
           text: this.sanitizeText($(el).text()),
         }))
         .get();
@@ -99,7 +99,7 @@ export class SeriousEatsParser extends BaseParser {
 
     for (const selector of instructionSelectors) {
       const found = $(selector)
-        .map((i, el) => ({
+        .map((i: any, el: any) => ({
           stepNumber: i + 1,
           text: this.sanitizeText($(el).text()),
         }))
@@ -115,7 +115,7 @@ export class SeriousEatsParser extends BaseParser {
       const instructionBlocks = $('.mntl-sc-block-html');
       if (instructionBlocks.length > 0) {
         instructions = instructionBlocks
-          .map((i, el) => {
+          .map((i: any, el: any) => {
             const text = this.sanitizeText($(el).text());
             return text && text.length > 10
               ? { stepNumber: i + 1, text }
@@ -166,7 +166,7 @@ export class SeriousEatsParser extends BaseParser {
 
     // Extract additional notes/tips that Serious Eats often includes
     const notes: string[] = [];
-    $('.recipe-notes li, .chef-note, .recipe-tips li').each((_, el) => {
+    $('.recipe-notes li, .chef-note, .recipe-tips li').each((_: any, el: any) => {
       const noteText = this.sanitizeText($(el).text());
       if (noteText && noteText.length > 0) {
         notes.push(noteText);

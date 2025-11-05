@@ -57,7 +57,7 @@ export class LauraInTheKitchenParser extends BaseParser {
     let totalTime: string | undefined;
     let servings = '';
 
-    $('.cs-recipe-details > div').each((_, el) => {
+    $('.cs-recipe-details > div').each((_: any, el: any) => {
       const fullText = $(el).text();
       const spanText = $(el).find('span').text().toLowerCase();
 
@@ -90,7 +90,7 @@ export class LauraInTheKitchenParser extends BaseParser {
 
     // Parse ingredients
     const ingredients: { text: string }[] = [];
-    $('.cs-ingredients-check-list li').each((_, el) => {
+    $('.cs-ingredients-check-list li').each((_: any, el: any) => {
       const text = this.sanitizeText($(el).text());
       if (text) {
         ingredients.push({ text });
@@ -101,8 +101,8 @@ export class LauraInTheKitchenParser extends BaseParser {
     const instructions: { stepNumber: number; text: string }[] = [];
     const instructionText = $('.cs-recipe-single-preparation ul').text();
     // Instructions are separated by numbers like "1)", "2)", etc.
-    const steps = instructionText.split(/\d+\)/).filter(s => s.trim().length > 0);
-    steps.forEach((step, idx) => {
+    const steps = instructionText.split(/\d+\)/).filter((s: any) => s.trim().length > 0);
+    steps.forEach((step: any, idx: any) => {
       const text = this.sanitizeText(step);
       if (text) {
         instructions.push({ stepNumber: idx + 1, text });
