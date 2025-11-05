@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 )
@@ -161,6 +162,7 @@ func main() {
 	// Determine which validations to run based on flags
 	// Always include prerequisites as first section
 	var validations []ValidationTask
+	var tierName string
 
 	// Add prerequisites first
 	validations = append(validations, ValidationTask{"Prerequisite Checks", validatePrerequisites, false, "Prerequisites"})
@@ -168,19 +170,26 @@ func main() {
 	// Add other validations based on flags
 	if *infraFlag {
 		validations = append(validations, getInfraValidations()...)
+		tierName = "--infra"
 	} else if *p1Flag {
 		validations = append(validations, getP1Validations()...)
+		tierName = "--p1"
 	} else if *medFlag {
 		validations = append(validations, getMediumValidations()...)
+		tierName = "--med"
 	} else if *mobileFlag {
 		validations = append(validations, getMobileValidations()...)
+		tierName = "--mobile"
 	} else if *toolsFlag {
 		validations = append(validations, getToolsValidations()...)
+		tierName = "--tools"
 	} else if *allFlag {
 		validations = append(validations, getAllValidations()...)
+		tierName = "--all"
 	} else {
 		// Default: run medium validations
 		validations = append(validations, getMediumValidations()...)
+		tierName = "--med"
 	}
 
 	// Run validations (parallel by default for multiple validations)
@@ -191,7 +200,7 @@ func main() {
 	}
 
 	if useParallel {
-		runValidationsParallel(validator, validations, projectRoot, *verboseFlag)
+		runValidationsParallel(validator, validations, projectRoot, tierName, *verboseFlag)
 	} else {
 		runValidationsSequential(validator, validations, projectRoot)
 	}
@@ -239,7 +248,7 @@ func runValidationsSequential(validator *Validator, validations []ValidationTask
 }
 
 // runValidationsParallel runs parallelizable validations concurrently with dashboard UI
-func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, _ bool) {
+func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, tierName string, _ bool) {
 	// Group validations by section
 	sectionTasks := make(map[string][]ValidationTask)
 	sectionOrder := []string{}
@@ -259,8 +268,9 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 		sectionTasks[section] = append(sectionTasks[section], validation)
 	}
 
-	// Create progress dashboard
+	// Create progress dashboard with title
 	dashboard := NewProgressDashboard()
+	dashboard.Title = fmt.Sprintf("Monorepo Validator (%s)", tierName)
 	for _, section := range sectionOrder {
 		tasks := sectionTasks[section]
 		dashboard.AddSection(section, len(tasks))
@@ -307,18 +317,20 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 		}
 	}
 
-	// Progress monitoring - update on every task completion (no periodic ticker)
+	// Progress monitoring - update on every task completion
 	progressDone := make(chan struct{})
-	errorLines := 0 // Track how many error lines we've printed
 
-	redrawDashboard := func() {
-		// Calculate lines dynamically based on current dashboard sections
-		numLines := len(dashboard.Order) + 2 // sections + blank line + elapsed
-		moveUp := numLines + errorLines
-		_, _ = fmt.Fprintf(originalStdout, "\033[%dA", moveUp) // Move up
-		_, _ = fmt.Fprint(originalStdout, "\033[J")            // Clear from cursor to end
-		_, _ = fmt.Fprintln(originalStdout, dashboard.View())
+	// Helper to count lines in rendered dashboard
+	countLines := func(s string) int {
+		if s == "" {
+			return 0
+		}
+		return strings.Count(s, "\n") + 1
 	}
+
+	// Track last dashboard output for calculating cursor movement
+	var lastDashboard string
+	lastDashboard = dashboard.View()
 
 	go func() {
 		defer close(progressDone)
@@ -327,16 +339,19 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 			dashboard.IncrementSection(taskResult.Section, taskResult.Result.Success)
 			validator.AddResult(taskResult.Result)
 
-			// Redraw dashboard
-			redrawDashboard()
+			// Calculate how many lines to move up based on last dashboard size
+			linesToMoveUp := countLines(lastDashboard)
 
-			// Display errors immediately below dashboard
-			if !taskResult.Result.Success {
-				// Print to original stdout to avoid log file capture
-				_, _ = fmt.Fprintln(originalStdout, errorStyle.Render(fmt.Sprintf("  ✗ %s %s", taskResult.Result.Name, taskResult.Result.Message)))
-				_, _ = fmt.Fprintf(originalStdout, "  📄 Log: %s\n", taskResult.Result.LogPath)
-				errorLines += 2
-			}
+			// Render new dashboard
+			newDashboard := dashboard.View()
+
+			// Move up, clear, and redraw
+			_, _ = fmt.Fprintf(originalStdout, "\033[%dA", linesToMoveUp) // Move up to dashboard start
+			_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear from cursor to end
+			_, _ = fmt.Fprintln(originalStdout, newDashboard)              // Print updated dashboard
+
+			// Update last dashboard for next iteration
+			lastDashboard = newDashboard
 		}
 	}()
 
@@ -345,15 +360,24 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 	close(resultChan)
 	<-progressDone // Wait for ALL results to be processed
 
-	// Print final dashboard state one more time to ensure 100% completion is shown
-	numLines := len(dashboard.Order) + 2 // sections + blank line + elapsed
-	moveUp := numLines + errorLines
-	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", moveUp) // Move up
-	_, _ = fmt.Fprint(originalStdout, "\033[J")            // Clear from cursor to end
-	_, _ = fmt.Fprintln(originalStdout, dashboard.View())
+	// Final dashboard render - move up based on current dashboard size
+	linesToMoveUp := countLines(lastDashboard)
+	finalDashboard := dashboard.View()
 
-	// Print all errors again in final summary
-	if errorLines > 0 {
+	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", linesToMoveUp) // Move to dashboard start
+	_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear everything below
+	_, _ = fmt.Fprintln(originalStdout, finalDashboard)            // Print final dashboard
+
+	// Print all errors in final summary
+	hasErrors := false
+	for _, result := range validator.Results {
+		if !result.Success {
+			hasErrors = true
+			break
+		}
+	}
+
+	if hasErrors {
 		_, _ = fmt.Fprintln(originalStdout)
 		_, _ = fmt.Fprintln(originalStdout, sectionStyle.Render("Errors encountered:"))
 		for _, result := range validator.Results {
@@ -399,9 +423,9 @@ func getInfraValidations() []ValidationTask {
 func getP1Validations() []ValidationTask {
 	return []ValidationTask{
 		{"Install Dependencies", installDependencies, false, "Dependencies"},
-		{"Build Go Binaries", buildGoBinaries, true, "P1"},
-		{"Build TypeScript", buildTypeScript, true, "P1"},
-		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true, "P1"}, // Fast syntax validation
+		{"Build Go Binaries", buildGoBinaries, true, "Builds"},
+		{"Build TypeScript", buildTypeScript, true, "Builds"},
+		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true, "Builds"},
 	}
 }
 
