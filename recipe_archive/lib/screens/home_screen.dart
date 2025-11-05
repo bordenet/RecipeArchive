@@ -818,7 +818,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
         const SizedBox(height: 16),
         const Text(
-          'Supported sites include Smitten Kitchen, Food52, NYT Cooking, Alexandra\'s Kitchen, and many more.',
+          'Supported sites include Smitten Kitchen, Food52, NYT Cooking, Alexandra\'s Kitchen, Laura in the Kitchen, and many more.',
         ),
         const SizedBox(height: 16),
         const Text(

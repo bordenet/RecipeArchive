@@ -50,7 +50,7 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 - **[Command Reference →](COMMANDS.md)** - Quick lookup for all commands
 - **[Development Guide →](CLAUDE.md)** - Conventions and best practices
 
-## Supported Recipe Sites (14)
+## Supported Recipe Sites (15)
 
 | Supported Sites |  |  |
 |-----------------|--|--|
@@ -58,7 +58,7 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 | [Food52](https://food52.com) | [AllRecipes](https://allrecipes.com) | [Epicurious](https://epicurious.com) |
 | [Serious Eats](https://seriouseats.com) | [Love & Lemons](https://loveandlemons.com) | [Washington Post](https://washingtonpost.com) |
 | [Food & Wine](https://foodandwine.com) | [Damn Delicious](https://damndelicious.net) | [Alexandra's Kitchen](https://alexandracooks.com) |
-| [Lemons and Zest](https://lemonsandzest.com) | [The Anthony Kitchen](https://theanthonykitchen.com) |  |
+| [Lemons and Zest](https://lemonsandzest.com) | [The Anthony Kitchen](https://theanthonykitchen.com) | [Laura in the Kitchen](https://laurainthekitchen.com) |
 
 
 <details>
