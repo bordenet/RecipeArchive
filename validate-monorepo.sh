@@ -36,19 +36,19 @@
 #          Includes: AWS connectivity, S3 buckets, Lambda functions, multi-tenant
 #
 # ⚡ PERFORMANCE FEATURES:
-#   --parallel     Run compatible validations concurrently (faster execution)
+#   --parallel     Run compatible validations concurrently (16 goroutines max)
 #   --verbose      Detailed output with timing and progress indicators
-#   Smart binary building: Only rebuilds Go validator when source changes
+#   Always rebuilds validator: Go build is fast and ensures latest changes
 #
 # 🛠️  SYSTEM REQUIREMENTS:
 #   Required: Node.js (18+), npm, Go (1.19+), Git
 #   Optional: Make, ESLint, TruffleHog, Flutter (for full validation)
 #
 # 🏃‍♂️ EXECUTION MODEL:
-#   1. Sources .env file (if present) for PROJECT_ROOT
-#   2. Conditionally builds tools/monorepo-validator-go (only if needed)
+#   1. Sources .env file (if present) for environment configuration
+#   2. Always rebuilds tools/monorepo-validator-go (Go caches unchanged files)
 #   3. Maps shell arguments to Go flags (--p1 → --p1, etc.)
-#   4. Executes Go validator with beautiful terminal UX
+#   4. Executes Go validator with real-time progress dashboard
 #
 # 🔗 INTEGRATION EXAMPLES:
 #   Husky pre-commit:     ./validate-monorepo.sh --p1
