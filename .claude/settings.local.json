@@ -91,7 +91,8 @@
       "Bash(node tools/build-parser-bundle.cjs:*)",
       "Bash(git stash:*)",
       "Bash(flutter pub get:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
