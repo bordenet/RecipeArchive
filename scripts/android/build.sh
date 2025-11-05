@@ -335,24 +335,44 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
     CONFIG_LOWER=$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')
 
     if [ "$FORMAT" = "apk" ]; then
-        # Try both possible APK locations (Gradle can put them in different places)
-        OUTPUT_FILE="$FLUTTER_DIR/build/app/outputs/flutter-apk/app-$CONFIG_LOWER.apk"
-        if [ ! -f "$OUTPUT_FILE" ]; then
-            OUTPUT_FILE="$FLUTTER_DIR/build/app/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
-        fi
-        if [ ! -f "$OUTPUT_FILE" ]; then
-            OUTPUT_FILE="$BUILD_DIR/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
-        fi
+        # Try all possible APK locations (Gradle can put them in different places)
+        # Standard Gradle locations
+        POSSIBLE_LOCATIONS=(
+            "$ANDROID_DIR/app/build/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+            "$FLUTTER_DIR/build/app/outputs/flutter-apk/app-$CONFIG_LOWER.apk"
+            "$FLUTTER_DIR/build/app/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+            "$BUILD_DIR/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+            "$BUILD_DIR/app/outputs/apk/$CONFIG_LOWER/app-$CONFIG_LOWER.apk"
+        )
+
+        OUTPUT_FILE=""
+        for location in "${POSSIBLE_LOCATIONS[@]}"; do
+            if [ -f "$location" ]; then
+                OUTPUT_FILE="$location"
+                break
+            fi
+        done
         OUTPUT_NAME="app-$CONFIG_LOWER.apk"
     else
-        OUTPUT_FILE="$FLUTTER_DIR/build/app/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
-        if [ ! -f "$OUTPUT_FILE" ]; then
-            OUTPUT_FILE="$BUILD_DIR/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
-        fi
+        # Try all possible AAB locations
+        POSSIBLE_LOCATIONS=(
+            "$ANDROID_DIR/app/build/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+            "$FLUTTER_DIR/build/app/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+            "$BUILD_DIR/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+            "$BUILD_DIR/app/outputs/bundle/${CONFIG_LOWER}Release/app-${CONFIG_LOWER}-release.aab"
+        )
+
+        OUTPUT_FILE=""
+        for location in "${POSSIBLE_LOCATIONS[@]}"; do
+            if [ -f "$location" ]; then
+                OUTPUT_FILE="$location"
+                break
+            fi
+        done
         OUTPUT_NAME="app-${CONFIG_LOWER}-release.aab"
     fi
 
-    if [ -f "$OUTPUT_FILE" ]; then
+    if [ -n "$OUTPUT_FILE" ] && [ -f "$OUTPUT_FILE" ]; then
         print_success "Output location: $OUTPUT_FILE"
 
         # Create unified build directory with semantic naming
@@ -425,7 +445,25 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
             fi
         fi
     else
-        error_exit "Build succeeded but output not found at $OUTPUT_FILE"
+        print_error "Build succeeded but output file not found"
+        echo ""
+        echo "Checked the following locations:"
+        for location in "${POSSIBLE_LOCATIONS[@]}"; do
+            echo "  ✗ $location"
+        done
+        echo ""
+        echo "Searching for APK/AAB files in build directory:"
+        if [ "$FORMAT" = "apk" ]; then
+            find "$ANDROID_DIR" "$FLUTTER_DIR/build" -name "*.apk" 2>/dev/null | while read -r file; do
+                echo "  Found: $file"
+            done || echo "  No APK files found"
+        else
+            find "$ANDROID_DIR" "$FLUTTER_DIR/build" -name "*.aab" 2>/dev/null | while read -r file; do
+                echo "  Found: $file"
+            done || echo "  No AAB files found"
+        fi
+        echo ""
+        die "Build failed: output artifact not found in expected locations"
     fi
 else
     error_exit "Build failed (exit code: $BUILD_EXIT_CODE)"

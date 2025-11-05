@@ -1452,34 +1452,19 @@ main() {
         set +o allexport
     fi
 
-    # Conditionally build the Go validator (only if needed)
-    VALIDATOR_BINARY="tools/monorepo-validator-go/monorepo-validator-go"
-    NEEDS_BUILD=false
+    # Always build the Go validator (Go's build system is smart and fast if nothing changed)
+    echo -e "${BLUE}🔨 Building Go validator...${NC}"
 
-    if [ ! -f "$VALIDATOR_BINARY" ]; then
-        echo -e "${BLUE}🔨 Go validator binary not found - building...${NC}"
-        NEEDS_BUILD=true
-    else
-        # Check if any Go source files are newer than the binary
-        if find tools/monorepo-validator-go -name "*.go" -newer "$VALIDATOR_BINARY" | grep -q .; then
-            echo -e "${BLUE}🔄 Go source files updated - rebuilding validator...${NC}"
-            NEEDS_BUILD=true
-        else
-            echo -e "${GREEN}✅ Go validator binary is up to date${NC}"
-        fi
+    pushd tools/monorepo-validator-go > /dev/null
+    if ! go build -o monorepo-validator-go; then
+        echo -e "${RED}❌ Failed to build Go validator${NC}"
+        echo -e "${YELLOW}💡 Try: cd tools/monorepo-validator-go && go mod tidy && go build${NC}"
+        popd > /dev/null
+        exit 1
     fi
+    popd > /dev/null
 
-    if [ "$NEEDS_BUILD" = true ]; then
-        echo -e "${BLUE}⚡ Building Go validator (this will be fast after first build)...${NC}"
-        cd tools/monorepo-validator-go
-        if ! go build -o monorepo-validator-go; then
-            echo -e "${RED}❌ Failed to build Go validator${NC}"
-            echo -e "${YELLOW}💡 Try: cd tools/monorepo-validator-go && go mod tidy && go build${NC}"
-            exit 1
-        fi
-        echo -e "${GREEN}✅ Go validator built successfully${NC}"
-        cd - > /dev/null
-    fi
+    echo -e "${GREEN}✅ Go validator built successfully${NC}"
 
     # Map shell script arguments to Go app arguments
     GO_ARGS=""
