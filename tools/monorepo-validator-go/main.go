@@ -423,9 +423,9 @@ func getInfraValidations() []ValidationTask {
 func getP1Validations() []ValidationTask {
 	return []ValidationTask{
 		{"Install Dependencies", installDependencies, false, "Dependencies"},
-		{"Build Go Binaries", buildGoBinaries, true, "P1"},
-		{"Build TypeScript", buildTypeScript, true, "P1"},
-		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true, "P1"}, // Fast syntax validation
+		{"Build Go Binaries", buildGoBinaries, true, "Builds"},
+		{"Build TypeScript", buildTypeScript, true, "Builds"},
+		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true, "Builds"},
 	}
 }
 
