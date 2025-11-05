@@ -4,74 +4,27 @@
 #
 # 🔧 RecipeArchive Monorepo Validation Script
 #
-# A comprehensive validation system for the RecipeArchive monorepo that builds
-# and executes a high-performance Go application for parallelized testing.
-#
-# 📋 OVERVIEW:
-# This script acts as a wrapper that builds the Go-based monorepo-validator and
-# passes through command-line arguments. The Go validator provides faster
-# execution, better UX, parallelization, and robust error handling.
+# Comprehensive validation system using a high-performance Go application with
+# parallelized testing, real-time progress dashboard, and structured logging.
 #
 # 🚀 QUICK START:
-#   git clone <repo> && cd RecipeArchive
-#   ./validate-monorepo.sh              # Standard validation
-#   ./validate-monorepo.sh --p1         # Quick commit checks
-#   ./validate-monorepo.sh --all        # Full release validation
-#
-# 📊 VALIDATION TIERS:
-#   --p1   📦 Phase 1 (~20-30s): Prerequisites + Dependencies + Core Builds
-#          Perfect for: Git commits, quick development checks
-#          Includes: Node.js/Go/Flutter checks, npm install, TypeScript/Go builds
-#
-#   --med  🔬 Medium (~2-3min): P1 + Integration Tests + Security + Linting
-#          Perfect for: Pull requests, CI/CD pipelines (DEFAULT)
-#          Includes: P1 + parser tests, backend tests, security scans, quality gates
-#
-#   --all  🏆 Comprehensive (~5-10min): Everything + Infrastructure + Extensions
-#          Perfect for: Release validation, comprehensive audits
-#          Includes: Medium + AWS infrastructure, recipe storage, frontend status
-#
-#   --infra 🏗️  Infrastructure (~2-3min): AWS-dependent validations only
-#          Perfect for: Infrastructure changes, deployment validation
-#          Includes: AWS connectivity, S3 buckets, Lambda functions, multi-tenant
-#
-# ⚡ PERFORMANCE FEATURES:
-#   --parallel     Run compatible validations concurrently (16 goroutines max)
-#   --verbose      Detailed output with timing and progress indicators
-#   Always rebuilds validator: Go build is fast and ensures latest changes
-#
-# 🛠️  SYSTEM REQUIREMENTS:
-#   Required: Node.js (18+), npm, Go (1.19+), Git
-#   Optional: Make, ESLint, TruffleHog, Flutter (for full validation)
+#   ./validate-monorepo.sh              # Standard validation (--med tier)
+#   ./validate-monorepo.sh --p1         # Quick commit checks (~20-30s)
+#   ./validate-monorepo.sh --all        # Full release validation (~5-10min)
+#   ./validate-monorepo.sh --help       # See all options and tiers
 #
 # 🏃‍♂️ EXECUTION MODEL:
-#   1. Sources .env file (if present) for environment configuration
-#   2. Always rebuilds tools/monorepo-validator-go (Go caches unchanged files)
-#   3. Maps shell arguments to Go flags (--p1 → --p1, etc.)
-#   4. Executes Go validator with real-time progress dashboard
+#   1. Always rebuilds Go validator (Go caches unchanged files for speed)
+#   2. Executes validations with real-time progress dashboard
+#   3. Saves structured logs to .validation-logs/ directory
+#   4. Returns exit code 0 (pass) or 1 (fail)
 #
-# 🔗 INTEGRATION EXAMPLES:
-#   Husky pre-commit:     ./validate-monorepo.sh --p1
-#   GitHub Actions:       ./validate-monorepo.sh --med
-#   Release pipeline:     ./validate-monorepo.sh --all
-#   AWS deployment:       ./validate-monorepo.sh --infra
-#
-# 🎯 EXIT CODES:
-#   0   All validations passed
-#   1   One or more validations failed
-#   130 User interrupted (Ctrl+C)
-#
-# 📁 PROJECT STRUCTURE AWARENESS:
-# Automatically detects project root via git repository detection.
-# Validates: Web extensions, Recipe parsers, AWS backend, Flutter app,
-# TypeScript infrastructure, Go microservices, Multi-tenant features
-#
-# 🔧 DEVELOPMENT NOTES:
-# - The Go validator source is in tools/monorepo-validator-go/
-# - Binary is built to tools/monorepo-validator-go/monorepo-validator-go
-# - Uses goroutines for parallel execution when --parallel flag is used
-# - Thread-safe validation result collection with comprehensive reporting
-# - Graceful signal handling ensures terminal never left in bad state
+# 🔧 TECHNICAL DETAILS:
+# - Source: tools/monorepo-validator-go/
+# - Binary: tools/monorepo-validator-go/monorepo-validator-go
+# - Parallelization: Up to 16 concurrent validations with semaphore limiting
+# - Progress: Red-to-green gradient bars, updates every 2 seconds
+# - Interrupts: Graceful Ctrl+C handling, never leaves terminal in bad state
 #
 ################################################################################
 
