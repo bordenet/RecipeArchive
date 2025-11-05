@@ -409,7 +409,14 @@ func getP1Validations() []ValidationTask {
 func getMediumValidations() []ValidationTask {
 	validations := getP1Validations()
 	validations = append(validations,
-		ValidationTask{"Run Integration Tests", runIntegrationTests, true, "Tests"},
+		// Granular test tasks for better progress visibility
+		ValidationTask{"Build Parser Bundle", buildParserBundle, true, "Tests"},
+		ValidationTask{"Parser Unit Tests", runParserTests, true, "Tests"},
+		ValidationTask{"TypeScript Unit Tests", runTypeScriptUnitTests, true, "Tests"},
+		ValidationTask{"Go Backend Tests", runGoBackendTests, true, "Tests"},
+		ValidationTask{"Go Tools Tests", runGoToolsTests, true, "Tests"},
+		ValidationTask{"Extension Integration Tests", runExtensionIntegrationTests, true, "Tests"},
+		ValidationTask{"Extension Tests", runExtensionTests, true, "Tests"},
 		ValidationTask{"Run Security Scan", runSecurityScan, true, "Security"},
 		ValidationTask{"Run Quality Gate", runQualityGate, true, "Quality"},
 		ValidationTask{"Run Linting Checks", runLintingChecks, true, "Linting"},
@@ -452,10 +459,10 @@ func getAllValidations() []ValidationTask {
 		ValidationTask{"Web Extension Linting", runWebExtensionLinting, true, "Mobile"},         // Parallel: Uses npm in extensions/
 
 		// Then comprehensive tests (may fail on network/AWS issues)
-		ValidationTask{"Run Comprehensive Tests", runComprehensiveTests, true, "P1"},
-		ValidationTask{"Validate Parsers", validateParsers, true, "P1"},
-		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true, "P1"},
-		ValidationTask{"Check Frontend Status", checkFrontendStatus, true, "P1"},
+		ValidationTask{"Flutter Tests", runComprehensiveTests, true, "Tests"}, // Moved to Tests section for better visibility
+		ValidationTask{"Validate Parsers", validateParsers, true, "Tests"},
+		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true, "Tests"},
+		ValidationTask{"Check Frontend Status", checkFrontendStatus, true, "Tests"},
 
 		// Go tools validation (parallel: independent Go binaries)
 		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, true, "Tools"},
