@@ -199,8 +199,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate
-[ -z "$MODE" ] && error_exit "Must specify --dev or --prod"
+# Validate - default to dev mode if not specified
+if [ -z "$MODE" ]; then
+    log_warning "No mode specified, defaulting to --dev mode"
+    MODE="dev"
+fi
 [ "$MODE" = "prod" ] && [ "$TARGET" = "emulator" ] && error_exit "Production builds require --device"
 [ "$MODE" = "dev" ] && [ -n "$VERSION" ] && error_exit "Version only applies to production builds"
 [ "$RUN_AFTER" = true ] && [ "$MODE" = "prod" ] && error_exit "--run only applies to dev builds"
