@@ -36,7 +36,7 @@ export class LoveAndLemonsParser extends BaseParser {
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -60,10 +60,10 @@ export class LoveAndLemonsParser extends BaseParser {
     // Fallback selectors using Cheerio
     const title = this.sanitizeText($('h1.entry-title').first().text() || '');
     const ingredients = $('.wprm-recipe-ingredient')
-      .map((_, el) => ({ text: this.sanitizeText($(el).text()) }))
+      .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
       .get();
     const instructions = $('.wprm-recipe-instruction-text')
-      .map((_, el) => ({
+      .map((_: any, el: any) => ({
         stepNumber: _ + 1,
         text: this.sanitizeText($(el).text()),
       }))

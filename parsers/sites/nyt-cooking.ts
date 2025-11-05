@@ -29,7 +29,7 @@ export class NYTCookingParser extends BaseParser {
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -70,12 +70,12 @@ export class NYTCookingParser extends BaseParser {
     const ingredients = $(
       '[data-testid="IngredientList"] li, .recipe-ingredients li, .ingredients-section li, [data-module="Ingredients"] li, ul[data-testid="ingredients"] li'
     )
-      .map((_, el) => ({ text: this.sanitizeText($(el).text()) }))
+      .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
       .get();
     const instructions = $(
       '[data-testid="MethodList"] li, .recipe-instructions li, .instructions-section li, [data-module="Instructions"] li, ol[data-testid="instructions"] li'
     )
-      .map((_, el) => ({
+      .map((_: any, el: any) => ({
         stepNumber: _ + 1,
         text: this.sanitizeText($(el).text()),
       }))

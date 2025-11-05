@@ -107,7 +107,7 @@ export class WashingtonPostParser extends BaseParser {
     ];
 
     for (const selector of ingredientSelectors) {
-      $(selector).each((_, el) => {
+      $(selector).each((_: any, el: any) => {
         const text = $(el).text().trim();
         if (text && !this.isIngredientHeader(text)) {
           ingredients.push({ text: this.sanitizeText(text) });
@@ -140,7 +140,7 @@ export class WashingtonPostParser extends BaseParser {
     ];
 
     for (const selector of instructionSelectors) {
-      $(selector).each((idx, el) => {
+      $(selector).each((idx: any, el: any) => {
         const text = $(el).text().trim();
         if (text && !this.isInstructionHeader(text)) {
           instructions.push({
@@ -238,7 +238,7 @@ export class WashingtonPostParser extends BaseParser {
     const ingredients: Array<{ text: string }> = [];
 
     // Look for paragraphs that might contain ingredients
-    $('p').each((_, el) => {
+    $('p').each((_: any, el: any) => {
       const text = $(el).text().trim();
       if (this.looksLikeIngredient(text)) {
         ingredients.push({ text: this.sanitizeText(text) });
@@ -254,7 +254,7 @@ export class WashingtonPostParser extends BaseParser {
     const instructions: Array<{ stepNumber: number; text: string }> = [];
 
     // Look for paragraphs that might contain cooking instructions
-    $('p').each((idx, el) => {
+    $('p').each((idx: any, el: any) => {
       const text = $(el).text().trim();
       if (this.looksLikeInstruction(text)) {
         instructions.push({

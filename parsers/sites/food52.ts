@@ -70,7 +70,7 @@ export class Food52Parser extends BaseParser {
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -99,7 +99,7 @@ export class Food52Parser extends BaseParser {
         .nextAll('ul')
         .first()
         .find('li')
-        .each((_, el) => {
+        .each((_: any, el: any) => {
           const text = $(el)
             .text()
             .trim()
@@ -113,7 +113,7 @@ export class Food52Parser extends BaseParser {
         .nextAll('ul')
         .first()
         .find('li')
-        .each((i, el) => {
+        .each((i: any, el: any) => {
           const text = $(el).find('p').text().trim();
           if (text) instructions.push({ stepNumber: i + 1, text });
         });
@@ -135,7 +135,7 @@ export class Food52Parser extends BaseParser {
       );
       if (tagEls.length) {
         tags = [];
-        tagEls.each((_, el) => {
+        tagEls.each((_: any, el: any) => {
           const t = $(el).text().trim();
           if (tags && t) tags.push(t);
         });

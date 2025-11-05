@@ -23,7 +23,7 @@ export class FoodNetworkParser extends BaseParser {
             : this.sanitizeText(jsonLd.author?.name) || 'Food Network',
         ingredients: (jsonLd.recipeIngredient || [])
           .map((i) => ({ text: this.sanitizeText(i) }))
-          .filter((ing) => typeof ing.text === 'string' && ing.text.length > 0),
+          .filter((ing: any) => typeof ing.text === 'string' && ing.text.length > 0),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || [])
             .map((i) =>
@@ -31,7 +31,7 @@ export class FoodNetworkParser extends BaseParser {
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -62,7 +62,7 @@ export class FoodNetworkParser extends BaseParser {
         $('h1.o-AssetTitle__a-HeadlineText').text(),
         $('h1.recipe-title').text(),
         $('h1').text(),
-      ].find((t) => t && t.trim().length > 0) || ''
+      ].find((t: any) => t && t.trim().length > 0) || ''
     );
 
     const author = this.sanitizeText(
@@ -70,14 +70,14 @@ export class FoodNetworkParser extends BaseParser {
         $('.o-Attribution__a-Name').text(),
         $('.recipe-author').text(),
         $('.chef-name').text(),
-      ].find((a) => a && a.trim().length > 0) || 'Food Network'
+      ].find((a: any) => a && a.trim().length > 0) || 'Food Network'
     );
 
     let ingredients: Ingredient[] = [];
     // Try main selectors first
     $(
       '.o-Ingredients__a-Ingredient, .ingredients-list__item, .ingredient, .recipe-ingredients li, ul li, .entry-content ul li'
-    ).each((_, el) => {
+    ).each((_: any, el: any) => {
       let label = $(el)
         .find('.o-Ingredients__a-Ingredient--CheckboxLabel')
         .text()
@@ -91,10 +91,10 @@ export class FoodNetworkParser extends BaseParser {
     if (ingredients.length === 0) {
       $('h2:contains("Ingredients")')
         .nextAll('ul')
-        .each((_, ul) => {
+        .each((_: any, ul: any) => {
           $(ul)
             .find('li')
-            .each((__, el) => {
+            .each((__: any, el: any) => {
               const text = $(el).text().trim();
               if (text) ingredients.push({ text });
             });
@@ -118,7 +118,7 @@ export class FoodNetworkParser extends BaseParser {
       'span.instruction-text',
     ];
     for (const selector of instructionSelectors) {
-      $(selector).each((_, el) => {
+      $(selector).each((_: any, el: any) => {
         const text = this.sanitizeText($(el).text());
         if (text && text.length > 0) instructionsRaw.push(text);
       });
@@ -132,10 +132,10 @@ export class FoodNetworkParser extends BaseParser {
     if (instructions.length === 0) {
       $('h2:contains("Directions"), h2:contains("Instructions")')
         .nextAll('ul')
-        .each((ulIdx, ul) => {
+        .each((ulIdx: any, ul: any) => {
           $(ul)
             .find('li')
-            .each((liIdx, el) => {
+            .each((liIdx: any, el: any) => {
               const text = $(el).text().trim();
               if (text)
                 instructions.push({

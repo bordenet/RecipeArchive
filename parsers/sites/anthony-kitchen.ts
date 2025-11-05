@@ -35,7 +35,7 @@ export class AnthonyKitchenParser extends BaseParser {
               // Handle direct HowToStep objects
               return [this.sanitizeText(section.text || section.name || '')];
             })
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -60,10 +60,10 @@ export class AnthonyKitchenParser extends BaseParser {
     // Fallback selectors if JSON-LD is not available or invalid
     const title = this.sanitizeText($('h1.entry-title, h1.wp-block-post-title').first().text() || '');
     const ingredients = $('.wp-block-recipe-ingredient, .recipe-ingredient')
-      .map((_, el) => ({ text: this.sanitizeText($(el).text()) }))
+      .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
       .get();
     const instructions = $('.wp-block-recipe-instruction, .recipe-instruction')
-      .map((_, el) => ({
+      .map((_: any, el: any) => ({
         stepNumber: _ + 1,
         text: this.sanitizeText($(el).text()),
       }))
