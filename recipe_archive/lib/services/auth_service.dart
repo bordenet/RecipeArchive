@@ -1,8 +1,9 @@
-import 'dart:convert';
-import 'package:amazon_cognito_identity_dart_2/cognito.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "dart:convert";
+import "package:amazon_cognito_identity_dart_2/cognito.dart";
+import "package:flutter_dotenv/flutter_dotenv.dart";
+import "package:flutter_secure_storage/flutter_secure_storage.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:recipe_archive/utils/app_logger.dart";
 
 // User model for authenticated state
 class AuthUser {
@@ -39,9 +40,9 @@ class AuthUser {
         idToken: idToken.getJwtToken() ?? '',
       );
     } catch (e) {
-      // ignore: avoid_print
-      print('Error creating AuthUser from Cognito: $e');
-      throw Exception('Failed to create AuthUser: ${e.toString()}');
+      AppLogger.auth.error("Failed to create AuthUser from Cognito session",
+          metadata: {"error": e.toString()});
+      throw Exception("Failed to create AuthUser: ${e.toString()}");
     }
   }
 
@@ -91,22 +92,22 @@ class AuthenticationService {
       final clientId =
           dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '7lm8mqr03s0m0fn17dnv373s4h';
 
-      // ignore: avoid_print
-      print(
-          'Initializing Cognito with poolId: $userPoolId, clientId: $clientId');
+      AppLogger.auth.info("Initializing Cognito UserPool", metadata: {
+        "poolId": AppLogger.auth.redact(userPoolId),
+        "clientId": AppLogger.auth.redact(clientId),
+      });
 
       if (userPoolId.isEmpty || clientId.isEmpty) {
         throw Exception(
-            'Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId');
+            "Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId");
       }
 
       _userPool = CognitoUserPool(userPoolId, clientId);
-      // ignore: avoid_print
-      print('Cognito UserPool initialized successfully');
+      AppLogger.auth.info("Cognito UserPool initialized successfully");
     } catch (e) {
-      // ignore: avoid_print
-      print('Error initializing Cognito: $e');
-      throw Exception('Failed to initialize Cognito: ${e.toString()}');
+      AppLogger.auth.error("Failed to initialize Cognito",
+          metadata: {"error": e.toString()});
+      throw Exception("Failed to initialize Cognito: ${e.toString()}");
     }
   }
 
@@ -115,37 +116,32 @@ class AuthenticationService {
   // Check if user is currently authenticated
   Future<bool> isAuthenticated() async {
     try {
-      // ignore: avoid_print
-      print('TELEMETRY [isAuthenticated] Starting authentication check');
+      AppLogger.auth.debug("Starting authentication check");
       // First try to restore from stored user data
       final storedUser = await _getStoredUser();
-      // ignore: avoid_print
-      print(
-          'TELEMETRY [isAuthenticated] Stored user: ${storedUser?.email ?? "null"}');
+      AppLogger.auth.debug("Checked stored user", metadata: {
+        "hasStoredUser": storedUser != null,
+        "email": storedUser != null ? AppLogger.auth.redact(storedUser.email) : "null",
+      });
       if (storedUser != null) {
         _currentUser = storedUser;
         // Try to refresh the Cognito session if stored user exists
         try {
-          // ignore: avoid_print
-          print('TELEMETRY [isAuthenticated] Getting current Cognito user...');
+          AppLogger.auth.debug("Refreshing Cognito session from stored user");
           _cognitoUser = await _userPool.getCurrentUser();
           final cognitoUser = _cognitoUser;
           if (cognitoUser != null) {
-            // ignore: avoid_print
-            print('TELEMETRY [isAuthenticated] Getting session...');
             final session = await cognitoUser.getSession();
-            // ignore: avoid_print
-            print(
-                'TELEMETRY [isAuthenticated] Session valid: ${session?.isValid() ?? false}');
+            AppLogger.auth.debug("Retrieved Cognito session", metadata: {
+              "isValid": session?.isValid() ?? false,
+            });
             if (session != null && session.isValid()) {
               // Update with fresh session data
               _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
               final currentUser = _currentUser;
               if (currentUser != null) {
                 await _storeUser(currentUser);
-                // ignore: avoid_print
-                print(
-                    'TELEMETRY [isAuthenticated] Returning true (refreshed session)');
+                AppLogger.auth.info("Authentication check succeeded (refreshed session)");
                 return true;
               }
             }
@@ -153,16 +149,14 @@ class AuthenticationService {
         } catch (cognitoError) {
           // Cognito session refresh failed, but we have stored user data
           // Keep the stored user for now - they may still be authenticated
-          // ignore: avoid_print
-          print(
-              'TELEMETRY [isAuthenticated] Cognito session refresh failed, using stored user: $cognitoError');
+          AppLogger.auth.warning("Cognito session refresh failed, using stored user",
+              metadata: {"error": cognitoError.toString()});
           return true;
         }
       }
 
       // Try to get current authenticated user from Cognito (fresh login)
-      // ignore: avoid_print
-      print('TELEMETRY [isAuthenticated] No stored user, checking Cognito...');
+      AppLogger.auth.debug("No stored user, checking Cognito for active session");
       _cognitoUser = await _userPool.getCurrentUser();
       final cognitoUser = _cognitoUser;
       if (cognitoUser != null) {
@@ -173,16 +167,14 @@ class AuthenticationService {
             final currentUser = _currentUser;
             if (currentUser != null) {
               await _storeUser(currentUser);
-              // ignore: avoid_print
-              print('TELEMETRY [isAuthenticated] Returning true (new session)');
+              AppLogger.auth.info("Authentication check succeeded (new session)");
               return true;
             }
           }
         } catch (sessionError) {
           // Session validation failed, clear invalid data
-          // ignore: avoid_print
-          print(
-              'TELEMETRY [isAuthenticated] Session validation failed: $sessionError');
+          AppLogger.auth.warning("Session validation failed, clearing stored data",
+              metadata: {"error": sessionError.toString()});
           await _clearStoredUser();
           _cognitoUser = null;
           _currentUser = null;
@@ -195,17 +187,19 @@ class AuthenticationService {
         await _clearStoredUser();
       }
       _cognitoUser = null;
-      // ignore: avoid_print
-      print(
-          'TELEMETRY [isAuthenticated] Returning ${_currentUser != null} (currentUser exists: ${_currentUser != null})');
+      AppLogger.auth.debug("Authentication check complete", metadata: {
+        "isAuthenticated": _currentUser != null,
+      });
       return _currentUser != null;
     } catch (e, stackTrace) {
       // On error, preserve stored user data if it exists
-      // ignore: avoid_print
-      print(
-          'TELEMETRY [isAuthenticated] ERROR - Type: ${e.runtimeType}, Message: $e');
-      // ignore: avoid_print
-      print('TELEMETRY [isAuthenticated] Stack trace: $stackTrace');
+      AppLogger.auth.error("Authentication check failed",
+          metadata: {
+            "errorType": e.runtimeType.toString(),
+            "hasCurrentUser": _currentUser != null,
+          },
+          error: e,
+          stackTrace: stackTrace);
       _cognitoUser = null;
       // Only return false if we have no stored user data
       return _currentUser != null;
@@ -214,78 +208,75 @@ class AuthenticationService {
 
   // Sign in with email and password
   Future<AuthUser> signIn(String email, String password) async {
+    final startTime = DateTime.now();
     try {
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Starting sign in for email: $email');
+      AppLogger.auth.info("Starting sign in", metadata: {
+        "email": AppLogger.auth.redact(email),
+      });
 
       _cognitoUser = CognitoUser(email, _userPool);
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Created CognitoUser');
-
       final authDetails = AuthenticationDetails(
         username: email,
         password: password,
       );
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Created AuthenticationDetails');
 
       final cognitoUser = _cognitoUser;
       if (cognitoUser == null) {
-        throw Exception('Failed to create Cognito user');
+        throw Exception("Failed to create Cognito user");
       }
 
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Calling authenticateUser...');
+      AppLogger.auth.debug("Authenticating user with Cognito");
       final session = await cognitoUser.authenticateUser(authDetails);
-      // ignore: avoid_print
-      print(
-          'TELEMETRY [signIn] Authentication completed, session valid: ${session?.isValid()}');
 
       if (session == null || !session.isValid()) {
-        throw Exception('Failed to authenticate user - invalid session');
+        throw Exception("Failed to authenticate user - invalid session");
       }
 
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Creating AuthUser from session...');
+      AppLogger.auth.debug("Creating AuthUser from session", metadata: {
+        "sessionValid": session.isValid(),
+      });
       _currentUser = AuthUser.fromCognitoUser(cognitoUser, session);
       final currentUser = _currentUser;
       if (currentUser == null) {
-        throw Exception('Failed to create user from Cognito response');
+        throw Exception("Failed to create user from Cognito response");
       }
 
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Storing user...');
       await _storeUser(currentUser);
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Sign in completed successfully');
+      final duration = DateTime.now().difference(startTime).inMilliseconds;
+      AppLogger.auth.info("Sign in completed successfully", metadata: {
+        "durationMs": duration,
+        "userId": AppLogger.auth.redact(currentUser.id),
+      });
       return currentUser;
     } catch (e, stackTrace) {
-      // ignore: avoid_print
-      print(
-          'TELEMETRY [signIn] ERROR CAUGHT - Type: ${e.runtimeType}, Message: $e');
-      // ignore: avoid_print
-      print('TELEMETRY [signIn] Stack trace: $stackTrace');
+      final duration = DateTime.now().difference(startTime).inMilliseconds;
       if (e is CognitoUserException) {
-        // ignore: avoid_print
-        print(
-            'TELEMETRY [signIn] CognitoUserException - message: ${e.message}');
-        final message = e.message ?? 'Authentication failed';
-        if (message.contains('UserNotConfirmed')) {
-          throw Exception('Please verify your email address before signing in');
-        } else if (message.contains('NotAuthorized')) {
-          throw Exception('Invalid email or password');
-        } else if (message.contains('TooManyRequests')) {
-          throw Exception('Too many failed attempts. Please try again later');
-        } else if (message.contains('UserNotFound')) {
-          throw Exception('User not found. Please check your email address');
+        final message = e.message ?? "Authentication failed";
+        AppLogger.auth.warning("Sign in failed - Cognito error", metadata: {
+          "durationMs": duration,
+          "errorType": e.runtimeType.toString(),
+          "errorMessage": message,
+        });
+        if (message.contains("UserNotConfirmed")) {
+          throw Exception("Please verify your email address before signing in");
+        } else if (message.contains("NotAuthorized")) {
+          throw Exception("Invalid email or password");
+        } else if (message.contains("TooManyRequests")) {
+          throw Exception("Too many failed attempts. Please try again later");
+        } else if (message.contains("UserNotFound")) {
+          throw Exception("User not found. Please check your email address");
         } else {
           throw Exception(message);
         }
       }
-      // ignore: avoid_print
-      print(
-          'TELEMETRY [signIn] Throwing generic exception with full error details');
-      throw Exception('Sign in failed: ${e.toString()}');
+      AppLogger.auth.error("Sign in failed",
+          metadata: {
+            "durationMs": duration,
+            "errorType": e.runtimeType.toString(),
+          },
+          error: e,
+          stackTrace: stackTrace);
+      throw Exception("Sign in failed: ${e.toString()}");
     }
   }
 

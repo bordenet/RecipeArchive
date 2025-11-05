@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:ui';
-import 'screens/home_screen.dart';
-import 'screens/auth/login_screen.dart';
-import 'services/auth_service.dart';
-import 'services/diagnostic_service.dart';
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:flutter_dotenv/flutter_dotenv.dart";
+import "dart:ui";
+import "screens/home_screen.dart";
+import "screens/auth/login_screen.dart";
+import "services/auth_service.dart";
+import "services/diagnostic_service.dart";
+import "utils/app_logger.dart";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,8 +50,7 @@ void main() async {
       await dotenv.load(fileName: ".env");
     } catch (e2) {
       // No .env file available - will use default values
-      // ignore: avoid_print
-      print("Warning: No .env file found, using default configuration");
+      AppLogger.ui.warning("No .env file found, using default configuration");
     }
   }
 

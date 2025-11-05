@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/recipe.dart';
-import '../services/recipe_service.dart';
-import '../services/auth_service.dart';
-import '../services/unified_analytics_service.dart';
-import '../services/advanced_search_service.dart';
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "../models/recipe.dart";
+import "../services/recipe_service.dart";
+import "../services/auth_service.dart";
+import "../services/unified_analytics_service.dart";
+import "../services/advanced_search_service.dart";
+import "../utils/app_logger.dart";
 
 // Recipe service provider
 final recipeServiceProvider = Provider<RecipeService>((ref) {
@@ -200,9 +200,8 @@ class RecipeNotifier extends StateNotifier<AsyncValue<List<Recipe>>> {
           );
         } catch (analyticsError) {
           // Don't fail the search if analytics fails
-          if (kDebugMode) {
-            debugPrint('Analytics tracking failed: $analyticsError');
-          }
+          AppLogger.analytics.warning("Analytics tracking failed during search",
+              metadata: {"error": analyticsError.toString()});
         }
       }
     } catch (e, stackTrace) {

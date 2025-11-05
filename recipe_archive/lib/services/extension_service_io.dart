@@ -1,6 +1,6 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import "package:http/http.dart" as http;
+import "dart:convert";
+import "../utils/app_logger.dart";
 
 class ExtensionVersion {
   final String version;
@@ -73,9 +73,11 @@ class ExtensionService {
 
   void downloadExtension(ExtensionVersion extension, String platform) {
     // Non-web platforms: Just log the download attempt
-    if (kDebugMode) {
-      print('Download simulation: ${extension.filename} from ${extension.downloadUrl}');
-    }
+    AppLogger.ui.debug("Extension download simulation", metadata: {
+      "filename": extension.filename,
+      "platform": platform,
+      "size": extension.formattedSize,
+    });
   }
 
   String getInstallationInstructions(String platform) {
