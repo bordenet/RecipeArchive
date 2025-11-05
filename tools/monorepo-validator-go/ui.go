@@ -123,8 +123,31 @@ func (pd *ProgressDashboard) View() string {
 		// Format label (left-aligned, fixed width)
 		labelText := fmt.Sprintf("%-15s", section.Label+":")
 
-		// Progress bar
-		progressBar := section.prog.ViewAs(section.Progress())
+		// Progress bar - color based on completion status
+		var progressBar string
+		if section.Completed == section.Total {
+			// Section complete - use solid color based on success/failure
+			if section.Failed > 0 {
+				// Red bar for failures
+				redProg := progress.New(
+					progress.WithSolidFill("#FF5555"), // Solid red
+					progress.WithWidth(50),
+					progress.WithoutPercentage(),
+				)
+				progressBar = redProg.ViewAs(1.0)
+			} else {
+				// Green bar for success
+				greenProg := progress.New(
+					progress.WithSolidFill("#04B575"), // Solid green
+					progress.WithWidth(50),
+					progress.WithoutPercentage(),
+				)
+				progressBar = greenProg.ViewAs(1.0)
+			}
+		} else {
+			// In progress - use gradient
+			progressBar = section.prog.ViewAs(section.Progress())
+		}
 
 		// Stats (compact)
 		stats := fmt.Sprintf("%d/%d", section.Completed, section.Total)
