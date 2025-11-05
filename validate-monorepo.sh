@@ -22,7 +22,7 @@
 # 🔧 TECHNICAL DETAILS:
 # - Source: tools/monorepo-validator-go/
 # - Binary: tools/monorepo-validator-go/monorepo-validator-go
-# - Parallelization: Up to 16 concurrent validations with semaphore limiting
+# - Execution: Sequential (mutex-protected to prevent stdout/stderr race conditions)
 # - Progress: Red-to-green gradient bars, updates every 2 seconds
 # - Interrupts: Graceful Ctrl+C handling, never leaves terminal in bad state
 #
