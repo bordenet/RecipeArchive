@@ -36,6 +36,7 @@ import { FoodAndWineParser } from './sites/food-and-wine';
 import { WashingtonPostParser } from './sites/washington-post';
 import { AlexandrasKitchenParser } from './sites/alexandras-kitchen';
 import { LemonsAndZestParser } from './sites/lemonsandzest';
+import { LauraInTheKitchenParser } from './sites/laurainthekitchen.com';
 
 // Initialize registry
 const registry = ParserRegistry.getInstance();
@@ -54,6 +55,7 @@ registry.registerParser('foodandwine.com', FoodAndWineParser);
 registry.registerParser('washingtonpost.com', WashingtonPostParser);
 registry.registerParser('alexandracooks.com', AlexandrasKitchenParser);
 registry.registerParser('lemonsandzest.com', LemonsAndZestParser);
+registry.registerParser('laurainthekitchen.com', LauraInTheKitchenParser);
 
 // Export for browser use
 if (typeof window !== 'undefined') {

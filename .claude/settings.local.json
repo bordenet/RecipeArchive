@@ -82,7 +82,13 @@
       "Bash(npm test:*)",
       "Bash(node build-parser-bundle.cjs:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run test:parsers:*)"
+      "Bash(npm run test:parsers:*)",
+      "Bash(npx jest --clearCache)",
+      "Bash(./tools/bin/recipe-extract-test:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(node tools/test-parser.mjs:*)",
+      "Bash(npm run lint:*)",
+      "Bash(node tools/build-parser-bundle.cjs:*)"
     ],
     "deny": [],
     "ask": []
