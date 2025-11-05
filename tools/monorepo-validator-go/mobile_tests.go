@@ -33,7 +33,7 @@ func runMobileTests(projectRoot string) bool {
 	// These scripts are required for complete iOS and Android development
 	scriptsFound := 0
 	scripts := []string{
-		"scripts/ios/build.sh",    // iOS build automation
+		"scripts/ios/build.sh",     // iOS build automation
 		"scripts/ios/setup.sh",     // iOS environment setup
 		"scripts/android/build.sh", // Android build automation
 		"scripts/android/setup.sh", // Android environment setup
@@ -191,4 +191,57 @@ func runWebExtensionLinting(projectRoot string) bool {
 
 	fmt.Printf("  Extension linting: ✓\n")
 	return true
+}
+
+// runBuildScriptSyntaxValidation validates that build scripts have valid syntax and accept default args
+func runBuildScriptSyntaxValidation(projectRoot string) bool {
+	fmt.Println("\n=== BUILD SCRIPT SYNTAX & DEFAULTS VALIDATION ===")
+
+	scripts := map[string]string{
+		"iOS build":     filepath.Join(projectRoot, "scripts/ios/build.sh"),
+		"Android build": filepath.Join(projectRoot, "scripts/android/build.sh"),
+		"iOS clean":     filepath.Join(projectRoot, "scripts/ios/clean.sh"),
+		"Android clean": filepath.Join(projectRoot, "scripts/android/clean.sh"),
+	}
+
+	allPassed := true
+
+	for name, script := range scripts {
+		// Check if script exists
+		if _, err := os.Stat(script); os.IsNotExist(err) {
+			fmt.Printf("  %s: ✗ (not found at %s)\n", name, script)
+			allPassed = false
+			continue
+		}
+
+		// Test 1: Script has valid bash syntax
+		fmt.Printf("  Testing %s syntax... ", name)
+		_, err := runCommand(projectRoot, "bash", "-n", script)
+		if err != nil {
+			fmt.Printf("✗ (syntax error)\n")
+			allPassed = false
+			continue
+		}
+		fmt.Printf("✓\n")
+
+		// Test 2: Script shows help with --help (skip clean scripts)
+		if filepath.Base(script) != "clean.sh" {
+			fmt.Printf("  Testing %s --help... ", name)
+			_, err = runCommand(projectRoot, script, "--help")
+			if err != nil {
+				fmt.Printf("✗ (help flag failed)\n")
+				allPassed = false
+				continue
+			}
+			fmt.Printf("✓\n")
+		}
+	}
+
+	if allPassed {
+		fmt.Printf("\n  Build script validation: ✓\n")
+	} else {
+		fmt.Printf("\n  Build script validation: ✗\n")
+	}
+
+	return allPassed
 }
