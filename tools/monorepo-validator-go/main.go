@@ -307,18 +307,9 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 		}
 	}
 
-	// Progress monitoring - update on every task completion (no periodic ticker)
+	// Progress monitoring - update on every task completion
 	progressDone := make(chan struct{})
-	errorLines := 0 // Track how many error lines we've printed
-
-	redrawDashboard := func() {
-		// Calculate lines dynamically based on current dashboard sections
-		numLines := len(dashboard.Order) + 2 // sections + blank line + elapsed
-		moveUp := numLines + errorLines
-		_, _ = fmt.Fprintf(originalStdout, "\033[%dA", moveUp) // Move up
-		_, _ = fmt.Fprint(originalStdout, "\033[J")            // Clear from cursor to end
-		_, _ = fmt.Fprintln(originalStdout, dashboard.View())
-	}
+	dashboardLines := len(dashboard.Order) + 2 // Fixed: track initial dashboard size
 
 	go func() {
 		defer close(progressDone)
@@ -327,16 +318,11 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 			dashboard.IncrementSection(taskResult.Section, taskResult.Result.Success)
 			validator.AddResult(taskResult.Result)
 
-			// Redraw dashboard
-			redrawDashboard()
-
-			// Display errors immediately below dashboard
-			if !taskResult.Result.Success {
-				// Print to original stdout to avoid log file capture
-				_, _ = fmt.Fprintln(originalStdout, errorStyle.Render(fmt.Sprintf("  ✗ %s %s", taskResult.Result.Name, taskResult.Result.Message)))
-				_, _ = fmt.Fprintf(originalStdout, "  📄 Log: %s\n", taskResult.Result.LogPath)
-				errorLines += 2
-			}
+			// FIXED: Safe redraw - move up exactly dashboardLines, clear, and redraw
+			_, _ = fmt.Fprintf(originalStdout, "\033[%dA", dashboardLines) // Move up to dashboard start
+			_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear from cursor to end
+			_, _ = fmt.Fprintln(originalStdout, dashboard.View())          // Print updated dashboard
+			// Note: Errors will be printed at the end to avoid complexity of tracking cursor position
 		}
 	}()
 
@@ -345,15 +331,21 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 	close(resultChan)
 	<-progressDone // Wait for ALL results to be processed
 
-	// Print final dashboard state one more time to ensure 100% completion is shown
-	numLines := len(dashboard.Order) + 2 // sections + blank line + elapsed
-	moveUp := numLines + errorLines
-	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", moveUp) // Move up
-	_, _ = fmt.Fprint(originalStdout, "\033[J")            // Clear from cursor to end
-	_, _ = fmt.Fprintln(originalStdout, dashboard.View())
+	// FIXED: Final dashboard render - move up only by dashboard lines
+	_, _ = fmt.Fprintf(originalStdout, "\033[%dA", dashboardLines) // Move to dashboard start
+	_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear everything below
+	_, _ = fmt.Fprintln(originalStdout, dashboard.View())          // Print final dashboard
 
-	// Print all errors again in final summary
-	if errorLines > 0 {
+	// Print all errors in final summary
+	hasErrors := false
+	for _, result := range validator.Results {
+		if !result.Success {
+			hasErrors = true
+			break
+		}
+	}
+
+	if hasErrors {
 		_, _ = fmt.Fprintln(originalStdout)
 		_, _ = fmt.Fprintln(originalStdout, sectionStyle.Render("Errors encountered:"))
 		for _, result := range validator.Results {
