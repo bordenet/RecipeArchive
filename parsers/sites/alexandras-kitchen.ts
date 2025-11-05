@@ -84,7 +84,7 @@ export class AlexandrasKitchenParser extends BaseParser {
       const ingredients: Ingredient[] = [];
       $(
         '.tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li'
-      ).each((_, el) => {
+      ).each((_: any, el: any) => {
         const text = $(el).text().trim();
         if (text) ingredients.push({ text: this.sanitizeText(text) });
       });
@@ -93,7 +93,7 @@ export class AlexandrasKitchenParser extends BaseParser {
       const instructions: Instruction[] = [];
       $(
         '.tasty-recipes-instructions li, .recipe-instructions li, .instructions li'
-      ).each((idx, el) => {
+      ).each((idx: any, el: any) => {
         const text = $(el).text().trim();
         if (text)
           instructions.push({

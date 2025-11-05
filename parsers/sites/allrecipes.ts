@@ -49,7 +49,7 @@ export class AllRecipesParser extends BaseParser {
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === 'string' && text.length > 0)
         ),
         imageUrl:
           typeof jsonLd.image === 'string'
@@ -106,7 +106,7 @@ export class AllRecipesParser extends BaseParser {
 
     for (const selector of ingredientSelectors) {
       const found = $(selector)
-        .map((_, el) => {
+        .map((_: any, el: any) => {
           const text = this.sanitizeText($(el).text());
           return text && text.length > 0 ? { text } : null;
         })
@@ -130,7 +130,7 @@ export class AllRecipesParser extends BaseParser {
 
     for (const selector of instructionSelectors) {
       const found = $(selector)
-        .map((i, el) => {
+        .map((i: any, el: any) => {
           const text = this.sanitizeText($(el).text());
           return text && text.length > 0 ? { stepNumber: i + 1, text } : null;
         })

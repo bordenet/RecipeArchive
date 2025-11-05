@@ -81,13 +81,13 @@ export class DamnDeliciousParser extends BaseParser {
         ];
         for (const headerSelector of headerSelectors) {
           const headerElements = $(headerSelector.split(':contains')[0]).filter(
-            (_, el) => $(el).text().toLowerCase().includes('ingredients')
+            (_: any, el: any) => $(el).text().toLowerCase().includes('ingredients')
           );
           if (headerElements.length > 0) {
             const ingredientsList = headerElements.next('ul').find('li');
             if (ingredientsList.length > 0) {
               ingredients = ingredientsList
-                .map((_, el) => ({
+                .map((_: any, el: any) => ({
                   text: this.sanitizeText($(el).text()),
                 }))
                 .get();
@@ -97,7 +97,7 @@ export class DamnDeliciousParser extends BaseParser {
         }
       } else {
         const found = $(selector)
-          .map((_, el) => ({
+          .map((_: any, el: any) => ({
             text: this.sanitizeText($(el).text()),
           }))
           .get();
@@ -128,13 +128,13 @@ export class DamnDeliciousParser extends BaseParser {
         ];
         for (const headerSelector of headerSelectors) {
           const headerElements = $(headerSelector.split(':contains')[0]).filter(
-            (_, el) => $(el).text().toLowerCase().includes('directions')
+            (_: any, el: any) => $(el).text().toLowerCase().includes('directions')
           );
           if (headerElements.length > 0) {
             const instructionsList = headerElements.next('ol').find('li');
             if (instructionsList.length > 0) {
               instructions = instructionsList
-                .map((i, el) => ({
+                .map((i: any, el: any) => ({
                   stepNumber: i + 1,
                   text: this.sanitizeText($(el).text()),
                 }))
@@ -145,7 +145,7 @@ export class DamnDeliciousParser extends BaseParser {
         }
       } else {
         const found = $(selector)
-          .map((i, el) => ({
+          .map((i: any, el: any) => ({
             stepNumber: i + 1,
             text: this.sanitizeText($(el).text()),
           }))

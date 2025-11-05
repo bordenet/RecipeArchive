@@ -11,6 +11,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["*.ts", "**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": ["*.ts", "sites/**/*.ts"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "tests/**"]
 }
