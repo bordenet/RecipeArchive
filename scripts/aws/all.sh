@@ -35,7 +35,7 @@
 
 # Source common library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/../lib/common.sh"
 init_script
 
 readonly REPO_ROOT="$(get_repo_root)"
@@ -56,27 +56,10 @@ if ((BASH_VERSINFO[0] < 4)); then
     die "Deployment failed"
 fi
 
-set -e  # Exit on any error
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-#BLUE='\033[0;34m'
-BLUE='\033[1;34m'
+# Additional color for script output (beyond common.sh colors)
 PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
 
 declare -A LAMBDA_FUNCTIONS
-
-# Helper functions
-log_error() {
-    log_error "❌ $1"
-}
-
-# Get script directory and repo root
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Load environment variables from repo root
 if [ -f "$REPO_ROOT/.env" ]; then
@@ -99,24 +82,6 @@ S3_BUCKET=$S3_WEB_APP_BUCKET  # Backward compatibility alias
 
 # Lambda Functions will be auto-discovered from AWS (no hardcoded values)
 declare -A LAMBDA_FUNCTIONS
-
-# Helper functions (continued)
-log_info() {
-    log_info "ℹ️  $1"
-}
-
-log_success() {
-    log_success "✅ $1"
-}
-
-log_warning() {
-    log_warning "⚠️  $1"
-}
-
-log_header() {
-    echo -e "${PURPLE}🚀 $1"
-    echo "======================================"
-}
 
 # Check prerequisites
 check_prerequisites() {
