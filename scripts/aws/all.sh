@@ -384,22 +384,22 @@ main() {
     local start_time=$(date +%s)
     local DEPLOY_FRONTEND=true
     local DEPLOY_BACKEND=true
-    
+    local SPECIFIC_FUNCTION=""
+
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
             --frontend-only)
                 DEPLOY_BACKEND=false
                 shift
-                ;; 
+                ;;
             --backend-only)
                 DEPLOY_FRONTEND=false
                 shift
-                ;; 
+                ;;
             --function)
                 # Deploy specific function only
                 DEPLOY_FRONTEND=false
-                DEPLOY_ALL_LAMBDAS=false
                 SPECIFIC_FUNCTION=$2
                 shift 2
                 ;; 
