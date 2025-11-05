@@ -89,7 +89,9 @@
       "Bash(node tools/test-parser.mjs:*)",
       "Bash(npm run lint:*)",
       "Bash(node tools/build-parser-bundle.cjs:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter analyze:*)"
     ],
     "deny": [],
     "ask": []
