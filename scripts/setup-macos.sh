@@ -1335,8 +1335,8 @@ fi
 # Final setup summary and manual steps
 print_info "Setup completed! Summary and next steps..."
 
-# Installation summary
-cat <<EOM
+# Installation summary (use while loop with echo -e to interpret ANSI escape sequences)
+while IFS= read -r line || [ -n "$line" ]; do echo -e "$line"; done <<EOM
 
 ${GREEN}✅ INSTALLATION SUMMARY${NC}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
