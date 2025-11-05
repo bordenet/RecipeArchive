@@ -21,19 +21,15 @@ type ValidationResult struct {
 // Validator manages a collection of validation results and provides summary reporting.
 // It's thread-safe for concurrent validations.
 type Validator struct {
-	Results   []ValidationResult
-	mutex     sync.Mutex
-	semaphore chan struct{} // Limits concurrent output redirection
+	Results      []ValidationResult
+	mutex        sync.Mutex
+	redirectMux  sync.Mutex // Serializes stdout/stderr redirection to prevent race conditions
 }
 
 // NewValidator creates and returns a new Validator instance.
 func NewValidator() *Validator {
-	// Allow up to 16 concurrent validations to redirect output
-	// Maximizes parallelism while maintaining output capture reliability
-	semaphore := make(chan struct{}, 16)
 	return &Validator{
-		Results:   make([]ValidationResult, 0),
-		semaphore: semaphore,
+		Results: make([]ValidationResult, 0),
 	}
 }
 
@@ -116,25 +112,23 @@ func (v *Validator) RunValidationSilent(name string, validationFunc func(project
 	_, _ = fmt.Fprintf(logFile, "║   Re-run failed commands in their working directory for debugging.\n")
 	_, _ = fmt.Fprintf(logFile, "╚════════════════════════════════════════════════════════════════════════╝\n\n")
 
-	// Acquire semaphore slot to limit concurrent output redirection
-	v.semaphore <- struct{}{}
-	defer func() { <-v.semaphore }()
+	// CRITICAL SECTION: Must serialize entire redirect → execute → restore sequence
+	// os.Stdout and os.Stderr are global variables shared across all goroutines
+	// If we allow concurrent access, output gets mixed up between different log files
+	v.redirectMux.Lock()
+	defer v.redirectMux.Unlock()
 
-	// Redirect stdout and stderr to log file
-	// Use simple Go-level redirection - child processes will inherit these
+	// Redirect stdout and stderr to log file for this validation
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
-
 	os.Stdout = logFile
 	os.Stderr = logFile
 
-	// Run the validation
+	// Run the validation with redirected output
 	success := validationFunc(projectRoot)
 
-	// Flush any buffered output to log file before restoring
+	// Flush and restore stdout and stderr
 	_ = logFile.Sync()
-
-	// Restore stdout and stderr
 	os.Stdout = oldStdout
 	os.Stderr = oldStderr
 
