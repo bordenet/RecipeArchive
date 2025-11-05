@@ -476,16 +476,16 @@ main() {
     if $DEPLOY_BACKEND;
     then
         log_header "Validating API Gateway Integrations"
-        if ./scripts/manage-api-routes.sh validate; then
+        if "$REPO_ROOT/scripts/manage-api-routes.sh" validate; then
             log_success "✅ All API Gateway integrations are valid"
         else
             log_warning "⚠️ API Gateway integration issues detected. Attempting automatic fix..."
-            if ./scripts/manage-api-routes.sh fix; then
+            if "$REPO_ROOT/scripts/manage-api-routes.sh" fix; then
                 log_success "✅ API Gateway integrations fixed successfully"
             else
                 log_error "❌ Failed to fix API Gateway integrations. Manual intervention required."
-                log_warning "💡 Run: ./scripts/manage-api-routes.sh validate"
-                log_warning "💡 Then: ./scripts/manage-api-routes.sh fix"
+                log_warning "💡 Run: $REPO_ROOT/scripts/manage-api-routes.sh validate"
+                log_warning "💡 Then: $REPO_ROOT/scripts/manage-api-routes.sh fix"
             fi
         fi
     fi
