@@ -154,9 +154,16 @@ get_repo_root() {
 ################################################################################
 
 # Ask yes/no question (returns 0 for yes, 1 for no)
+# Respects AUTO_YES global variable for non-interactive mode
 ask_yes_no() {
     local question="$1"
     local default="${2:-n}"
+
+    # If AUTO_YES is set, automatically return yes
+    if [[ "${AUTO_YES:-false}" == "true" ]]; then
+        echo -e "${COLOR_YELLOW}[?]${COLOR_RESET} $question [AUTO-YES]"
+        return 0
+    fi
 
     local prompt
     if [[ "$default" == "y" ]]; then
