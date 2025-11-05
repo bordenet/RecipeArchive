@@ -75,7 +75,7 @@ export class FoodAndWineParser extends BaseParser {
 
     for (const selector of ingredientSelectors) {
       const found = $(selector)
-        .map((_, el) => ({
+        .map((_: any, el: any) => ({
           text: this.sanitizeText($(el).text()),
         }))
         .get();
@@ -97,7 +97,7 @@ export class FoodAndWineParser extends BaseParser {
 
     for (const selector of instructionSelectors) {
       const found = $(selector)
-        .map((i, el) => ({
+        .map((i: any, el: any) => ({
           stepNumber: i + 1,
           text: this.sanitizeText($(el).text()),
         }))

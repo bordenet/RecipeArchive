@@ -131,7 +131,7 @@ export class SmittenKitchenParser extends BaseParser {
       const jetpackIngredients = $('.jetpack-recipe-ingredients');
       if (jetpackIngredients.length > 0) {
         // Parse jetpack ingredients with section headers
-        jetpackIngredients.children().each((_, el) => {
+        jetpackIngredients.children().each((_: any, el: any) => {
           const $el = $(el);
           if ($el.is('h5')) {
             // This is a section header like "For the crust (pâte brisée)" or "For the filling"
@@ -141,7 +141,7 @@ export class SmittenKitchenParser extends BaseParser {
             }
           } else if ($el.is('ul')) {
             // This is a list of ingredients under the section
-            $el.find('li.jetpack-recipe-ingredient').each((__, li) => {
+            $el.find('li.jetpack-recipe-ingredient').each((__: any, li: any) => {
               const text = $(li).text().trim();
               if (text) ingredients.push({ text: this.sanitizeText(text) });
             });
@@ -151,7 +151,7 @@ export class SmittenKitchenParser extends BaseParser {
 
       // Fallback to original parsing if no section headers found
       if (ingredients.length === 0) {
-        $('.jetpack-recipe-ingredient').each((_, el) => {
+        $('.jetpack-recipe-ingredient').each((_: any, el: any) => {
           const text = $(el).text().trim();
           if (text) ingredients.push({ text: this.sanitizeText(text) });
         });
@@ -160,16 +160,16 @@ export class SmittenKitchenParser extends BaseParser {
         ingredients = $(
           '.recipe-ingredients li, .ingredients li, .ingredient, .wprm-recipe-ingredient'
         )
-          .map((_, el) => ({ text: this.sanitizeText($(el).text()) }))
+          .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
           .get();
       }
       if (ingredients.length === 0) {
         $('h2:contains("Ingredients")')
           .nextAll('ul')
-          .each((_, ul) => {
+          .each((_: any, ul: any) => {
             $(ul)
               .find('li')
-              .each((__, el) => {
+              .each((__: any, el: any) => {
                 const text = $(el).text().trim();
                 if (text) ingredients.push({ text });
               });
@@ -186,25 +186,25 @@ export class SmittenKitchenParser extends BaseParser {
         if (raw) {
           ingredients = raw
             .split(/<br\s*\/>/i)
-            .map((t) => ({
+            .map((t: any) => ({
               text: this.sanitizeText(
                 $(t).text() || $('<div>' + t + '</div>').text()
               ),
             }))
-            .filter((i) => i.text);
+            .filter((i: any) => i.text);
         }
       }
 
       // Parse old-style narrative recipes (2013 era) - ingredients in paragraph with newlines
       if (ingredients.length === 0) {
-        $('.entry-content p').each((_, el) => {
+        $('.entry-content p').each((_: any, el: any) => {
           const text = $(el).text().trim();
           // Look for paragraphs with multiple ingredient-like lines (measurements)
           if (text.match(/\d+\s+(cup|tablespoon|teaspoon|ounce|pound|lb|oz|tsp|tbsp)/gi)) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const lines = text.split('\n').map((l: any) => l.trim()).filter((l: any) => l.length > 0);
             // If multiple lines with measurements, treat as ingredient list
-            if (lines.length > 3 && lines.filter(l => /\d/.test(l)).length > 2) {
-              lines.forEach(line => {
+            if (lines.length > 3 && lines.filter((l: any) => /\d/.test(l)).length > 2) {
+              lines.forEach((line: any) => {
                 if (line.length > 0) {
                   ingredients.push({ text: this.sanitizeText(line) });
                 }
@@ -265,7 +265,7 @@ export class SmittenKitchenParser extends BaseParser {
         instructions = $(
           '.instructions li, .instruction, .wprm-recipe-instruction-text, .preparation-step'
         )
-          .map((i, el) => ({
+          .map((i: any, el: any) => ({
             stepNumber: i + 1,
             text: this.sanitizeText($(el).text()),
           }))
@@ -274,10 +274,10 @@ export class SmittenKitchenParser extends BaseParser {
       if (instructions.length === 0) {
         $('h2:contains("Directions"), h2:contains("Instructions")')
           .nextAll('ul')
-          .each((ulIdx, ul) => {
+          .each((ulIdx: any, ul: any) => {
             $(ul)
               .find('li')
-              .each((liIdx, el) => {
+              .each((liIdx: any, el: any) => {
                 const text = $(el).text().trim();
                 if (text)
                   instructions.push({
@@ -291,7 +291,7 @@ export class SmittenKitchenParser extends BaseParser {
       // Parse old-style narrative recipes (2013 era) - instructions in paragraphs after ingredients
       if (instructions.length === 0 && ingredients.length > 0) {
         let foundIngredients = false;
-        $('.entry-content p').each((_, el) => {
+        $('.entry-content p').each((_: any, el: any) => {
           const text = $(el).text().trim();
           // Skip until we find the ingredient paragraph
           if (!foundIngredients && ingredients.some(ing => text.includes(ing.text.substring(0, 20)))) {
@@ -316,7 +316,7 @@ export class SmittenKitchenParser extends BaseParser {
       entryContent
         .find('p')
         .slice(instrIdx + 1)
-        .each((i, el) => {
+        .each((i: any, el: any) => {
           const html = $(el).html();
           if (
             html &&
