@@ -103,10 +103,18 @@ func (v *Validator) RunValidationSilent(name string, validationFunc func(project
 	}
 	defer func() { _ = logFile.Close() }()
 
-	// Write header to log
-	_, _ = fmt.Fprintf(logFile, "=== Validation: %s ===\n", name)
-	_, _ = fmt.Fprintf(logFile, "Started: %s\n", start.Format(time.RFC3339))
-	_, _ = fmt.Fprintf(logFile, "======================\n\n")
+	// Write header to log with actionable reproduction steps
+	_, _ = fmt.Fprintf(logFile, "╔════════════════════════════════════════════════════════════════════════╗\n")
+	_, _ = fmt.Fprintf(logFile, "║ VALIDATION: %s\n", name)
+	_, _ = fmt.Fprintf(logFile, "╠════════════════════════════════════════════════════════════════════════╣\n")
+	_, _ = fmt.Fprintf(logFile, "║ Started: %s\n", start.Format(time.RFC3339))
+	_, _ = fmt.Fprintf(logFile, "║ Project root: %s\n", projectRoot)
+	_, _ = fmt.Fprintf(logFile, "╠════════════════════════════════════════════════════════════════════════╣\n")
+	_, _ = fmt.Fprintf(logFile, "║ HOW TO REPRODUCE:\n")
+	_, _ = fmt.Fprintf(logFile, "║   This log shows all commands executed during validation.\n")
+	_, _ = fmt.Fprintf(logFile, "║   Look for '▸ Running:' lines below to see exact commands.\n")
+	_, _ = fmt.Fprintf(logFile, "║   Re-run failed commands in their working directory for debugging.\n")
+	_, _ = fmt.Fprintf(logFile, "╚════════════════════════════════════════════════════════════════════════╝\n\n")
 
 	// Acquire semaphore slot to limit concurrent output redirection
 	v.semaphore <- struct{}{}

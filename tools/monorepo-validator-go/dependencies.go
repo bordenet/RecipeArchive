@@ -10,12 +10,19 @@ import (
 
 // runCommand executes a shell command and returns its combined output.
 // If the command fails, it prints detailed error information.
+// IMPORTANT: Always logs the command being run for debugging
 func runCommand(dir string, name string, arg ...string) (string, error) {
+	// Log command being executed (captured in validation logs)
+	cmdLine := fmt.Sprintf("%s %s", name, strings.Join(arg, " "))
+	fmt.Printf("\n▸ Running: %s\n", cmdLine)
+	fmt.Printf("  Working directory: %s\n\n", dir)
+
 	cmd := exec.Command(name, arg...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("\n%s[ERROR] Command failed in %s: %s %s%s\n", ColorRed, dir, name, strings.Join(arg, " "), ColorReset)
+		fmt.Printf("\n%s[ERROR] Command failed: %s%s\n", ColorRed, cmdLine, ColorReset)
+		fmt.Printf("%sWorking directory: %s%s\n", ColorYellow, dir, ColorReset)
 		fmt.Printf("%s--- Output ---%s\n%s\n", ColorYellow, ColorReset, string(out))
 	}
 	return string(out), err
