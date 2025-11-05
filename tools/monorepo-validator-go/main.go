@@ -290,6 +290,7 @@ func getP1Validations() []ValidationTask {
 		{"Install Dependencies", installDependencies, false},
 		{"Build Go Binaries", buildGoBinaries, true},
 		{"Build TypeScript", buildTypeScript, true},
+		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true}, // Fast syntax validation
 	}
 }
 
@@ -309,11 +310,12 @@ func getMediumValidations() []ValidationTask {
 // getMobileValidations returns mobile app validations only
 func getMobileValidations() []ValidationTask {
 	return []ValidationTask{
+		{"Build Script Syntax Check", runBuildScriptSyntaxValidation, true},
 		{"Mobile App Validation", runMobileTests, false},
-		{"iOS Build & Lint Validation", runIOSValidation, false},
-		{"Android Build & Lint Validation", runAndroidValidation, false},
-		{"Web Build Validation", runWebValidation, false},
-		{"Web Extension Linting", runWebExtensionLinting, false},
+		{"iOS Build & Lint Validation", runIOSValidation, true},         // Parallel: Different build systems
+		{"Android Build & Lint Validation", runAndroidValidation, true}, // Parallel: Different build systems
+		{"Web Build Validation", runWebValidation, true},                // Parallel: Different build systems
+		{"Web Extension Linting", runWebExtensionLinting, true},
 	}
 }
 
@@ -326,20 +328,29 @@ func getToolsValidations() []ValidationTask {
 }
 
 // getAllValidations returns all validations including infrastructure, mobile, web, and tools
+// IMPORTANT: Mobile builds run EARLY to catch compilation errors before optional tests
 func getAllValidations() []ValidationTask {
 	validations := getMediumValidations()
 	validations = append(validations,
+		// CRITICAL: Mobile platform builds FIRST - catch compilation errors early
+		// Parallel: Different build systems (Xcode/Gradle/Flutter) in different dirs
+		ValidationTask{"Mobile App Validation", runMobileTests, true},
+		ValidationTask{"iOS Build & Lint Validation", runIOSValidation, true},         // Parallel: Uses Xcode in ios/
+		ValidationTask{"Android Build & Lint Validation", runAndroidValidation, true}, // Parallel: Uses Gradle in android/
+		ValidationTask{"Web Build Validation", runWebValidation, true},                // Parallel: Uses Flutter in recipe_archive/
+		ValidationTask{"Web Extension Linting", runWebExtensionLinting, true},         // Parallel: Uses npm in extensions/
+
+		// Then comprehensive tests (may fail on network/AWS issues)
 		ValidationTask{"Run Comprehensive Tests", runComprehensiveTests, true},
 		ValidationTask{"Validate Parsers", validateParsers, true},
 		ValidationTask{"Validate Recipe Storage", validateRecipeStorage, true},
 		ValidationTask{"Check Frontend Status", checkFrontendStatus, true},
-		ValidationTask{"Mobile App Validation", runMobileTests, true},
-		ValidationTask{"iOS Build & Lint Validation", runIOSValidation, false},        // Sequential, takes time
-		ValidationTask{"Android Build & Lint Validation", runAndroidValidation, false}, // Sequential, takes time
-		ValidationTask{"Web Build Validation", runWebValidation, false},                // Sequential, takes time
-		ValidationTask{"Web Extension Linting", runWebExtensionLinting, false},         // Sequential, takes time
-		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, false},      // Sequential, takes time
-		ValidationTask{"Go Lint Validation", runGoLintValidation, false},               // Sequential, takes time
+
+		// Go tools validation (parallel: independent Go binaries)
+		ValidationTask{"Go Tools Build, Test & Run", runGoToolsValidation, true},
+		ValidationTask{"Go Lint Validation", runGoLintValidation, true},
+
+		// Infrastructure tests (may fail on AWS connectivity)
 		ValidationTask{"AWS Infrastructure Tests", runAwsInfrastructureTests, true},
 		ValidationTask{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, true},
 		ValidationTask{"Validate Extension Downloads", validateExtensionDownloads, true},
