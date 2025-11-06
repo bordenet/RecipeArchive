@@ -142,12 +142,31 @@ export class RecipeArchiveStack extends cdk.Stack {
         ...(props.environment === 'prod'
           ? [
               {
+                id: 'transition-to-glacier',
+                transitions: [
+                  {
+                    storageClass: s3.StorageClass.GLACIER,
+                    transitionAfter: cdk.Duration.days(90), // Archive after 90 days
+                  },
+                  {
+                    storageClass: s3.StorageClass.DEEP_ARCHIVE,
+                    transitionAfter: cdk.Duration.days(365), // Deep archive after 1 year
+                  },
+                ],
+              },
+              {
                 id: 'archive-old-files',
                 expiration: cdk.Duration.days(2555), // 7 years for production
               },
               {
                 id: 'archive-old-versions',
                 noncurrentVersionExpiration: cdk.Duration.days(365),
+                noncurrentVersionTransitions: [
+                  {
+                    storageClass: s3.StorageClass.GLACIER,
+                    transitionAfter: cdk.Duration.days(30), // Old versions to Glacier after 30 days
+                  },
+                ],
               },
             ]
           : [
@@ -898,7 +917,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           handler: 'bootstrap',
           code: lambda.Code.fromAsset('../functions/dist/diagnostics-package'),
           timeout: cdk.Duration.seconds(15),
-          memorySize: 256,
+          memorySize: 128, // Optimized: low-frequency diagnostic operations
           reservedConcurrentExecutions: 5, // Medium-frequency function
           logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
@@ -952,7 +971,7 @@ export class RecipeArchiveStack extends cdk.Stack {
             '../functions/dist/flutter-console-diagnostics-package'
           ),
           timeout: cdk.Duration.seconds(15),
-          memorySize: 256,
+          memorySize: 128, // Optimized: low-frequency diagnostic uploads
           reservedConcurrentExecutions: 3, // Low-frequency function
           logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
@@ -1070,7 +1089,7 @@ export class RecipeArchiveStack extends cdk.Stack {
             '../functions/dist/invitation-manager-package'
           ),
           timeout: cdk.Duration.seconds(15),
-          memorySize: 256,
+          memorySize: 128, // Optimized: low-frequency admin operations
           reservedConcurrentExecutions: 3, // Low-frequency function
           logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
@@ -1098,7 +1117,7 @@ export class RecipeArchiveStack extends cdk.Stack {
             '../functions/dist/registration-handler-package'
           ),
           timeout: cdk.Duration.seconds(15),
-          memorySize: 256,
+          memorySize: 128, // Optimized: low-frequency registration operations
           reservedConcurrentExecutions: 3, // Low-frequency function
           logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
@@ -1126,7 +1145,7 @@ export class RecipeArchiveStack extends cdk.Stack {
             '../functions/dist/analytics-aggregator-package'
           ),
           timeout: cdk.Duration.seconds(15),
-          memorySize: 256,
+          memorySize: 128, // Optimized: simple S3 read/write operations
           reservedConcurrentExecutions: 5, // Medium-frequency function
           logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
