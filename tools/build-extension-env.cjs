@@ -181,6 +181,7 @@ class ExtensionEnvBuilder {
 
     const configContent = `// Auto-generated environment configuration
 // This file is generated at build time - do not edit manually
+// DO NOT COMMIT THIS FILE - it contains your AWS infrastructure details
 const ENV_CONFIG = ${JSON.stringify(config, null, 2)};
 
 // Make it available globally for browser extensions
@@ -199,6 +200,35 @@ if (typeof module !== "undefined" && module.exports) {
       `📝 Generated env-config.js for ${path.basename(this.extensionPath)}`
     );
   }
+
+  generateManifest() {
+    const templatePath = path.join(this.extensionPath, 'manifest.template.json');
+    const outputPath = path.join(this.extensionPath, 'manifest.json');
+
+    if (!fs.existsSync(templatePath)) {
+      console.warn(`⚠️  No manifest template found at: ${templatePath}`);
+      return;
+    }
+
+    // Read template
+    let templateContent = fs.readFileSync(templatePath, 'utf8');
+
+    // Replace environment variable placeholders
+    templateContent = templateContent.replace(/__AWS_REGION__/g, this.envVars.AWS_REGION || 'us-west-2');
+
+    // For API_BASE_URL, we need to handle it carefully to preserve JSON structure
+    if (this.envVars.API_BASE_URL) {
+      // Extract just the domain part for host_permissions
+      const apiUrl = this.envVars.API_BASE_URL.replace(/\/+$/, ''); // Remove trailing slashes
+      templateContent = templateContent.replace(/"__API_BASE_URL__\/\*"/g, `"${apiUrl}/*"`);
+    }
+
+    // Write generated manifest
+    fs.writeFileSync(outputPath, templateContent);
+    console.log(
+      `📝 Generated manifest.json for ${path.basename(this.extensionPath)}`
+    );
+  }
 }
 
 function main() {
@@ -207,8 +237,8 @@ function main() {
   if (args.length === 0) {
     console.log('🔧 Building environment variables for all extensions...');
 
-    // Process both Chrome and Safari extensions
-    const extensions = ['chrome', 'safari'];
+    // Process Chrome, Safari, and shared extensions
+    const extensions = ['chrome', 'safari', 'shared'];
     let totalModified = 0;
 
     extensions.forEach((ext) => {
@@ -216,6 +246,10 @@ function main() {
       if (fs.existsSync(extPath)) {
         const builder = new ExtensionEnvBuilder(extPath);
         builder.generateEnvConfig();
+        // Only generate manifest for Chrome and Safari (not shared)
+        if (ext !== 'shared') {
+          builder.generateManifest();
+        }
         totalModified += builder.processExtension();
       }
     });
@@ -234,6 +268,7 @@ function main() {
 
     const builder = new ExtensionEnvBuilder(extPath);
     builder.generateEnvConfig();
+    builder.generateManifest();
     builder.processExtension();
   }
 }
