@@ -872,6 +872,11 @@ export class RecipeArchiveStack extends cdk.Stack {
   // Singleton getters for Lambda functions
   public getHealthFunction(): lambda.Function {
     if (!this._healthFunction) {
+      const logGroup = new logs.LogGroup(this, 'HealthFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._healthFunction = new lambda.Function(this, 'HealthFunction', {
         runtime: lambda.Runtime.PROVIDED_AL2,
         handler: 'bootstrap',
@@ -879,7 +884,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         timeout: cdk.Duration.seconds(10),
         memorySize: 128, // Minimal memory for Free Tier optimization
         reservedConcurrentExecutions: 2, // Low-frequency function
-        logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
+        logGroup: logGroup,
         environment: {
           ENVIRONMENT: this.stackEnvironment,
           REGION: this.region,
@@ -896,6 +901,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getRecipesFunction(): lambda.Function {
     if (!this._recipesFunction) {
+      const logGroup = new logs.LogGroup(this, 'RecipesFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._recipesFunction = new lambda.Function(this, 'RecipesFunction', {
         runtime: lambda.Runtime.PROVIDED_AL2,
         handler: 'bootstrap',
@@ -903,7 +913,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         timeout: cdk.Duration.seconds(15),
         memorySize: 256, // More memory for CRUD operations
         reservedConcurrentExecutions: 10, // High-frequency function (CRUD + search)
-        logRetention: logs.RetentionDays.ONE_WEEK, // 7 days retention (high volume)
+        logGroup: logGroup,
         environment: {
           ENVIRONMENT: this.stackEnvironment,
           REGION: this.region,
@@ -922,6 +932,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getDiagnosticsFunction(): lambda.Function {
     if (!this._diagnosticsFunction) {
+      const logGroup = new logs.LogGroup(this, 'DiagnosticsFunctionLogGroup', {
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._diagnosticsFunction = new lambda.Function(
         this,
         'DiagnosticsFunction',
@@ -932,7 +947,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(15),
           memorySize: 128, // Optimized: low-frequency diagnostic operations
           reservedConcurrentExecutions: 5, // Medium-frequency function
-          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -948,6 +963,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getImageUploadFunction(): lambda.Function {
     if (!this._imageUploadFunction) {
+      const logGroup = new logs.LogGroup(this, 'ImageUploadFunctionLogGroup', {
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._imageUploadFunction = new lambda.Function(
         this,
         'ImageUploadFunction',
@@ -958,7 +978,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(30), // More time for image processing
           memorySize: 128, // Optimized: usage shows ~33MB, reduced from 512MB
           reservedConcurrentExecutions: 5, // Medium-frequency function
-          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -974,6 +994,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getFlutterConsoleDiagnosticsFunction(): lambda.Function {
     if (!this._flutterConsoleDiagnosticsFunction) {
+      const logGroup = new logs.LogGroup(this, 'FlutterConsoleDiagnosticsFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._flutterConsoleDiagnosticsFunction = new lambda.Function(
         this,
         'FlutterConsoleDiagnosticsFunction',
@@ -986,7 +1011,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(15),
           memorySize: 128, // Optimized: low-frequency diagnostic uploads
           reservedConcurrentExecutions: 3, // Low-frequency function
-          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1001,6 +1026,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getContentNormalizerFunction(): lambda.Function {
     if (!this._contentNormalizerFunction) {
+      const logGroup = new logs.LogGroup(this, 'ContentNormalizerFunctionLogGroup', {
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._contentNormalizerFunction = new lambda.Function(
         this,
         'ContentNormalizerFunction',
@@ -1013,7 +1043,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(30), // Longer timeout for OpenAI API calls
           memorySize: 128, // Optimized: usage shows ~33MB, reduced from 512MB
           reservedConcurrentExecutions: 5, // Medium-frequency function
-          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1029,6 +1059,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getBackgroundNormalizerFunction(): lambda.Function {
     if (!this._backgroundNormalizerFunction) {
+      const logGroup = new logs.LogGroup(this, 'BackgroundNormalizerFunctionLogGroup', {
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._backgroundNormalizerFunction = new lambda.Function(
         this,
         'BackgroundNormalizerFunction',
@@ -1041,7 +1076,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(45), // Longer timeout for OpenAI processing
           memorySize: 128, // Optimized: usage shows ~33MB, reduced from 512MB
           reservedConcurrentExecutions: 5, // Background queue processing
-          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1064,6 +1099,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getDiagnosticProcessorFunction(): lambda.Function {
     if (!this._diagnosticProcessorFunction) {
+      const logGroup = new logs.LogGroup(this, 'DiagnosticProcessorFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._diagnosticProcessorFunction = new lambda.Function(
         this,
         'DiagnosticProcessorFunction',
@@ -1076,7 +1116,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(60), // Longer timeout for S3 analysis
           memorySize: 1024, // More memory for processing diagnostic data
           reservedConcurrentExecutions: 2, // Low-frequency function
-          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1092,6 +1132,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getInvitationManagerFunction(): lambda.Function {
     if (!this._invitationManagerFunction) {
+      const logGroup = new logs.LogGroup(this, 'InvitationManagerFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._invitationManagerFunction = new lambda.Function(
         this,
         'InvitationManagerFunction',
@@ -1104,7 +1149,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(15),
           memorySize: 128, // Optimized: low-frequency admin operations
           reservedConcurrentExecutions: 3, // Low-frequency function
-          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1120,6 +1165,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getRegistrationHandlerFunction(): lambda.Function {
     if (!this._registrationHandlerFunction) {
+      const logGroup = new logs.LogGroup(this, 'RegistrationHandlerFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._registrationHandlerFunction = new lambda.Function(
         this,
         'RegistrationHandlerFunction',
@@ -1132,7 +1182,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(15),
           memorySize: 128, // Optimized: low-frequency registration operations
           reservedConcurrentExecutions: 3, // Low-frequency function
-          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1148,6 +1198,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getAnalyticsFunction(): lambda.Function {
     if (!this._analyticsFunction) {
+      const logGroup = new logs.LogGroup(this, 'AnalyticsFunctionLogGroup', {
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._analyticsFunction = new lambda.Function(
         this,
         'RecipeAnalyticsAggregator',
@@ -1160,7 +1215,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(15),
           memorySize: 128, // Optimized: simple S3 read/write operations
           reservedConcurrentExecutions: 5, // Medium-frequency function
-          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1176,6 +1231,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getBackupFunction(): lambda.Function {
     if (!this._backupFunction) {
+      const logGroup = new logs.LogGroup(this, 'BackupFunctionLogGroup', {
+        retention: logs.RetentionDays.TWO_WEEKS,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._backupFunction = new lambda.Function(
         this,
         'BackupFunction',
@@ -1186,7 +1246,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(60), // Backup operations may take time
           memorySize: 256, // Higher memory for ZIP compression
           reservedConcurrentExecutions: 3, // Low-frequency user-initiated function
-          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1202,6 +1262,11 @@ export class RecipeArchiveStack extends cdk.Stack {
 
   public getDiagnosticsMobileShareFunction(): lambda.Function {
     if (!this._diagnosticsMobileShareFunction) {
+      const logGroup = new logs.LogGroup(this, 'DiagnosticsMobileShareFunctionLogGroup', {
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
       this._diagnosticsMobileShareFunction = new lambda.Function(
         this,
         'DiagnosticsMobileShareFunction',
@@ -1214,7 +1279,7 @@ export class RecipeArchiveStack extends cdk.Stack {
           timeout: cdk.Duration.seconds(10),
           memorySize: 128, // Simple telemetry collection
           reservedConcurrentExecutions: 5, // Medium-frequency diagnostic function
-          logRetention: logs.RetentionDays.ONE_WEEK, // 7 days retention (diagnostic data)
+          logGroup: logGroup,
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,

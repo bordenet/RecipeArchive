@@ -116,6 +116,22 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 **Updated:** 2025-11-06
 
+### Code Quality & Tooling
+
+- **Comprehensive ESLint Coverage (P1)**: Expand linting from extensions-only to entire monorepo
+  - **Current coverage**: Only 26 files (extensions/chrome/*.js, extensions/safari/*.js)
+  - **Missing coverage**: 159+ JavaScript/TypeScript files across:
+    - TypeScript files everywhere (parsers/*.ts, tools/*.ts, packages/shared-types/src/*.ts, etc.)
+    - Tools directory (build-extension-env.cjs, enhanced-security-scan.cjs, etc.)
+    - Scripts directory (mcp-diagnostics-gate.js, organize-docs.cjs, etc.)
+    - Tests directory (76+ test files)
+    - Config files (jest.config.js, etc.)
+  - **Goal**: Zero linting errors across entire codebase
+  - **Approach**: Update lint script to `npx eslint '**/*.{js,ts,cjs,mjs}'` with proper ignores
+  - **Impact**: Improved code quality, catch bugs earlier, consistent style
+  - **Effort**: M-L (Fix existing violations, then integrate into CI)
+  - **Note**: User explicitly wants to fix all problems uncovered - not avoiding work!
+
 ### High Priority Performance Optimization
 
 - **Client-Side Recipe Caching (P0)**: Implement local caching in Flutter app to eliminate unnecessary Lambda invocations on every page load
