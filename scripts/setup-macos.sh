@@ -698,7 +698,6 @@ if command -v code &> /dev/null; then
       print_warning "No .vscode/extensions.txt found. Skipping extension installation."
     fi
   fi
-fi
 
   print_info "Installing comprehensive VS Code extensions..."
 
@@ -722,9 +721,9 @@ fi
   )
 
   for extension in "${extensions[@]}"; do
-    if ! code --list-extensions | grep -q "$extension"; then
+    if ! code --list-extensions 2>/dev/null | grep -q "$extension"; then
       print_info "Installing $extension..."
-      if code --install-extension "$extension" --force; then
+      if code --install-extension "$extension" --force 2>/dev/null; then
         print_success "$extension installed successfully"
       else
         print_error "Failed to install $extension"
@@ -735,6 +734,7 @@ fi
   done
 
   print_success "VS Code extensions installation complete"
+fi
 
 
 # Install browser automation tools
