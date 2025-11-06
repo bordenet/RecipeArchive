@@ -50,7 +50,8 @@
       "Bash(timeout 120 ./validate-monorepo.sh:*)",
       "Bash(git checkout:*)",
       "Bash(npm run lint:*)",
-      "Bash(timeout 180 ./validate-monorepo.sh:*)"
+      "Bash(timeout 180 ./validate-monorepo.sh:*)",
+      "Bash(./scripts/setup-macos.sh:*)"
     ],
     "deny": [],
     "ask": []

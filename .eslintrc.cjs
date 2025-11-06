@@ -1,22 +1,22 @@
 /* eslint-env node */
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
+  parser: "@typescript-eslint/parser",
+  plugins: ["@typescript-eslint"],
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier',
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
   ],
   env: {
     node: true,
   },
   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json'],
+    ecmaVersion: "latest",
+    sourceType: "module",
+    project: ["./tsconfig.json"],
   },
   rules: {
-    // Add any project-specific rules here
+    quotes: ["error", "double"],
   },
 };

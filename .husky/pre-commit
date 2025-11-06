@@ -1,2 +1,1 @@
-# Run medium-tier validation before commit
-./validate-monorepo.sh --med
+npm test
