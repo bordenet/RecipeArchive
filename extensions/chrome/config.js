@@ -1,28 +1,43 @@
 // Configuration for Recipe Archive Browser Extensions
 // This handles switching between local development and production AWS endpoints
 // SECURITY: Uses environment-based configuration to avoid hardcoded credentials
-// TODO: Integrate with root .env for build-time environment variable loading
+// This file loads configuration from env-config.js (auto-generated at build time)
 
 // Environment configuration loader
 function loadEnvironmentConfig() {
-  return {
-    COGNITO_USER_POOL_ID:
-      localStorage.getItem("COGNITO_USER_POOL_ID") ||
-      "your-cognito-user-pool-id",
-    COGNITO_APP_CLIENT_ID:
-      localStorage.getItem("COGNITO_APP_CLIENT_ID") ||
-      "your-cognito-app-client-id",
-    AWS_REGION: localStorage.getItem("AWS_REGION") || "us-west-2",
-    API_BASE_URL:
-      localStorage.getItem("API_BASE_URL") ||
-      "https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod",
-    WEB_APP_URL:
-      localStorage.getItem("WEB_APP_URL") ||
-      "https://your-cloudfront-distribution.cloudfront.net",
-    S3_RECIPE_STORAGE_BUCKET:
-      localStorage.getItem("S3_RECIPE_STORAGE_BUCKET") ||
-      "your-recipe-storage-bucket-name",
+  // First, try to load from the auto-generated ENV_CONFIG
+  if (typeof ENV_CONFIG !== "undefined" && ENV_CONFIG) {
+    return {
+      COGNITO_USER_POOL_ID: localStorage.getItem("COGNITO_USER_POOL_ID") || ENV_CONFIG.COGNITO_USER_POOL_ID,
+      COGNITO_APP_CLIENT_ID: localStorage.getItem("COGNITO_APP_CLIENT_ID") || ENV_CONFIG.COGNITO_APP_CLIENT_ID,
+      AWS_REGION: localStorage.getItem("AWS_REGION") || ENV_CONFIG.AWS_REGION,
+      API_BASE_URL: localStorage.getItem("API_BASE_URL") || ENV_CONFIG.API_BASE_URL,
+      WEB_APP_URL: localStorage.getItem("WEB_APP_URL") || ENV_CONFIG.WEB_APP_URL,
+      S3_RECIPE_STORAGE_BUCKET: localStorage.getItem("S3_RECIPE_STORAGE_BUCKET") || ENV_CONFIG.S3_RECIPE_STORAGE_BUCKET,
+    };
+  }
+
+  // Fallback: Check localStorage only (for manual configuration)
+  const localStorageConfig = {
+    COGNITO_USER_POOL_ID: localStorage.getItem("COGNITO_USER_POOL_ID"),
+    COGNITO_APP_CLIENT_ID: localStorage.getItem("COGNITO_APP_CLIENT_ID"),
+    AWS_REGION: localStorage.getItem("AWS_REGION"),
+    API_BASE_URL: localStorage.getItem("API_BASE_URL"),
+    WEB_APP_URL: localStorage.getItem("WEB_APP_URL"),
+    S3_RECIPE_STORAGE_BUCKET: localStorage.getItem("S3_RECIPE_STORAGE_BUCKET"),
   };
+
+  // If all localStorage values are present, use them
+  if (Object.values(localStorageConfig).every(val => val)) {
+    return localStorageConfig;
+  }
+
+  // No configuration found - show error
+  console.error("❌ RecipeArchive Extension: Missing configuration!");
+  console.error("This extension must be built with 'npm run build:extensions' to generate env-config.js");
+  console.error("See README.md for setup instructions");
+
+  throw new Error("Extension not properly configured. Run 'npm run build:extensions' first.");
 }
 
 const envConfig = loadEnvironmentConfig();
@@ -36,8 +51,8 @@ const CONFIG = {
     return isDevelopment ? "development" : "production";
   })(),
 
-  // Web App URL (authoritative source)
-  WEB_APP_URL: "https://d1jcaphz4458q7.cloudfront.net",
+  // Web App URL (from environment configuration)
+  WEB_APP_URL: envConfig.WEB_APP_URL,
 
   // API Endpoints
   API: {
