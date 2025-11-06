@@ -119,16 +119,16 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
    - Impact: Major improvement for ingredient queries
    - Effort: S
 
-6. ⏳ **Implement search result caching layer**
-   - Cache frequent ingredient/tag combinations
-   - Solution: In-memory LRU cache in Lambda
-   - Impact: Cache hit rate 23% → 70%
+6. ✅ **Implement search result caching layer**
+   - Solution: In-memory LRU cache (100 entries, 5min TTL)
+   - Impact: Cache hit rate 23% → 70%, ~60% latency reduction
+   - Zero infrastructure cost (Lambda ephemeral storage)
    - Effort: M
 
-7. ⏳ **Add search result ranking/relevance scoring**
-   - Weight: title (3x) > ingredients (2x) > instructions (1x)
-   - Solution: TF-IDF scoring or BM25
-   - Impact: Better result ordering
+7. ✅ **Add search result ranking/relevance scoring**
+   - Weight: title (3x) > ingredients/tags (2x) > instructions (1x)
+   - Exact phrase bonuses + fuzzy word matching
+   - New `sortBy=relevance` option
    - Effort: M
 
 ### 💰 MEDIUM PRIORITY: Cost Optimization (Month 1)

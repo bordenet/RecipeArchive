@@ -109,31 +109,7 @@ func getUserIDFromRequest(request events.APIGatewayProxyRequest) string {
 
 // handleSearchRecipes handles GET requests to search recipes with cost-efficient in-Lambda filtering
 func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequest, userID string) (events.APIGatewayProxyResponse, error) {
-	// Get all recipes for user from S3 (cost-efficient: no external search service needed)
-	allRecipes, err := recipeDB.ListRecipes(userID)
-	if err != nil {
-		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
-			"error": map[string]interface{}{
-				"code":      "INTERNAL_ERROR",
-				"message":   "Failed to retrieve recipes for search",
-				"timestamp": time.Now().UTC(),
-			},
-		})
-		if responseErr != nil {
-			return events.APIGatewayProxyResponse{}, responseErr
-		}
-		return response, nil
-	}
-
-	// Filter out soft-deleted recipes
-	var activeRecipes []models.Recipe
-	for _, recipe := range allRecipes {
-		if !recipe.IsDeleted {
-			activeRecipes = append(activeRecipes, recipe)
-		}
-	}
-
-	// Parse search parameters
+	// Parse search parameters first (needed for cache key)
 	queryParams := request.QueryStringParameters
 	searchQuery := strings.ToLower(strings.TrimSpace(queryParams["q"]))
 
@@ -160,9 +136,93 @@ func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequ
 	timeCategory := strings.ToLower(strings.TrimSpace(queryParams["timeCategory"]))
 	complexity := strings.ToLower(strings.TrimSpace(queryParams["complexity"]))
 	mealTypes := parseSearchArray(queryParams["mealType"])
-
-	// Source URL filtering
 	sourceFilter := strings.ToLower(strings.TrimSpace(queryParams["source"]))
+	sortBy := queryParams["sortBy"]
+	sortOrder := queryParams["sortOrder"]
+
+	// Generate cache key from search parameters
+	cacheKey := generateCacheKey(userID, searchQuery, maxPrepTime, maxCookTime,
+		semanticTags, primaryIngredients, cookingMethods, dietaryTags,
+		flavorProfile, equipment, mealTypes, timeCategory, complexity, sourceFilter,
+		sortBy, sortOrder)
+
+	// Check cache first (Lambda ephemeral storage for warm invocations)
+	if cachedResults, cachedTotal, found := searchCache.Get(cacheKey); found {
+		// Apply pagination to cached results
+		limit := 50
+		if limitStr, exists := queryParams["limit"]; exists {
+			if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+				limit = parsedLimit
+			}
+		}
+
+		start := 0
+		if cursor, exists := queryParams["cursor"]; exists {
+			if startIdx, err := strconv.Atoi(cursor); err == nil && startIdx >= 0 {
+				start = startIdx
+			}
+		}
+
+		end := start + limit
+		if end > cachedTotal {
+			end = cachedTotal
+		}
+
+		var paginatedRecipes []models.Recipe
+		var nextCursor *string
+		hasMore := false
+
+		if start < cachedTotal {
+			paginatedRecipes = cachedResults[start:end]
+			if end < cachedTotal {
+				hasMore = true
+				cursorStr := strconv.Itoa(end)
+				nextCursor = &cursorStr
+			}
+		} else {
+			paginatedRecipes = []models.Recipe{}
+		}
+
+		response := models.RecipesListResponse{
+			Recipes: paginatedRecipes,
+			Pagination: models.Pagination{
+				NextCursor: nextCursor,
+				HasMore:    hasMore,
+				Total:      &cachedTotal,
+			},
+		}
+
+		apiResponse, responseErr := utils.NewAPIResponse(http.StatusOK, response)
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return apiResponse, nil
+	}
+
+	// Cache miss - perform full search
+	// Get all recipes for user from S3 (cost-efficient: no external search service needed)
+	allRecipes, err := recipeDB.ListRecipes(userID)
+	if err != nil {
+		response, responseErr := utils.NewAPIResponse(http.StatusInternalServerError, map[string]interface{}{
+			"error": map[string]interface{}{
+				"code":      "INTERNAL_ERROR",
+				"message":   "Failed to retrieve recipes for search",
+				"timestamp": time.Now().UTC(),
+			},
+		})
+		if responseErr != nil {
+			return events.APIGatewayProxyResponse{}, responseErr
+		}
+		return response, nil
+	}
+
+	// Filter out soft-deleted recipes
+	var activeRecipes []models.Recipe
+	for _, recipe := range allRecipes {
+		if !recipe.IsDeleted {
+			activeRecipes = append(activeRecipes, recipe)
+		}
+	}
 
 	// Apply cost-efficient in-memory filtering
 	var matchingRecipes []models.Recipe
@@ -174,10 +234,11 @@ func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequ
 		}
 	}
 
-	// Sort results (cost-efficient: in-memory sorting)
-	sortBy := queryParams["sortBy"]
-	sortOrder := queryParams["sortOrder"]
-	SortSearchResults(matchingRecipes, sortBy, sortOrder)
+	// Sort results (cost-efficient: in-memory sorting with relevance scoring)
+	SortSearchResults(matchingRecipes, sortBy, sortOrder, searchQuery)
+
+	// Cache the full results for future requests (Lambda warm invocations)
+	searchCache.Set(cacheKey, matchingRecipes, len(matchingRecipes))
 
 	// Apply pagination
 	limit := 50 // Default limit

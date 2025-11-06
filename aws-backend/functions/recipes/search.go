@@ -390,8 +390,93 @@ func containsAnyMatch(searchTerms, targetValues []string) bool {
 	return false
 }
 
+// calculateRelevanceScore computes a relevance score for a recipe based on search query matches
+// Higher scores indicate better matches. Scoring:
+// - Title match: 3x weight (most important)
+// - Ingredient match: 2x weight
+// - Instruction match: 1x weight
+// - Tag match: 2x weight (user-curated)
+func calculateRelevanceScore(recipe models.Recipe, searchQuery string) float64 {
+	if searchQuery == "" {
+		return 0.0 // No search query, all recipes equally relevant
+	}
+
+	score := 0.0
+	query := strings.ToLower(searchQuery)
+	queryWords := strings.Fields(query)
+
+	// Title matches (3x weight) - most important
+	titleLower := strings.ToLower(recipe.Title)
+	titleWords := strings.Fields(titleLower)
+
+	// Exact phrase match in title (bonus)
+	if strings.Contains(titleLower, query) {
+		score += 30.0 // High bonus for exact phrase in title
+	}
+
+	// Individual word matches in title
+	for _, queryWord := range queryWords {
+		for _, titleWord := range titleWords {
+			if fuzzyMatch(queryWord, titleWord) {
+				score += 3.0
+			}
+		}
+	}
+
+	// Tag matches (2x weight) - user-curated, important
+	for _, tag := range recipe.Tags {
+		tagLower := strings.ToLower(tag)
+		if strings.Contains(tagLower, query) {
+			score += 10.0 // Bonus for exact phrase in tags
+		}
+		tagWords := strings.Fields(tagLower)
+		for _, queryWord := range queryWords {
+			for _, tagWord := range tagWords {
+				if fuzzyMatch(queryWord, tagWord) {
+					score += 2.0
+				}
+			}
+		}
+	}
+
+	// Ingredient matches (2x weight)
+	for _, ingredient := range recipe.Ingredients {
+		ingredientLower := strings.ToLower(ingredient.Text)
+		if strings.Contains(ingredientLower, query) {
+			score += 6.0 // Bonus for exact phrase in ingredients
+		}
+		ingredientWords := strings.Fields(ingredientLower)
+		for _, queryWord := range queryWords {
+			for _, ingredientWord := range ingredientWords {
+				if fuzzyMatch(queryWord, ingredientWord) {
+					score += 2.0
+				}
+			}
+		}
+	}
+
+	// Instruction matches (1x weight) - least important
+	for _, instruction := range recipe.Instructions {
+		instructionLower := strings.ToLower(instruction.Text)
+		if strings.Contains(instructionLower, query) {
+			score += 2.0 // Bonus for exact phrase in instructions
+		}
+		instructionWords := strings.Fields(instructionLower)
+		for _, queryWord := range queryWords {
+			for _, instructionWord := range instructionWords {
+				if fuzzyMatch(queryWord, instructionWord) {
+					score += 1.0
+				}
+			}
+		}
+	}
+
+	return score
+}
+
 // SortSearchResults sorts recipes by the specified field and order
-func SortSearchResults(recipes []models.Recipe, sortBy, sortOrder string) {
+// When sortBy is "relevance", recipes are scored based on search query match quality
+func SortSearchResults(recipes []models.Recipe, sortBy, sortOrder, searchQuery string) {
 	if sortBy == "" {
 		sortBy = "createdAt"
 	}
@@ -399,9 +484,26 @@ func SortSearchResults(recipes []models.Recipe, sortBy, sortOrder string) {
 		sortOrder = "desc"
 	}
 
+	// Pre-calculate relevance scores if needed
+	var relevanceScores map[string]float64
+	if sortBy == "relevance" && searchQuery != "" {
+		relevanceScores = make(map[string]float64, len(recipes))
+		for _, recipe := range recipes {
+			relevanceScores[recipe.ID] = calculateRelevanceScore(recipe, searchQuery)
+		}
+	}
+
 	sort.Slice(recipes, func(i, j int) bool {
 		var less bool
 		switch sortBy {
+		case "relevance":
+			if relevanceScores != nil {
+				// Higher score = more relevant (should come first in desc order)
+				less = relevanceScores[recipes[i].ID] < relevanceScores[recipes[j].ID]
+			} else {
+				// Fallback to createdAt if no search query
+				less = recipes[i].CreatedAt.Before(recipes[j].CreatedAt)
+			}
 		case "title":
 			less = recipes[i].Title < recipes[j].Title
 		case "updatedAt":
