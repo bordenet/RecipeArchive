@@ -118,7 +118,8 @@ func fuzzyMatch(search, target string) bool {
 	}
 
 	// Substring match - second fastest path
-	if strings.Contains(targetLower, searchLower) || strings.Contains(searchLower, targetLower) {
+	// Check if the target word contains the search term (NOT the other way around)
+	if strings.Contains(targetLower, searchLower) {
 		return true
 	}
 
