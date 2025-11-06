@@ -1,20 +1,34 @@
 /* eslint-env node */
 module.exports = {
-  extends: [require.resolve('../.eslintrc.cjs')],
+  extends: [require.resolve("../.eslintrc.cjs")],
   parserOptions: {
     tsconfigRootDir: __dirname,
-    project: ['./tsconfig.json'],
+    project: ["./tsconfig.json"],
   },
   rules: {
-    'no-console': 'off',
-    'no-undef': 'off',
-    '@typescript-eslint/no-unused-vars': [
-      'warn',
+    "no-console": "off",
+    "no-undef": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
       {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
       },
     ],
   },
+  overrides: [
+    {
+      // Use default parser for .js files (not TypeScript parser)
+      files: ["*.js"],
+      parser: "espree",
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+      },
+      rules: {
+        "@typescript-eslint/no-require-imports": "off",
+      },
+    },
+  ],
 };
