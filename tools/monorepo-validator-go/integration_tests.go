@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 )
 
@@ -44,6 +45,11 @@ func runExtensionTests(projectRoot string) bool {
 
 // buildParserBundle validates that the parser bundle builds successfully
 func buildParserBundle(projectRoot string) bool {
+	// Clean up any stale lock files from crashed validation runs
+	// This ensures a fresh start for each validation run
+	lockFile := filepath.Join(projectRoot, "parsers", ".build-lock")
+	_ = os.Remove(lockFile) // Ignore errors - file might not exist
+
 	_, err := runCommand(projectRoot, "npm", "run", "build:parser-bundle")
 	return err == nil
 }
