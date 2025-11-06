@@ -51,7 +51,13 @@
       "Bash(git checkout:*)",
       "Bash(npm run lint:*)",
       "Bash(timeout 180 ./validate-monorepo.sh:*)",
-      "Bash(./scripts/setup-macos.sh:*)"
+      "Bash(./scripts/setup-macos.sh:*)",
+      "Bash(xargs ls:*)",
+      "Bash(npm run build:parser-bundle:*)",
+      "Bash(npm config list:*)",
+      "Bash(sudo chflags:*)",
+      "Bash(timeout 60 ./validate-monorepo.sh:*)",
+      "Bash(./scripts/lock-eslintrc.sh:*)"
     ],
     "deny": [],
     "ask": []
