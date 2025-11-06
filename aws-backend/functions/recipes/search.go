@@ -7,6 +7,151 @@ import (
 	"recipe-archive/models"
 )
 
+// levenshteinDistance calculates the Levenshtein distance between two strings
+// Used for fuzzy matching in search (e.g., "drink" matches "drinks")
+func levenshteinDistance(s1, s2 string) int {
+	if len(s1) == 0 {
+		return len(s2)
+	}
+	if len(s2) == 0 {
+		return len(s1)
+	}
+
+	// Create a 2D slice for dynamic programming
+	matrix := make([][]int, len(s1)+1)
+	for i := range matrix {
+		matrix[i] = make([]int, len(s2)+1)
+	}
+
+	// Initialize first row and column
+	for i := 0; i <= len(s1); i++ {
+		matrix[i][0] = i
+	}
+	for j := 0; j <= len(s2); j++ {
+		matrix[0][j] = j
+	}
+
+	// Fill in the rest of the matrix
+	for i := 1; i <= len(s1); i++ {
+		for j := 1; j <= len(s2); j++ {
+			cost := 0
+			if s1[i-1] != s2[j-1] {
+				cost = 1
+			}
+
+			matrix[i][j] = min(
+				matrix[i-1][j]+1,      // deletion
+				matrix[i][j-1]+1,      // insertion
+				matrix[i-1][j-1]+cost, // substitution
+			)
+		}
+	}
+
+	return matrix[len(s1)][len(s2)]
+}
+
+// min returns the minimum of three integers
+func min(a, b, c int) int {
+	if a < b {
+		if a < c {
+			return a
+		}
+		return c
+	}
+	if b < c {
+		return b
+	}
+	return c
+}
+
+// stem applies basic English stemming rules to a word
+// Implements a simplified Porter Stemmer for common cooking terms
+func stem(word string) string {
+	word = strings.ToLower(word)
+
+	// Skip very short words
+	if len(word) <= 3 {
+		return word
+	}
+
+	// Common plural forms
+	if strings.HasSuffix(word, "ies") && len(word) > 4 {
+		return word[:len(word)-3] + "y" // berries -> berry
+	}
+	if strings.HasSuffix(word, "es") && len(word) > 3 {
+		// Special case: -ches, -shes, -sses, -xes
+		if strings.HasSuffix(word, "ches") || strings.HasSuffix(word, "shes") ||
+		   strings.HasSuffix(word, "sses") || strings.HasSuffix(word, "xes") {
+			return word[:len(word)-2] // dishes -> dish, glasses -> glass
+		}
+		return word[:len(word)-2] // tomatoes -> tomato
+	}
+	if strings.HasSuffix(word, "s") && len(word) > 3 {
+		return word[:len(word)-1] // drinks -> drink, eggs -> egg
+	}
+
+	// Common verb forms
+	if strings.HasSuffix(word, "ing") && len(word) > 5 {
+		return word[:len(word)-3] // baking -> bake, cooking -> cook
+	}
+	if strings.HasSuffix(word, "ed") && len(word) > 4 {
+		return word[:len(word)-2] // baked -> bake, cooked -> cook
+	}
+
+	// Common adjective/adverb forms
+	if strings.HasSuffix(word, "ly") && len(word) > 4 {
+		return word[:len(word)-2] // quickly -> quick
+	}
+
+	return word
+}
+
+// fuzzyMatch checks if two strings match within a Levenshtein distance threshold
+// Now also includes stemming for better ingredient matching
+func fuzzyMatch(search, target string) bool {
+	searchLower := strings.ToLower(search)
+	targetLower := strings.ToLower(target)
+
+	// Exact match - fastest path
+	if searchLower == targetLower {
+		return true
+	}
+
+	// Substring match - second fastest path
+	if strings.Contains(targetLower, searchLower) || strings.Contains(searchLower, targetLower) {
+		return true
+	}
+
+	// Stemming match - check if stemmed forms match
+	searchStem := stem(searchLower)
+	targetStem := stem(targetLower)
+	if searchStem == targetStem {
+		return true // "baking" matches "baked" via stem "bake"
+	}
+
+	// Calculate distance threshold based on search term length
+	// Shorter words get stricter thresholds to avoid false positives
+	var threshold int
+	searchLen := len(searchLower)
+	switch {
+	case searchLen <= 3:
+		threshold = 0 // No fuzzy matching for very short words (e.g., "egg" shouldn't match "leg")
+	case searchLen <= 5:
+		threshold = 1 // 1 character difference for short words (e.g., "drink" matches "drinks")
+	case searchLen <= 8:
+		threshold = 2 // 2 character difference for medium words
+	default:
+		threshold = 3 // 3 character difference for long words
+	}
+
+	if threshold == 0 {
+		return false
+	}
+
+	distance := levenshteinDistance(searchLower, targetLower)
+	return distance <= threshold
+}
+
 // parseSearchArray parses a comma-separated string into a slice of lowercase search terms
 func parseSearchArray(value string) []string {
 	if value == "" {
@@ -39,30 +184,52 @@ func matchesSearchCriteria(recipe models.Recipe, searchQuery string,
 	if searchQuery != "" {
 		recipeText := strings.ToLower(recipe.Title)
 
+		// Collect all text fields for fuzzy matching
+		var allWords []string
+		allWords = append(allWords, strings.Fields(strings.ToLower(recipe.Title))...)
+
 		// Search in ingredients
 		for _, ingredient := range recipe.Ingredients {
-			recipeText += " " + strings.ToLower(ingredient.Text)
+			ingredientText := strings.ToLower(ingredient.Text)
+			recipeText += " " + ingredientText
+			allWords = append(allWords, strings.Fields(ingredientText)...)
 		}
 
 		// Search in instructions
 		for _, instruction := range recipe.Instructions {
-			recipeText += " " + strings.ToLower(instruction.Text)
+			instructionText := strings.ToLower(instruction.Text)
+			recipeText += " " + instructionText
+			allWords = append(allWords, strings.Fields(instructionText)...)
 		}
 
 		// Search in user-added tags (critical for manual tag search)
 		for _, tag := range recipe.Tags {
-			recipeText += " " + strings.ToLower(tag)
+			tagText := strings.ToLower(tag)
+			recipeText += " " + tagText
+			allWords = append(allWords, strings.Fields(tagText)...)
 		}
 
 		// Check if search query matches any part of the recipe text
 		// Support comma-separated OR queries (e.g., "drink, cocktail")
 		searchTerms := parseSearchArray(searchQuery)
 		if len(searchTerms) > 1 {
-			// Multiple terms - use OR logic
+			// Multiple terms - use OR logic with fuzzy matching
 			found := false
 			for _, term := range searchTerms {
-				if strings.Contains(recipeText, strings.TrimSpace(strings.ToLower(term))) {
+				term = strings.TrimSpace(strings.ToLower(term))
+				// First try exact substring match (fastest)
+				if strings.Contains(recipeText, term) {
 					found = true
+					break
+				}
+				// Then try fuzzy matching against individual words
+				for _, word := range allWords {
+					if fuzzyMatch(term, word) {
+						found = true
+						break
+					}
+				}
+				if found {
 					break
 				}
 			}
@@ -70,9 +237,20 @@ func matchesSearchCriteria(recipe models.Recipe, searchQuery string,
 				return false
 			}
 		} else {
-			// Single term - use exact match
-			if !strings.Contains(recipeText, searchQuery) {
-				return false
+			// Single term - use exact match first, then fuzzy match
+			searchTerm := strings.ToLower(searchQuery)
+			if !strings.Contains(recipeText, searchTerm) {
+				// Try fuzzy matching against individual words
+				fuzzyFound := false
+				for _, word := range allWords {
+					if fuzzyMatch(searchTerm, word) {
+						fuzzyFound = true
+						break
+					}
+				}
+				if !fuzzyFound {
+					return false
+				}
 			}
 		}
 	}
@@ -189,12 +367,23 @@ func matchesTimeCategory(recipeTimeCategory, searchTimeCategory string) bool {
 }
 
 // containsAnyMatch checks if any search term matches any value in the target list (case-insensitive)
+// Now supports fuzzy matching to improve search flexibility
 func containsAnyMatch(searchTerms, targetValues []string) bool {
 	for _, searchTerm := range searchTerms {
 		searchLower := strings.ToLower(searchTerm)
 		for _, targetValue := range targetValues {
-			if strings.ToLower(targetValue) == searchLower || strings.Contains(strings.ToLower(targetValue), searchLower) {
+			targetLower := strings.ToLower(targetValue)
+			// Try exact match first (fastest)
+			if targetLower == searchLower || strings.Contains(targetLower, searchLower) {
 				return true
+			}
+			// Try fuzzy matching for partial matches
+			// Split target into words for word-level fuzzy matching
+			targetWords := strings.Fields(targetLower)
+			for _, word := range targetWords {
+				if fuzzyMatch(searchLower, word) {
+					return true
+				}
 			}
 		}
 	}
