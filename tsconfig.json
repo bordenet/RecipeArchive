@@ -1,24 +1,8 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
-  },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "parsers/**/*",
-    "aws-backend/infrastructure/**/*",
-    "extensions/**/*",
-    "packages/**/*",
-    "recipe_archive/**/*",
-    "tests/**/*",
-    "tools/**/*",
-    ".validation-logs/**/*",
-    "scripts/**/*"
+  "files": [],
+  "references": [
+    { "path": "./packages/shared-types" },
+    { "path": "./parsers" },
+    { "path": "./extensions" }
   ]
 }
