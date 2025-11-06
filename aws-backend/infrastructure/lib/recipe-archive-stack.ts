@@ -6,6 +6,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as snsSubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as budgets from 'aws-cdk-lib/aws-budgets';
@@ -454,25 +455,45 @@ export class RecipeArchiveStack extends cdk.Stack {
     recipesResource.addMethod('GET', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
+      throttling: {
+        rateLimit: 10, // 10 requests per second per user
+        burstLimit: 20, // 20 concurrent requests per user
+      },
     });
 
     // Create recipe: POST /recipes (requires authentication)
     recipesResource.addMethod('POST', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
+      throttling: {
+        rateLimit: 5, // 5 requests per second per user (expensive operation)
+        burstLimit: 10, // 10 concurrent requests per user
+      },
     });
 
     // Single recipe operations: GET/PUT/DELETE /recipes/{id} (requires authentication)
     const recipeResource = recipesResource.addResource('{id}');
     recipeResource.addMethod('GET', recipesIntegration, {
       authorizer: cognitoAuthorizer,
+      throttling: {
+        rateLimit: 20, // 20 requests per second per user
+        burstLimit: 40, // 40 concurrent requests per user
+      },
     });
     recipeResource.addMethod('PUT', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
+      throttling: {
+        rateLimit: 5, // 5 requests per second per user (expensive operation)
+        burstLimit: 10, // 10 concurrent requests per user
+      },
     });
     recipeResource.addMethod('DELETE', recipesIntegration, {
       authorizer: cognitoAuthorizer,
+      throttling: {
+        rateLimit: 5, // 5 requests per second per user
+        burstLimit: 10, // 10 concurrent requests per user
+      },
     });
 
     // Search endpoint: GET /recipes/search (requires authentication)
@@ -480,6 +501,10 @@ export class RecipeArchiveStack extends cdk.Stack {
     searchResource.addMethod('GET', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
+      throttling: {
+        rateLimit: 10, // 10 requests per second per user (expensive operation)
+        burstLimit: 20, // 20 concurrent requests per user
+      },
     });
 
     // Analytics endpoints: POST /v1/analytics/events, GET /v1/analytics/summary (requires authentication)
@@ -493,6 +518,10 @@ export class RecipeArchiveStack extends cdk.Stack {
     analyticsEventsResource.addMethod('POST', analyticsIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
+      throttling: {
+        rateLimit: 10, // 10 requests per second per user
+        burstLimit: 20, // 20 concurrent requests per user
+      },
     });
 
     // Get analytics summary: GET /v1/analytics/summary
@@ -510,6 +539,10 @@ export class RecipeArchiveStack extends cdk.Stack {
     uploadResource.addMethod('POST', imageUploadIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
+      throttling: {
+        rateLimit: 5, // 5 requests per second per user (expensive operation)
+        burstLimit: 10, // 10 concurrent requests per user
+      },
     });
 
     // Admin Endpoints for Multi-Tenant Invitation Management
@@ -813,6 +846,8 @@ export class RecipeArchiveStack extends cdk.Stack {
         code: lambda.Code.fromAsset('../functions/dist/health-package'),
         timeout: cdk.Duration.seconds(10),
         memorySize: 128, // Minimal memory for Free Tier optimization
+        reservedConcurrentExecutions: 2, // Low-frequency function
+        logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
         environment: {
           ENVIRONMENT: this.stackEnvironment,
           REGION: this.region,
@@ -835,6 +870,8 @@ export class RecipeArchiveStack extends cdk.Stack {
         code: lambda.Code.fromAsset('../functions/dist/recipes-package'),
         timeout: cdk.Duration.seconds(15),
         memorySize: 256, // More memory for CRUD operations
+        reservedConcurrentExecutions: 10, // High-frequency function (CRUD + search)
+        logRetention: logs.RetentionDays.ONE_WEEK, // 7 days retention (high volume)
         environment: {
           ENVIRONMENT: this.stackEnvironment,
           REGION: this.region,
@@ -862,6 +899,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           code: lambda.Code.fromAsset('../functions/dist/diagnostics-package'),
           timeout: cdk.Duration.seconds(15),
           memorySize: 256,
+          reservedConcurrentExecutions: 5, // Medium-frequency function
+          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -886,6 +925,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           code: lambda.Code.fromAsset('../functions/dist/image-upload-package'),
           timeout: cdk.Duration.seconds(30), // More time for image processing
           memorySize: 128, // Optimized: usage shows ~33MB, reduced from 512MB
+          reservedConcurrentExecutions: 5, // Medium-frequency function
+          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -912,6 +953,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(15),
           memorySize: 256,
+          reservedConcurrentExecutions: 3, // Low-frequency function
+          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -937,6 +980,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(30), // Longer timeout for OpenAI API calls
           memorySize: 128, // Optimized: usage shows ~33MB, reduced from 512MB
+          reservedConcurrentExecutions: 5, // Medium-frequency function
+          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -963,6 +1008,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(45), // Longer timeout for OpenAI processing
           memorySize: 128, // Optimized: usage shows ~33MB, reduced from 512MB
+          reservedConcurrentExecutions: 5, // Background queue processing
+          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -996,6 +1043,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(60), // Longer timeout for S3 analysis
           memorySize: 1024, // More memory for processing diagnostic data
+          reservedConcurrentExecutions: 2, // Low-frequency function
+          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1022,6 +1071,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(15),
           memorySize: 256,
+          reservedConcurrentExecutions: 3, // Low-frequency function
+          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1048,6 +1099,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(15),
           memorySize: 256,
+          reservedConcurrentExecutions: 3, // Low-frequency function
+          logRetention: logs.RetentionDays.ONE_MONTH, // 30 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
@@ -1074,6 +1127,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           ),
           timeout: cdk.Duration.seconds(15),
           memorySize: 256,
+          reservedConcurrentExecutions: 5, // Medium-frequency function
+          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
           environment: {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,

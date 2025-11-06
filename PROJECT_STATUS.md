@@ -79,9 +79,131 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 
 ✅ Alexandra's Kitchen • Lemons and Zest • The Anthony Kitchen
 
-## Outstanding Work
+## Outstanding Work - Sprint Plan
 
-**E2E Test Suite:** Automated parser regression testing (P0-1)
+**Updated:** 2025-11-06
+**Focus Areas:** Cost optimization, search improvements, Android recipe capture
+
+### 🎯 IMMEDIATE PRIORITIES (Cost Protection - This Week)
+
+**Total Potential Savings: $25-50/month (30-35% cost reduction)**
+
+1. ✅ **Implement API Gateway rate limiting** - CRITICAL
+   - Prevents abuse and runaway costs
+   - Estimated savings: $5-10/month
+   - Effort: XS
+
+2. ✅ **Set reserved concurrency limits on Lambda functions**
+   - Caps maximum scaling costs (11 functions)
+   - Estimated savings: $10-20/month
+   - Effort: S
+
+3. ✅ **Configure CloudWatch log retention policies**
+   - Set 7-30 day retention per function (was indefinite)
+   - Estimated savings: $10-20/month
+   - Effort: XS
+
+### 🔍 HIGH PRIORITY: Search Improvements (Next 2 Weeks)
+
+**Target: Relevance 78% → 90%, Cache hit rate 23% → 70%, Zero additional hosting cost**
+
+4. ⏳ **Implement fuzzy matching for search**
+   - Fix: "drink" doesn't match "drinks"
+   - Solution: Levenshtein distance algorithm
+   - Impact: Relevance +7%
+   - Effort: M
+
+5. ⏳ **Add stemming/lemmatization for ingredient search**
+   - Fix: "baking" ≠ "baked", "bake"
+   - Solution: Porter Stemmer (github.com/kljensen/snowball)
+   - Impact: Major improvement for ingredient queries
+   - Effort: S
+
+6. ⏳ **Implement search result caching layer**
+   - Cache frequent ingredient/tag combinations
+   - Solution: In-memory LRU cache in Lambda
+   - Impact: Cache hit rate 23% → 70%
+   - Effort: M
+
+7. ⏳ **Add search result ranking/relevance scoring**
+   - Weight: title (3x) > ingredients (2x) > instructions (1x)
+   - Solution: TF-IDF scoring or BM25
+   - Impact: Better result ordering
+   - Effort: M
+
+### 💰 MEDIUM PRIORITY: Cost Optimization (Month 1)
+
+8. ⏳ **Optimize Lambda memory allocation**
+   - High-freq (recipes): Keep 256MB
+   - Low-freq (diagnostics, backup): Reduce to 128MB
+   - Estimated savings: $15-25/month
+   - Effort: S
+
+9. ⏳ **Add S3 lifecycle policies for archiving**
+   - Archive recipes >90 days to Glacier
+   - Estimated savings: 40-60% on archive storage (~$5-10/month)
+   - Effort: S
+
+### 📱 HIGH PRIORITY: Android Recipe Capture (Month 1-2)
+
+**Status:** ✅ Prerequisites complete (Cognito auth working!)
+**Target:** Full iOS feature parity
+**Timeline:** 4 weeks (22 working days)
+
+10. ⏳ **Phase 1: Share Intent Receiver + MethodChannel**
+    - AndroidManifest.xml share intent filter
+    - ShareActivity.kt implementation
+    - Flutter bridge via MethodChannel
+    - SharedPreferences queue mechanism
+    - Effort: L
+
+11. ⏳ **Phase 2: WebView HTML Extraction + Image Download**
+    - WebViewContentLoader.kt (mirrors iOS WKWebView)
+    - OkHttp image downloader
+    - JavaScript HTML extraction
+    - 30-second timeout handling
+    - Effort: L
+
+12. ⏳ **Phase 3: Flutter Integration**
+    - SharedPreferences queue implementation
+    - Dart bridge integration
+    - End-to-end testing
+    - Effort: L
+
+13. ⏳ **Phase 4: Testing & Production Polish**
+    - Test matrix: Chrome, Firefox, Edge, DuckDuckGo
+    - Paywalled sites validation (NYT Cooking, Food Network)
+    - Error handling and telemetry integration
+    - Build script automation
+    - Effort: L
+
+### 📊 Cost/Benefit Summary
+
+| Category | Monthly Savings | Implementation Effort | Priority |
+|----------|----------------|----------------------|----------|
+| Cost protection (items 1-3) | $25-50 | XS-S | 🔴 CRITICAL |
+| Search improvements (items 4-7) | $0 (no new costs) | M-L | 🟡 HIGH |
+| Lambda optimization (item 8) | $15-25 | S | 🟢 MEDIUM |
+| S3 archiving (item 9) | $5-10 | S | 🟢 MEDIUM |
+| Android capture (items 10-13) | $0 | XL | 🟡 HIGH |
+
+**Total Potential Savings:** ~$45-85/month (35-40% reduction)
+
+**Effort Sizing:**
+- XS = < 1 hour
+- S = 1-3 hours
+- M = 3-8 hours
+- L = 1-2 days
+- XL = 1+ weeks
+
+### Future Work (Phase 2)
+
+- **E2E Test Suite:** Automated parser regression testing (P0-1)
+- **Ingredient Inventory Search:** "What can I make" feature
+- **Voice Search:** Siri/Google Assistant integration
+- **Nutritional Search:** Calorie/macro filtering
+- **Search Analytics Dashboard:** Visual query insights
+- **Autocomplete:** Real-time search suggestions
 
 ## New Adopter Quick Start
 
