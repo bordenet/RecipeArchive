@@ -107,15 +107,15 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 
 **Target: Relevance 78% → 90%, Cache hit rate 23% → 70%, Zero additional hosting cost**
 
-4. ⏳ **Implement fuzzy matching for search**
-   - Fix: "drink" doesn't match "drinks"
-   - Solution: Levenshtein distance algorithm
+4. ✅ **Implement fuzzy matching for search**
+   - Fix: "drink" now matches "drinks", "drinking"
+   - Solution: Levenshtein distance with adaptive thresholds
    - Impact: Relevance +7%
    - Effort: M
 
-5. ⏳ **Add stemming/lemmatization for ingredient search**
-   - Fix: "baking" ≠ "baked", "bake"
-   - Solution: Porter Stemmer (github.com/kljensen/snowball)
+5. ✅ **Add stemming/lemmatization for ingredient search**
+   - Fix: "baking" now matches "baked", "bake"
+   - Solution: Simplified Porter Stemmer (inline, zero dependencies)
    - Impact: Major improvement for ingredient queries
    - Effort: S
 
