@@ -1,6 +1,8 @@
 /* eslint-env node */
+const path = require("path");
+
 module.exports = {
-  extends: [require.resolve("../.eslintrc.cjs")],
+  extends: [path.resolve(__dirname, "../.eslintrc.cjs")],
   parserOptions: {
     tsconfigRootDir: __dirname,
     project: ["./tsconfig.json"],
