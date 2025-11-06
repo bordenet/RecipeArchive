@@ -140,7 +140,25 @@ get_aws_function_name() {
             echo "RecipeArchive-dev-ImageUploadFunction1528BFB7-SkQEMmTH8zTf"
             return
             ;;
-        "backup"|"local-server"|"s3-manager"|"test-tools")
+        "backup")
+            # Backup function (CDK-managed)
+            local aws_name
+            aws_name=$(aws lambda list-functions --region "$REGION" \
+                --query "Functions[?contains(FunctionName, \`BackupFunction\`)].FunctionName" \
+                --output text 2> /tmp/deploy-lambda.log | head -1)
+            echo "$aws_name"
+            return
+            ;;
+        "diagnostics-mobile-share")
+            # Diagnostics mobile share function (CDK-managed)
+            local aws_name
+            aws_name=$(aws lambda list-functions --region "$REGION" \
+                --query "Functions[?contains(FunctionName, \`DiagnosticsMobileShareFunction\`)].FunctionName" \
+                --output text 2> /tmp/deploy-lambda.log | head -1)
+            echo "$aws_name"
+            return
+            ;;
+        "local-server"|"s3-manager"|"test-tools")
             # These are utility functions that don't have AWS deployments
             echo ""
             return
@@ -260,12 +278,12 @@ deploy_function() {
     if [ -z "$aws_func_name" ]; then
         # Check if this is a utility function that shouldn't be deployed
         case "$func_name" in
-            "backup"|"local-server"|"s3-manager"|"test-tools")
+            "local-server"|"s3-manager"|"test-tools")
                 log_warning "Skipping utility function: $func_name (not deployable to AWS)"
                 return 2  # Special return code for skipped functions
                 ;;
             *)
-                log_error "Unknown function: $func_name"
+                log_error "Unknown function: $func_name (no corresponding AWS function found)"
                 return 1
                 ;;
         esac
