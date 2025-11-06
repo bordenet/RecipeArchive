@@ -39,6 +39,39 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 | Extension Error Rate | 3.2% | <2% | 🟡 |
 | End-to-End Test Coverage | 93% | 80% | 🟢 |
 
+## Architecture Decisions & Cost Protection
+
+### API Gateway Throttling (CRITICAL - DO NOT MODIFY)
+
+**Current Implementation:** API-level throttling via UsagePlan (lines 327-342 in recipe-archive-stack.ts)
+
+```typescript
+const usagePlan = new apigateway.UsagePlan(this, 'RecipeArchiveUsagePlan', {
+  throttle: {
+    rateLimit: 200,   // requests per second per API key
+    burstLimit: 400,  // concurrent requests
+  },
+  quota: {
+    limit: 10000,     // requests per month per API key
+    period: apigateway.Period.MONTH,
+  },
+});
+```
+
+**Why This Matters:**
+- ✅ Prevents runaway costs from API abuse ($5-10/month savings)
+- ✅ DDoS protection at infrastructure level
+- ✅ Per-user rate limiting via Cognito authentication
+- ✅ Monthly quota caps ensure predictable costs
+
+**DO NOT:**
+- ❌ Add `throttling` property to individual `MethodOptions` (not supported in AWS CDK)
+- ❌ Remove the UsagePlan configuration
+- ❌ Increase rate limits without cost analysis
+
+**Per-Method Throttling:**
+If granular per-endpoint limits are needed, use API Gateway stage `methodSettings` (not `MethodOptions.throttling`).
+
 ## Known Limitations
 
 ### Search Functionality (By Design)

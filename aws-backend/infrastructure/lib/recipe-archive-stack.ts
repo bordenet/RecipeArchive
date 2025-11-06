@@ -474,45 +474,25 @@ export class RecipeArchiveStack extends cdk.Stack {
     recipesResource.addMethod('GET', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
-      throttling: {
-        rateLimit: 10, // 10 requests per second per user
-        burstLimit: 20, // 20 concurrent requests per user
-      },
     });
 
     // Create recipe: POST /recipes (requires authentication)
     recipesResource.addMethod('POST', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
-      throttling: {
-        rateLimit: 5, // 5 requests per second per user (expensive operation)
-        burstLimit: 10, // 10 concurrent requests per user
-      },
     });
 
     // Single recipe operations: GET/PUT/DELETE /recipes/{id} (requires authentication)
     const recipeResource = recipesResource.addResource('{id}');
     recipeResource.addMethod('GET', recipesIntegration, {
       authorizer: cognitoAuthorizer,
-      throttling: {
-        rateLimit: 20, // 20 requests per second per user
-        burstLimit: 40, // 40 concurrent requests per user
-      },
     });
     recipeResource.addMethod('PUT', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
-      throttling: {
-        rateLimit: 5, // 5 requests per second per user (expensive operation)
-        burstLimit: 10, // 10 concurrent requests per user
-      },
     });
     recipeResource.addMethod('DELETE', recipesIntegration, {
       authorizer: cognitoAuthorizer,
-      throttling: {
-        rateLimit: 5, // 5 requests per second per user
-        burstLimit: 10, // 10 concurrent requests per user
-      },
     });
 
     // Search endpoint: GET /recipes/search (requires authentication)
@@ -520,10 +500,6 @@ export class RecipeArchiveStack extends cdk.Stack {
     searchResource.addMethod('GET', recipesIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
-      throttling: {
-        rateLimit: 10, // 10 requests per second per user (expensive operation)
-        burstLimit: 20, // 20 concurrent requests per user
-      },
     });
 
     // Analytics endpoints: POST /v1/analytics/events, GET /v1/analytics/summary (requires authentication)
@@ -537,10 +513,6 @@ export class RecipeArchiveStack extends cdk.Stack {
     analyticsEventsResource.addMethod('POST', analyticsIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
-      throttling: {
-        rateLimit: 10, // 10 requests per second per user
-        burstLimit: 20, // 20 concurrent requests per user
-      },
     });
 
     // Get analytics summary: GET /v1/analytics/summary
@@ -558,10 +530,6 @@ export class RecipeArchiveStack extends cdk.Stack {
     uploadResource.addMethod('POST', imageUploadIntegration, {
       authorizer: cognitoAuthorizer,
       requestValidator: requestValidator,
-      throttling: {
-        rateLimit: 5, // 5 requests per second per user (expensive operation)
-        burstLimit: 10, // 10 concurrent requests per user
-      },
     });
 
     // Admin Endpoints for Multi-Tenant Invitation Management
