@@ -406,11 +406,49 @@ func runValidationsSequential(validator *Validator, validations []ValidationTask
 	}
 }
 
+// purgeOldLogs removes log files older than 1 hour from the validation logs directory
+func purgeOldLogs(logsDir string) {
+	oneHourAgo := time.Now().Add(-1 * time.Hour)
+
+	entries, err := os.ReadDir(logsDir)
+	if err != nil {
+		// Directory doesn't exist or can't be read - skip cleanup
+		return
+	}
+
+	purgedCount := 0
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		// Remove files older than 1 hour
+		if info.ModTime().Before(oneHourAgo) {
+			logPath := filepath.Join(logsDir, entry.Name())
+			if err := os.Remove(logPath); err == nil {
+				purgedCount++
+			}
+		}
+	}
+
+	if purgedCount > 0 {
+		_, _ = fmt.Fprintf(originalStdout, "🧹 Purged %d old log file(s) from .validation-logs/\n", purgedCount)
+	}
+}
+
 // runValidationsParallel runs parallelizable validations concurrently with dashboard UI
 func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, tierName string, _ bool) {
 	// Create logs directory if it doesn't exist
 	logsDir := filepath.Join(projectRoot, ".validation-logs")
 	_ = os.MkdirAll(logsDir, 0755)
+
+	// Purge old logs (older than 1 hour) to prevent accumulation
+	purgeOldLogs(logsDir)
 
 	// Group validations by section
 	sectionTasks := make(map[string][]ValidationTask)
