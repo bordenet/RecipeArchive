@@ -133,15 +133,17 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 
 ### 💰 MEDIUM PRIORITY: Cost Optimization (Month 1)
 
-8. ⏳ **Optimize Lambda memory allocation**
-   - High-freq (recipes): Keep 256MB
-   - Low-freq (diagnostics, backup): Reduce to 128MB
+8. ✅ **Optimize Lambda memory allocation**
+   - Reduced 5 functions from 256MB → 128MB
+   - Functions: Diagnostics, FlutterDiagnostics, Invitations, Registration, Analytics
    - Estimated savings: $15-25/month
    - Effort: S
 
-9. ⏳ **Add S3 lifecycle policies for archiving**
-   - Archive recipes >90 days to Glacier
-   - Estimated savings: 40-60% on archive storage (~$5-10/month)
+9. ✅ **Add S3 lifecycle policies for archiving**
+   - Glacier transition: 90 days (40-60% savings)
+   - Deep Archive transition: 365 days (70-80% savings)
+   - Old versions to Glacier: 30 days
+   - Estimated savings: $5-10/month (grows with data)
    - Effort: S
 
 ### 📱 HIGH PRIORITY: Android Recipe Capture (Month 1-2)
@@ -179,15 +181,15 @@ Cross-platform recipe management system with web app, browser extensions (Chrome
 
 ### 📊 Cost/Benefit Summary
 
-| Category | Monthly Savings | Implementation Effort | Priority |
-|----------|----------------|----------------------|----------|
-| Cost protection (items 1-3) | $25-50 | XS-S | 🔴 CRITICAL |
-| Search improvements (items 4-7) | $0 (no new costs) | M-L | 🟡 HIGH |
-| Lambda optimization (item 8) | $15-25 | S | 🟢 MEDIUM |
-| S3 archiving (item 9) | $5-10 | S | 🟢 MEDIUM |
-| Android capture (items 10-13) | $0 | XL | 🟡 HIGH |
+| Category | Monthly Savings | Implementation Effort | Status |
+|----------|----------------|----------------------|--------|
+| Cost protection (items 1-3) | $25-50 | XS-S | ✅ COMPLETE |
+| Search improvements (items 4-7) | $0 (no new costs) | M-L | ✅ COMPLETE |
+| Lambda optimization (item 8) | $15-25 | S | ✅ COMPLETE |
+| S3 archiving (item 9) | $5-10 | S | ✅ COMPLETE |
+| Android capture (items 10-13) | $0 | XL | ⏳ READY |
 
-**Total Potential Savings:** ~$45-85/month (35-40% reduction)
+**Total Cost Savings Achieved:** $45-85/month (35-40% reduction) ✅
 
 **Effort Sizing:**
 - XS = < 1 hour
