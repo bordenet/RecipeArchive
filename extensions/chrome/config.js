@@ -8,12 +8,12 @@ function loadEnvironmentConfig() {
   // First, try to load from the auto-generated ENV_CONFIG
   if (typeof ENV_CONFIG !== "undefined" && ENV_CONFIG) {
     return {
-      COGNITO_USER_POOL_ID: localStorage.getItem("COGNITO_USER_POOL_ID") || ENV_CONFIG.COGNITO_USER_POOL_ID,
-      COGNITO_APP_CLIENT_ID: localStorage.getItem("COGNITO_APP_CLIENT_ID") || ENV_CONFIG.COGNITO_APP_CLIENT_ID,
-      AWS_REGION: localStorage.getItem("AWS_REGION") || ENV_CONFIG.AWS_REGION,
-      API_BASE_URL: localStorage.getItem("API_BASE_URL") || ENV_CONFIG.API_BASE_URL,
-      WEB_APP_URL: localStorage.getItem("WEB_APP_URL") || ENV_CONFIG.WEB_APP_URL,
-      S3_RECIPE_STORAGE_BUCKET: localStorage.getItem("S3_RECIPE_STORAGE_BUCKET") || ENV_CONFIG.S3_RECIPE_STORAGE_BUCKET,
+      COGNITO_USER_POOL_ID: localStorage.getItem("COGNITO_USER_POOL_ID") || ENV_CONFIG.COGNITO_USER_POOL_ID || "",
+      COGNITO_APP_CLIENT_ID: localStorage.getItem("COGNITO_APP_CLIENT_ID") || ENV_CONFIG.COGNITO_APP_CLIENT_ID || "",
+      AWS_REGION: localStorage.getItem("AWS_REGION") || ENV_CONFIG.AWS_REGION || "us-west-2",
+      API_BASE_URL: localStorage.getItem("API_BASE_URL") || ENV_CONFIG.API_BASE_URL || "http://localhost:8080",
+      WEB_APP_URL: localStorage.getItem("WEB_APP_URL") || ENV_CONFIG.WEB_APP_URL || "http://localhost:3000",
+      S3_RECIPE_STORAGE_BUCKET: localStorage.getItem("S3_RECIPE_STORAGE_BUCKET") || ENV_CONFIG.S3_RECIPE_STORAGE_BUCKET || "",
     };
   }
 
@@ -32,12 +32,18 @@ function loadEnvironmentConfig() {
     return localStorageConfig;
   }
 
-  // No configuration found - show error
-  console.error("❌ RecipeArchive Extension: Missing configuration!");
-  console.error("This extension must be built with 'npm run build:extensions' to generate env-config.js");
-  console.error("See README.md for setup instructions");
+  // No configuration found - use development defaults with warning
+  console.warn("⚠️ RecipeArchive Extension: No configuration found!");
+  console.warn("Using development defaults. For production, configure .env and run 'npm run build:extensions'");
 
-  throw new Error("Extension not properly configured. Run 'npm run build:extensions' first.");
+  return {
+    COGNITO_USER_POOL_ID: "",
+    COGNITO_APP_CLIENT_ID: "",
+    AWS_REGION: "us-west-2",
+    API_BASE_URL: "http://localhost:8080",
+    WEB_APP_URL: "http://localhost:3000",
+    S3_RECIPE_STORAGE_BUCKET: "",
+  };
 }
 
 const envConfig = loadEnvironmentConfig();
