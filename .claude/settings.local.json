@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(npm run test:extensions:*)",
+      "Bash(npm run lint:*)",
       "Bash(time timeout 120 ./validate-monorepo.sh:*)",
       "Bash(time timeout 180 ./validate-monorepo.sh:*)",
       "Bash(time timeout 240 ./validate-monorepo.sh:*)",
