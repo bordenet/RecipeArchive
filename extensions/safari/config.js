@@ -1,6 +1,48 @@
 // Configuration for Recipe Archive Browser Extensions
 // This handles switching between local development and production AWS endpoints
-// TODO: Integrate with root .env for build-time environment variable loading
+// SECURITY: Uses environment-based configuration to avoid hardcoded credentials
+// This file loads configuration from env-config.js (auto-generated at build time)
+
+// Environment configuration loader
+function loadEnvironmentConfig() {
+  // First, try to load from the auto-generated ENV_CONFIG
+  if (typeof ENV_CONFIG !== "undefined" && ENV_CONFIG) {
+    return {
+      COGNITO_USER_POOL_ID: (typeof localStorage !== "undefined" ? localStorage.getItem("COGNITO_USER_POOL_ID") : null) || ENV_CONFIG.COGNITO_USER_POOL_ID,
+      COGNITO_APP_CLIENT_ID: (typeof localStorage !== "undefined" ? localStorage.getItem("COGNITO_APP_CLIENT_ID") : null) || ENV_CONFIG.COGNITO_APP_CLIENT_ID,
+      AWS_REGION: (typeof localStorage !== "undefined" ? localStorage.getItem("AWS_REGION") : null) || ENV_CONFIG.AWS_REGION,
+      API_BASE_URL: (typeof localStorage !== "undefined" ? localStorage.getItem("API_BASE_URL") : null) || ENV_CONFIG.API_BASE_URL,
+      WEB_APP_URL: (typeof localStorage !== "undefined" ? localStorage.getItem("WEB_APP_URL") : null) || ENV_CONFIG.WEB_APP_URL,
+      S3_RECIPE_STORAGE_BUCKET: (typeof localStorage !== "undefined" ? localStorage.getItem("S3_RECIPE_STORAGE_BUCKET") : null) || ENV_CONFIG.S3_RECIPE_STORAGE_BUCKET,
+    };
+  }
+
+  // Fallback: Check localStorage only (for manual configuration)
+  if (typeof localStorage !== "undefined") {
+    const localStorageConfig = {
+      COGNITO_USER_POOL_ID: localStorage.getItem("COGNITO_USER_POOL_ID"),
+      COGNITO_APP_CLIENT_ID: localStorage.getItem("COGNITO_APP_CLIENT_ID"),
+      AWS_REGION: localStorage.getItem("AWS_REGION"),
+      API_BASE_URL: localStorage.getItem("API_BASE_URL"),
+      WEB_APP_URL: localStorage.getItem("WEB_APP_URL"),
+      S3_RECIPE_STORAGE_BUCKET: localStorage.getItem("S3_RECIPE_STORAGE_BUCKET"),
+    };
+
+    // If all localStorage values are present, use them
+    if (Object.values(localStorageConfig).every(val => val)) {
+      return localStorageConfig;
+    }
+  }
+
+  // No configuration found - show error
+  console.error("❌ RecipeArchive Extension: Missing configuration!");
+  console.error("This extension must be built with 'npm run build:extensions' to generate env-config.js");
+  console.error("See README.md for setup instructions");
+
+  throw new Error("Extension not properly configured. Run 'npm run build:extensions' first.");
+}
+
+const envConfig = loadEnvironmentConfig();
 
 const CONFIG = {
   // Environment detection
@@ -23,8 +65,8 @@ const CONFIG = {
     }
   })(),
 
-  // Web App URL (authoritative source)
-  WEB_APP_URL: "https://d1jcaphz4458q7.cloudfront.net",
+  // Web App URL (from environment configuration)
+  WEB_APP_URL: envConfig.WEB_APP_URL,
 
   // API Endpoints
   API: {
@@ -35,29 +77,18 @@ const CONFIG = {
       health: "http://127.0.0.1:8081/health",
     },
     production: {
-      base: "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod",
-      recipes:
-        "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/recipes",
-diagnostics: "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/report-error",
-      health:
-        "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/health",
+      base: envConfig.API_BASE_URL,
+      recipes: `${envConfig.API_BASE_URL}/recipes`,
+      diagnostics: `${envConfig.API_BASE_URL}/report-error`,
+      health: `${envConfig.API_BASE_URL}/health`,
     },
   },
 
-  // AWS Cognito Configuration (loaded from environment/localStorage)
+  // AWS Cognito Configuration (from environment configuration)
   COGNITO: {
-    region:
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem("AWS_REGION")
-        : null) || "us-west-2",
-    userPoolId:
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem("COGNITO_USER_POOL_ID")
-        : null) || "us-west-2_rpBcEEhYK",
-    clientId:
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem("COGNITO_APP_CLIENT_ID")
-        : null) || "7lm8mqr03s0m0fn17dnv373s4h",
+    region: envConfig.AWS_REGION,
+    userPoolId: envConfig.COGNITO_USER_POOL_ID,
+    clientId: envConfig.COGNITO_APP_CLIENT_ID,
   },
 
   // Development test user (use environment variables for real values)
@@ -131,20 +162,14 @@ diagnostics: "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/report
   reloadConfiguration: function () {
     try {
       if (typeof localStorage !== "undefined") {
-        this.COGNITO.region = localStorage.getItem("AWS_REGION") || "us-west-2";
-        this.COGNITO.userPoolId =
-          localStorage.getItem("COGNITO_USER_POOL_ID") || "CONFIGURE_ME";
-        this.COGNITO.clientId =
-          localStorage.getItem("COGNITO_APP_CLIENT_ID") || "CONFIGURE_ME";
-        this.API.production.base =
-          localStorage.getItem("API_BASE_URL") ||
-          "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod";
+        this.COGNITO.region = localStorage.getItem("AWS_REGION") || envConfig.AWS_REGION;
+        this.COGNITO.userPoolId = localStorage.getItem("COGNITO_USER_POOL_ID") || envConfig.COGNITO_USER_POOL_ID;
+        this.COGNITO.clientId = localStorage.getItem("COGNITO_APP_CLIENT_ID") || envConfig.COGNITO_APP_CLIENT_ID;
+        this.API.production.base = localStorage.getItem("API_BASE_URL") || envConfig.API_BASE_URL;
         this.API.production.recipes = `${this.API.production.base}/recipes`;
         this.API.production.diagnostics = `${this.API.production.base}/report-error`;
         this.API.production.health = `${this.API.production.base}/health`;
-        console.log(
-          "🔄 Configuration reloaded with latest localStorage values"
-        );
+        console.log("🔄 Configuration reloaded with latest localStorage values");
       }
     } catch (error) {
       console.warn("CONFIG: Could not reload configuration:", error.message);

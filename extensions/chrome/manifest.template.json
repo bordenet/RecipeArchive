@@ -5,8 +5,8 @@
   "description": "Capture and archive recipes from the web.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
-    "https://cognito-idp.us-west-2.amazonaws.com/*",
-    "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/*"
+    "https://cognito-idp.__AWS_REGION__.amazonaws.com/*",
+    "__API_BASE_URL__/*"
   ],
   "icons": {
     "16": "icon16.png",
