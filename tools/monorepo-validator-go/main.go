@@ -4,12 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 )
 
 // Global file object for original stdout for dashboard output
@@ -96,6 +98,154 @@ AUDIT LOGS
 `)
 }
 
+// getAllPossibleValidations returns a map of all validation names to their functions
+// Used for single-validation mode where we run one validation in isolation
+// CRITICAL: Names must EXACTLY match ValidationTask names in get*Validations() functions
+func getAllPossibleValidations() map[string]func(string) bool {
+	return map[string]func(string) bool{
+		"Prerequisite Checks":                validatePrerequisites,
+		"Install Dependencies":               installDependencies,
+		"Build Go Binaries":                  buildGoBinaries,
+		"Build TypeScript":                   buildTypeScript,
+		"Build Script Syntax Check":          runBuildScriptSyntaxValidation,
+		"Build Parser Bundle":                buildParserBundle,
+		"Parser Unit Tests":                  runParserTests,
+		"TypeScript Unit Tests":              runTypeScriptUnitTests,
+		"Go Backend Tests":                   runGoBackendTests,
+		"Go Tools Tests":                     runGoToolsTests,
+		"Extension Integration Tests":        runExtensionIntegrationTests,
+		"Extension Tests":                    runExtensionTests,
+		"Run Security Scan":                  runSecurityScan,
+		"Run Quality Gate":                   runQualityGate,
+		"Run Linting Checks":                 runLintingChecks,
+		"Run Basic Quality Checks":           runBasicQualityChecks,
+		"Mobile App Validation":              runMobileTests,
+		"iOS Build & Lint Validation":        runIOSValidation,
+		"Android Build & Lint Validation":    runAndroidValidation,
+		"Web Build Validation":               runWebValidation,
+		"Web Extension Linting":              runWebExtensionLinting,
+		"Flutter Tests":                      runComprehensiveTests,
+		"Validate Parsers":                   validateParsers,
+		"Validate Recipe Storage":            validateRecipeStorage,
+		"Check Frontend Status":              checkFrontendStatus,
+		"AWS Infrastructure Tests":           runAwsInfrastructureTests,
+		"Validate Deployment Infrastructure": validateDeploymentInfrastructure,
+		"Validate Extension Downloads":       validateExtensionDownloads,
+		"Go Tools Build, Test & Run":         runGoToolsValidation,
+		"Go Lint Validation":                 runGoLintValidation,
+	}
+}
+
+// runSingleValidation runs a single validation by name and exits with appropriate code
+// This is used for process isolation - each validation runs in its own process
+func runSingleValidation(name string, projectRoot string) {
+	validations := getAllPossibleValidations()
+	validationFunc, exists := validations[name]
+	if !exists {
+		fmt.Fprintf(os.Stderr, "ERROR: Unknown validation: %s\n", name)
+		os.Exit(2) // Exit code 2 = invalid validation name
+	}
+
+	// Run the validation - output goes to stdout/stderr naturally
+	success := validationFunc(projectRoot)
+
+	if success {
+		os.Exit(0) // Success
+	} else {
+		os.Exit(1) // Failure
+	}
+}
+
+// execValidationInProcess runs a validation in a separate process and captures output to a log file
+// This provides natural output isolation without global stdout/stderr redirection
+// Returns ValidationResult with success status, duration, and log path
+func execValidationInProcess(name string, projectRoot string, logsDir string, start time.Time) ValidationResult {
+	// Create log file for this validation
+	timestamp := start.Format("20060102-150405")
+	logFileName := fmt.Sprintf("%s_%s.log", timestamp, sanitizeFilename(name))
+	logPath := filepath.Join(logsDir, logFileName)
+
+	logFile, err := os.Create(logPath)
+	if err != nil {
+		return ValidationResult{
+			Name:      name,
+			Success:   false,
+			Duration:  time.Since(start),
+			Message:   fmt.Sprintf("(failed to create log: %v)", err),
+			StartTime: start,
+			LogPath:   logPath,
+		}
+	}
+	defer func() { _ = logFile.Close() }()
+
+	// Write header to log with actionable reproduction steps
+	_, _ = fmt.Fprintf(logFile, "╔════════════════════════════════════════════════════════════════════════╗\n")
+	_, _ = fmt.Fprintf(logFile, "║ VALIDATION: %s\n", name)
+	_, _ = fmt.Fprintf(logFile, "╠════════════════════════════════════════════════════════════════════════╣\n")
+	_, _ = fmt.Fprintf(logFile, "║ Started: %s\n", start.Format(time.RFC3339))
+	_, _ = fmt.Fprintf(logFile, "║ Project root: %s\n", projectRoot)
+	_, _ = fmt.Fprintf(logFile, "╠════════════════════════════════════════════════════════════════════════╣\n")
+	_, _ = fmt.Fprintf(logFile, "║ HOW TO REPRODUCE:\n")
+	_, _ = fmt.Fprintf(logFile, "║   This log shows all commands executed during validation.\n")
+	_, _ = fmt.Fprintf(logFile, "║   Look for '▸ Running:' lines below to see exact commands.\n")
+	_, _ = fmt.Fprintf(logFile, "║   Re-run failed commands in their working directory for debugging.\n")
+	_, _ = fmt.Fprintf(logFile, "╚════════════════════════════════════════════════════════════════════════╝\n\n")
+
+	// Get path to current executable
+	exePath, err := os.Executable()
+	if err != nil {
+		return ValidationResult{
+			Name:      name,
+			Success:   false,
+			Duration:  time.Since(start),
+			Message:   fmt.Sprintf("(failed to get executable path: %v)", err),
+			StartTime: start,
+			LogPath:   logPath,
+		}
+	}
+
+	// Spawn validation in separate process
+	cmd := exec.Command(exePath, "--run-validation", name)
+	cmd.Dir = projectRoot
+	cmd.Env = append(os.Environ(), "PROJECT_ROOT="+projectRoot)
+
+	// Capture stdout and stderr to log file
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	// Run the validation process
+	err = cmd.Run()
+	duration := time.Since(start)
+
+	// Determine success based on exit code
+	success := (err == nil)
+
+	// Write footer to log
+	_, _ = fmt.Fprintf(logFile, "\n======================\n")
+	_, _ = fmt.Fprintf(logFile, "Completed: %s\n", time.Now().Format(time.RFC3339))
+	_, _ = fmt.Fprintf(logFile, "Duration: %s\n", FormatDuration(duration))
+	_, _ = fmt.Fprintf(logFile, "Success: %v\n", success)
+	if err != nil {
+		_, _ = fmt.Fprintf(logFile, "Error: %v\n", err)
+	}
+
+	var message string
+	if success {
+		message = fmt.Sprintf("(%s)", FormatDuration(duration))
+	} else {
+		message = fmt.Sprintf("(failed after %s)", FormatDuration(duration))
+	}
+
+	return ValidationResult{
+		Name:      name,
+		Success:   success,
+		Duration:  duration,
+		Message:   message,
+		StartTime: start,
+		LogPath:   logPath,
+	}
+}
+
 func main() {
 	// MAX OUT CPU/MEMORY USAGE - This is the only thing that matters when running
 	runtime.GOMAXPROCS(runtime.NumCPU())                       // Use ALL available CPUs
@@ -113,6 +263,9 @@ func main() {
 	toolsFlag := flag.Bool("tools", false, "Run Go tools build, test, and execution validation")
 	sequentialFlag := flag.Bool("sequential", false, "Run validations sequentially (default is parallel)")
 	verboseFlag := flag.Bool("verbose", false, "Enable verbose output")
+
+	// Internal flag for running single validation in isolated process
+	runValidationFlag := flag.String("run-validation", "", "Internal: Run single validation and exit")
 
 	// Set custom usage function
 	flag.Usage = printUsage
@@ -149,6 +302,12 @@ func main() {
 
 	if *verboseFlag {
 		fmt.Printf("📁 Project root: %s\n\n", projectRoot)
+	}
+
+	// Handle single-validation mode (for process isolation)
+	if *runValidationFlag != "" {
+		runSingleValidation(*runValidationFlag, projectRoot)
+		return
 	}
 
 	// Set up graceful shutdown
@@ -249,6 +408,10 @@ func runValidationsSequential(validator *Validator, validations []ValidationTask
 
 // runValidationsParallel runs parallelizable validations concurrently with dashboard UI
 func runValidationsParallel(validator *Validator, validations []ValidationTask, projectRoot string, tierName string, _ bool) {
+	// Create logs directory if it doesn't exist
+	logsDir := filepath.Join(projectRoot, ".validation-logs")
+	_ = os.MkdirAll(logsDir, 0755)
+
 	// Group validations by section
 	sectionTasks := make(map[string][]ValidationTask)
 	sectionOrder := []string{}
@@ -293,7 +456,8 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 	for _, section := range []string{"Prerequisites", "Dependencies"} {
 		if tasks, exists := sectionTasks[section]; exists {
 			for _, validation := range tasks {
-				result := validator.RunValidationSilent(validation.Name, validation.Function, projectRoot)
+				// Spawn validation in separate process for output isolation
+				result := execValidationInProcess(validation.Name, projectRoot, logsDir, time.Now())
 				// Don't increment dashboard here - let the monitoring goroutine do it
 				// Just send the result through the channel
 				resultChan <- TaskResult{Section: section, Result: result}
@@ -311,7 +475,8 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 			wg.Add(1)
 			go func(sec string, v ValidationTask) {
 				defer wg.Done()
-				result := validator.RunValidationSilent(v.Name, v.Function, projectRoot)
+				// Spawn validation in separate process for output isolation
+				result := execValidationInProcess(v.Name, projectRoot, logsDir, time.Now())
 				resultChan <- TaskResult{Section: sec, Result: result}
 			}(section, validation)
 		}
