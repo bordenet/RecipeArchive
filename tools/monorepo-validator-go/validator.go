@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 )
@@ -21,10 +19,9 @@ type ValidationResult struct {
 // Validator manages a collection of validation results and provides summary reporting.
 // It's thread-safe for concurrent validations.
 type Validator struct {
-	Results      []ValidationResult
-	mutex        sync.Mutex
-	writeMux     sync.Mutex // Serializes stdout/stderr redirection (performance trade-off for correctness)
-	StartTime    time.Time  // Wall clock start time for accurate total duration
+	Results   []ValidationResult
+	mutex     sync.Mutex
+	StartTime time.Time // Wall clock start time for accurate total duration
 }
 
 // NewValidator creates and returns a new Validator instance.
@@ -70,93 +67,6 @@ func (v *Validator) RunValidation(name string, validationFunc func(projectRoot s
 	})
 
 	return success
-}
-
-// RunValidationSilent executes a validation function and returns the result without printing
-// Captures stdout/stderr to log files for debugging while keeping dashboard clean
-func (v *Validator) RunValidationSilent(name string, validationFunc func(projectRoot string) bool, projectRoot string) ValidationResult {
-	start := time.Now()
-
-	// Create logs directory if it doesn't exist
-	logsDir := filepath.Join(projectRoot, ".validation-logs")
-	_ = os.MkdirAll(logsDir, 0755)
-
-	// Create log file for this validation
-	timestamp := start.Format("20060102-150405")
-	logFileName := fmt.Sprintf("%s_%s.log", timestamp, sanitizeFilename(name))
-	logPath := filepath.Join(logsDir, logFileName)
-
-	logFile, err := os.Create(logPath)
-	if err != nil {
-		// If we can't create log file, just run without logging
-		success := validationFunc(projectRoot)
-		duration := time.Since(start)
-		return ValidationResult{
-			Name:      name,
-			Success:   success,
-			Duration:  duration,
-			Message:   fmt.Sprintf("(%s)", FormatDuration(duration)),
-			StartTime: start,
-		}
-	}
-	defer func() { _ = logFile.Close() }()
-
-	// Write header to log with actionable reproduction steps
-	_, _ = fmt.Fprintf(logFile, "╔════════════════════════════════════════════════════════════════════════╗\n")
-	_, _ = fmt.Fprintf(logFile, "║ VALIDATION: %s\n", name)
-	_, _ = fmt.Fprintf(logFile, "╠════════════════════════════════════════════════════════════════════════╣\n")
-	_, _ = fmt.Fprintf(logFile, "║ Started: %s\n", start.Format(time.RFC3339))
-	_, _ = fmt.Fprintf(logFile, "║ Project root: %s\n", projectRoot)
-	_, _ = fmt.Fprintf(logFile, "╠════════════════════════════════════════════════════════════════════════╣\n")
-	_, _ = fmt.Fprintf(logFile, "║ HOW TO REPRODUCE:\n")
-	_, _ = fmt.Fprintf(logFile, "║   This log shows all commands executed during validation.\n")
-	_, _ = fmt.Fprintf(logFile, "║   Look for '▸ Running:' lines below to see exact commands.\n")
-	_, _ = fmt.Fprintf(logFile, "║   Re-run failed commands in their working directory for debugging.\n")
-	_, _ = fmt.Fprintf(logFile, "╚════════════════════════════════════════════════════════════════════════╝\n\n")
-
-	// CRITICAL: Serialize stdout/stderr redirection to prevent race conditions
-	// os.Stdout/os.Stderr are global - concurrent modifications corrupt output
-	// Performance trade-off: Correctness over parallelism
-	v.writeMux.Lock()
-	defer v.writeMux.Unlock()
-
-	// Redirect stdout and stderr to this validation's log file
-	oldStdout := os.Stdout
-	oldStderr := os.Stderr
-	os.Stdout = logFile
-	os.Stderr = logFile
-
-	// Run validation with redirected output
-	success := validationFunc(projectRoot)
-
-	// Flush and restore
-	_ = logFile.Sync()
-	os.Stdout = oldStdout
-	os.Stderr = oldStderr
-
-	duration := time.Since(start)
-
-	// Write footer to log
-	_, _ = fmt.Fprintf(logFile, "\n======================\n")
-	_, _ = fmt.Fprintf(logFile, "Completed: %s\n", time.Now().Format(time.RFC3339))
-	_, _ = fmt.Fprintf(logFile, "Duration: %s\n", FormatDuration(duration))
-	_, _ = fmt.Fprintf(logFile, "Success: %v\n", success)
-
-	var message string
-	if success {
-		message = fmt.Sprintf("(%s)", FormatDuration(duration))
-	} else {
-		message = fmt.Sprintf("(failed after %s)", FormatDuration(duration))
-	}
-
-	return ValidationResult{
-		Name:      name,
-		Success:   success,
-		Duration:  duration,
-		Message:   message,
-		StartTime: start,
-		LogPath:   logPath,
-	}
 }
 
 // sanitizeFilename removes characters that aren't safe for filenames
