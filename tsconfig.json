@@ -6,5 +6,19 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "parsers/**/*",
+    "aws-backend/infrastructure/**/*",
+    "extensions/**/*",
+    "packages/**/*",
+    "recipe_archive/**/*",
+    "tests/**/*",
+    "tools/**/*",
+    ".validation-logs/**/*",
+    "scripts/**/*"
+  ]
 }
