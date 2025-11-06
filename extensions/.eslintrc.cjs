@@ -5,6 +5,11 @@ module.exports = {
     tsconfigRootDir: __dirname,
     project: ["./tsconfig.json"],
   },
+  ignorePatterns: [
+    "**/typescript-parser-bundle.js",
+    "**/env-config.js",
+    "node_modules/**",
+  ],
   rules: {
     "no-console": "off",
     "no-undef": "off",
