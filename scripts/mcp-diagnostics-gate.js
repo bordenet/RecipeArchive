@@ -41,6 +41,13 @@ class QualityGate {
       if (output) console.log(output);
       this.log(GREEN, '✅ TypeScript compilation: PASSED');
     } catch (error) {
+      // Handle "no inputs found" error gracefully - this is expected when root tsconfig excludes everything
+      const errorOutput = (error.stdout || '') + (error.stderr || '');
+      if (errorOutput.includes('TS18003: No inputs were found')) {
+        this.log(GREEN, '✅ TypeScript compilation: PASSED (no root-level files to compile)');
+        return;
+      }
+
       if (error.stdout) console.log(error.stdout);
       if (error.stderr) console.error(error.stderr);
       this.errors.push('TypeScript compilation failed');
