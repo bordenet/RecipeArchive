@@ -2,7 +2,7 @@
 // This handles switching between local development and production AWS endpoints
 // SECURITY: Uses environment-based configuration to avoid hardcoded credentials
 
-type Environment = 'development' | 'production';
+type Environment = "development" | "production";
 type APIConfig = {
   base: string;
   recipes: string;
@@ -25,21 +25,21 @@ type Status = {
 function loadEnvironmentConfig() {
   return {
     COGNITO_USER_POOL_ID:
-      typeof localStorage !== 'undefined'
-        ? localStorage.getItem('COGNITO_USER_POOL_ID') || 'CONFIGURE_ME'
-        : 'CONFIGURE_ME',
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("COGNITO_USER_POOL_ID") || "CONFIGURE_ME"
+        : "CONFIGURE_ME",
     COGNITO_APP_CLIENT_ID:
-      typeof localStorage !== 'undefined'
-        ? localStorage.getItem('COGNITO_APP_CLIENT_ID') || 'CONFIGURE_ME'
-        : 'CONFIGURE_ME',
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("COGNITO_APP_CLIENT_ID") || "CONFIGURE_ME"
+        : "CONFIGURE_ME",
     AWS_REGION:
-      typeof localStorage !== 'undefined'
-        ? localStorage.getItem('AWS_REGION') || 'us-west-2'
-        : 'us-west-2',
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("AWS_REGION") || "us-west-2"
+        : "us-west-2",
     API_BASE_URL:
-      typeof localStorage !== 'undefined'
-        ? localStorage.getItem('API_BASE_URL') || 'CONFIGURE_ME'
-        : 'CONFIGURE_ME',
+      typeof localStorage !== "undefined"
+        ? localStorage.getItem("API_BASE_URL") || "CONFIGURE_ME"
+        : "CONFIGURE_ME",
   };
 }
 
@@ -48,17 +48,17 @@ const envConfig = loadEnvironmentConfig();
 export const CONFIG = {
   ENVIRONMENT: (function determineEnvironment() {
     const isDevelopment =
-      typeof localStorage !== 'undefined' &&
-      localStorage.getItem('recipeArchive.dev') !== 'false';
-    return isDevelopment ? 'development' : 'production';
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("recipeArchive.dev") !== "false";
+    return isDevelopment ? "development" : "production";
   })(),
 
   API: {
     development: {
-      base: 'http://localhost:8080',
-      recipes: 'http://localhost:8080/api/recipes',
-      diagnostics: 'http://localhost:8080/api/diagnostics',
-      health: 'http://localhost:8080/health',
+      base: "http://localhost:8080",
+      recipes: "http://localhost:8080/api/recipes",
+      diagnostics: "http://localhost:8080/api/diagnostics",
+      health: "http://localhost:8080/health",
     },
     production: {
       base: envConfig.API_BASE_URL,
@@ -75,7 +75,7 @@ export const CONFIG = {
   },
 
   DEFAULT_TEST_USER: {
-    email: 'test@example.com',
+    email: "test@example.com",
   },
 
   getCurrentAPI(): APIConfig {
@@ -88,11 +88,11 @@ export const CONFIG = {
 
   toggleEnvironment(): Environment {
     const newEnv: Environment =
-      this.ENVIRONMENT === 'development' ? 'production' : 'development';
-    if (typeof localStorage !== 'undefined') {
+      this.ENVIRONMENT === "development" ? "production" : "development";
+    if (typeof localStorage !== "undefined") {
       localStorage.setItem(
-        'recipeArchive.dev',
-        newEnv === 'development' ? 'true' : 'false'
+        "recipeArchive.dev",
+        newEnv === "development" ? "true" : "false"
       );
     }
     this.ENVIRONMENT = newEnv;
@@ -101,19 +101,19 @@ export const CONFIG = {
   },
 
   enableDevelopment(): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('recipeArchive.dev', 'true');
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("recipeArchive.dev", "true");
     }
-    this.ENVIRONMENT = 'development';
-    console.log('🔧 Development mode enabled');
+    this.ENVIRONMENT = "development";
+    console.log("🔧 Development mode enabled");
   },
 
   enableProduction(): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('recipeArchive.dev', 'false');
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("recipeArchive.dev", "false");
     }
-    this.ENVIRONMENT = 'production';
-    console.log('🚀 Production mode enabled');
+    this.ENVIRONMENT = "production";
+    console.log("🚀 Production mode enabled");
   },
 
   getStatus(): Status {
@@ -123,15 +123,15 @@ export const CONFIG = {
       environment: this.ENVIRONMENT as Environment,
       api: api,
       cognito: cognito,
-      isLocal: this.ENVIRONMENT === 'development',
+      isLocal: this.ENVIRONMENT === "development",
     };
   },
 };
 
-console.log('🔧 Recipe Archive Extension Config:', CONFIG.getStatus());
+console.log("🔧 Recipe Archive Extension Config:", CONFIG.getStatus());
 
 // Export for browser
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   (
     window as unknown as {
       RecipeArchiveConfig: typeof CONFIG;

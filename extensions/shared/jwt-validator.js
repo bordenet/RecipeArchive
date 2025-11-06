@@ -13,7 +13,7 @@ class JWTValidator {
         return { valid: false, error: "Token expired" };
       }
       return { valid: true, payload };
-    } catch (e) {
+    } catch (_e) {
       return { valid: false, error: "Failed to parse JWT" };
     }
   }
@@ -29,7 +29,7 @@ class JWTValidator {
         given_name: payload.given_name,
         family_name: payload.family_name,
       };
-    } catch (e) {
+    } catch (_e) {
       return {};
     }
   }
@@ -37,7 +37,7 @@ class JWTValidator {
   parseJWT(token) {
     try {
       return JSON.parse(atob(token.split(".")[1]));
-    } catch (e) {
+    } catch (_e) {
       return null;
     }
   }
