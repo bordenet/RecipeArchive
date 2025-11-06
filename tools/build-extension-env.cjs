@@ -213,18 +213,39 @@ if (typeof module !== "undefined" && module.exports) {
     // Read template
     let templateContent = fs.readFileSync(templatePath, 'utf8');
 
-    // Replace environment variable placeholders
-    templateContent = templateContent.replace(/__AWS_REGION__/g, this.envVars.AWS_REGION || 'us-west-2');
-
-    // For API_BASE_URL, we need to handle it carefully to preserve JSON structure
-    if (this.envVars.API_BASE_URL) {
-      // Extract just the domain part for host_permissions
-      const apiUrl = this.envVars.API_BASE_URL.replace(/\/+$/, ''); // Remove trailing slashes
-      templateContent = templateContent.replace(/"__API_BASE_URL__\/\*"/g, `"${apiUrl}/*"`);
+    // Parse as JSON to work with it properly
+    let manifest;
+    try {
+      manifest = JSON.parse(templateContent);
+    } catch (error) {
+      console.error(`❌ Failed to parse manifest template: ${error.message}`);
+      return;
     }
 
-    // Write generated manifest
-    fs.writeFileSync(outputPath, templateContent);
+    // Replace environment variable placeholders in host_permissions
+    const awsRegion = this.envVars.AWS_REGION || 'us-west-2';
+    const apiBaseUrl = this.envVars.API_BASE_URL || '';
+
+    if (manifest.host_permissions) {
+      manifest.host_permissions = manifest.host_permissions.map(permission => {
+        // Replace AWS region placeholder
+        let updated = permission.replace(/__AWS_REGION__/g, awsRegion);
+
+        // Replace API_BASE_URL placeholder - only if we have a value
+        if (apiBaseUrl && updated.includes('__API_BASE_URL__')) {
+          const cleanUrl = apiBaseUrl.replace(/\/+$/, ''); // Remove trailing slashes
+          updated = updated.replace(/__API_BASE_URL__/g, cleanUrl);
+        } else if (updated.includes('__API_BASE_URL__')) {
+          // If no API_BASE_URL, use a safe default
+          updated = updated.replace('__API_BASE_URL__/*', 'https://localhost:8080/*');
+        }
+
+        return updated;
+      });
+    }
+
+    // Write generated manifest with proper formatting
+    fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2) + '\n');
     console.log(
       `📝 Generated manifest.json for ${path.basename(this.extensionPath)}`
     );
