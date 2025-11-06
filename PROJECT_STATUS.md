@@ -115,69 +115,37 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 ## Outstanding Work - Sprint Plan
 
 **Updated:** 2025-11-06
-**Focus Areas:** Cost optimization, search improvements, Android recipe capture
+**Focus Areas:** Missing Lambda deployments, Android recipe capture
 
-### 🎯 IMMEDIATE PRIORITIES (Cost Protection - This Week)
+### ✅ COMPLETED: Lambda Function Deployments (2025-11-06)
 
-**Total Potential Savings: $25-50/month (30-35% cost reduction)**
+1. ✅ **Deployed `backup` Lambda function**
+   - **What it does**: User-facing backup/restore API
+   - **Features**: ZIP backup creation, S3 storage, restore from backup
+   - **API endpoints**: GET/POST /v1/backups, POST /v1/backups/restore
+   - **AWS function**: RecipeArchiveStack-BackupFunction3129A640-snUb7NEst1im
+   - **Configuration**: 256MB memory, 60s timeout
+   - **Deployed**: 2025-11-06T18:41:26Z
 
-1. ✅ **Implement API Gateway rate limiting** - CRITICAL
-   - Prevents abuse and runaway costs
-   - Estimated savings: $5-10/month
-   - Effort: XS
+2. ✅ **Deployed `diagnostics-mobile-share` Lambda function**
+   - **What it does**: Collects mobile share extension failure telemetry
+   - **Features**: Tracks iOS/Android recipe capture errors for debugging
+   - **API endpoint**: POST /v1/diagnostics/mobile-share-failure
+   - **AWS function**: RecipeArchiveStack-DiagnosticsMobileShareFunction8-yyIWj75BtgvX
+   - **Configuration**: 128MB memory, 10s timeout
+   - **Deployed**: 2025-11-06T18:41:42Z
 
-2. ✅ **Set reserved concurrency limits on Lambda functions**
-   - Caps maximum scaling costs (11 functions)
-   - Estimated savings: $10-20/month
-   - Effort: S
+### 💰 COST OPTIMIZATION: S3 Lifecycle Policies
 
-3. ✅ **Configure CloudWatch log retention policies**
-   - Set 7-30 day retention per function (was indefinite)
-   - Estimated savings: $10-20/month
-   - Effort: XS
+**Status:** Deployed to AWS (2025-11-06)
 
-### 🔍 HIGH PRIORITY: Search Improvements (Next 2 Weeks)
-
-**Target: Relevance 78% → 90%, Cache hit rate 23% → 70%, Zero additional hosting cost**
-
-4. ✅ **Implement fuzzy matching for search**
-   - Fix: "drink" now matches "drinks", "drinking"
-   - Solution: Levenshtein distance with adaptive thresholds
-   - Impact: Relevance +7%
-   - Effort: M
-
-5. ✅ **Add stemming/lemmatization for ingredient search**
-   - Fix: "baking" now matches "baked", "bake"
-   - Solution: Simplified Porter Stemmer (inline, zero dependencies)
-   - Impact: Major improvement for ingredient queries
-   - Effort: S
-
-6. ✅ **Implement search result caching layer**
-   - Solution: In-memory LRU cache (100 entries, 5min TTL)
-   - Impact: Cache hit rate 23% → 70%, ~60% latency reduction
-   - Zero infrastructure cost (Lambda ephemeral storage)
-   - Effort: M
-
-7. ✅ **Add search result ranking/relevance scoring**
-   - Weight: title (3x) > ingredients/tags (2x) > instructions (1x)
-   - Exact phrase bonuses + fuzzy word matching
-   - New `sortBy=relevance` option
-   - Effort: M
-
-### 💰 MEDIUM PRIORITY: Cost Optimization (Month 1)
-
-8. ✅ **Optimize Lambda memory allocation**
-   - Reduced 5 functions from 256MB → 128MB
-   - Functions: Diagnostics, FlutterDiagnostics, Invitations, Registration, Analytics
-   - Estimated savings: $15-25/month
-   - Effort: S
-
-9. ✅ **Add S3 lifecycle policies for archiving**
-   - Glacier transition: 90 days (40-60% savings)
-   - Deep Archive transition: 365 days (70-80% savings)
-   - Old versions to Glacier: 30 days
-   - Estimated savings: $5-10/month (grows with data)
-   - Effort: S
+3. ✅ **S3 Glacier lifecycle policies deployed**
+   - **Rules applied**: Production S3 bucket lifecycle configuration active
+   - **Transitions**:
+     - Day 90+: Glacier transition (40-60% storage savings)
+     - Day 365+: Deep Archive transition (70-80% savings)
+     - Old versions → Glacier after 30 days
+   - **Estimated savings**: $5-10/month (grows with data)
 
 ### 📱 HIGH PRIORITY: Android Recipe Capture (Month 1-2)
 
@@ -185,44 +153,32 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 **Target:** Full iOS feature parity
 **Timeline:** 4 weeks (22 working days)
 
-10. ⏳ **Phase 1: Share Intent Receiver + MethodChannel**
+4. ⏳ **Phase 1: Share Intent Receiver + MethodChannel**
     - AndroidManifest.xml share intent filter
     - ShareActivity.kt implementation
     - Flutter bridge via MethodChannel
     - SharedPreferences queue mechanism
     - Effort: L
 
-11. ⏳ **Phase 2: WebView HTML Extraction + Image Download**
+5. ⏳ **Phase 2: WebView HTML Extraction + Image Download**
     - WebViewContentLoader.kt (mirrors iOS WKWebView)
     - OkHttp image downloader
     - JavaScript HTML extraction
     - 30-second timeout handling
     - Effort: L
 
-12. ⏳ **Phase 3: Flutter Integration**
+6. ⏳ **Phase 3: Flutter Integration**
     - SharedPreferences queue implementation
     - Dart bridge integration
     - End-to-end testing
     - Effort: L
 
-13. ⏳ **Phase 4: Testing & Production Polish**
+7. ⏳ **Phase 4: Testing & Production Polish**
     - Test matrix: Chrome, Firefox, Edge, DuckDuckGo
     - Paywalled sites validation (NYT Cooking, Food Network)
     - Error handling and telemetry integration
     - Build script automation
     - Effort: L
-
-### 📊 Cost/Benefit Summary
-
-| Category | Monthly Savings | Implementation Effort | Status |
-|----------|----------------|----------------------|--------|
-| Cost protection (items 1-3) | $25-50 | XS-S | ✅ COMPLETE |
-| Search improvements (items 4-7) | $0 (no new costs) | M-L | ✅ COMPLETE |
-| Lambda optimization (item 8) | $15-25 | S | ✅ COMPLETE |
-| S3 archiving (item 9) | $5-10 | S | ✅ COMPLETE |
-| Android capture (items 10-13) | $0 | XL | ⏳ READY |
-
-**Total Cost Savings Achieved:** $45-85/month (35-40% reduction) ✅
 
 **Effort Sizing:**
 - XS = < 1 hour
