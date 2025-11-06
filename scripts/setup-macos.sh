@@ -1462,14 +1462,45 @@ cp extensions/chrome/config.sample.json extensions/chrome/config.json
 cp extensions/safari/config.sample.json extensions/safari/config.json
 
 ${COLOR_BLUE}📖 Documentation:${COLOR_RESET}
-• Project guide: ../docs/development/claude-context.md
-• Chrome extension: ./extensions/chrome/README.md  
+• Project guide: ./docs/development/claude-context.md
+• Chrome extension: ./extensions/chrome/README.md
 • Safari extension: ./extensions/safari/README.md
 
 EOM
 
 print_success "🎉 RecipeArchive development environment setup complete!"
 print_info ""
+
+# Check if .env file exists and show critical warning if not
+if [ ! -f ".env" ]; then
+  print_warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  print_warning "⚠️  CRITICAL: .env FILE REQUIRED"
+  print_warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  print_error "No .env file found! You MUST create one before proceeding."
+  print_info ""
+  print_info "The .env file contains essential configuration:"
+  print_info "• AWS credentials and region"
+  print_info "• S3 bucket names"
+  print_info "• Cognito User Pool ID and Client ID"
+  print_info "• API Gateway endpoints"
+  print_info "• Admin authentication tokens"
+  print_info ""
+  print_info "How to create your .env file:"
+  if [ -f ".env.example" ]; then
+    print_info "1. Copy the template: cp .env.example .env"
+    print_info "2. Edit .env and fill in your values"
+  else
+    print_info "1. Create .env file in repository root"
+    print_info "2. Add required environment variables (see documentation)"
+  fi
+  print_info "3. Configure AWS credentials: aws configure"
+  print_info "4. Deploy infrastructure to get endpoint values"
+  print_info ""
+  print_warning "Without .env file, validate-monorepo.sh --all WILL FAIL"
+  print_warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  print_info ""
+fi
+
 print_info "To validate your setup, run: ./validate-monorepo.sh --all"
 
 print_info ""
