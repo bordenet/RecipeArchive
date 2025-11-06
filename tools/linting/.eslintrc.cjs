@@ -1,53 +1,22 @@
+/* eslint-env node */
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
-  extends: ["eslint:recommended"],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+  ],
   env: {
-    browser: true,
-    es2021: true,
-    webextensions: true,
     node: true,
-    jest: true,
-  },
-  globals: {
-    chrome: "readonly",
-    browser: "readonly",
-    JWTValidator: "readonly",
-    SafariCognitoAuth: "readonly",
-    CognitoAuth: "readonly",
-    ChromeCognitoAuth: "readonly",
-    CONFIG: "readonly",
-    module: "writable",
-    global: "writable",
   },
   parserOptions: {
-    ecmaVersion: 2021,
+    ecmaVersion: "latest",
     sourceType: "module",
+    project: ["./tsconfig.json"],
   },
   rules: {
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_|^error$|^e$|^state$|^forceAuthRefresh$",
-        caughtErrorsIgnorePattern: "^_|^error$|^e$",
-      },
-    ],
-    "@typescript-eslint/no-require-imports": "off",
-    "no-undef": "error",
-    "no-unused-vars": "off",
-    "no-redeclare": "warn",
-    "no-console": "off",
+    quotes: ["error", "double"],
   },
-  ignorePatterns: [
-    "**/eslint.config.js",
-    "extensions/safari-backup/**",
-    "**/typescript-parser-bundle.js",
-    "node_modules/**",
-    "aws-backend/**",
-    "recipe_archive/**",
-    "tools/**",
-    "tests/**",
-  ],
 };
