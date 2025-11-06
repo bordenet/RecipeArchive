@@ -16,7 +16,7 @@ When work is complete:
 4. **Return the PR URL** - provide the link so the user can review
 
 ### VS Code Agent Mode (CLI)
-**NEVER run git commands yourself.**
+**Don't run git commands yourself unless I explicitly request it.**
 
 When work is complete:
 1. **Show the user what commands to run** - provide exact git commands as copyable text
@@ -58,6 +58,10 @@ When making infrastructure changes, ALWAYS:
 - **`content-ops`**: A multi-tenant content operations utility for analyzing recipes across all tenants in AWS S3. It supports pagination for large datasets and provides operational insights for multi-tenant management.
 - **`recipe-tracer`**: An end-to-end tracing tool that tracks recipe processing through S3, SQS, and CloudWatch logs, with cache performance analysis and detailed normalization debugging.
 - **`get-diagnostics`**: Collects and analyzes diagnostic telemetry from web extensions, Flutter apps, and Lambda functions for error triage and production monitoring. Default (no flags) produces a global report.
+
+## Build Hygiene
+
+NEVER build scripts which modify source files in place. All build scripts MUST output to a separate build/ or dist/ directory. This prevents accidental source code corruption and ensures reproducible builds. If you detect this haappening, IMMEDIATELY alert the user and fix the build scripts-- this is a critical error and work stoppage event until we fix it.
 
 ## CODE STYLE MANDATE
 
