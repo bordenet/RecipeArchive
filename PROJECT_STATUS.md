@@ -101,8 +101,8 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 | Cognito User Pool | 🟢 Active | - | Multi-tenant enabled |
 | Chrome Extension | 🟢 Ready | 1.0.0 | Manual install only |
 | Safari Extension | 🟢 Ready | 1.0.0 | Manual install only |
-| iOS App | 🟢 Ready | 1.0.0 | Local build only |
-| Android App | 🟢 Ready | 1.0.0 | Local build only |
+| iOS App | 🟢 Ready | 1.0.0 | Local build, Share Extension |
+| Android App | 🟢 Ready | 1.0.0 | Local build, Share Extension |
 
 ### Supported Recipe Sites (14)
 
@@ -112,82 +112,28 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 ✅ Alexandra's Kitchen • Lemons and Zest • The Anthony Kitchen
 
-## Outstanding Work - Sprint Plan
+## Outstanding Work
 
 **Updated:** 2025-11-06
-**Focus Areas:** Missing Lambda deployments, Android recipe capture
 
-### ✅ COMPLETED: Lambda Function Deployments (2025-11-06)
+### High Priority Performance Optimization
 
-1. ✅ **Deployed `backup` Lambda function**
-   - **What it does**: User-facing backup/restore API
-   - **Features**: ZIP backup creation, S3 storage, restore from backup
-   - **API endpoints**: GET/POST /v1/backups, POST /v1/backups/restore
-   - **AWS function**: RecipeArchiveStack-BackupFunction3129A640-snUb7NEst1im
-   - **Configuration**: 256MB memory, 60s timeout
-   - **Deployed**: 2025-11-06T18:41:26Z
+- **Client-Side Recipe Caching (P0)**: Implement local caching in Flutter app to eliminate unnecessary Lambda invocations on every page load
+  - **Current behavior**: Every app load fetches ALL recipes from Lambda → S3 (expensive, slow)
+  - **Target behavior**: Cache recipes locally, only hit Lambda on:
+    - First load (no cache)
+    - User-initiated refresh/pull-to-refresh
+    - Recipe mutations (add, edit, delete, star rating)
+    - Search queries
+    - Cache invalidation (configurable TTL)
+  - **Implementation options**:
+    - `hive` (fast, NoSQL, Flutter-native)
+    - `sqflite` (SQLite, structured queries)
+    - `shared_preferences` (simple key-value, limited to small datasets)
+  - **Impact**: 90%+ reduction in Lambda costs, instant recipe list loads, offline browsing
+  - **Effort**: M (3-8 hours)
 
-2. ✅ **Deployed `diagnostics-mobile-share` Lambda function**
-   - **What it does**: Collects mobile share extension failure telemetry
-   - **Features**: Tracks iOS/Android recipe capture errors for debugging
-   - **API endpoint**: POST /v1/diagnostics/mobile-share-failure
-   - **AWS function**: RecipeArchiveStack-DiagnosticsMobileShareFunction8-yyIWj75BtgvX
-   - **Configuration**: 128MB memory, 10s timeout
-   - **Deployed**: 2025-11-06T18:41:42Z
-
-### 💰 COST OPTIMIZATION: S3 Lifecycle Policies
-
-**Status:** Deployed to AWS (2025-11-06)
-
-3. ✅ **S3 Glacier lifecycle policies deployed**
-   - **Rules applied**: Production S3 bucket lifecycle configuration active
-   - **Transitions**:
-     - Day 90+: Glacier transition (40-60% storage savings)
-     - Day 365+: Deep Archive transition (70-80% savings)
-     - Old versions → Glacier after 30 days
-   - **Estimated savings**: $5-10/month (grows with data)
-
-### 📱 HIGH PRIORITY: Android Recipe Capture (Month 1-2)
-
-**Status:** ✅ Prerequisites complete (Cognito auth working!)
-**Target:** Full iOS feature parity
-**Timeline:** 4 weeks (22 working days)
-
-4. ⏳ **Phase 1: Share Intent Receiver + MethodChannel**
-    - AndroidManifest.xml share intent filter
-    - ShareActivity.kt implementation
-    - Flutter bridge via MethodChannel
-    - SharedPreferences queue mechanism
-    - Effort: L
-
-5. ⏳ **Phase 2: WebView HTML Extraction + Image Download**
-    - WebViewContentLoader.kt (mirrors iOS WKWebView)
-    - OkHttp image downloader
-    - JavaScript HTML extraction
-    - 30-second timeout handling
-    - Effort: L
-
-6. ⏳ **Phase 3: Flutter Integration**
-    - SharedPreferences queue implementation
-    - Dart bridge integration
-    - End-to-end testing
-    - Effort: L
-
-7. ⏳ **Phase 4: Testing & Production Polish**
-    - Test matrix: Chrome, Firefox, Edge, DuckDuckGo
-    - Paywalled sites validation (NYT Cooking, Food Network)
-    - Error handling and telemetry integration
-    - Build script automation
-    - Effort: L
-
-**Effort Sizing:**
-- XS = < 1 hour
-- S = 1-3 hours
-- M = 3-8 hours
-- L = 1-2 days
-- XL = 1+ weeks
-
-### Future Work (Phase 2)
+### Future Enhancements (Phase 2)
 
 - **E2E Test Suite:** Automated parser regression testing (P0-1)
 - **Ingredient Inventory Search:** "What can I make" feature
@@ -224,7 +170,9 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 ✅ Security validation and monitoring
 
-✅ iOS native share extension (WKWebView-based capture)
+✅ iOS native share extension (WKWebView-based HTML/image capture)
+
+✅ Android native share extension (WebView-based HTML/image capture, full iOS parity)
 
 ✅ Screen wakelock for hands-free cooking
 
