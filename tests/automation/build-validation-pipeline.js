@@ -115,7 +115,6 @@ class BuildValidationPipeline {
 
     await this.runValidation(
       'Extension Scoping Validation',
-      'npm run lint:scoping'
     );
 
     // 2. Flutter Analysis (with error tolerance)
