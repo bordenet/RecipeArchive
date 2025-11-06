@@ -8,6 +8,7 @@
 | Validate Quick | `./validate-monorepo.sh --p1` |
 | Validate Medium | `./validate-monorepo.sh --med` |
 | Validate Mobile | `./validate-monorepo.sh --mobile` |
+| Deploy Infrastructure (CDK) | `./scripts/aws/deploy-infrastructure.sh` |
 | Deploy All (AWS + Web) | `./scripts/aws/all.sh` |
 | Deploy Lambda Functions | `./scripts/aws/lambda.sh --all` |
 | Deploy Web App | `./scripts/web/deploy.sh` |
@@ -59,6 +60,27 @@
 | Android Help | `./scripts/android/help.sh` |
 | Android Clean | `./scripts/android/clean.sh` |
 
+## AWS Infrastructure Deployment
+
+| Task | Command |
+| --- | --- |
+| Deploy Infrastructure Stack | `./scripts/aws/deploy-infrastructure.sh` |
+| Show Infrastructure Diff | `./scripts/aws/deploy-infrastructure.sh --diff` |
+| Dry Run (Preview) | `./scripts/aws/deploy-infrastructure.sh --dry-run` |
+| Bootstrap CDK (First Time) | `./scripts/aws/deploy-infrastructure.sh --bootstrap` |
+| Deploy Lambda Code Only | `./scripts/aws/lambda.sh --all` |
+| Deploy Single Lambda | `./scripts/aws/lambda.sh <function-name>` |
+| Full Deployment (Infra + Code + Web) | `./scripts/aws/all.sh` |
+
+**Infrastructure deployment includes:**
+- Cognito user pools and authentication
+- S3 buckets with lifecycle policies (Glacier archiving)
+- Lambda infrastructure (memory, concurrency, log retention)
+- API Gateway with rate limiting (200 req/s, 10k/month)
+- CloudWatch monitoring and billing alerts
+- SQS queues for background processing
+- **Cost optimizations: $45-85/month savings (35-40% reduction)**
+
 ## API Gateway Management Commands
 
 | Command | Purpose |
@@ -73,8 +95,9 @@
 
 | Task | Command |
 | --- | --- |
-| Deploy Monitoring Stack | `cd aws-backend/infrastructure && npx cdk deploy RecipeArchive-Monitoring` |
+| Deploy Monitoring & Alarms | `./scripts/aws/deploy-infrastructure.sh` (includes monitoring) |
 | View CloudWatch Dashboard | Navigate to CloudWatch console → Dashboards → RecipeArchive-Production |
+| Check Lambda Logs | `aws logs tail /aws/lambda/<function-name> --follow` |
 | Test Alarm Triggers | See monitoring implementation plan for test procedures |
 
 ## Testing Commands
