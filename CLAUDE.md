@@ -182,7 +182,33 @@ npm run security:scan                  # Check for security issues
 
 ## New Adopter Security
 
-Browser extensions contain hardcoded AWS infrastructure references. New adopters must deploy their own AWS infrastructure via CDK and run `./scripts/setup-new-adopter-environment.sh` to configure extensions.
+**Browser extensions use build-time code generation for AWS configuration:**
+
+1. **Source code is generic** - No hardcoded AWS values committed to git
+2. **Configuration via .env** - New adopters create `.env` with their AWS infrastructure details
+3. **Build generates config files** - `npm run build:extension-env` creates:
+   - `extensions/*/env-config.js` (gitignored, contains AWS values)
+   - `extensions/*/manifest.json` (gitignored, contains API permissions)
+4. **Clean separation** - Source code loads values from generated config files at runtime
+
+**Setup process for new adopters:**
+```bash
+# 1. Copy and configure environment
+cp .env.example .env
+# Edit .env with YOUR AWS infrastructure
+
+# 2. Generate extension configuration
+./scripts/setup-new-adopter-environment.sh
+
+# 3. Build extensions
+npm run build:extensions
+```
+
+**Key benefits:**
+- ✅ No source code forks required
+- ✅ AWS credentials never committed to git
+- ✅ Easy to update configuration (regenerate files)
+- ✅ Safe distribution (generated files are gitignored)
 
 ## Mobile Development
 
