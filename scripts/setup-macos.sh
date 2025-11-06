@@ -580,8 +580,8 @@ if [ "$ios_setup_needed" = true ]; then
     else
       print_success "Modern Ruby already installed via Homebrew"
       export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+    fi
 
-    
     # Install CocoaPods with modern Ruby
     if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
       if timed_confirm "Install CocoaPods for iOS development?"; then
@@ -604,11 +604,16 @@ if [ "$ios_setup_needed" = true ]; then
     fi
 
     # Install SwiftLint for code quality
+    if ! command -v swiftlint &> /dev/null; then
       if timed_confirm "Install SwiftLint for Swift code quality checks?"; then
         print_info "Installing SwiftLint..."
+        brew install swiftlint
+        print_success "SwiftLint installed"
       else
+        print_warning "Skipping SwiftLint installation."
       fi
     else
+      print_success "SwiftLint already installed"
     fi
 
     # Set up iOS development team (will be configured in .env)
@@ -620,7 +625,6 @@ if [ "$ios_setup_needed" = true ]; then
     print_info "4. Select your development team"
   fi
   fi
-fi
 fi
 
 
@@ -948,10 +952,6 @@ if [ -d "extensions/chrome" ]; then
   if [ -f "package.json" ]; then
     timeout 180 npm install
     print_success "Chrome extension dependencies installed"
-
-      else
-      fi
-    fi
   fi
   
   # Create extension package
@@ -1268,12 +1268,6 @@ if command -v claude &> /dev/null; then
     timeout 30 claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>/dev/null || print_warning "Filesystem MCP server setup failed"
   else
     print_success "Filesystem MCP server already configured"
-  fi
-
-  # Add ESLint MCP server
-    print_info "Adding ESLint MCP server..."
-  else
-    print_success "ESLint MCP server already configured"
   fi
 
   # Add Flutter MCP server
