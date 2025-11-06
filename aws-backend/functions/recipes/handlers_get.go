@@ -119,7 +119,7 @@ func handleListRecipes(ctx context.Context, userID string, queryParams map[strin
 	// Sort results (same logic as search endpoint)
 	sortBy := queryParams["sortBy"]
 	sortOrder := queryParams["sortOrder"]
-	SortSearchResults(activeRecipes, sortBy, sortOrder)
+	SortSearchResults(activeRecipes, sortBy, sortOrder, "")
 
 	// Apply pagination
 	total := len(activeRecipes)

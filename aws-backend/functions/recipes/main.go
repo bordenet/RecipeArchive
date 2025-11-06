@@ -234,8 +234,8 @@ func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequ
 		}
 	}
 
-	// Sort results (cost-efficient: in-memory sorting)
-	SortSearchResults(matchingRecipes, sortBy, sortOrder)
+	// Sort results (cost-efficient: in-memory sorting with relevance scoring)
+	SortSearchResults(matchingRecipes, sortBy, sortOrder, searchQuery)
 
 	// Cache the full results for future requests (Lambda warm invocations)
 	searchCache.Set(cacheKey, matchingRecipes, len(matchingRecipes))
