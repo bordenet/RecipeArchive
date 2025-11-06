@@ -44,6 +44,8 @@ export class RecipeArchiveStack extends cdk.Stack {
   private _invitationManagerFunction: lambda.Function | undefined;
   private _registrationHandlerFunction: lambda.Function | undefined;
   private _analyticsFunction: lambda.Function | undefined;
+  private _backupFunction: lambda.Function | undefined;
+  private _diagnosticsMobileShareFunction: lambda.Function | undefined;
 
   constructor(scope: Construct, id: string, props: RecipeArchiveStackProps) {
     super(scope, id, props);
@@ -569,6 +571,49 @@ export class RecipeArchiveStack extends cdk.Stack {
     adminInvitationStatusTokenResource.addMethod(
       'GET',
       invitationManagerIntegration
+    );
+
+    // Backup endpoints: GET/POST /v1/backups (authenticated)
+    const backupsResource = v1.addResource('backups');
+    const backupIntegration = new apigateway.LambdaIntegration(
+      this.getBackupFunction()
+    );
+
+    // List backups: GET /v1/backups
+    backupsResource.addMethod('GET', backupIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
+    });
+
+    // Create backup: POST /v1/backups
+    backupsResource.addMethod('POST', backupIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
+    });
+
+    // Restore from backup: POST /v1/backups/restore
+    const backupRestoreResource = backupsResource.addResource('restore');
+    backupRestoreResource.addMethod('POST', backupIntegration, {
+      authorizer: cognitoAuthorizer,
+      requestValidator: requestValidator,
+    });
+
+    // Mobile share diagnostics: POST /v1/diagnostics/mobile-share-failure (authenticated)
+    // Used by iOS/Android share extensions to report capture failures
+    const diagnosticsV1Resource = v1.addResource('diagnostics');
+    const mobileShareFailureResource = diagnosticsV1Resource.addResource(
+      'mobile-share-failure'
+    );
+    const diagnosticsMobileShareIntegration = new apigateway.LambdaIntegration(
+      this.getDiagnosticsMobileShareFunction()
+    );
+    mobileShareFailureResource.addMethod(
+      'POST',
+      diagnosticsMobileShareIntegration,
+      {
+        authorizer: cognitoAuthorizer,
+        requestValidator: requestValidator,
+      }
     );
 
     // Auth Endpoints for Registration
@@ -1127,5 +1172,59 @@ export class RecipeArchiveStack extends cdk.Stack {
       );
     }
     return this._analyticsFunction;
+  }
+
+  public getBackupFunction(): lambda.Function {
+    if (!this._backupFunction) {
+      this._backupFunction = new lambda.Function(
+        this,
+        'BackupFunction',
+        {
+          runtime: lambda.Runtime.PROVIDED_AL2,
+          handler: 'bootstrap',
+          code: lambda.Code.fromAsset('../functions/dist/backup-package'),
+          timeout: cdk.Duration.seconds(60), // Backup operations may take time
+          memorySize: 256, // Higher memory for ZIP compression
+          reservedConcurrentExecutions: 3, // Low-frequency user-initiated function
+          logRetention: logs.RetentionDays.TWO_WEEKS, // 14 days retention
+          environment: {
+            ENVIRONMENT: this.stackEnvironment,
+            REGION: this.region,
+            S3_STORAGE_BUCKET: this.storageBucket.bucketName,
+            COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+          },
+          role: this.lambdaRole,
+        }
+      );
+    }
+    return this._backupFunction;
+  }
+
+  public getDiagnosticsMobileShareFunction(): lambda.Function {
+    if (!this._diagnosticsMobileShareFunction) {
+      this._diagnosticsMobileShareFunction = new lambda.Function(
+        this,
+        'DiagnosticsMobileShareFunction',
+        {
+          runtime: lambda.Runtime.PROVIDED_AL2,
+          handler: 'bootstrap',
+          code: lambda.Code.fromAsset(
+            '../functions/dist/diagnostics-mobile-share-package'
+          ),
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128, // Simple telemetry collection
+          reservedConcurrentExecutions: 5, // Medium-frequency diagnostic function
+          logRetention: logs.RetentionDays.ONE_WEEK, // 7 days retention (diagnostic data)
+          environment: {
+            ENVIRONMENT: this.stackEnvironment,
+            REGION: this.region,
+            S3_STORAGE_BUCKET: this.storageBucket.bucketName,
+            COGNITO_USER_POOL_ID: this.userPool.userPoolId,
+          },
+          role: this.lambdaRole,
+        }
+      );
+    }
+    return this._diagnosticsMobileShareFunction;
   }
 }
