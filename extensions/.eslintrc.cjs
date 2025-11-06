@@ -1,2 +1,3 @@
 // Forward to root ESLint configuration
-module.exports = require("../.eslintrc.cjs");
+const path = require("path");
+module.exports = require(path.resolve(__dirname, "../.eslintrc.cjs"));
