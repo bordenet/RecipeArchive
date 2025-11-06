@@ -18,6 +18,7 @@ module.exports = {
     CognitoAuth: "readonly",
     ChromeCognitoAuth: "readonly",
     CONFIG: "readonly",
+    ENV_CONFIG: "readonly",
     module: "writable",
     global: "writable",
   },

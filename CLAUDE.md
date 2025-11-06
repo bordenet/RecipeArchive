@@ -40,26 +40,6 @@ The monorepo validator features a real-time terminal UI with structured logging:
 
 See [docs/validation-dashboard-design.md](docs/validation-dashboard-design.md) for complete design documentation.
 
-## Outstanding Work
-
-### Android Recipe Capture Implementation
-
-**Status:** Ready to implement - Android authentication now working!
-
-**Implementation Plan:**
-- See [ADR 003](docs/adr/003-android-recipe-capture-implementation.md) for complete execution plan
-- Phase 1: Share Intent Receiver + MethodChannel (Week 1)
-- Phase 2: WebView HTML Extraction + Image Download (Week 2)
-- Phase 3: Flutter Integration (Week 3)
-- Phase 4: Testing & Production Polish (Week 4)
-- Target: Full parity with iOS WKWebView implementation
-
-**Recent Fixes:**
-- ✅ Android Cognito authentication working on emulator
-- ✅ .env file correctly bundled in APK
-- ✅ Build scripts auto-sync .env from root before every build
-- ✅ Emulator runs successfully (Medium_Phone_API_36.1 - ARM64)
-
 ALWAYS review COMMANDS.md to find project-specific tools, including tools for diagnostic error harvesting, tracing, and deployments. DO NOT "wing it" with direct S3 access, direct lambda deployments, etc.
 
 ### Infrastructure Validation Protocol
@@ -299,6 +279,27 @@ These conventions ensure consistent, maintainable, production-grade automation a
 - `recipe_archive/ios/RecipeArchive/ShareViewController.swift` - Share Extension entry point
 - `recipe_archive/ios/Runner/AppDelegate.swift` - Flutter integration
 - `recipe_archive/lib/services/share_channel.dart` - Dart bridge
+
+### Android Recipe Capture
+
+**Architecture**: Full parity with iOS three-tier approach (see [ADR 003](docs/adr/003-android-recipe-capture-implementation.md))
+1. **WebView Proxy** (primary) - Loads page in background, extracts HTML + images
+2. **SharedPreferences Queue** - Reliable cross-process communication
+3. **URL-only** - Fallback for public content
+
+**Key Implementation**: [WebViewContentLoader.kt](recipe_archive/android/app/src/main/kotlin/com/recipeArchive/recipe_archive/WebViewContentLoader.kt)
+- Off-screen WebView loads URL with authenticated session (cookies, headers)
+- JavaScript extracts HTML + image URLs
+- OkHttp downloads images (bypasses CDN restrictions)
+- Base64 encodes and queues via SharedPreferences
+- Flutter app processes via MethodChannel
+
+**Files**:
+- `recipe_archive/android/app/src/main/kotlin/com/recipeArchive/recipe_archive/ShareActivity.kt` - Share intent receiver
+- `recipe_archive/android/app/src/main/kotlin/com/recipeArchive/recipe_archive/WebViewContentLoader.kt` - WebView loader
+- `recipe_archive/android/app/src/main/kotlin/com/recipeArchive/recipe_archive_fresh/MainActivity.kt` - MethodChannel bridge
+- `recipe_archive/android/app/src/main/AndroidManifest.xml` - Share intent configuration
+- `recipe_archive/lib/services/share_channel.dart` - Dart bridge (shared with iOS)
 
 ### Android Builds
 

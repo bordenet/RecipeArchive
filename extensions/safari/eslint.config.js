@@ -46,6 +46,7 @@ export default [
         SafariCognitoAuth: "readonly",
         JWTValidator: "readonly",
         CONFIG: "readonly",
+        ENV_CONFIG: "readonly",
 
         // Test globals
         jest: "readonly",
