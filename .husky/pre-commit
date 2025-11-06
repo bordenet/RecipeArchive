@@ -1,1 +1,5 @@
-npm test
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run medium-tier validation before commit
+./validate-monorepo.sh --med
