@@ -1,9 +1,9 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 
 export interface RecipeArchiveApiStackProps extends cdk.StackProps {
   environment: string;
@@ -26,17 +26,17 @@ export class RecipeArchiveApiStack extends cdk.Stack {
     // Import existing Cognito User Pool
     const userPool = cognito.UserPool.fromUserPoolId(
       this,
-      'ImportedUserPool',
+      "ImportedUserPool",
       props.userPoolId
     );
 
     // IAM Role for Lambda Functions with secure naming
-    const lambdaRole = new iam.Role(this, 'SecureApiLambdaRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+    const lambdaRole = new iam.Role(this, "SecureApiLambdaRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       roleName: `recipe-api-lambda-role-${props.secureRandomId}`,
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName(
-          'service-role/AWSLambdaBasicExecutionRole'
+          "service-role/AWSLambdaBasicExecutionRole"
         ),
       ],
       inlinePolicies: {
@@ -45,11 +45,11 @@ export class RecipeArchiveApiStack extends cdk.Stack {
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: [
-                's3:GetObject',
-                's3:PutObject',
-                's3:DeleteObject',
-                's3:ListBucket',
-                's3:GetObjectAttributes',
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:ListBucket",
+                "s3:GetObjectAttributes",
               ],
               resources: [
                 `arn:aws:s3:::${props.storageBucketName}`,
@@ -63,10 +63,10 @@ export class RecipeArchiveApiStack extends cdk.Stack {
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: [
-                'cognito-idp:AdminGetUser',
-                'cognito-idp:AdminCreateUser',
-                'cognito-idp:AdminSetUserPassword',
-                'cognito-idp:AdminListGroupsForUser',
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminCreateUser",
+                "cognito-idp:AdminSetUserPassword",
+                "cognito-idp:AdminListGroupsForUser",
               ],
               resources: [userPool.userPoolArn],
             }),
@@ -78,11 +78,11 @@ export class RecipeArchiveApiStack extends cdk.Stack {
     // Health Lambda Function (minimal, cost-effective)
     const healthFunction = new lambda.Function(
       this,
-      'SecureApiHealthFunction',
+      "SecureApiHealthFunction",
       {
         runtime: lambda.Runtime.PROVIDED_AL2,
-        handler: 'bootstrap',
-        code: lambda.Code.fromAsset('../functions/dist/health-package'),
+        handler: "bootstrap",
+        code: lambda.Code.fromAsset("../functions/dist/health-package"),
         functionName: `recipe-api-health-${props.secureRandomId}`,
         timeout: cdk.Duration.seconds(10),
         memorySize: 128, // Minimal memory for cost control
@@ -99,27 +99,27 @@ export class RecipeArchiveApiStack extends cdk.Stack {
     );
 
     // API Gateway with secure naming and minimal configuration
-    this.api = new apigateway.RestApi(this, 'SecureApi', {
+    this.api = new apigateway.RestApi(this, "SecureApi", {
       restApiName: `recipe-api-${props.secureRandomId}`,
-      description: 'RecipeArchive Secure API - Step 2 (Health endpoint only)',
+      description: "RecipeArchive Secure API - Step 2 (Health endpoint only)",
       defaultCorsPreflightOptions: {
         allowOrigins: [
-          'https://localhost:3000',
-          'https://d1jcaphz4458q7.cloudfront.net',
+          "https://localhost:3000",
+          "https://d1jcaphz4458q7.cloudfront.net",
         ],
-        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowHeaders: [
-          'Content-Type',
-          'Authorization',
-          'X-Amz-Date',
-          'X-Api-Key',
-          'X-Amz-Security-Token',
+          "Content-Type",
+          "Authorization",
+          "X-Amz-Date",
+          "X-Api-Key",
+          "X-Amz-Security-Token",
         ],
         allowCredentials: true,
       },
       deployOptions: {
-        stageName: 'prod',
-        description: 'Production stage for secure API',
+        stageName: "prod",
+        description: "Production stage for secure API",
       },
     });
 
@@ -127,33 +127,33 @@ export class RecipeArchiveApiStack extends cdk.Stack {
     const healthIntegration = new apigateway.LambdaIntegration(healthFunction);
 
     // Add health resource and method (minimal configuration)
-    const healthResource = this.api.root.addResource('health');
-    healthResource.addMethod('GET', healthIntegration);
+    const healthResource = this.api.root.addResource("health");
+    healthResource.addMethod("GET", healthIntegration);
 
     // Update Lambda function with new API Gateway URL
-    healthFunction.addEnvironment('API_GATEWAY_URL', this.api.url);
+    healthFunction.addEnvironment("API_GATEWAY_URL", this.api.url);
 
     // Output secure API identifiers
-    new cdk.CfnOutput(this, 'SecureApiGatewayUrl', {
+    new cdk.CfnOutput(this, "SecureApiGatewayUrl", {
       value: this.api.url,
-      description: 'Secure API Gateway URL',
+      description: "Secure API Gateway URL",
     });
 
-    new cdk.CfnOutput(this, 'SecureApiGatewayId', {
+    new cdk.CfnOutput(this, "SecureApiGatewayId", {
       value: this.api.restApiId,
-      description: 'Secure API Gateway ID',
+      description: "Secure API Gateway ID",
     });
 
-    new cdk.CfnOutput(this, 'SecureHealthEndpoint', {
+    new cdk.CfnOutput(this, "SecureHealthEndpoint", {
       value: `${this.api.url}health`,
-      description: 'Secure Health Check Endpoint',
+      description: "Secure Health Check Endpoint",
     });
 
     // Add tags for cost tracking
-    cdk.Tags.of(this).add('Project', `RecipeArchive-${props.secureRandomId}`);
-    cdk.Tags.of(this).add('Environment', props.environment);
-    cdk.Tags.of(this).add('SecureStack', 'true');
-    cdk.Tags.of(this).add('StackType', 'API-Gateway');
-    cdk.Tags.of(this).add('CreatedBy', 'RecipeArchive-API-CDK');
+    cdk.Tags.of(this).add("Project", `RecipeArchive-${props.secureRandomId}`);
+    cdk.Tags.of(this).add("Environment", props.environment);
+    cdk.Tags.of(this).add("SecureStack", "true");
+    cdk.Tags.of(this).add("StackType", "API-Gateway");
+    cdk.Tags.of(this).add("CreatedBy", "RecipeArchive-API-CDK");
   }
 }

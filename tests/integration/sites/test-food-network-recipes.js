@@ -4,17 +4,17 @@
  * @jest-environment jsdom
  */
 
-import { chromium } from 'playwright';
+import { chromium } from "playwright";
 
 const FOOD_NETWORK_RECIPES = [
   {
-    url: 'https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048',
-    expected: 'Margarita',
-    category: 'cocktails',
+    url: "https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048",
+    expected: "Margarita",
+    category: "cocktails",
   },
 ];
 
-describe('Food Network Recipe Extraction', () => {
+describe("Food Network Recipe Extraction", () => {
   let browser;
   let context;
 
@@ -22,7 +22,7 @@ describe('Food Network Recipe Extraction', () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext({
       userAgent:
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     });
   });
 
@@ -31,13 +31,13 @@ describe('Food Network Recipe Extraction', () => {
   });
 
   test.each(FOOD_NETWORK_RECIPES)(
-    'should extract recipe data from %s',
+    "should extract recipe data from %s",
     async (recipe) => {
       const page = await context.newPage();
 
       try {
         await page.goto(recipe.url, {
-          waitUntil: 'domcontentloaded',
+          waitUntil: "domcontentloaded",
           timeout: 60000,
         });
         await page.waitForTimeout(3000);
@@ -70,7 +70,7 @@ async function testRecipeExtraction(page, recipe) {
     // JSON-LD Extraction (Primary method for Food Network)
     function extractRecipeFromJsonLd() {
       const jsonLdScripts = document.querySelectorAll(
-        'script[type="application/ld+json"]'
+        "script[type=\"application/ld+json\"]"
       );
 
       for (const script of jsonLdScripts) {
@@ -80,8 +80,8 @@ async function testRecipeExtraction(page, recipe) {
 
           // Handle array of JSON-LD objects
           if (Array.isArray(jsonData)) {
-            recipeData = jsonData.find((item) => item['@type'] === 'Recipe');
-          } else if (jsonData['@type'] === 'Recipe') {
+            recipeData = jsonData.find((item) => item["@type"] === "Recipe");
+          } else if (jsonData["@type"] === "Recipe") {
             recipeData = jsonData;
           }
 
@@ -94,10 +94,10 @@ async function testRecipeExtraction(page, recipe) {
             if (recipeData.recipeInstructions) {
               const stepItems = recipeData.recipeInstructions
                 .map((instruction) => {
-                  if (typeof instruction === 'string') return instruction;
+                  if (typeof instruction === "string") return instruction;
                   if (instruction.text) return instruction.text;
                   if (instruction.name) return instruction.name;
-                  return '';
+                  return "";
                 })
                 .filter(Boolean);
 
@@ -107,7 +107,7 @@ async function testRecipeExtraction(page, recipe) {
             }
 
             return {
-              method: 'json-ld',
+              method: "json-ld",
               title: recipeData.name,
               ingredients,
               steps,
@@ -126,7 +126,7 @@ async function testRecipeExtraction(page, recipe) {
             };
           }
         } catch (e) {
-          console.log('Food Network: JSON-LD parsing failed:', e.message);
+          console.log("Food Network: JSON-LD parsing failed:", e.message);
         }
       }
       return null;
@@ -135,16 +135,16 @@ async function testRecipeExtraction(page, recipe) {
     // Food Network HTML extraction fallback
     function extractFoodNetworkRecipe() {
       const title =
-        document.querySelector('h1')?.textContent?.trim() ||
+        document.querySelector("h1")?.textContent?.trim() ||
         document.title ||
-        'Unknown Recipe';
+        "Unknown Recipe";
 
       // Extract ingredients - avoiding metadata
       let ingredients = [];
       const ingredientSelectors = [
-        '.o-RecipeInfo__a-Ingredients li',
-        '.o-Ingredients__a-ListItem',
-        'section[aria-labelledby="recipe-ingredients-section"] li',
+        ".o-RecipeInfo__a-Ingredients li",
+        ".o-Ingredients__a-ListItem",
+        "section[aria-labelledby=\"recipe-ingredients-section\"] li",
       ];
 
       for (const selector of ingredientSelectors) {
@@ -156,13 +156,13 @@ async function testRecipeExtraction(page, recipe) {
               (text) =>
                 text &&
                 text.length > 3 &&
-                !text.includes('Level:') &&
-                !text.includes('Total:') &&
-                !text.includes('Prep:') &&
-                !text.includes('Yield:') &&
-                !text.includes('Nutrition Info') &&
-                !text.includes('Save Recipe') &&
-                !text.includes('{')
+                !text.includes("Level:") &&
+                !text.includes("Total:") &&
+                !text.includes("Prep:") &&
+                !text.includes("Yield:") &&
+                !text.includes("Nutrition Info") &&
+                !text.includes("Save Recipe") &&
+                !text.includes("{")
             );
 
           if (items.length > 0) {
@@ -175,10 +175,10 @@ async function testRecipeExtraction(page, recipe) {
       // Extract steps
       let steps = [];
       const stepSelectors = [
-        '.o-Method__m-Body li',
-        '.o-Method li',
-        '.recipe-directions li',
-        'section[aria-labelledby="recipe-instructions-section"] li',
+        ".o-Method__m-Body li",
+        ".o-Method li",
+        ".recipe-directions li",
+        "section[aria-labelledby=\"recipe-instructions-section\"] li",
       ];
 
       for (const selector of stepSelectors) {
@@ -196,7 +196,7 @@ async function testRecipeExtraction(page, recipe) {
       }
 
       return {
-        method: 'html-parsing',
+        method: "html-parsing",
         title,
         ingredients,
         steps,

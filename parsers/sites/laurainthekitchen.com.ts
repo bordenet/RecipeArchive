@@ -1,10 +1,10 @@
-import { BaseParser } from '../base-parser';
-import * as cheerio from 'cheerio';
-import { Recipe } from '../types';
+import { BaseParser } from "../base-parser";
+import * as cheerio from "cheerio";
+import { Recipe } from "../types";
 
 export class LauraInTheKitchenParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('laurainthekitchen.com/recipes');
+    return url.includes("laurainthekitchen.com/recipes");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -17,22 +17,22 @@ export class LauraInTheKitchenParser extends BaseParser {
         title: this.sanitizeText(jsonLd.name),
         source: url,
         author:
-          typeof jsonLd.author === 'string'
+          typeof jsonLd.author === "string"
             ? jsonLd.author
-            : jsonLd.author?.name || 'Laura Vitale',
+            : jsonLd.author?.name || "Laura Vitale",
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
           text: this.sanitizeText(i),
         })),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || []).map((i) =>
-            typeof i === 'string' ? this.sanitizeText(i) : this.sanitizeText(i.text)
+            typeof i === "string" ? this.sanitizeText(i) : this.sanitizeText(i.text)
           )
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -47,32 +47,32 @@ export class LauraInTheKitchenParser extends BaseParser {
     }
 
     // Fallback to HTML scraping if JSON-LD fails
-    const title = this.sanitizeText($('.cs-page-title h1').first().text());
-    const author = 'Laura Vitale';
-    const imageUrl = $('meta[property="og:image"]').attr('content') || '';
+    const title = this.sanitizeText($(".cs-page-title h1").first().text());
+    const author = "Laura Vitale";
+    const imageUrl = $("meta[property=\"og:image\"]").attr("content") || "";
 
     // Parse prep and cook time from recipe details
     let prepTime: string | undefined;
     let cookTime: string | undefined;
     let totalTime: string | undefined;
-    let servings = '';
+    let servings = "";
 
-    $('.cs-recipe-details > div').each((_: any, el: any) => {
+    $(".cs-recipe-details > div").each((_: any, el: any) => {
       const fullText = $(el).text();
-      const spanText = $(el).find('span').text().toLowerCase();
+      const spanText = $(el).find("span").text().toLowerCase();
 
-      if (spanText.includes('preparation')) {
+      if (spanText.includes("preparation")) {
         const match = fullText.match(/(\d+)\s*minutes?/i);
         if (match) prepTime = `PT${match[1]}M`;
-      } else if (spanText.includes('cook')) {
+      } else if (spanText.includes("cook")) {
         const match = fullText.match(/(\d+)\s*(hours?)?\s*(\d+)?\s*minutes?/i);
         if (match) {
           const hours = match[1] ? parseInt(match[1], 10) : 0;
           const mins = match[3] ? parseInt(match[3], 10) : 0;
           cookTime = hours > 0 ? `PT${hours}H${mins}M` : `PT${mins}M`;
         }
-      } else if (spanText.includes('servings')) {
-        servings = fullText.replace(/servings/i, '').trim();
+      } else if (spanText.includes("servings")) {
+        servings = fullText.replace(/servings/i, "").trim();
       }
     });
 
@@ -90,7 +90,7 @@ export class LauraInTheKitchenParser extends BaseParser {
 
     // Parse ingredients
     const ingredients: { text: string }[] = [];
-    $('.cs-ingredients-check-list li').each((_: any, el: any) => {
+    $(".cs-ingredients-check-list li").each((_: any, el: any) => {
       const text = this.sanitizeText($(el).text());
       if (text) {
         ingredients.push({ text });
@@ -99,7 +99,7 @@ export class LauraInTheKitchenParser extends BaseParser {
 
     // Parse instructions
     const instructions: { stepNumber: number; text: string }[] = [];
-    const instructionText = $('.cs-recipe-single-preparation ul').text();
+    const instructionText = $(".cs-recipe-single-preparation ul").text();
     // Instructions are separated by numbers like "1)", "2)", etc.
     const steps = instructionText.split(/\d+\)/).filter((s: any) => s.trim().length > 0);
     steps.forEach((step: any, idx: any) => {

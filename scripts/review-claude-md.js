@@ -7,14 +7,14 @@
  * opportunities to keep the project guide concise and current.
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { readFileSync, existsSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = join(__dirname, '..');
-const claudeFile = join(projectRoot, 'CLAUDE.md');
+const projectRoot = join(__dirname, "..");
+const claudeFile = join(projectRoot, "CLAUDE.md");
 
 class ClaudeReviewer {
   constructor() {
@@ -31,12 +31,12 @@ class ClaudeReviewer {
 
   review() {
     if (!existsSync(claudeFile)) {
-      console.log('✅ No CLAUDE.md found - skipping review');
+      console.log("✅ No CLAUDE.md found - skipping review");
       return true;
     }
 
-    const content = readFileSync(claudeFile, 'utf8');
-    const lines = content.split('\n');
+    const content = readFileSync(claudeFile, "utf8");
+    const lines = content.split("\n");
     this.stats.totalLines = lines.length;
 
     this.checkLength(lines);
@@ -82,16 +82,16 @@ class ClaudeReviewer {
     const outdatedPatterns = [
       {
         pattern: /✅.*(?:complete|done|finished|ready)/gi,
-        section: 'Completed items that could be archived',
+        section: "Completed items that could be archived",
       },
-      { pattern: /august 202[0-4]/gi, section: 'Old date references' },
+      { pattern: /august 202[0-4]/gi, section: "Old date references" },
       {
         pattern: /\b(?:todo|fixme|hack|temporary)\b/gi,
-        section: 'Development artifacts',
+        section: "Development artifacts",
       },
       {
         pattern: /status.*(?:in progress|blocked|waiting)/gi,
-        section: 'Stale status updates',
+        section: "Stale status updates",
       },
     ];
 
@@ -127,9 +127,9 @@ class ClaudeReviewer {
 
   checkForVerbosity(content) {
     const verbosePatterns = [
-      { pattern: /```[\s\S]*?```/g, name: 'Code blocks', threshold: 10 },
-      { pattern: /^\s*-\s+/gm, name: 'List items', threshold: 50 },
-      { pattern: /\*\*[^*]+\*\*/g, name: 'Bold text emphasis', threshold: 30 },
+      { pattern: /```[\s\S]*?```/g, name: "Code blocks", threshold: 10 },
+      { pattern: /^\s*-\s+/gm, name: "List items", threshold: 50 },
+      { pattern: /\*\*[^*]+\*\*/g, name: "Bold text emphasis", threshold: 30 },
     ];
 
     verbosePatterns.forEach(({ pattern, name, threshold }) => {
@@ -143,9 +143,9 @@ class ClaudeReviewer {
   }
 
   reportFindings() {
-    console.log('\n🔍 CLAUDE.md Review Report');
+    console.log("\n🔍 CLAUDE.md Review Report");
     console.log(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     );
 
     console.log(
@@ -153,28 +153,28 @@ class ClaudeReviewer {
     );
 
     if (this.warnings.length > 0) {
-      console.log('\n⚠️  WARNINGS (Action Required):');
+      console.log("\n⚠️  WARNINGS (Action Required):");
       this.warnings.forEach((warning) => console.log(`   ${warning}`));
     }
 
     if (this.suggestions.length > 0) {
-      console.log('\n💡 SUGGESTIONS (Consider for next cleanup):');
+      console.log("\n💡 SUGGESTIONS (Consider for next cleanup):");
       this.suggestions.forEach((suggestion) => console.log(`   ${suggestion}`));
     }
 
     if (this.warnings.length === 0 && this.suggestions.length === 0) {
-      console.log('\n✅ CLAUDE.md looks good - no immediate pruning needed');
+      console.log("\n✅ CLAUDE.md looks good - no immediate pruning needed");
     }
 
     console.log(
-      '\n📋 COMMIT RULE: Review suggestions above and consider consolidating'
+      "\n📋 COMMIT RULE: Review suggestions above and consider consolidating"
     );
-    console.log('   • Archive completed features to reduce redundancy');
-    console.log('   • Merge related sections for better organization');
-    console.log('   • Remove outdated status updates and TODOs');
-    console.log('   • Keep essential context, prune verbose explanations');
+    console.log("   • Archive completed features to reduce redundancy");
+    console.log("   • Merge related sections for better organization");
+    console.log("   • Remove outdated status updates and TODOs");
+    console.log("   • Keep essential context, prune verbose explanations");
     console.log(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
     );
   }
 }

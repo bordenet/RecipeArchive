@@ -5,7 +5,7 @@
  * and HTML fixtures.
  */
 
-import { Recipe } from '../types';
+import { Recipe } from "../types";
 
 export interface ParserTestCase {
   name: string;
@@ -39,7 +39,7 @@ export class ParserTestRunner {
       // Use HTML fixture if provided, otherwise this would need to fetch the URL
       if (!testCase.htmlFixture) {
         errors.push(
-          'No HTML fixture provided - cannot test without HTML content'
+          "No HTML fixture provided - cannot test without HTML content"
         );
         return {
           testCase,
@@ -67,19 +67,19 @@ export class ParserTestRunner {
       );
 
       // Validate required fields are present
-      if (!actualRecipe?.title || actualRecipe.title.trim() === '') {
-        errors.push('Missing or empty title');
+      if (!actualRecipe?.title || actualRecipe.title.trim() === "") {
+        errors.push("Missing or empty title");
       }
 
       if (!actualRecipe?.ingredients || actualRecipe.ingredients.length === 0) {
-        errors.push('Missing or empty ingredients');
+        errors.push("Missing or empty ingredients");
       }
 
       if (
         !actualRecipe?.instructions ||
         actualRecipe.instructions.length === 0
       ) {
-        errors.push('Missing or empty instructions');
+        errors.push("Missing or empty instructions");
       }
 
       // Check expected values
@@ -92,7 +92,7 @@ export class ParserTestRunner {
 
         const actualValue = (actualRecipe as any)[key];
 
-        if (key === 'ingredients' || key === 'instructions') {
+        if (key === "ingredients" || key === "instructions") {
           // For arrays, check minimum expected count
           if (Array.isArray(expectedValue) && Array.isArray(actualValue)) {
             if (actualValue.length < expectedValue.length) {
@@ -101,11 +101,11 @@ export class ParserTestRunner {
               );
             }
           }
-        } else if (key === 'title') {
+        } else if (key === "title") {
           // For title, check if it contains expected keywords
           if (
-            typeof expectedValue === 'string' &&
-            typeof actualValue === 'string'
+            typeof expectedValue === "string" &&
+            typeof actualValue === "string"
           ) {
             const expectedWords = expectedValue.toLowerCase().split(/\s+/);
             const actualTitle = actualValue.toLowerCase();
@@ -114,7 +114,7 @@ export class ParserTestRunner {
             );
             if (missingWords.length > 0) {
               errors.push(
-                `Title missing expected words: ${missingWords.join(', ')}`
+                `Title missing expected words: ${missingWords.join(", ")}`
               );
             }
           }
@@ -156,23 +156,23 @@ export class ParserTestRunner {
     const passedTests = results.filter((r) => r.passed).length;
     const failedTests = totalTests - passedTests;
 
-    let report = `Parser Test Results\n`;
-    report += `==================\n`;
+    let report = "Parser Test Results\n";
+    report += "==================\n";
     report += `Total Tests: ${totalTests}\n`;
     report += `Passed: ${passedTests}\n`;
     report += `Failed: ${failedTests}\n`;
     report += `Success Rate: ${((passedTests / totalTests) * 100).toFixed(1)}%\n\n`;
 
     if (failedTests > 0) {
-      report += `Failed Tests:\n`;
-      report += `=============\n`;
+      report += "Failed Tests:\n";
+      report += "=============\n";
 
       results
         .filter((r) => !r.passed)
         .forEach((result) => {
           report += `\n❌ ${result.testCase.name}\n`;
           report += `   URL: ${result.testCase.url}\n`;
-          report += `   Errors:\n`;
+          report += "   Errors:\n";
           result.errors.forEach((error) => {
             report += `   - ${error}\n`;
           });

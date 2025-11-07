@@ -1,6 +1,6 @@
-import { BaseParser } from '../base-parser.js';
-import { Recipe } from '../types.js';
-import * as cheerio from 'cheerio';
+import { BaseParser } from "../base-parser.js";
+import { Recipe } from "../types.js";
+import * as cheerio from "cheerio";
 
 /**
  * Washington Post Recipe Parser
@@ -17,11 +17,11 @@ import * as cheerio from 'cheerio';
 export class WashingtonPostParser extends BaseParser {
   canParse(url: string): boolean {
     return (
-      url.includes('washingtonpost.com/food') ||
-      (url.includes('washingtonpost.com') && url.includes('recipe')) ||
-      url.includes('washingtonpost.com/news/voraciously') ||
-      (url.includes('washingtonpost.com') &&
-        (url.includes('voraciously') || url.includes('food')))
+      url.includes("washingtonpost.com/food") ||
+      (url.includes("washingtonpost.com") && url.includes("recipe")) ||
+      url.includes("washingtonpost.com/news/voraciously") ||
+      (url.includes("washingtonpost.com") &&
+        (url.includes("voraciously") || url.includes("food")))
     );
   }
 
@@ -44,11 +44,11 @@ export class WashingtonPostParser extends BaseParser {
 
     // Fallback: If no instructions found, use recipe description as a single step
     if (instructions.length === 0) {
-      const description = metadata.notes?.[0] || '';
+      const description = metadata.notes?.[0] || "";
       if (description) {
         instructions = [{ stepNumber: 1, text: description }];
       } else {
-        instructions = [{ stepNumber: 1, text: 'No instructions provided.' }];
+        instructions = [{ stepNumber: 1, text: "No instructions provided." }];
       }
     }
 
@@ -75,12 +75,12 @@ export class WashingtonPostParser extends BaseParser {
   private extractTitle($: cheerio.CheerioAPI): string {
     // Washington Post title selectors (in order of preference)
     const titleSelectors = [
-      'h1[data-qa="headline"]',
-      'h1.headline',
-      'h1.font--headline',
-      'h1',
-      '.headline h1',
-      '[data-qa="headline"]',
+      "h1[data-qa=\"headline\"]",
+      "h1.headline",
+      "h1.font--headline",
+      "h1",
+      ".headline h1",
+      "[data-qa=\"headline\"]",
     ];
 
     for (const selector of titleSelectors) {
@@ -90,7 +90,7 @@ export class WashingtonPostParser extends BaseParser {
       }
     }
 
-    return 'Recipe from Washington Post';
+    return "Recipe from Washington Post";
   }
 
   private extractIngredients($: cheerio.CheerioAPI): Array<{ text: string }> {
@@ -98,12 +98,12 @@ export class WashingtonPostParser extends BaseParser {
 
     // Washington Post ingredient selectors
     const ingredientSelectors = [
-      '.recipe-ingredients li',
-      '.ingredients-section li',
-      '.ingredient-list li',
-      'ul[data-qa="ingredients"] li',
-      '.wpds-box ul li', // Washington Post Design System
-      'li[data-ingredient]',
+      ".recipe-ingredients li",
+      ".ingredients-section li",
+      ".ingredient-list li",
+      "ul[data-qa=\"ingredients\"] li",
+      ".wpds-box ul li", // Washington Post Design System
+      "li[data-ingredient]",
     ];
 
     for (const selector of ingredientSelectors) {
@@ -131,12 +131,12 @@ export class WashingtonPostParser extends BaseParser {
 
     // Washington Post instruction selectors
     const instructionSelectors = [
-      '.recipe-instructions li',
-      '.instructions-section li',
-      '.method-steps li',
-      'ol[data-qa="instructions"] li',
-      '.recipe-method li',
-      '.directions li',
+      ".recipe-instructions li",
+      ".instructions-section li",
+      ".method-steps li",
+      "ol[data-qa=\"instructions\"] li",
+      ".recipe-method li",
+      ".directions li",
     ];
 
     for (const selector of instructionSelectors) {
@@ -163,24 +163,24 @@ export class WashingtonPostParser extends BaseParser {
   private extractImage($: cheerio.CheerioAPI): string | undefined {
     // Washington Post image selectors
     const imageSelectors = [
-      '.recipe-hero img',
-      '.lead-image img',
-      '.featured-image img',
-      'img[data-qa="hero-image"]',
-      '.wpds-image img',
-      'meta[property="og:image"]',
+      ".recipe-hero img",
+      ".lead-image img",
+      ".featured-image img",
+      "img[data-qa=\"hero-image\"]",
+      ".wpds-image img",
+      "meta[property=\"og:image\"]",
     ];
 
     for (const selector of imageSelectors) {
-      if (selector.startsWith('meta')) {
-        const content = $(selector).attr('content');
+      if (selector.startsWith("meta")) {
+        const content = $(selector).attr("content");
         if (content) return content;
       } else {
         const src =
-          $(selector).first().attr('src') ||
-          $(selector).first().attr('data-src');
+          $(selector).first().attr("src") ||
+          $(selector).first().attr("data-src");
         if (src)
-          return src.startsWith('http')
+          return src.startsWith("http")
             ? src
             : `https://washingtonpost.com${src}`;
       }
@@ -193,20 +193,20 @@ export class WashingtonPostParser extends BaseParser {
     const metadata: Partial<Recipe> = {};
 
     // Extract cooking times
-    const prepTime = $('[data-qa="prep-time"], .prep-time').text().trim();
-    const cookTime = $('[data-qa="cook-time"], .cook-time').text().trim();
-    const totalTime = $('[data-qa="total-time"], .total-time').text().trim();
+    const prepTime = $("[data-qa=\"prep-time\"], .prep-time").text().trim();
+    const cookTime = $("[data-qa=\"cook-time\"], .cook-time").text().trim();
+    const totalTime = $("[data-qa=\"total-time\"], .total-time").text().trim();
 
     if (prepTime) metadata.prepTime = prepTime;
     if (cookTime) metadata.cookTime = cookTime;
     if (totalTime) metadata.totalTime = totalTime;
 
     // Extract servings
-    const servings = $('[data-qa="servings"], .servings, .yield').text().trim();
+    const servings = $("[data-qa=\"servings\"], .servings, .yield").text().trim();
     if (servings) metadata.servings = servings;
 
     // Extract description/notes
-    const description = $('.recipe-description, .article-summary, .dek')
+    const description = $(".recipe-description, .article-summary, .dek")
       .first()
       .text()
       .trim();
@@ -219,16 +219,16 @@ export class WashingtonPostParser extends BaseParser {
 
   private isIngredientHeader(text: string): boolean {
     const headers = [
-      'ingredients',
-      'for the',
-      'you will need',
-      'shopping list',
+      "ingredients",
+      "for the",
+      "you will need",
+      "shopping list",
     ];
     return headers.some((header) => text.toLowerCase().includes(header));
   }
 
   private isInstructionHeader(text: string): boolean {
-    const headers = ['instructions', 'method', 'directions', 'steps'];
+    const headers = ["instructions", "method", "directions", "steps"];
     return headers.some((header) => text.toLowerCase().includes(header));
   }
 
@@ -238,7 +238,7 @@ export class WashingtonPostParser extends BaseParser {
     const ingredients: Array<{ text: string }> = [];
 
     // Look for paragraphs that might contain ingredients
-    $('p').each((_: any, el: any) => {
+    $("p").each((_: any, el: any) => {
       const text = $(el).text().trim();
       if (this.looksLikeIngredient(text)) {
         ingredients.push({ text: this.sanitizeText(text) });
@@ -254,7 +254,7 @@ export class WashingtonPostParser extends BaseParser {
     const instructions: Array<{ stepNumber: number; text: string }> = [];
 
     // Look for paragraphs that might contain cooking instructions
-    $('p').each((idx: any, el: any) => {
+    $("p").each((idx: any, el: any) => {
       const text = $(el).text().trim();
       if (this.looksLikeInstruction(text)) {
         instructions.push({
@@ -294,7 +294,7 @@ export class WashingtonPostParser extends BaseParser {
 
   private parseFromJsonLD(jsonLd: any, url: string): Recipe {
     return {
-      title: this.sanitizeText(jsonLd.name || 'Recipe'),
+      title: this.sanitizeText(jsonLd.name || "Recipe"),
       source: url,
       ingredients: (jsonLd.recipeIngredient || []).map((i: string) => ({
         text: this.sanitizeText(i),
@@ -303,7 +303,7 @@ export class WashingtonPostParser extends BaseParser {
         (instruction: any, idx: number) => ({
           stepNumber: idx + 1,
           text:
-            typeof instruction === 'string'
+            typeof instruction === "string"
               ? this.sanitizeText(instruction)
               : this.sanitizeText(instruction.text),
         })
@@ -320,10 +320,10 @@ export class WashingtonPostParser extends BaseParser {
   }
 
   private extractImageFromJsonLD(jsonLd: any): string | undefined {
-    if (typeof jsonLd.image === 'string') return jsonLd.image;
+    if (typeof jsonLd.image === "string") return jsonLd.image;
     if (Array.isArray(jsonLd.image)) {
       const firstImage = jsonLd.image[0];
-      return typeof firstImage === 'string' ? firstImage : firstImage?.url;
+      return typeof firstImage === "string" ? firstImage : firstImage?.url;
     }
     return jsonLd.image?.url;
   }

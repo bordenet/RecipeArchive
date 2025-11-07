@@ -3,15 +3,15 @@
 // Test script to verify Chrome and Safari extensions produce identical payloads
 // This ensures AWS API compatibility between browser extensions
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 console.log(
-  '🧪 Testing payload compatibility between Chrome and Safari extensions...\n'
+  "🧪 Testing payload compatibility between Chrome and Safari extensions...\n"
 );
 
 // Mock DOM environment for testing
-const { JSDOM } = require('jsdom');
+const { JSDOM } = require("jsdom");
 
 // Create a test Smitten Kitchen recipe page
 const mockRecipeHTML = `
@@ -46,9 +46,9 @@ const mockRecipeHTML = `
 
 // Setup JSDOM environment
 const dom = new JSDOM(mockRecipeHTML, {
-  url: 'https://smittenkitchen.com/test-recipe/',
+  url: "https://smittenkitchen.com/test-recipe/",
   pretendToBeVisual: true,
-  resources: 'usable',
+  resources: "usable",
 });
 
 global.window = dom.window;
@@ -58,7 +58,7 @@ global.NodeFilter = dom.window.NodeFilter;
 
 // JSDOM doesn't implement innerText, so we need to polyfill it
 if (!global.document.body.innerText) {
-  Object.defineProperty(global.document.body, 'innerText', {
+  Object.defineProperty(global.document.body, "innerText", {
     get: function () {
       return this.textContent;
     },
@@ -77,31 +77,31 @@ global.chrome = {
 global.browser = global.chrome;
 
 // Override userAgent to be consistent
-Object.defineProperty(global.navigator, 'userAgent', {
-  value: 'Test-Agent/1.0',
+Object.defineProperty(global.navigator, "userAgent", {
+  value: "Test-Agent/1.0",
   writable: true,
 });
 
 // Load and test Chrome extension
-console.log('📋 Testing Chrome extension payload structure...');
+console.log("📋 Testing Chrome extension payload structure...");
 
 // Read Chrome content script and extract the functions
 const chromeContentPath = path.join(
   __dirname,
-  '../../extensions/chrome/content.js'
+  "../../extensions/chrome/content.js"
 );
-const chromeContent = fs.readFileSync(chromeContentPath, 'utf8');
+const chromeContent = fs.readFileSync(chromeContentPath, "utf8");
 
 // Execute Chrome content script in our test environment
 eval(chromeContent);
 
 const chromePayload = extractSmittenKitchenRecipe();
 
-console.log('✅ Chrome payload generated');
-console.log('   Fields:', Object.keys(chromePayload).sort());
+console.log("✅ Chrome payload generated");
+console.log("   Fields:", Object.keys(chromePayload).sort());
 
 // Load and test Safari extension
-console.log('\n📋 Testing Safari extension payload structure...');
+console.log("\n📋 Testing Safari extension payload structure...");
 
 // Reset the environment
 global.browser = global.chrome; // Safari compatibility
@@ -109,20 +109,20 @@ global.browser = global.chrome; // Safari compatibility
 // Read Safari content script and extract the functions
 const safariContentPath = path.join(
   __dirname,
-  '../../extensions/safari/content.js'
+  "../../extensions/safari/content.js"
 );
-const safariContent = fs.readFileSync(safariContentPath, 'utf8');
+const safariContent = fs.readFileSync(safariContentPath, "utf8");
 
 // Execute Safari content script in our test environment
 eval(safariContent);
 
 const safariPayload = extractSmittenKitchenRecipe();
 
-console.log('✅ Safari payload generated');
-console.log('   Fields:', Object.keys(safariPayload).sort());
+console.log("✅ Safari payload generated");
+console.log("   Fields:", Object.keys(safariPayload).sort());
 
 // Compare payload structures
-console.log('\n🔍 Comparing payload structures...');
+console.log("\n🔍 Comparing payload structures...");
 
 const chromeKeys = Object.keys(chromePayload).sort();
 const safariKeys = Object.keys(safariPayload).sort();
@@ -130,32 +130,32 @@ const safariKeys = Object.keys(safariPayload).sort();
 const keysMatch = JSON.stringify(chromeKeys) === JSON.stringify(safariKeys);
 
 if (keysMatch) {
-  console.log('✅ Payload structures are identical!');
-  console.log('   Both extensions have fields:', chromeKeys.join(', '));
+  console.log("✅ Payload structures are identical!");
+  console.log("   Both extensions have fields:", chromeKeys.join(", "));
 } else {
-  console.log('❌ Payload structures differ!');
-  console.log('   Chrome fields:', chromeKeys.join(', '));
-  console.log('   Safari fields:', safariKeys.join(', '));
+  console.log("❌ Payload structures differ!");
+  console.log("   Chrome fields:", chromeKeys.join(", "));
+  console.log("   Safari fields:", safariKeys.join(", "));
 
   const chromeOnly = chromeKeys.filter((k) => !safariKeys.includes(k));
   const safariOnly = safariKeys.filter((k) => !chromeKeys.includes(k));
 
   if (chromeOnly.length)
-    console.log('   Chrome-only fields:', chromeOnly.join(', '));
+    console.log("   Chrome-only fields:", chromeOnly.join(", "));
   if (safariOnly.length)
-    console.log('   Safari-only fields:', safariOnly.join(', '));
+    console.log("   Safari-only fields:", safariOnly.join(", "));
 }
 
 // Test specific critical fields
-console.log('\n🔍 Validating critical fields...');
+console.log("\n🔍 Validating critical fields...");
 
 const criticalFields = [
-  'title',
-  'ingredients',
-  'steps',
-  'fullTextContent',
-  'fullPageArchive',
-  'attributionUrl',
+  "title",
+  "ingredients",
+  "steps",
+  "fullTextContent",
+  "fullPageArchive",
+  "attributionUrl",
 ];
 let allCriticalPresent = true;
 
@@ -167,14 +167,14 @@ criticalFields.forEach((field) => {
     console.log(`   ✅ ${field}: Present in both`);
   } else {
     console.log(
-      `   ❌ ${field}: Chrome:${chromeHas ? '✓' : '✗'} Safari:${safariHas ? '✓' : '✗'}`
+      `   ❌ ${field}: Chrome:${chromeHas ? "✓" : "✗"} Safari:${safariHas ? "✓" : "✗"}`
     );
     allCriticalPresent = false;
   }
 });
 
 // Test fullTextContent specifically
-console.log('\n🔍 Testing fullTextContent extraction...');
+console.log("\n🔍 Testing fullTextContent extraction...");
 
 if (chromePayload.fullTextContent && safariPayload.fullTextContent) {
   const chromeTextLength = chromePayload.fullTextContent.length;
@@ -184,17 +184,17 @@ if (chromePayload.fullTextContent && safariPayload.fullTextContent) {
   console.log(`   Safari text length: ${safariTextLength}`);
 
   if (chromeTextLength === safariTextLength) {
-    console.log('   ✅ Text content lengths match');
+    console.log("   ✅ Text content lengths match");
   } else {
     console.log(
-      '   ⚠️  Text content lengths differ (may be due to minor processing differences)'
+      "   ⚠️  Text content lengths differ (may be due to minor processing differences)"
     );
   }
 
   // Check if both contain expected content
   const hasRecipeKeywords = (text) => {
     return (
-      text.includes('flour') && text.includes('eggs') && text.includes('Bake')
+      text.includes("flour") && text.includes("eggs") && text.includes("Bake")
     );
   };
 
@@ -202,30 +202,30 @@ if (chromePayload.fullTextContent && safariPayload.fullTextContent) {
   const safariHasContent = hasRecipeKeywords(safariPayload.fullTextContent);
 
   if (chromeHasContent && safariHasContent) {
-    console.log('   ✅ Both extensions extract recipe content properly');
+    console.log("   ✅ Both extensions extract recipe content properly");
   } else {
-    console.log('   ❌ Content extraction issue detected');
+    console.log("   ❌ Content extraction issue detected");
   }
 } else {
-  console.log('   ❌ fullTextContent missing from one or both extensions');
+  console.log("   ❌ fullTextContent missing from one or both extensions");
   allCriticalPresent = false;
 }
 
 // Final result
-console.log('\n📊 Final Results:');
+console.log("\n📊 Final Results:");
 console.log(
-  `   Payload structure compatibility: ${keysMatch ? '✅ PASS' : '❌ FAIL'}`
+  `   Payload structure compatibility: ${keysMatch ? "✅ PASS" : "❌ FAIL"}`
 );
 console.log(
-  `   Critical fields present: ${allCriticalPresent ? '✅ PASS' : '❌ FAIL'}`
+  `   Critical fields present: ${allCriticalPresent ? "✅ PASS" : "❌ FAIL"}`
 );
 
 if (keysMatch && allCriticalPresent) {
   console.log(
-    '\n🎉 SUCCESS: Both extensions will produce compatible AWS API payloads!'
+    "\n🎉 SUCCESS: Both extensions will produce compatible AWS API payloads!"
   );
   process.exit(0);
 } else {
-  console.log('\n💥 FAILURE: Extensions produce incompatible payloads');
+  console.log("\n💥 FAILURE: Extensions produce incompatible payloads");
   process.exit(1);
 }

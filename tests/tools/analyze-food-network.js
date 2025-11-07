@@ -3,19 +3,19 @@
  * Usage: node tests/tools/analyze-food-network.js
  */
 
-import { chromium } from 'playwright';
+import { chromium } from "playwright";
 
 const TEST_URL =
-  'https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048';
+  "https://www.foodnetwork.com/recipes/alton-brown/margarita-recipe-1949048";
 
 async function analyzeFoodNetworkStructure() {
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
   try {
-    console.log('🧪 Analyzing Food Network Structure...');
+    console.log("🧪 Analyzing Food Network Structure...");
     await page.goto(TEST_URL, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: "domcontentloaded",
       timeout: 60000,
     });
     await page.waitForTimeout(3000); // Wait for dynamic content
@@ -31,10 +31,10 @@ async function analyzeFoodNetworkStructure() {
 
       // Check for title
       const titleSelectors = [
-        'h1',
-        '.recipe-title',
-        '.o-RecipeInfo__a-Headline',
-        '[data-module="RecipeInfo"] h1',
+        "h1",
+        ".recipe-title",
+        ".o-RecipeInfo__a-Headline",
+        "[data-module=\"RecipeInfo\"] h1",
       ];
 
       for (const selector of titleSelectors) {
@@ -48,28 +48,28 @@ async function analyzeFoodNetworkStructure() {
 
       // Check for JSON-LD
       const jsonLdScript = document.querySelector(
-        'script[type="application/ld+json"]'
+        "script[type=\"application/ld+json\"]"
       );
       if (jsonLdScript) {
         try {
           const jsonData = JSON.parse(jsonLdScript.textContent);
           results.json_ld = jsonData;
-          results.selectors_found.push('JSON-LD found');
+          results.selectors_found.push("JSON-LD found");
         } catch (e) {
-          results.selectors_found.push('JSON-LD exists but parsing failed');
+          results.selectors_found.push("JSON-LD exists but parsing failed");
         }
       }
 
       // Check various ingredient selectors
       const ingredientSelectors = [
-        '.o-RecipeInfo__a-Ingredients li',
-        '.o-Ingredients__a-ListItem',
-        '.recipe-ingredients li',
-        '.ingredients li',
-        '[data-module="RecipeInfo"] ul li',
-        '.o-RecipeInfo ul li',
-        'section[aria-labelledby="recipe-ingredients-section"] li',
-        '.o-RecipeInfo__m-Body ul li',
+        ".o-RecipeInfo__a-Ingredients li",
+        ".o-Ingredients__a-ListItem",
+        ".recipe-ingredients li",
+        ".ingredients li",
+        "[data-module=\"RecipeInfo\"] ul li",
+        ".o-RecipeInfo ul li",
+        "section[aria-labelledby=\"recipe-ingredients-section\"] li",
+        ".o-RecipeInfo__m-Body ul li",
       ];
 
       results.ingredient_selectors = [];
@@ -98,15 +98,15 @@ async function analyzeFoodNetworkStructure() {
 
       // Check various direction selectors
       const directionSelectors = [
-        '.o-Method__m-Body li',
-        '.o-Method li',
-        '.recipe-directions li',
-        '.directions li',
-        '.instructions li',
-        '[data-module="Method"] li',
-        '.o-RecipeInfo__a-Directions li',
-        'section[aria-labelledby="recipe-instructions-section"] li',
-        '.o-RecipeInfo__m-Body ol li',
+        ".o-Method__m-Body li",
+        ".o-Method li",
+        ".recipe-directions li",
+        ".directions li",
+        ".instructions li",
+        "[data-module=\"Method\"] li",
+        ".o-RecipeInfo__a-Directions li",
+        "section[aria-labelledby=\"recipe-instructions-section\"] li",
+        ".o-RecipeInfo__m-Body ol li",
       ];
 
       results.direction_selectors = [];
@@ -135,13 +135,13 @@ async function analyzeFoodNetworkStructure() {
 
       // Look for recipe metadata
       const metaSelectors = [
-        '.o-RecipeInfo__a-Description',
-        '.recipe-summary',
-        '.prep-time',
-        '.cook-time',
-        '.total-time',
-        '.servings',
-        '.yield',
+        ".o-RecipeInfo__a-Description",
+        ".recipe-summary",
+        ".prep-time",
+        ".cook-time",
+        ".total-time",
+        ".servings",
+        ".yield",
       ];
 
       results.meta_selectors = [];
@@ -158,43 +158,43 @@ async function analyzeFoodNetworkStructure() {
       return results;
     });
 
-    console.log('\n📊 ANALYSIS RESULTS:');
-    console.log(`🎯 Title: ${analysis.title || 'NOT FOUND'}`);
+    console.log("\n📊 ANALYSIS RESULTS:");
+    console.log(`🎯 Title: ${analysis.title || "NOT FOUND"}`);
     console.log(`📝 Ingredients Found: ${analysis.ingredients.length}`);
     console.log(`📋 Directions Found: ${analysis.directions.length}`);
 
     if (analysis.ingredients.length > 0) {
-      console.log('\n🧄 INGREDIENTS SAMPLE:');
+      console.log("\n🧄 INGREDIENTS SAMPLE:");
       analysis.ingredients.slice(0, 5).forEach((ing, i) => {
         console.log(`   ${i + 1}. ${ing}`);
       });
     }
 
     if (analysis.directions.length > 0) {
-      console.log('\n📝 DIRECTIONS SAMPLE:');
+      console.log("\n📝 DIRECTIONS SAMPLE:");
       analysis.directions.slice(0, 3).forEach((dir, i) => {
         console.log(`   ${i + 1}. ${dir.substring(0, 100)}...`);
       });
     }
 
-    console.log('\n📋 INGREDIENT SELECTORS:');
+    console.log("\n📋 INGREDIENT SELECTORS:");
     analysis.ingredient_selectors.forEach((ing) => {
       console.log(`   ${ing.selector} (${ing.count} items)`);
-      console.log(`   Sample: ${ing.sample[0] || 'N/A'}`);
+      console.log(`   Sample: ${ing.sample[0] || "N/A"}`);
     });
 
-    console.log('\n📋 DIRECTION SELECTORS:');
+    console.log("\n📋 DIRECTION SELECTORS:");
     analysis.direction_selectors.forEach((dir) => {
       console.log(`   ${dir.selector} (${dir.count} items)`);
-      console.log(`   Sample: ${dir.sample[0] || 'N/A'}`);
+      console.log(`   Sample: ${dir.sample[0] || "N/A"}`);
     });
 
     if (analysis.json_ld) {
-      console.log('\n📜 JSON-LD Structure:');
+      console.log("\n📜 JSON-LD Structure:");
       if (Array.isArray(analysis.json_ld)) {
         analysis.json_ld.forEach((item, index) => {
-          console.log(`   [${index}] Type: ${item['@type']}`);
-          if (item['@type'] === 'Recipe') {
+          console.log(`   [${index}] Type: ${item["@type"]}`);
+          if (item["@type"] === "Recipe") {
             console.log(`       Name: ${item.name}`);
             console.log(
               `       Ingredients: ${item.recipeIngredient?.length || 0} items`
@@ -205,8 +205,8 @@ async function analyzeFoodNetworkStructure() {
           }
         });
       } else {
-        console.log(`   Type: ${analysis.json_ld['@type']}`);
-        if (analysis.json_ld['@type'] === 'Recipe') {
+        console.log(`   Type: ${analysis.json_ld["@type"]}`);
+        if (analysis.json_ld["@type"] === "Recipe") {
           console.log(`   Name: ${analysis.json_ld.name}`);
           console.log(
             `   Ingredients: ${analysis.json_ld.recipeIngredient?.length || 0} items`
@@ -219,13 +219,13 @@ async function analyzeFoodNetworkStructure() {
     }
 
     if (analysis.meta_selectors.length > 0) {
-      console.log('\n⏱️ META SELECTORS:');
+      console.log("\n⏱️ META SELECTORS:");
       analysis.meta_selectors.forEach((meta) => {
         console.log(`   ${meta.selector}: ${meta.content}`);
       });
     }
   } catch (error) {
-    console.error('❌ Analysis failed:', error.message);
+    console.error("❌ Analysis failed:", error.message);
   } finally {
     await browser.close();
   }

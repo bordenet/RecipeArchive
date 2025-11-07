@@ -1,6 +1,6 @@
 // Save a fully rendered HTML fixture using Playwright (CommonJS)
-const { chromium } = require('playwright');
-const fs = require('fs');
+const { chromium } = require("playwright");
+const fs = require("fs");
 
 async function saveRenderedHTML(url, outputPath) {
   const maxRetries = 3;
@@ -15,9 +15,9 @@ async function saveRenderedHTML(url, outputPath) {
         page.close();
         throw new Error(`Fetch timeout: ${url} took longer than 30 seconds`);
       }, 30000);
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 90000 });
+      await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
       clearTimeout(fetchTimeout);
-      await page.waitForSelector('body', { timeout: 30000 });
+      await page.waitForSelector("body", { timeout: 30000 });
       // Check for 404 or error page
       const title = await page.title();
       if (/404|not found|error/i.test(title)) {
@@ -49,7 +49,7 @@ async function saveRenderedHTML(url, outputPath) {
 if (require.main === module) {
   const [url, outputPath] = process.argv.slice(2);
   if (!url || !outputPath) {
-    console.error('Usage: node save-rendered-fixture.cjs <url> <outputPath>');
+    console.error("Usage: node save-rendered-fixture.cjs <url> <outputPath>");
     process.exit(1);
   }
   saveRenderedHTML(url, outputPath);

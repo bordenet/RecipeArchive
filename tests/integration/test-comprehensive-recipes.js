@@ -1,41 +1,41 @@
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 // Comprehensive test suite with multiple sites and recipes
 const TEST_RECIPES = [
   // Love & Lemons - our primary test site
   {
-    url: 'https://www.loveandlemons.com/vegan-sugar-cookies/',
-    expected: 'Vegan Sugar Cookies',
-    site: 'Love & Lemons',
-    category: 'baking',
+    url: "https://www.loveandlemons.com/vegan-sugar-cookies/",
+    expected: "Vegan Sugar Cookies",
+    site: "Love & Lemons",
+    category: "baking",
   },
   {
-    url: 'https://www.loveandlemons.com/brownies-recipe/',
-    expected: 'Best Brownies',
-    site: 'Love & Lemons',
-    category: 'baking',
+    url: "https://www.loveandlemons.com/brownies-recipe/",
+    expected: "Best Brownies",
+    site: "Love & Lemons",
+    category: "baking",
   },
   {
-    url: 'https://www.loveandlemons.com/hummus/',
-    expected: 'Hummus',
-    site: 'Love & Lemons',
-    category: 'snacks',
+    url: "https://www.loveandlemons.com/hummus/",
+    expected: "Hummus",
+    site: "Love & Lemons",
+    category: "snacks",
   },
 
   // Food52 - should work with JSON-LD
   {
-    url: 'https://food52.com/recipes/78143-chocolate-chip-cookies',
-    expected: 'Chocolate Chip Cookies',
-    site: 'Food52',
-    category: 'baking',
+    url: "https://food52.com/recipes/78143-chocolate-chip-cookies",
+    expected: "Chocolate Chip Cookies",
+    site: "Food52",
+    category: "baking",
   },
 
   // AllRecipes - should work with JSON-LD
   {
-    url: 'https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/',
-    expected: 'Best Chocolate Chip Cookies',
-    site: 'AllRecipes',
-    category: 'baking',
+    url: "https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/",
+    expected: "Best Chocolate Chip Cookies",
+    site: "AllRecipes",
+    category: "baking",
   },
 ];
 
@@ -46,7 +46,7 @@ async function testRecipeExtraction(page, recipe) {
   try {
     // Navigate to recipe
     await page.goto(recipe.url, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: "domcontentloaded",
       timeout: 45000,
     });
 
@@ -57,26 +57,26 @@ async function testRecipeExtraction(page, recipe) {
     await page.evaluate(() => {
       // Remove common popup elements
       const selectors = [
-        '[id*="overlay"]',
-        '.modal',
-        '.gdpr',
-        '.newsletter',
-        '.popup',
-        '[data-testid*="modal"]',
-        '[class*="modal"]',
-        '[class*="popup"]',
-        '.newsletter-signup',
-        '.email-signup',
-        '.subscribe-popup',
-        '.cookie-notice',
-        '.privacy-banner',
+        "[id*=\"overlay\"]",
+        ".modal",
+        ".gdpr",
+        ".newsletter",
+        ".popup",
+        "[data-testid*=\"modal\"]",
+        "[class*=\"modal\"]",
+        "[class*=\"popup\"]",
+        ".newsletter-signup",
+        ".email-signup",
+        ".subscribe-popup",
+        ".cookie-notice",
+        ".privacy-banner",
       ];
 
       selectors.forEach((selector) => {
         const elements = document.querySelectorAll(selector);
         elements.forEach((el) => {
           if (el) {
-            el.style.display = 'none';
+            el.style.display = "none";
             el.remove();
           }
         });
@@ -84,21 +84,21 @@ async function testRecipeExtraction(page, recipe) {
 
       // Click dismiss buttons
       const dismissButtons = document.querySelectorAll(
-        'button, [role="button"], .close, .dismiss'
+        "button, [role=\"button\"], .close, .dismiss"
       );
       dismissButtons.forEach((btn) => {
-        const text = (btn.textContent || btn.innerText || '').toLowerCase();
-        const title = (btn.title || '').toLowerCase();
-        const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
+        const text = (btn.textContent || btn.innerText || "").toLowerCase();
+        const title = (btn.title || "").toLowerCase();
+        const ariaLabel = (btn.getAttribute("aria-label") || "").toLowerCase();
 
         if (
-          text.includes('close') ||
-          text.includes('dismiss') ||
-          text.includes('×') ||
-          text.includes('accept') ||
-          text.includes('got it') ||
-          title.includes('close') ||
-          ariaLabel.includes('close')
+          text.includes("close") ||
+          text.includes("dismiss") ||
+          text.includes("×") ||
+          text.includes("accept") ||
+          text.includes("got it") ||
+          title.includes("close") ||
+          ariaLabel.includes("close")
         ) {
           try {
             btn.click();
@@ -114,7 +114,7 @@ async function testRecipeExtraction(page, recipe) {
       // JSON-LD Extraction
       function extractRecipeFromJsonLd() {
         const jsonLdScripts = document.querySelectorAll(
-          'script[type="application/ld+json"]'
+          "script[type=\"application/ld+json\"]"
         );
 
         for (const script of jsonLdScripts) {
@@ -125,18 +125,18 @@ async function testRecipeExtraction(page, recipe) {
             for (const item of recipes) {
               // Handle nested recipe data
               let recipeData = null;
-              if (item['@type'] === 'Recipe') {
+              if (item["@type"] === "Recipe") {
                 recipeData = item;
-              } else if (item['@graph']) {
-                recipeData = item['@graph'].find(
-                  (g) => g['@type'] === 'Recipe'
+              } else if (item["@graph"]) {
+                recipeData = item["@graph"].find(
+                  (g) => g["@type"] === "Recipe"
                 );
               } else if (Array.isArray(item) && item.length > 0) {
-                recipeData = item.find((i) => i['@type'] === 'Recipe');
+                recipeData = item.find((i) => i["@type"] === "Recipe");
               }
 
               if (recipeData) {
-                console.log('Found JSON-LD Recipe data');
+                console.log("Found JSON-LD Recipe data");
 
                 const ingredients = recipeData.recipeIngredient
                   ? [{ title: null, items: recipeData.recipeIngredient }]
@@ -146,10 +146,10 @@ async function testRecipeExtraction(page, recipe) {
                 if (recipeData.recipeInstructions) {
                   const stepItems = recipeData.recipeInstructions
                     .map((instruction) => {
-                      if (typeof instruction === 'string') return instruction;
+                      if (typeof instruction === "string") return instruction;
                       if (instruction.text) return instruction.text;
                       if (instruction.name) return instruction.name;
-                      return '';
+                      return "";
                     })
                     .filter(Boolean);
 
@@ -174,12 +174,12 @@ async function testRecipeExtraction(page, recipe) {
                       ? recipeData.image
                       : [recipeData.image]
                     : [],
-                  source: 'json-ld',
+                  source: "json-ld",
                 };
               }
             }
           } catch (e) {
-            console.log('Failed to parse JSON-LD:', e.message);
+            console.log("Failed to parse JSON-LD:", e.message);
           }
         }
 
@@ -189,25 +189,25 @@ async function testRecipeExtraction(page, recipe) {
       // Love & Lemons specific extraction
       function extractLoveLemonsManual() {
         const title =
-          document.querySelector('h1')?.textContent?.trim() || document.title;
+          document.querySelector("h1")?.textContent?.trim() || document.title;
 
         let ingredients = [];
         const ingredientElements = document.querySelectorAll(
-          '.entry-content ul li'
+          ".entry-content ul li"
         );
         const ingredientItems = Array.from(ingredientElements)
           .map((li) => li.textContent?.trim())
           .filter(
             (text) =>
               text &&
-              !text.includes('RECIPES') &&
-              !text.includes('ABOUT') &&
-              !text.includes('NEWSLETTER') &&
-              !text.includes('Easy Cookie Recipes') &&
-              !text.includes('Or any of these') &&
-              !text.includes('Follow me on') &&
-              !text.includes('Email') &&
-              !text.includes('Instagram') &&
+              !text.includes("RECIPES") &&
+              !text.includes("ABOUT") &&
+              !text.includes("NEWSLETTER") &&
+              !text.includes("Easy Cookie Recipes") &&
+              !text.includes("Or any of these") &&
+              !text.includes("Follow me on") &&
+              !text.includes("Email") &&
+              !text.includes("Instagram") &&
               text.length > 5 &&
               text.length < 200 &&
               !/^[A-Z\s]+$/.test(text) &&
@@ -219,7 +219,7 @@ async function testRecipeExtraction(page, recipe) {
         }
 
         let steps = [];
-        const stepElements = document.querySelectorAll('.entry-content ol li');
+        const stepElements = document.querySelectorAll(".entry-content ol li");
         const stepItems = Array.from(stepElements)
           .map((li) => li.textContent?.trim())
           .filter((text) => text && text.length > 20);
@@ -235,22 +235,22 @@ async function testRecipeExtraction(page, recipe) {
           servingSize: null,
           time: null,
           photos: [],
-          source: 'love-lemons-manual',
+          source: "love-lemons-manual",
         };
       }
 
       // Generic fallback extraction
       function extractGenericRecipe() {
         const title =
-          document.querySelector('h1')?.textContent?.trim() || document.title;
+          document.querySelector("h1")?.textContent?.trim() || document.title;
 
         let ingredients = [];
         const ingredientSelectors = [
-          '.recipe-ingredients li',
-          '.ingredients li',
-          '.recipe-ingredient li',
-          'ul[class*="ingredient"] li',
-          '[data-ingredient] li',
+          ".recipe-ingredients li",
+          ".ingredients li",
+          ".recipe-ingredient li",
+          "ul[class*=\"ingredient\"] li",
+          "[data-ingredient] li",
         ];
 
         for (const selector of ingredientSelectors) {
@@ -269,11 +269,11 @@ async function testRecipeExtraction(page, recipe) {
 
         let steps = [];
         const stepSelectors = [
-          '.recipe-instructions li',
-          '.instructions li',
-          '.recipe-instruction li',
-          'ol[class*="instruction"] li',
-          '[data-instruction] li',
+          ".recipe-instructions li",
+          ".instructions li",
+          ".recipe-instruction li",
+          "ol[class*=\"instruction\"] li",
+          "[data-instruction] li",
         ];
 
         for (const selector of stepSelectors) {
@@ -297,7 +297,7 @@ async function testRecipeExtraction(page, recipe) {
           servingSize: null,
           time: null,
           photos: [],
-          source: 'generic-fallback',
+          source: "generic-fallback",
         };
       }
 
@@ -311,7 +311,7 @@ async function testRecipeExtraction(page, recipe) {
       }
 
       // Site-specific manual extraction
-      if (site.includes('loveandlemons.com')) {
+      if (site.includes("loveandlemons.com")) {
         result = extractLoveLemonsManual();
         if (result.ingredients.length > 0 && result.steps.length > 0) {
           return result;
@@ -342,32 +342,32 @@ async function testRecipeExtraction(page, recipe) {
     console.log(
       `   Steps: ${result.steps?.reduce((sum, s) => sum + s.items.length, 0) || 0} items`
     );
-    console.log(`   Success: ${success ? '✅' : '❌'}`);
+    console.log(`   Success: ${success ? "✅" : "❌"}`);
 
     if (!success) {
-      console.log('   Issues:');
-      if (!hasTitle) console.log('     - Missing title');
-      if (!hasIngredients) console.log('     - Missing ingredients');
-      if (!hasSteps) console.log('     - Missing steps');
+      console.log("   Issues:");
+      if (!hasTitle) console.log("     - Missing title");
+      if (!hasIngredients) console.log("     - Missing ingredients");
+      if (!hasSteps) console.log("     - Missing steps");
     }
 
     return {
       success,
       result,
-      issues: success ? [] : ['Missing required fields'],
+      issues: success ? [] : ["Missing required fields"],
     };
   } catch (error) {
     console.log(`   Error: ${error.message}`);
     return {
       success: false,
       error: error.message,
-      issues: ['Test execution failed'],
+      issues: ["Test execution failed"],
     };
   }
 }
 
 async function runComprehensiveTest() {
-  console.log('🚀 Starting Comprehensive Recipe Extraction Test');
+  console.log("🚀 Starting Comprehensive Recipe Extraction Test");
   console.log(
     `📊 Testing ${TEST_RECIPES.length} recipes across multiple sites`
   );
@@ -377,7 +377,7 @@ async function runComprehensiveTest() {
 
   // Set user agent and viewport
   await page.setUserAgent(
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
   );
   await page.setViewportSize({ width: 1280, height: 720 });
 
@@ -396,8 +396,8 @@ async function runComprehensiveTest() {
     }
 
     // Generate summary
-    console.log('\n📊 TEST RESULTS SUMMARY');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("\n📊 TEST RESULTS SUMMARY");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     console.log(
       `\n✅ Success Rate: ${successCount}/${TEST_RECIPES.length} (${((successCount / TEST_RECIPES.length) * 100).toFixed(1)}%)`
@@ -412,7 +412,7 @@ async function runComprehensiveTest() {
       else resultsBySite[site].failed++;
     });
 
-    console.log('\n📈 Results by Site:');
+    console.log("\n📈 Results by Site:");
     Object.entries(resultsBySite).forEach(([site, stats]) => {
       const total = stats.passed + stats.failed;
       const percentage = ((stats.passed / total) * 100).toFixed(1);
@@ -422,31 +422,31 @@ async function runComprehensiveTest() {
     // Show failures
     const failures = results.filter((r) => !r.success);
     if (failures.length > 0) {
-      console.log('\n❌ Failed Tests:');
+      console.log("\n❌ Failed Tests:");
       failures.forEach((f) => {
         console.log(`   ${f.recipe.site}: ${f.recipe.expected}`);
         console.log(`     URL: ${f.recipe.url}`);
         if (f.error) {
           console.log(`     Error: ${f.error}`);
         } else if (f.issues) {
-          console.log(`     Issues: ${f.issues.join(', ')}`);
+          console.log(`     Issues: ${f.issues.join(", ")}`);
         }
       });
     }
 
     // Save detailed results
-    const fs = require('fs');
+    const fs = require("fs");
     fs.writeFileSync(
-      'comprehensive-test-results.json',
+      "comprehensive-test-results.json",
       JSON.stringify(results, null, 2)
     );
     console.log(
-      '\\n💾 Detailed results saved to: comprehensive-test-results.json'
+      "\\n💾 Detailed results saved to: comprehensive-test-results.json"
     );
 
     if (successCount === TEST_RECIPES.length) {
       console.log(
-        '\\n🎉 All tests passed! Recipe extraction is working correctly across all sites.'
+        "\\n🎉 All tests passed! Recipe extraction is working correctly across all sites."
       );
     } else {
       console.log(

@@ -1,10 +1,10 @@
-import { BaseParser } from '../base-parser';
-import * as cheerio from 'cheerio';
-import { Recipe, Ingredient, Instruction } from '../types';
+import { BaseParser } from "../base-parser";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
 
 export class SeriousEatsParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('seriouseats.com');
+    return url.includes("seriouseats.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -17,7 +17,7 @@ export class SeriousEatsParser extends BaseParser {
         title: this.sanitizeText(jsonLd.name),
         source: url,
         author:
-          typeof jsonLd.author === 'string'
+          typeof jsonLd.author === "string"
             ? jsonLd.author
             : jsonLd.author?.name,
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
@@ -25,14 +25,14 @@ export class SeriousEatsParser extends BaseParser {
         })),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || []).map((i) =>
-            typeof i === 'string' ? i : i.text
+            typeof i === "string" ? i : i.text
           )
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -53,25 +53,25 @@ export class SeriousEatsParser extends BaseParser {
 
     // Fallback selectors for Serious Eats specific structure
     const title = this.sanitizeText(
-      $('h1.heading-1, h1.recipe-title, h1').first().text() || ''
+      $("h1.heading-1, h1.recipe-title, h1").first().text() || ""
     );
 
     const author = this.sanitizeText(
-      $('.recipe-author, .author-name, [data-author], .by-author')
+      $(".recipe-author, .author-name, [data-author], .by-author")
         .first()
         .text()
-        .replace(/^by\s*/i, '') || ''
+        .replace(/^by\s*/i, "") || ""
     );
 
     // Extract ingredients - Serious Eats often uses structured recipe components
     let ingredients: Ingredient[] = [];
     const ingredientSelectors = [
-      '.structured-ingredients__list-item',
-      '.recipe-ingredients li',
-      '.ingredients li',
-      '.mntl-structured-ingredients__list-item',
-      'section[data-module="StructuredIngredients"] li',
-      '.recipe-ingredient-group li',
+      ".structured-ingredients__list-item",
+      ".recipe-ingredients li",
+      ".ingredients li",
+      ".mntl-structured-ingredients__list-item",
+      "section[data-module=\"StructuredIngredients\"] li",
+      ".recipe-ingredient-group li",
     ];
 
     for (const selector of ingredientSelectors) {
@@ -89,12 +89,12 @@ export class SeriousEatsParser extends BaseParser {
     // Extract instructions - Serious Eats often uses detailed instruction blocks
     let instructions: Instruction[] = [];
     const instructionSelectors = [
-      '.structured-instructions__list-item',
-      '.recipe-instructions li',
-      '.instructions li',
-      '.mntl-sc-block-group--LI .mntl-sc-block',
-      'section[data-module="StructuredInstructions"] li',
-      '.recipe-instruction-group li',
+      ".structured-instructions__list-item",
+      ".recipe-instructions li",
+      ".instructions li",
+      ".mntl-sc-block-group--LI .mntl-sc-block",
+      "section[data-module=\"StructuredInstructions\"] li",
+      ".recipe-instruction-group li",
     ];
 
     for (const selector of instructionSelectors) {
@@ -112,7 +112,7 @@ export class SeriousEatsParser extends BaseParser {
 
     // Alternative instruction extraction for Serious Eats' detailed format
     if (instructions.length === 0) {
-      const instructionBlocks = $('.mntl-sc-block-html');
+      const instructionBlocks = $(".mntl-sc-block-html");
       if (instructionBlocks.length > 0) {
         instructions = instructionBlocks
           .map((i: any, el: any) => {
@@ -127,38 +127,38 @@ export class SeriousEatsParser extends BaseParser {
     }
 
     // Extract image
-    let imageUrl = $('.recipe-image img, .primary-image img, .hero-image img')
+    let imageUrl = $(".recipe-image img, .primary-image img, .hero-image img")
       .first()
-      .attr('src');
+      .attr("src");
     if (!imageUrl) {
-      imageUrl = $('meta[property="og:image"]').attr('content');
+      imageUrl = $("meta[property=\"og:image\"]").attr("content");
     }
 
     // Extract timing and serving info
     const prepTime = this.sanitizeText(
       $(
-        '.recipe-prep-time, .prep-time, [data-prep-time], [itemprop="prepTime"]'
+        ".recipe-prep-time, .prep-time, [data-prep-time], [itemprop=\"prepTime\"]"
       )
         .first()
         .text()
     );
     const cookTime = this.sanitizeText(
       $(
-        '.recipe-cook-time, .cook-time, [data-cook-time], [itemprop="cookTime"]'
+        ".recipe-cook-time, .cook-time, [data-cook-time], [itemprop=\"cookTime\"]"
       )
         .first()
         .text()
     );
     const totalTime = this.sanitizeText(
       $(
-        '.recipe-total-time, .total-time, [data-total-time], [itemprop="totalTime"]'
+        ".recipe-total-time, .total-time, [data-total-time], [itemprop=\"totalTime\"]"
       )
         .first()
         .text()
     );
     const servings = this.sanitizeText(
       $(
-        '.recipe-servings, .servings, .recipe-yield, [data-servings], [itemprop="recipeYield"]'
+        ".recipe-servings, .servings, .recipe-yield, [data-servings], [itemprop=\"recipeYield\"]"
       )
         .first()
         .text()
@@ -166,7 +166,7 @@ export class SeriousEatsParser extends BaseParser {
 
     // Extract additional notes/tips that Serious Eats often includes
     const notes: string[] = [];
-    $('.recipe-notes li, .chef-note, .recipe-tips li').each((_: any, el: any) => {
+    $(".recipe-notes li, .chef-note, .recipe-tips li").each((_: any, el: any) => {
       const noteText = this.sanitizeText($(el).text());
       if (noteText && noteText.length > 0) {
         notes.push(noteText);

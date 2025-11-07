@@ -1,6 +1,6 @@
 // Basic unit test for background.js
 
-describe('Chrome Extension Background Script', () => {
+describe("Chrome Extension Background Script", () => {
   beforeAll(() => {
     global.chrome = {
       runtime: {
@@ -8,7 +8,7 @@ describe('Chrome Extension Background Script', () => {
       },
     };
   });
-  it('should be defined and executable', () => {
-    expect(() => require('../background.js')).not.toThrow();
+  it("should be defined and executable", () => {
+    expect(() => require("../background.js")).not.toThrow();
   });
 });

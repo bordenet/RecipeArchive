@@ -1,28 +1,28 @@
 /* global extractRecipeFromSmittenKitchen */
 
-const { webkit } = require('playwright');
+const { webkit } = require("playwright");
 
 // Test configuration with environment variables for security
 const TEST_CONFIG = {
-  extensionPath: '$PROJECT_ROOT/extensions/safari',
+  extensionPath: "$PROJECT_ROOT/extensions/safari",
   testCredentials: {
-    username: process.env.RECIPE_TEST_USER || 'test',
-    password: process.env.RECIPE_TEST_PASS || 'subject123',
+    username: process.env.RECIPE_TEST_USER || "test",
+    password: process.env.RECIPE_TEST_PASS || "subject123",
   },
   testUrls: [
     {
-      url: 'https://smittenkitchen.com/2011/09/red-wine-chocolate-cake/',
-      expected: 'Red Wine Chocolate Cake',
+      url: "https://smittenkitchen.com/2011/09/red-wine-chocolate-cake/",
+      expected: "Red Wine Chocolate Cake",
     },
     {
-      url: 'https://smittenkitchen.com/2017/10/bakery-style-butter-cookies-the-new-book-is-here/',
-      expected: 'Bakery-Style Butter Cookies',
+      url: "https://smittenkitchen.com/2017/10/bakery-style-butter-cookies-the-new-book-is-here/",
+      expected: "Bakery-Style Butter Cookies",
     },
   ],
 };
 
 async function setupExtensionAuthentication(context) {
-  console.log('🔐 Setting up Safari extension authentication...');
+  console.log("🔐 Setting up Safari extension authentication...");
 
   try {
     // Create a new page for extension setup
@@ -30,7 +30,7 @@ async function setupExtensionAuthentication(context) {
 
     // Navigate to a dummy page to set up the storage
     await setupPage.goto(
-      'data:text/html,<html><body>Safari Extension Setup</body></html>'
+      "data:text/html,<html><body>Safari Extension Setup</body></html>"
     );
 
     // Set the authentication data in localStorage (Safari Web Extensions use localStorage)
@@ -42,24 +42,24 @@ async function setupExtensionAuthentication(context) {
 
       // Set the test credentials from environment or defaults
       const authData = {
-        username: process.env.RECIPE_TEST_USER || 'test',
-        password: process.env.RECIPE_TEST_PASS || 'subject123',
+        username: process.env.RECIPE_TEST_USER || "test",
+        password: process.env.RECIPE_TEST_PASS || "subject123",
         authConfigured: true,
       };
 
       // Store the auth data in localStorage (Safari Web Extensions)
-      localStorage.setItem('recipeArchiveAuth', JSON.stringify(authData));
+      localStorage.setItem("recipeArchiveAuth", JSON.stringify(authData));
 
-      console.log('Safari extension authentication configured for testing');
+      console.log("Safari extension authentication configured for testing");
     });
 
     await setupPage.close();
 
-    console.log('✅ Safari extension authentication setup complete');
+    console.log("✅ Safari extension authentication setup complete");
     return true;
   } catch (error) {
     console.error(
-      '❌ Failed to setup Safari extension authentication:',
+      "❌ Failed to setup Safari extension authentication:",
       error.message
     );
     return false;
@@ -73,17 +73,17 @@ async function testRecipeExtraction(context, url, expected) {
   await page.goto(url);
 
   // Wait for main content to load
-  await page.waitForSelector('main', { timeout: 20000 });
+  await page.waitForSelector("main", { timeout: 20000 });
 
   // Attempt to dismiss overlays/popups if present
   await page.evaluate(() => {
     const overlay = document.querySelector(
-      '[id*="overlay"], .modal, .gdpr, .newsletter, .popup'
+      "[id*=\"overlay\"], .modal, .gdpr, .newsletter, .popup"
     );
     if (overlay) {
-      overlay.style.display = 'none';
+      overlay.style.display = "none";
     }
-    document.querySelectorAll('button, .close, .dismiss').forEach((btn) => {
+    document.querySelectorAll("button, .close, .dismiss").forEach((btn) => {
       if (btn.innerText && btn.innerText.match(/close|dismiss|×/i)) btn.click();
     });
   });
@@ -91,28 +91,28 @@ async function testRecipeExtraction(context, url, expected) {
   // Scroll to recipe section to ensure it's in view
   await page.evaluate(() => {
     const recipeSection = document.querySelector(
-      'div.jetpack-recipe-ingredients'
+      "div.jetpack-recipe-ingredients"
     );
     if (recipeSection) recipeSection.scrollIntoView();
   });
 
   // Test the extension's recipe capture functionality
-  console.log('🔍 Testing Safari extension recipe capture...');
+  console.log("🔍 Testing Safari extension recipe capture...");
 
   try {
     // Try to trigger the extension directly by simulating the popup action
     const captureResult = await page.evaluate(async () => {
       // Since we're in the page context, we need to simulate what the extension would do
       // This tests the content script functionality directly
-      if (typeof extractRecipeFromSmittenKitchen === 'function') {
+      if (typeof extractRecipeFromSmittenKitchen === "function") {
         return extractRecipeFromSmittenKitchen();
       } else {
         // Fallback: extract recipe data manually for testing
         const ingredients = Array.from(
-          document.querySelectorAll('div.jetpack-recipe-ingredients ul li')
+          document.querySelectorAll("div.jetpack-recipe-ingredients ul li")
         ).map((li) => li.textContent.trim());
         const steps = Array.from(
-          document.querySelectorAll('div.jetpack-recipe-directions ol li')
+          document.querySelectorAll("div.jetpack-recipe-directions ol li")
         ).map((li) => li.textContent.trim());
         return {
           ingredients: ingredients.length
@@ -120,7 +120,7 @@ async function testRecipeExtraction(context, url, expected) {
             : [],
           steps: steps.length ? [{ title: null, items: steps }] : [],
           title: document.title,
-          fullTextContent: document.body.innerText?.slice(0, 1000) || '',
+          fullTextContent: document.body.innerText?.slice(0, 1000) || "",
         };
       }
     });
@@ -151,13 +151,13 @@ async function testRecipeExtraction(context, url, expected) {
         return { success: true, data: captureResult };
       } else {
         console.error(`❌ FAILURE: Incomplete recipe data for "${expected}"`);
-        console.error('   - Ingredients:', hasIngredients ? '✓' : '✗');
-        console.error('   - Steps:', hasSteps ? '✓' : '✗');
-        return { success: false, error: 'Incomplete recipe data' };
+        console.error("   - Ingredients:", hasIngredients ? "✓" : "✗");
+        console.error("   - Steps:", hasSteps ? "✓" : "✗");
+        return { success: false, error: "Incomplete recipe data" };
       }
     } else {
       console.error(`❌ FAILURE: No recipe data captured for "${expected}"`);
-      return { success: false, error: 'No recipe data captured' };
+      return { success: false, error: "No recipe data captured" };
     }
   } catch (error) {
     console.error(
@@ -171,20 +171,20 @@ async function testRecipeExtraction(context, url, expected) {
 }
 
 async function runTests() {
-  console.log('🚀 Starting Safari Web Extension Recipe Extraction Tests');
+  console.log("🚀 Starting Safari Web Extension Recipe Extraction Tests");
   console.log(`📁 Extension path: ${TEST_CONFIG.extensionPath}`);
   console.log(
     `🧪 Testing ${TEST_CONFIG.testUrls.length} URLs with authentication`
   );
   console.log(
-    `🔑 Using credentials: ${TEST_CONFIG.testCredentials.username} (from ${process.env.RECIPE_TEST_USER ? 'env var' : 'default'})`
+    `🔑 Using credentials: ${TEST_CONFIG.testCredentials.username} (from ${process.env.RECIPE_TEST_USER ? "env var" : "default"})`
   );
 
   let context;
   try {
     // Launch Safari browser context
     // Note: Safari Web Extensions are tested through WebKit in Playwright
-    context = await webkit.launchPersistentContext('', {
+    context = await webkit.launchPersistentContext("", {
       headless: false,
       // Safari Web Extensions don't use the same loading mechanism as Chrome
       // We'll inject our content script directly for testing
@@ -194,7 +194,7 @@ async function runTests() {
     const authSetupSuccess = await setupExtensionAuthentication(context);
     if (!authSetupSuccess) {
       console.error(
-        '❌ Authentication setup failed - continuing with tests anyway'
+        "❌ Authentication setup failed - continuing with tests anyway"
       );
     }
 
@@ -209,7 +209,7 @@ async function runTests() {
     }
 
     // Summary
-    console.log('\n📊 Test Results Summary:');
+    console.log("\n📊 Test Results Summary:");
     const successCount = results.filter((r) => r.success).length;
     const totalCount = results.length;
 
@@ -218,17 +218,17 @@ async function runTests() {
 
     if (successCount === totalCount) {
       console.log(
-        '\n🎉 All Safari tests passed! Extension is working correctly.'
+        "\n🎉 All Safari tests passed! Extension is working correctly."
       );
       process.exit(0);
     } else {
       console.log(
-        '\n💥 Some Safari tests failed. Check the output above for details.'
+        "\n💥 Some Safari tests failed. Check the output above for details."
       );
       process.exit(1);
     }
   } catch (error) {
-    console.error('💥 Safari test suite error:', error.message);
+    console.error("💥 Safari test suite error:", error.message);
     process.exit(1);
   } finally {
     if (context) {

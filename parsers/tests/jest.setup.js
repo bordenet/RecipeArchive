@@ -22,7 +22,7 @@ expect.extend({
   toHaveValidRecipeStructure(received) {
     const pass =
       received &&
-      typeof received.title === 'string' &&
+      typeof received.title === "string" &&
       received.title.length > 0 &&
       Array.isArray(received.ingredients) &&
       received.ingredients.length > 0 &&
@@ -31,13 +31,13 @@ expect.extend({
 
     if (pass) {
       return {
-        message: () => `expected recipe to not have valid structure`,
+        message: () => "expected recipe to not have valid structure",
         pass: true,
       };
     } else {
       return {
         message: () =>
-          `expected recipe to have valid structure (title, ingredients, instructions)`,
+          "expected recipe to have valid structure (title, ingredients, instructions)",
         pass: false,
       };
     }

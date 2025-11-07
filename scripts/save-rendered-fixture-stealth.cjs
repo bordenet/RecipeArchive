@@ -1,7 +1,7 @@
 // Save a fully rendered HTML fixture using Playwright Extra Stealth
-const { chromium } = require('playwright-extra');
-const StealthPlugin = require('playwright-extra-plugin-stealth');
-const fs = require('fs');
+const { chromium } = require("playwright-extra");
+const StealthPlugin = require("playwright-extra-plugin-stealth");
+const fs = require("fs");
 
 chromium.use(StealthPlugin());
 
@@ -17,9 +17,9 @@ async function saveRenderedHTML(url, outputPath) {
         page.close();
         throw new Error(`Fetch timeout: ${url} took longer than 30 seconds`);
       }, 30000);
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 90000 });
+      await page.goto(url, { waitUntil: "networkidle", timeout: 90000 });
       clearTimeout(fetchTimeout);
-      await page.waitForSelector('body', { timeout: 30000 });
+      await page.waitForSelector("body", { timeout: 30000 });
       const title = await page.title();
       if (/404|not found|error/i.test(title)) {
         throw new Error(`404 or error page detected for URL: ${url}`);
@@ -50,7 +50,7 @@ if (require.main === module) {
   const [url, outputPath] = process.argv.slice(2);
   if (!url || !outputPath) {
     console.error(
-      'Usage: node save-rendered-fixture-stealth.cjs <url> <outputPath>'
+      "Usage: node save-rendered-fixture-stealth.cjs <url> <outputPath>"
     );
     process.exit(1);
   }

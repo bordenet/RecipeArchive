@@ -4,21 +4,21 @@
  * This will help us determine if the issue is with token generation or API validation
  */
 
-const AWS = require('aws-sdk');
-const jwt = require('jsonwebtoken');
+const AWS = require("aws-sdk");
+const jwt = require("jsonwebtoken");
 
 // Configuration from .env file
 const config = {
-  region: 'us-west-2',
-  userPoolId: 'us-west-2_rpBcEEhYK',
-  clientId: '7lm8mqr03s0m0fn17dnv373s4h',
-  apiUrl: 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/recipes',
-  testEmail: 'mattbordenet@hotmail.com',
-  testPassword: process.env.TEST_USER_PASSWORD || 'CHANGE_ME',
+  region: "us-west-2",
+  userPoolId: "us-west-2_rpBcEEhYK",
+  clientId: "7lm8mqr03s0m0fn17dnv373s4h",
+  apiUrl: "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/recipes",
+  testEmail: "mattbordenet@hotmail.com",
+  testPassword: process.env.TEST_USER_PASSWORD || "CHANGE_ME",
 };
 
-console.log('🔐 Testing RecipeArchive API Authentication');
-console.log('==========================================');
+console.log("🔐 Testing RecipeArchive API Authentication");
+console.log("==========================================");
 
 async function testAuthentication() {
   try {
@@ -29,13 +29,13 @@ async function testAuthentication() {
 
     const cognito = new AWS.CognitoIdentityServiceProvider();
 
-    console.log('📧 Attempting authentication...');
+    console.log("📧 Attempting authentication...");
     console.log(`   Email: ${config.testEmail}`);
     console.log(`   User Pool: ${config.userPoolId}`);
 
     // Authenticate with Cognito
     const authParams = {
-      AuthFlow: 'ADMIN_NO_SRP_AUTH',
+      AuthFlow: "ADMIN_NO_SRP_AUTH",
       UserPoolId: config.userPoolId,
       ClientId: config.clientId,
       AuthParameters: {
@@ -47,13 +47,13 @@ async function testAuthentication() {
     const authResult = await cognito.adminInitiateAuth(authParams).promise();
 
     if (!authResult.AuthenticationResult) {
-      throw new Error('Authentication failed - no result returned');
+      throw new Error("Authentication failed - no result returned");
     }
 
     const { IdToken, _AccessToken, _RefreshToken } =
       authResult.AuthenticationResult;
 
-    console.log('✅ Authentication successful!');
+    console.log("✅ Authentication successful!");
 
     // Decode and display token info
     const decoded = jwt.decode(IdToken);
@@ -64,13 +64,13 @@ async function testAuthentication() {
     );
 
     // Test API call
-    console.log('\n🌐 Testing API call...');
-    const fetch = require('node-fetch');
+    console.log("\n🌐 Testing API call...");
+    const fetch = require("node-fetch");
 
     const response = await fetch(config.apiUrl, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${IdToken}`,
       },
     });
@@ -93,7 +93,7 @@ async function testAuthentication() {
       console.log(`❌ API call failed: ${errorText}`);
     }
   } catch (error) {
-    console.error('❌ Authentication test failed:', error.message);
+    console.error("❌ Authentication test failed:", error.message);
 
     if (error.code) {
       console.error(`   AWS Error Code: ${error.code}`);
@@ -104,7 +104,7 @@ async function testAuthentication() {
 // Run the test
 testAuthentication()
   .then(() => {
-    console.log('\n==========================================');
-    console.log('Authentication test completed');
+    console.log("\n==========================================");
+    console.log("Authentication test completed");
   })
   .catch(console.error);
