@@ -42,6 +42,13 @@ init_script
 
 # Global variable for auto-yes functionality
 AUTO_YES=false
+VERBOSE=true  # Default to verbose mode
+
+# Helper functions (defined early for use in argument parsing)
+print_info()    { [ "$VERBOSE" = true ] && log_info "$1" || true; }
+print_success() { [ "$VERBOSE" = true ] && log_success "$1" || true; }
+print_warning() { [ "$VERBOSE" = true ] && log_warning "$1" || true; }
+print_error()   { log_error "$1"; }  # Always show errors
 
 # Function to display usage information
 usage() {
@@ -49,11 +56,19 @@ usage() {
     echo "Automates the setup of a comprehensive macOS development environment for RecipeArchive."
     echo ""
     echo "Options:"
-    echo "  -y, --yes    Automatically confirm all prompts (non-interactive mode)."
-    echo "  -h, --help   Display this help message and exit."
+    echo "  -y, --yes       Automatically confirm all prompts."
+    echo "  -v, --verbose   Show detailed output (verbose mode)."
+    echo "  -h, --help      Display this help message and exit."
     echo ""
-    echo "Example:"
-    echo "  $(basename "$0") --yes"
+    echo "Notes:"
+    echo "  - Default mode is verbose without --yes (interactive with details)"
+    echo "  - Using --yes alone enables compact mode (auto-confirm + minimal output)"
+    echo "  - Using --yes --verbose enables verbose mode with auto-confirmation"
+    echo ""
+    echo "Examples:"
+    echo "  $(basename "$0")                # Interactive with verbose output"
+    echo "  $(basename "$0") --yes          # Non-interactive with compact output"
+    echo "  $(basename "$0") --yes --verbose # Non-interactive with verbose output"
     exit 0
 }
 
@@ -63,6 +78,11 @@ while [[ $# -gt 0 ]]; do
     case $key in
         -y|--yes)
         AUTO_YES=true
+        VERBOSE=false  # Compact mode by default with --yes
+        shift # past argument
+        ;;
+        -v|--verbose)
+        VERBOSE=true  # Override to verbose mode
         shift # past argument
         ;;
         -h|--help)
@@ -77,27 +97,104 @@ done
 
 readonly REPO_ROOT="$(get_repo_root)"
 
-log_header "macOS Development Environment Setup"
-
 # Validate platform
 if ! is_macos; then
     die "This script is only for macOS"
 fi
 
-print_info() {
-    log_info "$1"
+# Error tracking for summary report
+FAILED_INSTALLS=()
+
+# Section tracking for compact output
+CURRENT_SECTION=""
+SECTION_STATUS=""
+SECTION_FAILURES=()
+
+# Section output functions (compact mode)
+section_start() {
+    CURRENT_SECTION="$1"
+    SECTION_STATUS="in_progress"
+    SECTION_FAILURES=()
+    if [ "$VERBOSE" = true ]; then
+        echo ""
+        print_info "$1"
+    else
+        printf "${COLOR_BLUE}[…]${COLOR_RESET} $1"
+    fi
 }
 
-print_success() {
-    log_success "$1"
+section_end() {
+    if [ "$VERBOSE" = false ] && [ -n "$CURRENT_SECTION" ]; then
+        if [ "${#SECTION_FAILURES[@]}" -gt 0 ]; then
+            # Show failed items (space-separated)
+            local failed_list="${SECTION_FAILURES[*]}"
+            printf "\r\033[K${COLOR_RED}[✗]${COLOR_RESET} $CURRENT_SECTION ${COLOR_RED}($failed_list)${COLOR_RESET}\n"
+        else
+            # Clean success - no details, clear any lingering text
+            printf "\r\033[K${COLOR_GREEN}[✓]${COLOR_RESET} $CURRENT_SECTION\n"
+        fi
+    fi
+    CURRENT_SECTION=""
+    SECTION_STATUS=""
+    SECTION_FAILURES=()
 }
 
-print_warning() {
-    log_warning "$1"
+section_update() {
+    if [ "$VERBOSE" = false ] && [ -n "$CURRENT_SECTION" ]; then
+        # Clear to end of line, then print section with current operation
+        printf "\r\033[K${COLOR_BLUE}[…]${COLOR_RESET} $CURRENT_SECTION ${COLOR_DIM}($1)${COLOR_RESET}"
+    fi
 }
 
-print_error() {
-    log_error "$1"
+section_fail() {
+    SECTION_STATUS="failed"
+    # Add failed item to section failures array
+    if [ "$VERBOSE" = false ]; then
+        SECTION_FAILURES+=("$1")
+    fi
+}
+
+# Checklist-style output functions (verbose mode)
+check_installing() {
+    if [ "$VERBOSE" = true ]; then
+        printf "[ ] Installing $1..."
+    else
+        section_update "$1"
+    fi
+}
+
+check_done() {
+    if [ "$VERBOSE" = true ]; then
+        printf "\r[✓] Installing $1... Done!\n"
+    else
+        section_update "$1 ✓"
+    fi
+}
+
+check_skip() {
+    if [ "$VERBOSE" = true ]; then
+        printf "\r[→] $1 already installed\n"
+    else
+        section_update "$1 ✓"
+    fi
+}
+
+check_exists() {
+    if [ "$VERBOSE" = true ]; then
+        printf "[✓] $1 already installed\n"
+    else
+        section_update "$1 ✓"
+    fi
+}
+
+check_failed() {
+    if [ "$VERBOSE" = true ]; then
+        printf "\r${COLOR_RED}[✗]${COLOR_RESET} $1 installation failed\n"
+    else
+        section_update "${COLOR_RED}$1 failed${COLOR_RESET}"
+        section_fail "$1"
+    fi
+    FAILED_INSTALLS+=("$1")
 }
 
 # Function for timed confirmation (15 seconds default to 'N')
@@ -157,99 +254,96 @@ timed_confirm() {
     fi
 }
 
-print_info "🚀 RecipeArchive Project Setup Script for macOS"
-print_info "This script will install comprehensive development dependencies"
-
-# Ensure we're in the repository root directory
+log_header "RecipeArchive Project Setup for macOS"
 cd "$REPO_ROOT"
-print_info "Working from repository root: $REPO_ROOT"
+
+section_start "Package manager"
 
 # Install Homebrew if not present
 if ! command -v brew &> /dev/null; then
   if timed_confirm "Homebrew is required but not installed. Install Homebrew? (Large download ~100MB)"; then
-    print_info "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    check_installing "Homebrew"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" > /dev/null 2>&1
     if ! command -v brew &> /dev/null; then
       print_error "Homebrew installation failed. Please install Homebrew manually."
       die "Setup failed"
     fi
-    print_success "Homebrew installed successfully"
+    check_done "Homebrew"
   else
     print_error "Homebrew is required for this setup. Exiting."
     die "Setup failed"
   fi
 else
-  print_success "Homebrew already installed"
+  check_exists "Homebrew"
 fi
 
-# Essential development tools
-print_info "Installing essential development tools..."
+section_end
+
+section_start "Essential development tools"
 
 # Install Node.js and npm
 if ! command -v node &> /dev/null; then
-  print_info "Installing Node.js and npm..."
-  brew install node
+  check_installing "Node.js"
+  brew install node > /dev/null 2>&1
   if ! command -v node &> /dev/null; then
     print_error "Node.js installation failed. Please install Node.js manually."
     die "Setup failed"
   fi
-  print_success "Node.js installed: $(node --version)"
+  check_done "Node.js"
 else
-  print_success "Node.js already installed: $(node --version)"
+  check_exists "Node.js ($(node --version))"
 fi
 
 # Install TypeScript globally
 if ! command -v tsc &> /dev/null; then
-  print_info "Installing TypeScript globally..."
-  timeout 180 npm install -g typescript
+  check_installing "TypeScript"
+  timeout 180 npm install -g typescript > /dev/null 2>&1
   if ! command -v tsc &> /dev/null; then
     print_error "TypeScript installation failed. Please install TypeScript manually."
     die "Setup failed"
   fi
-  print_success "TypeScript installed: $(tsc --version)"
+  check_done "TypeScript"
 else
-  print_success "TypeScript already installed: $(tsc --version)"
+  check_exists "TypeScript ($(tsc --version))"
 fi
 
 # Install AWS CDK globally
 if ! command -v cdk &> /dev/null; then
-  print_info "Installing AWS CDK globally..."
-  timeout 180 npm install -g aws-cdk@2.87.0
+  check_installing "AWS CDK"
+  timeout 180 npm install -g aws-cdk@2.87.0 > /dev/null 2>&1
   if ! command -v cdk &> /dev/null; then
     print_error "AWS CDK installation failed. Please install AWS CDK manually."
     die "Setup failed"
   fi
-  print_success "AWS CDK installed: $(cdk --version)"
+  check_done "AWS CDK"
 else
-  print_success "AWS CDK already installed: $(cdk --version)"
+  check_exists "AWS CDK ($(cdk --version))"
 fi
 
 # Install Go
 if ! command -v go &> /dev/null; then
-  print_info "Installing Go..."
-  brew install go
+  check_installing "Go"
+  brew install go > /dev/null 2>&1
   if ! command -v go &> /dev/null; then
     print_error "Go installation failed. Please install Go manually."
     die "Setup failed"
   fi
-  print_success "Go installed: $(go version)"
+  check_done "Go"
 else
-  print_success "Go already installed: $(go version)"
+  check_exists "Go ($(go version | awk '{print $3}'))"
 fi
 
 # Install Xcode CLI tools (required for iOS/Swift development)
 if ! xcode-select -p &> /dev/null; then
   if timed_confirm "Xcode CLI tools are required for iOS development. Install? (Large download ~500MB)"; then
-    print_info "Installing Xcode CLI tools..."
+    print_info "Installing Xcode CLI tools (follow on-screen prompts)..."
     xcode-select --install
-    print_info "Please follow the on-screen instructions to install the Xcode CLI tools."
-    print_info "Waiting for installation to complete..."
     max_wait=300 # 5 minutes
     wait_interval=10
     waited=0
     while [ $waited -lt $max_wait ]; do
       if xcode-select -p &> /dev/null; then
-        print_success "Xcode CLI tools installed successfully"
+        print_success "Xcode CLI tools installed"
         break
       fi
       sleep $wait_interval
@@ -263,11 +357,12 @@ if ! xcode-select -p &> /dev/null; then
     print_warning "Skipping Xcode CLI tools - iOS development will not be available"
   fi
 else
-  print_success "Xcode CLI tools already installed"
+  check_exists "Xcode CLI tools"
 fi
 
-# Mobile Development Setup
-print_info "Setting up mobile development environment..."
+section_end
+
+section_start "Mobile development environment"
 
 # Java Development Kit (required for Android)
 # MUST be installed BEFORE any Android SDK operations
@@ -280,13 +375,24 @@ if java -version 2>&1 | grep -q "openjdk\|java version"; then
 fi
 
 if [ "$java_working" = false ]; then
-  print_info "Installing Java Development Kit (required for Android)..."
-  brew install openjdk@17
+  # Check if Java is installed but just needs configuration
+  if [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
+    # Java is installed, just needs PATH configuration
+    check_exists "Java (needs PATH configuration)"
+    JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+    export JAVA_HOME
+    export PATH="$JAVA_HOME/bin:$PATH"
+  else
+    # Actually install Java
+    check_installing "Java Development Kit"
+    brew install openjdk@17 > /dev/null 2>&1
 
-  # Add Java to PATH
-  JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
-  export JAVA_HOME
-  export PATH="$JAVA_HOME/bin:$PATH"
+    # Add Java to PATH
+    JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+    export JAVA_HOME
+    export PATH="$JAVA_HOME/bin:$PATH"
+    check_done "Java Development Kit"
+  fi
 
   # Add to shell profile
   SHELL_PROFILE=""
@@ -304,13 +410,10 @@ if [ "$java_working" = false ]; then
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export PATH=\$JAVA_HOME/bin:\$PATH
 EOF
-      print_success "Added Java environment variables to $SHELL_PROFILE"
     fi
   fi
-
-  print_success "Java Development Kit installed"
 else
-  print_success "Java already installed: $(java -version 2>&1 | head -1)"
+  check_exists "Java ($(java -version 2>&1 | head -1 | awk -F '"' '{print $2}'))"
 
   # Ensure JAVA_HOME is set even if Java is already installed
   if [ -z "${JAVA_HOME:-}" ] && [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
@@ -322,16 +425,16 @@ fi
 # Flutter SDK Installation
 if ! command -v flutter &> /dev/null; then
   if timed_confirm "Flutter SDK is required for mobile app development. Install? (Large download ~1GB)"; then
-    print_info "Installing Flutter SDK via Homebrew..."
-    brew install flutter
-    
+    check_installing "Flutter SDK"
+    brew install flutter > /dev/null 2>&1
+
     # Add Flutter to PATH (prioritize Flutter's Dart over Homebrew's)
     FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
     export PATH="$FLUTTER_PATH:$PATH"
-    
+
     # Configure Flutter to use correct Android SDK
     flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
-    
+
     # Add to shell profile
     SHELL_PROFILE=""
     if [ -n "${ZSH_VERSION:-}" ]; then
@@ -339,20 +442,25 @@ if ! command -v flutter &> /dev/null; then
     elif [ -n "${BASH_VERSION:-}" ]; then
       SHELL_PROFILE="$HOME/.bash_profile"
     fi
-    
+
     if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
       if ! grep -q "export PATH=\"/opt/homebrew/share/flutter/bin:\$PATH\"" "$SHELL_PROFILE"; then
         echo "export PATH=\"/opt/homebrew/share/flutter/bin:\$PATH\"" >> "$SHELL_PROFILE"
-        print_success "Added Flutter to PATH in $SHELL_PROFILE"
       fi
     fi
-    
-    print_success "Flutter SDK installed: $(flutter --version | head -1)"
+
+    check_done "Flutter SDK"
   else
     print_warning "Skipping Flutter - mobile development will not be available"
   fi
 else
-  print_success "Flutter already installed: $(flutter --version | head -1)"
+  # Get Flutter version quietly by suppressing verbose output
+  FLUTTER_VERSION=$(flutter --version 2>&1 | grep "Flutter" | head -1 | awk '{print $2}' || echo "")
+  if [ -n "$FLUTTER_VERSION" ]; then
+    check_exists "Flutter ($FLUTTER_VERSION)"
+  else
+    check_exists "Flutter"
+  fi
 
   # Ensure Flutter is configured correctly even if already installed
   FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
@@ -382,32 +490,31 @@ if [ "$android_setup_needed" = true ]; then
     print_error "This is a critical setup error - Java should have been installed earlier"
     die "Java installation failed - cannot proceed with Android setup"
   fi
-  print_success "Java is available for Android SDK operations"
 
   # Install Android Studio
   if [ ! -d "/Applications/Android Studio.app" ]; then
     if timed_confirm "Install Android Studio? (Large download ~2GB)"; then
-      print_info "Installing Android Studio..."
-      brew install --cask android-studio
-      print_success "Android Studio installed"
+      check_installing "Android Studio"
+      brew install --cask android-studio > /dev/null 2>&1
+      check_done "Android Studio"
     else
       print_warning "Skipping Android Studio installation. You can install it manually later."
     fi
   else
-    print_success "Android Studio already installed"
+    check_exists "Android Studio"
   fi
-  
+
   # Install Android SDK command-line tools
   if ! command -v sdkmanager &> /dev/null; then
     if timed_confirm "Install Android SDK command-line tools?"; then
-      print_info "Installing Android SDK command-line tools..."
-      brew install --cask android-commandlinetools
-      print_success "Android SDK command-line tools installed"
+      check_installing "Android SDK tools"
+      brew install --cask android-commandlinetools > /dev/null 2>&1
+      check_done "Android SDK tools"
     else
       print_warning "Skipping Android SDK installation. Android development will not be available."
     fi
   else
-    print_success "Android SDK command-line tools already installed"
+    check_exists "Android SDK tools"
   fi
 
   # Set up Android SDK environment variables
@@ -437,22 +544,20 @@ EOF
 
   # Install platform-tools and a system image
   if command -v sdkmanager &> /dev/null; then
-    print_info "Installing Android platform-tools and system image..."
+    check_installing "Android platform-tools"
     timeout 300 sdkmanager "platform-tools" "system-images;android-33;google_apis;x86_64" > /dev/null 2>&1 || true
-    print_success "Android platform-tools and system image installed"
+    check_done "Android platform-tools"
   fi
-  
+
   # Install Android command-line tools and accept licenses
   if command -v sdkmanager &> /dev/null; then
-    print_info "Installing Android command-line tools..."
     timeout 30 sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
 
     print_info "Accepting Android SDK licenses..."
-    yes | flutter doctor --android-licenses || print_warning "Failed to accept Android licenses. Please run 'flutter doctor --android-licenses' manually."
-    print_success "Android SDK setup completed"
+    yes | flutter doctor --android-licenses > /dev/null 2>&1 || print_warning "Failed to accept Android licenses. Run 'flutter doctor --android-licenses' manually."
   fi
-  
-  print_success "Android development environment configured"
+
+  print_success "Android development configured"
   print_warning "MANUAL STEP: Complete Android Studio setup if needed"
   print_info "1. Open Android Studio (first launch will complete SDK setup)"
   print_info "2. Follow setup wizard if prompted"
@@ -461,14 +566,13 @@ EOF
     print_warning "Skipping Android setup - Android development will not be available"
   fi
 else
-  print_success "Android development environment already configured"
+  check_exists "Android development"
 
   # Update Android SDK components (default YES)
   if command -v sdkmanager &> /dev/null; then
     # CRITICAL: Verify Java is available before running SDK operations
     if ! java -version &> /dev/null; then
       print_warning "Java is not available - skipping Android SDK updates"
-      print_info "Install Java to enable Android SDK updates: brew install openjdk@17"
     else
       # Set up environment for sdkmanager
       ANDROID_HOME="$HOME/Library/Android/sdk"
@@ -513,17 +617,23 @@ else
       print_info "Updating Android SDK components..."
 
       # Update SDK manager itself
-      timeout 120 sdkmanager --update 2>&1 | grep -v "=" || true
+      UPDATE_OUTPUT=$(timeout 120 sdkmanager --update 2>&1 || true)
+      if echo "$UPDATE_OUTPUT" | grep -q "Update available"; then
+        print_info "Applying SDK updates..."
+      fi
 
       # Update platform-tools, build-tools, and latest platform
-      print_info "Updating platform-tools and build-tools..."
-      yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" || true
+      yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" > /dev/null 2>&1 || true
 
       # Update emulator
-      print_info "Updating Android emulator..."
-      timeout 120 sdkmanager "emulator" 2>&1 | grep -v "=" || true
+      timeout 120 sdkmanager "emulator" > /dev/null 2>&1 || true
 
-      print_success "Android SDK components updated"
+      # Check if updates were applied
+      if echo "$UPDATE_OUTPUT" | grep -q "No updates available"; then
+        print_info "No SDK updates available"
+      else
+        print_success "Android SDK components updated"
+      fi
     fi
   fi
 fi
@@ -536,28 +646,22 @@ fi
 
 if [ "$ios_setup_needed" = true ]; then
   if timed_confirm "Set up iOS development environment?"; then
-  print_info "Setting up iOS development..."
-  
   # Check if Xcode is installed
   if [ ! -d "/Applications/Xcode.app" ]; then
-    print_warning "Xcode not found. Please install from App Store:"
-    print_info "1. Open App Store"
-    print_info "2. Search for 'Xcode'"
-    print_info "3. Install Xcode (~15GB download)"
-    print_info "4. Run this script again after installation"
+    print_warning "Xcode not found. Install from App Store and run script again."
   else
-    print_success "Xcode already installed"
+    check_exists "Xcode"
     
     # Install modern Ruby (required for CocoaPods)
     if ! brew list ruby &> /dev/null; then
       if timed_confirm "Install modern Ruby for CocoaPods?"; then
-        print_info "Installing modern Ruby via Homebrew..."
-        brew install ruby
-        
+        check_installing "Ruby"
+        brew install ruby > /dev/null 2>&1
+
         # Add Homebrew Ruby to PATH
         RUBY_PATH="/opt/homebrew/opt/ruby/bin"
         export PATH="$RUBY_PATH:$PATH"
-        
+
         # Add to shell profile
         SHELL_PROFILE=""
         if [ -n "$ZSH_VERSION" ]; then
@@ -565,64 +669,58 @@ if [ "$ios_setup_needed" = true ]; then
         elif [ -n "$BASH_VERSION" ]; then
           SHELL_PROFILE="$HOME/.bash_profile"
         fi
-        
+
         if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
           if ! grep -q "export PATH=\"$RUBY_PATH:\$PATH\"" "$SHELL_PROFILE"; then
             echo "export PATH=\"$RUBY_PATH:\$PATH\"" >> "$SHELL_PROFILE"
-            print_success "Added Homebrew Ruby to PATH in $SHELL_PROFILE"
           fi
         fi
-        
-        print_success "Modern Ruby installed: $(/opt/homebrew/opt/ruby/bin/ruby --version)"
+
+        check_done "Ruby"
       else
         print_warning "Skipping Ruby installation. CocoaPods installation may fail."
       fi
     else
-      print_success "Modern Ruby already installed via Homebrew"
+      check_exists "Ruby"
       export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
     fi
 
     # Install CocoaPods with modern Ruby
     if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
       if timed_confirm "Install CocoaPods for iOS development?"; then
-        print_info "Installing CocoaPods with modern Ruby..."
-        sudo gem install cocoapods
-        /opt/homebrew/opt/ruby/bin/gem install cocoapods
-        print_success "CocoaPods installed"
+        check_installing "CocoaPods"
+        sudo gem install cocoapods > /dev/null 2>&1 || true
+        /opt/homebrew/opt/ruby/bin/gem install cocoapods > /dev/null 2>&1 || true
+        check_done "CocoaPods"
 
         # Verify 'pod' command is now available
         if ! command -v pod &> /dev/null; then
-            print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal or check your shell profile."
+            print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal."
             die "Setup failed"
         fi
       else
-        brew install cocoapods
-        print_warning "Skipping CocoaPods installation. iOS development may not work correctly."
+        brew install cocoapods > /dev/null 2>&1 || true
+        print_warning "Skipping CocoaPods installation."
       fi
     else
-      print_success "CocoaPods already installed"
+      check_exists "CocoaPods"
     fi
 
     # Install SwiftLint for code quality
     if ! command -v swiftlint &> /dev/null; then
       if timed_confirm "Install SwiftLint for Swift code quality checks?"; then
-        print_info "Installing SwiftLint..."
-        brew install swiftlint
-        print_success "SwiftLint installed"
+        check_installing "SwiftLint"
+        brew install swiftlint > /dev/null 2>&1
+        check_done "SwiftLint"
       else
         print_warning "Skipping SwiftLint installation."
       fi
     else
-      print_success "SwiftLint already installed"
+      check_exists "SwiftLint"
     fi
 
-    # Set up iOS development team (will be configured in .env)
-    print_info "iOS development environment ready"
-    print_warning "MANUAL STEP: Configure Apple Developer account in Xcode"
-    print_info "1. Open Xcode"
-    print_info "2. Go to Preferences > Accounts"
-    print_info "3. Add your Apple ID"
-    print_info "4. Select your development team"
+    print_success "iOS development configured"
+    print_warning "MANUAL: Configure Apple Developer account in Xcode (Preferences > Accounts)"
   fi
   fi
 fi
@@ -631,52 +729,50 @@ fi
 
 # AWS CLI
 if ! aws --version &> /dev/null; then
-  print_info "AWS CLI is not working. Reinstalling..."
-  brew reinstall awscli
+  check_installing "AWS CLI"
+  brew reinstall awscli > /dev/null 2>&1
   if ! aws --version &> /dev/null; then
     print_error "AWS CLI reinstall failed. Please check your Homebrew and Python setup."
     die "Setup failed"
   fi
-  print_success "AWS CLI reinstalled successfully: $(aws --version)"
+  check_done "AWS CLI"
 else
-  print_success "AWS CLI already installed: $(aws --version)"
+  check_exists "AWS CLI ($(aws --version | awk '{print $1}'))"
 fi
 
-# Essential tools for web extension development
-print_info "Installing web development tools..."
+section_end
+
+section_start "Web development tools"
 
 # ImageMagick (for icon generation)
 if ! command -v magick &> /dev/null; then
-  print_info "Installing ImageMagick for icon processing..."
-  brew install imagemagick
-  print_success "ImageMagick installed"
+  check_installing "ImageMagick"
+  brew install imagemagick > /dev/null 2>&1
+  check_done "ImageMagick"
 else
-  print_success "ImageMagick already installed"
+  check_exists "ImageMagick"
 fi
 
 # Git (usually pre-installed but ensure latest)
 if ! command -v git &> /dev/null; then
-  print_info "Installing Git..."
-  brew install git
-  print_success "Git installed"
+  check_installing "Git"
+  brew install git > /dev/null 2>&1
+  check_done "Git"
 else
-  print_success "Git already available: $(git --version)"
+  check_exists "Git ($(git --version | awk '{print $3}'))"
 fi
-
-# Large installations with confirmation prompts
-print_info "Checking for large development tools..."
 
 # Visual Studio Code
 if ! command -v code &> /dev/null; then
   if timed_confirm "Visual Studio Code is recommended for development. Install? (Large download ~200MB)"; then
-    print_info "Installing Visual Studio Code..."
-    brew install --cask visual-studio-code
-    print_success "Visual Studio Code installed"
+    check_installing "Visual Studio Code"
+    brew install --cask visual-studio-code > /dev/null 2>&1
+    check_done "Visual Studio Code"
   else
     print_warning "Skipping VS Code - you can install it later with: brew install --cask visual-studio-code"
   fi
 else
-  print_success "Visual Studio Code already installed"
+  check_exists "Visual Studio Code"
 fi
 
 
@@ -684,16 +780,22 @@ fi
 # Install VS Code extensions
 if command -v code &> /dev/null; then
   if timed_confirm "Install VS Code extensions from .vscode/extensions.txt?"; then
-    print_info "Installing VS Code extensions..."
     if [ -f ".vscode/extensions.txt" ]; then
+      print_info "Installing VS Code extensions from .vscode/extensions.txt..."
       while IFS= read -r extension; do
         if [ -n "$extension" ]; then
-          # Use 'code --install-extension' but ignore the 'v8::ToLocalChecked Empty MaybeLocal' error
-          # that causes it to crash by running in a subshell and suppressing stderr.
-          (code --install-extension "$extension" 2>/dev/null) || print_warning "Failed to install $extension or encountered non-fatal error"
+          # Use 'code --install-extension' but suppress all output for already-installed extensions
+          if ! code --list-extensions 2>/dev/null | grep -q "^${extension}$"; then
+            check_installing "$extension"
+            if code --install-extension "$extension" > /dev/null 2>&1; then
+              check_done "$extension"
+            else
+              check_failed "$extension"
+            fi
+          fi
         fi
       done < ".vscode/extensions.txt"
-      print_success "VS Code extensions installation attempted."
+      print_success "Extensions from .vscode/extensions.txt installed"
     else
       print_warning "No .vscode/extensions.txt found. Skipping extension installation."
     fi
@@ -720,25 +822,34 @@ if command -v code &> /dev/null; then
     "ms-playwright.playwright"                    # Playwright test support
   )
 
+  new_installs=0
+  already_installed=0
+
   for extension in "${extensions[@]}"; do
-    if ! code --list-extensions 2>/dev/null | grep -q "$extension"; then
-      print_info "Installing $extension..."
-      if code --install-extension "$extension" --force 2>/dev/null; then
-        print_success "$extension installed successfully"
+    if ! code --list-extensions 2>/dev/null | grep -q "^${extension}$"; then
+      check_installing "$extension"
+      if code --install-extension "$extension" --force > /dev/null 2>&1; then
+        check_done "$extension"
+        new_installs=$((new_installs + 1))
       else
-        print_error "Failed to install $extension"
+        check_failed "$extension"
       fi
     else
-      print_success "$extension already installed"
+      already_installed=$((already_installed + 1))
     fi
   done
 
-  print_success "VS Code extensions installation complete"
+  if [ $new_installs -gt 0 ]; then
+    print_success "Installed $new_installs new VS Code extensions"
+  fi
+  if [ $already_installed -gt 0 ]; then
+    print_info "$already_installed extensions already installed"
+  fi
 fi
 
+section_end
 
-# Install browser automation tools
-print_info "Setting up browser automation and testing tools..."
+section_start "Browser automation and testing tools"
 
 # Check if Playwright browsers are already installed
 playwright_browsers_installed=false
@@ -747,120 +858,121 @@ if [ -d "$HOME/Library/Caches/ms-playwright" ] && [ -n "$(ls -A "$HOME/Library/C
 fi
 
 if [ "$playwright_browsers_installed" = true ]; then
-  print_success "Playwright browsers already installed"
+  check_exists "Playwright browsers"
 else
   if timed_confirm "Install Playwright browsers? (~500MB download)" 10 "N"; then
-    print_info "Installing Playwright browsers..."
-    if npx playwright install; then
-      print_success "Playwright browsers installed"
+    check_installing "Playwright browsers"
+    if npx playwright install > /dev/null 2>&1; then
+      check_done "Playwright browsers"
     else
-      print_error "Playwright browser installation failed. Please run 'npx playwright install' manually."
+      check_failed "Playwright browsers"
     fi
   else
-    print_warning "Skipping Playwright browser installation. Browser automation tests will not work."
+    print_warning "Skipping Playwright browsers."
   fi
 fi
 
 # Install Jest testing framework globally (for compatibility)
 if ! command -v jest &> /dev/null; then
-  print_info "Installing Jest testing framework..."
-  npm install -g jest@^29.5.0
-  print_success "Jest installed globally"
+  check_installing "Jest"
+  npm install -g jest@^29.5.0 > /dev/null 2>&1
+  check_done "Jest"
 else
-  print_success "Jest already available"
+  check_exists "Jest"
 fi
 
-# Additional development tools
-print_info "Installing additional development utilities..."
+section_end
+
+section_start "Additional utilities"
 
 # jq for JSON processing
 if ! command -v jq &> /dev/null; then
-  print_info "Installing jq for JSON processing..."
-  brew install jq
-  print_success "jq installed"
+  check_installing "jq"
+  brew install jq > /dev/null 2>&1
+  check_done "jq"
 else
-  print_success "jq already installed"
+  check_exists "jq"
 fi
 
 # coreutils for timeout command (needed for multi-tenant tests)
 if ! command -v gtimeout &> /dev/null; then
-  print_info "Installing coreutils for timeout command..."
-  brew install coreutils
-  print_success "coreutils installed (gtimeout available)"
+  check_installing "coreutils"
+  brew install coreutils > /dev/null 2>&1
+  check_done "coreutils"
 else
-  print_success "coreutils already installed"
+  check_exists "coreutils"
 fi
 
 # curl and wget (usually pre-installed but ensure availability)
 if ! command -v curl &> /dev/null; then
-  brew install curl
+  check_installing "curl"
+  brew install curl > /dev/null 2>&1
+  check_done "curl"
 fi
 
 if ! command -v wget &> /dev/null; then
-  brew install wget
+  check_installing "wget"
+  brew install wget > /dev/null 2>&1
+  check_done "wget"
 fi
 
 # Tree for directory visualization
 if ! command -v tree &> /dev/null; then
-  print_info "Installing tree for directory visualization..."
-  brew install tree
-  print_success "tree installed"
+  check_installing "tree"
+  brew install tree > /dev/null 2>&1
+  check_done "tree"
 fi
 
 # Git repository tools for large file management and history cleanup
 if ! command -v bfg &> /dev/null; then
-  print_info "Installing BFG Repo-Cleaner for git history cleanup..."
-  brew install bfg
-  print_success "BFG Repo-Cleaner installed"
+  check_installing "BFG Repo-Cleaner"
+  brew install bfg > /dev/null 2>&1
+  check_done "BFG Repo-Cleaner"
 else
-  print_success "BFG Repo-Cleaner already installed"
+  check_exists "BFG Repo-Cleaner"
 fi
 
 if ! command -v git-lfs &> /dev/null; then
-  print_info "Installing Git Large File Storage..."
-  brew install git-lfs
-  # Initialize git-lfs for the user
+  check_installing "Git LFS"
+  brew install git-lfs > /dev/null 2>&1
   git lfs install --system 2>/dev/null || git lfs install 2>/dev/null || true
-  print_success "Git LFS installed and initialized"
+  check_done "Git LFS"
 else
-  print_success "Git LFS already installed"
+  check_exists "Git LFS"
 fi
 
 if ! command -v git-filter-repo &> /dev/null; then
-  print_info "Installing git-filter-repo for advanced history rewriting..."
-  brew install git-filter-repo
-  print_success "git-filter-repo installed"
+  check_installing "git-filter-repo"
+  brew install git-filter-repo > /dev/null 2>&1
+  check_done "git-filter-repo"
 else
-  print_success "git-filter-repo already installed"
+  check_exists "git-filter-repo"
 fi
 
-# Project-specific setup
-print_info "Setting up RecipeArchive monorepo dependencies..."
+section_end
+
+section_start "RecipeArchive monorepo setup"
 
 # Install root dependencies first
 if [ -f "package.json" ]; then
   print_info "Installing root monorepo dependencies..."
-  timeout 300 npm install
-  
+  timeout 300 npm install > /dev/null 2>&1
+
   # Set up pre-commit hooks
   print_info "Setting up Git pre-commit hooks..."
-  npx husky init || true
-  
+  npx husky init > /dev/null 2>&1 || true
+
   # Build shared types package
   if [ -d "packages/shared-types" ]; then
     print_info "Building shared types package..."
-    cd packages/shared-types
-    npm run build
-    cd - > /dev/null
+    (cd packages/shared-types && npm run build > /dev/null 2>&1)
     print_success "Shared types package built successfully"
   fi
-  
+
   # Run type checking to verify setup
   print_info "Verifying TypeScript configuration..."
-  npm run ts-check || print_warning "Type checking failed - check TypeScript configuration"
-  
-  print_info "Verifying code quality setup..."
-  
+  npm run ts-check > /dev/null 2>&1 || print_warning "Type checking failed - check TypeScript configuration"
+
   print_success "Root monorepo dependencies installed and verified"
 else
   print_warning "Root package.json not found - monorepo setup incomplete"
@@ -907,13 +1019,12 @@ EOF
   fi
 
   if [ -f "package.json" ]; then
-    timeout 180 npm install
+    timeout 180 npm install > /dev/null 2>&1
     print_success "AWS CDK dependencies installed"
 
     # Check if Lambda functions are built
     if [ ! -d "../functions/dist" ] || [ -z "$(ls -A ../functions/dist 2>/dev/null)" ]; then
-      print_info "Lambda function packages not found. They will be built during CDK deployment."
-      print_info "To build them now, run: cd aws-backend/functions && make build"
+      print_info "Lambda functions will be built during CDK deployment"
     else
       print_success "Lambda function packages already built"
     fi
@@ -922,10 +1033,10 @@ EOF
     if [ -d "../functions/dist" ] && [ -n "$(ls -A ../functions/dist 2>/dev/null)" ]; then
       if timed_confirm "Verify AWS CDK setup by synthesizing CloudFormation templates?" 10 "N"; then
         print_info "Synthesizing CDK templates..."
-        npm run synth || print_warning "CDK synthesis failed - check AWS credentials and configuration"
+        npm run synth > /dev/null 2>&1 || print_warning "CDK synthesis failed - check AWS credentials and configuration"
       fi
     else
-      print_info "Skipping CDK synthesis verification (Lambda functions not built yet)"
+      print_info "CDK synthesis will be performed during deployment"
     fi
   fi
 
@@ -950,17 +1061,17 @@ if [ -d "extensions/chrome" ]; then
 
   # Install dependencies
   if [ -f "package.json" ]; then
-    timeout 180 npm install
+    timeout 180 npm install > /dev/null 2>&1
     print_success "Chrome extension dependencies installed"
   fi
-  
+
   # Create extension package
   if [ -f "manifest.json" ]; then
     print_info "Packing Chrome extension for distribution..."
-    zip -r chrome-extension.zip . -x "node_modules/*" -x "chrome-extension.zip"
+    zip -r chrome-extension.zip . -x "node_modules/*" -x "chrome-extension.zip" > /dev/null 2>&1
     print_success "Chrome extension packed as chrome-extension.zip"
   fi
-  
+
   cd - > /dev/null
 else
   print_warning "Chrome extension directory not found - skipping Chrome setup"
@@ -981,7 +1092,7 @@ if [ -d "extensions/safari" ]; then
 
   # Install dependencies
   if [ -f "package.json" ]; then
-    timeout 180 npm install
+    timeout 180 npm install > /dev/null 2>&1
     print_success "Safari extension dependencies installed"
   fi
 
@@ -1004,8 +1115,10 @@ if [ -d "extensions/tests/safari" ]; then
   cd - > /dev/null
 fi
 
-# Environment variable setup for testing
-print_info "Setting up testing environment..."
+section_end
+
+section_start "Testing environment setup"
+
 if [ ! -f ".env" ]; then
   if [ -f ".env.example" ]; then
     print_info "Creating .env file from .env.example..."
@@ -1024,19 +1137,31 @@ fi
 
 # Try to load environment variables if .env exists
 if [ -f ".env" ]; then
-  print_info "Loading environment variables from .env file..."
-  if source "$REPO_ROOT/scripts/load-env.sh"; then
-    print_success "Environment variables loaded successfully"
+  if [ "$VERBOSE" = true ]; then
+    # Verbose mode: show all output from load-env.sh
+    if source "$REPO_ROOT/scripts/load-env.sh"; then
+      : # Success message already printed by load-env.sh
+    else
+      print_warning "Failed to load .env file - some features may not work"
+      print_info "Edit .env to fix any syntax errors or missing required variables"
+    fi
   else
-    print_warning "Failed to load .env file - some features may not work"
-    print_info "Edit .env to fix any syntax errors or missing required variables"
+    # Compact mode: suppress output from load-env.sh
+    section_update "Loading .env"
+    if source "$REPO_ROOT/scripts/load-env.sh" >/dev/null 2>&1; then
+      section_update ".env loaded ✓"
+    else
+      section_update "Failed to load .env"
+      section_fail ".env"
+    fi
   fi
 else
   print_info "Skipping .env load (file not present) - basic development will work"
 fi
 
-# MCP Server Setup for Claude Desktop
-print_info "Setting up MCP (Model Context Protocol) servers for Claude Desktop..."
+section_end
+
+section_start "MCP servers for Claude Desktop"
 
 # Check if Claude Desktop is installed
 CLAUDE_CONFIG_DIR="$HOME/Library/Application Support/Claude"
@@ -1136,12 +1261,12 @@ EOF
 
     # Display configured servers
     print_info "Configured MCP servers:"
-    echo "  ✅ GitHub MCP - Repository management, issues, PRs"
-    echo "  ✅ Flutter MCP - Flutter/Dart development tools"
-    echo "  ✅ Dart MCP - Official Dart tooling integration"
-    echo "  ✅ NPM Commands MCP - Package management automation"
-    echo "  ✅ Jest MCP - Testing framework integration"
-    echo "  ✅ Browser MCP - Browser automation for web development"
+    print_info "  • GitHub MCP - Repository management, issues, PRs"
+    print_info "  • Flutter MCP - Flutter/Dart development tools"
+    print_info "  • Dart MCP - Official Dart tooling integration"
+    print_info "  • NPM Commands MCP - Package management automation"
+    print_info "  • Jest MCP - Testing framework integration"
+    print_info "  • Browser MCP - Browser automation for web development"
 
     print_warning "IMPORTANT: Add your GitHub Personal Access Token to the configuration:"
     print_info "1. Generate token at: https://github.com/settings/personal-access-tokens"
@@ -1166,8 +1291,9 @@ else
   print_info "2. Run this script again to configure MCP servers"
 fi
 
-# Claude Code MCP Server Setup
-print_info "Setting up MCP servers for Claude Code CLI..."
+section_end
+
+section_start "MCP servers for Claude Code CLI"
 
 # Ensure ~/.local/bin directory exists
 LOCAL_BIN_DIR="$HOME/.local/bin"
@@ -1256,33 +1382,39 @@ if command -v claude &> /dev/null; then
 
   # Add GitHub MCP server (requires authentication)
   if ! timeout 10 claude mcp list 2>/dev/null | grep -q "github"; then
-    print_info "Adding GitHub MCP server to Claude Code..."
-    timeout 30 claude mcp add github npx @modelcontextprotocol/server-github --scope user 2>/dev/null || print_warning "GitHub MCP server setup failed - may require authentication"
+    check_installing "GitHub MCP server"
+    if timeout 30 claude mcp add github npx @modelcontextprotocol/server-github --scope user 2>/dev/null; then
+      check_done "GitHub MCP server"
+    else
+      check_failed "GitHub MCP server"
+    fi
   else
-    print_success "GitHub MCP server already configured"
+    check_exists "GitHub MCP server"
   fi
 
   # Add filesystem MCP server for project directory
   if ! timeout 10 claude mcp list 2>/dev/null | grep -q "filesystem"; then
-    print_info "Adding filesystem MCP server for project directory..."
-    timeout 30 claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>/dev/null || print_warning "Filesystem MCP server setup failed"
+    check_installing "Filesystem MCP server"
+    if timeout 30 claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>/dev/null; then
+      check_done "Filesystem MCP server"
+    else
+      check_failed "Filesystem MCP server"
+    fi
   else
-    print_success "Filesystem MCP server already configured"
+    check_exists "Filesystem MCP server"
   fi
 
   # Add Flutter MCP server
   if ! timeout 10 claude mcp list 2>/dev/null | grep -q "flutter"; then
-    print_info "Adding Flutter MCP server..."
-    timeout 30 claude mcp add flutter npx flutter-mcp --scope user 2>/dev/null || print_warning "Flutter MCP server setup failed"
+    check_installing "Flutter MCP server"
+    if timeout 30 claude mcp add flutter npx flutter-mcp --scope user 2>/dev/null; then
+      check_done "Flutter MCP server"
+    else
+      check_failed "Flutter MCP server"
+    fi
   else
-    print_success "Flutter MCP server already configured"
+    check_exists "Flutter MCP server"
   fi
-
-  print_success "Claude Code MCP servers configured"
-  print_info "Configured MCP servers for Claude Code:"
-  echo "  ✅ GitHub - Repository operations and issue management"
-  echo "  ✅ Filesystem - Project file operations"
-  echo "  ✅ Flutter - Dart/Flutter development tools"
 
   print_warning "IMPORTANT: Set up GitHub authentication:"
   print_info "1. Generate a GitHub Personal Access Token"
@@ -1298,8 +1430,13 @@ else
   print_info "6. Run: claude mcp add flutter npx flutter-mcp --scope user"
 fi
 
+section_end
+
 # Final setup summary and manual steps
-print_info "Setup completed! Summary and next steps..."
+if [ "$VERBOSE" = true ]; then
+  echo ""
+  print_info "Setup completed! Summary and next steps..."
+fi
 
 # Installation summary (use while loop with echo -e to interpret ANSI escape sequences)
 while IFS= read -r line || [ -n "$line" ]; do echo -e "$line"; done <<EOM
@@ -1401,30 +1538,18 @@ ${COLOR_YELLOW}📋 MANUAL STEPS REQUIRED${COLOR_RESET}
 ${COLOR_GREEN}🚀 QUICK START COMMANDS${COLOR_RESET}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# Test monorepo setup
-
-# Test Chrome extension
-
-# Test Safari extension  
+# Validate entire monorepo (tests, builds, linting)
+./validate-monorepo.sh --all
 
 # Deploy AWS infrastructure
 cd aws-backend/infrastructure && npm run deploy
 
-# Test cross-platform compatibility
-node tests/integration/test-payload-compatibility.js
-
-# Test mobile development setup
-./validate-monorepo.sh --mobile
-
-# Build mobile apps (after setup complete)
-cd recipe_archive && ./scripts/build-mobile.sh both debug
+# Build mobile apps
+./scripts/ios/build.sh --dev --run
+./scripts/android/build.sh --dev --run
 
 # Format all code
 npm run format
-
-# Create new config files
-cp extensions/chrome/config.sample.json extensions/chrome/config.json
-cp extensions/safari/config.sample.json extensions/safari/config.json
 
 ${COLOR_BLUE}📖 Documentation:${COLOR_RESET}
 • Project guide: ./docs/development/claude-context.md
@@ -1433,8 +1558,25 @@ ${COLOR_BLUE}📖 Documentation:${COLOR_RESET}
 
 EOM
 
-print_success "🎉 RecipeArchive development environment setup complete!"
-print_info ""
+echo ""
+
+# Display error report only if there were failures
+if [ ${#FAILED_INSTALLS[@]} -gt 0 ]; then
+  echo ""
+  log_header "Installation Issues Detected"
+  print_error "The following components failed to install:"
+  echo ""
+  for failed_item in "${FAILED_INSTALLS[@]}"; do
+    print_error "  • $failed_item"
+  done
+  echo ""
+  print_warning "Recommended Actions:"
+  print_info "1. Try running the script again: ./scripts/setup-macos.sh --yes"
+  print_info "2. Check error messages above for specific failures"
+  print_info "3. Install failed components manually"
+  print_info "4. Run validation to check what's working: ./validate-monorepo.sh --all"
+  echo ""
+fi
 
 # Check if .env file exists and show critical warning if not
 if [ ! -f ".env" ]; then
