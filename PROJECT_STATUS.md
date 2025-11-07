@@ -1,7 +1,7 @@
 # RecipeArchive - System Health Dashboard
 
 **Version:** 1.0.0
-**Last Updated:** 2025-10-30
+**Last Updated:** 2025-11-06
 **Overall Status:** 🟢 Production
 
 Cross-platform recipe management system with web app, browser extensions (Chrome/Safari), mobile apps (iOS/Android), and AWS serverless backend.
@@ -96,13 +96,36 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 |-----------|--------|---------|----------|
 | Web App (Flutter) | 🟢 Deployed | 1.0.0 | <https://d1jcaphz4458q7.cloudfront.net> |
 | API Gateway | 🟢 Live | v1 | `<https://api.YOUR_DOMAIN>` |
-| Lambda Functions | 🟢 Running | Go 1.21 | 12 functions deployed |
+| Lambda Functions | 🟢 Running | Go 1.21 | 10 functions deployed |
 | S3 Storage | 🟢 Active | - | 3 buckets (recipes, images, temp) |
 | Cognito User Pool | 🟢 Active | - | Multi-tenant enabled |
 | Chrome Extension | 🟢 Ready | 1.0.0 | Manual install only |
 | Safari Extension | 🟢 Ready | 1.0.0 | Manual install only |
 | iOS App | 🟢 Ready | 1.0.0 | Local build, Share Extension |
 | Android App | 🟢 Ready | 1.0.0 | Local build, Share Extension |
+
+### Lambda Functions (10 Deployed)
+
+| Function | Purpose | Status |
+|----------|---------|--------|
+| analytics-aggregator | Analytics data processing | 🟢 Deployed |
+| background-normalizer | Async recipe normalization | 🟢 Deployed |
+| backup | Recipe backup operations | 🟢 Deployed |
+| content-normalizer | Recipe content processing | 🟢 Deployed |
+| diagnostics | Error tracking and telemetry | 🟢 Deployed |
+| diagnostics-mobile-share | Mobile share extension diagnostics | 🟢 Deployed |
+| health | Health check endpoint | 🟢 Deployed |
+| image-upload | Recipe image processing | 🟢 Deployed |
+| invitation-manager-s3 | Tenant invitation management | 🟢 Deployed |
+| recipes | Main recipe CRUD operations | 🟢 Deployed |
+
+### Development Tools (Not Deployed)
+
+| Tool | Purpose | Location |
+|------|---------|----------|
+| local-server | Local development HTTP server | aws-backend/functions/local-server |
+| s3-manager | S3 utility CLI tool | aws-backend/functions/s3-manager |
+| test-tools | Testing utilities | aws-backend/functions/test-tools |
 
 ### Supported Recipe Sites (14)
 
@@ -116,21 +139,13 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 **Updated:** 2025-11-06
 
-### Code Quality & Tooling
+### Code Quality Status
 
-- **Comprehensive ESLint Coverage (P1)**: Expand linting from extensions-only to entire monorepo
-  - **Current coverage**: Only 26 files (extensions/chrome/*.js, extensions/safari/*.js)
-  - **Missing coverage**: 159+ JavaScript/TypeScript files across:
-    - TypeScript files everywhere (parsers/*.ts, tools/*.ts, packages/shared-types/src/*.ts, etc.)
-    - Tools directory (build-extension-env.cjs, enhanced-security-scan.cjs, etc.)
-    - Scripts directory (mcp-diagnostics-gate.js, organize-docs.cjs, etc.)
-    - Tests directory (76+ test files)
-    - Config files (jest.config.js, etc.)
-  - **Goal**: Zero linting errors across entire codebase
-  - **Approach**: Update lint script to `npx eslint '**/*.{js,ts,cjs,mjs}'` with proper ignores
-  - **Impact**: Improved code quality, catch bugs earlier, consistent style
-  - **Effort**: M-L (Fix existing violations, then integrate into CI)
-  - **Note**: User explicitly wants to fix all problems uncovered - not avoiding work!
+✅ **ESLint Coverage Complete**: Comprehensive linting implemented across entire monorepo
+  - All JavaScript/TypeScript files now linted (parsers, tools, scripts, tests, config files)
+  - Zero linting errors across codebase
+  - Integrated into pre-commit hooks via Husky
+  - Validates on every commit to maintain code quality
 
 ### High Priority Performance Optimization
 

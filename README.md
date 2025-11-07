@@ -199,13 +199,22 @@ cd RecipeArchive && npm install
 
 # Deployment
 ./scripts/web/deploy.sh           # Deploy web app
-./scripts/deploy-lambda.sh --all  # Deploy all Lambda functions
+./scripts/aws/lambda.sh --all     # Deploy all Lambda functions (10 functions)
 
 # Mobile Development
 ./scripts/ios/build.sh --dev --run              # iOS development build
 ./scripts/android/build.sh --dev --run          # Android development build
 ./scripts/ios/build.sh --prod --release --version 1.0.1    # iOS production
 ```
+
+### Lambda Deployment Notes
+
+The deployment script skips three development tools that are not deployed to AWS:
+- `local-server` - Local development HTTP server for testing
+- `s3-manager` - CLI utility for S3 operations
+- `test-tools` - Testing and validation utilities
+
+These warnings are expected and can be safely ignored. All 10 production Lambda functions deploy successfully.
 
 **Complete command reference:** [COMMANDS.md](COMMANDS.md)
 

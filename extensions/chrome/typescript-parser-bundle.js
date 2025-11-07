@@ -14727,7 +14727,7 @@
     }
     sanitizeText(text3) {
       if (!text3) return "";
-      let cleaned = this.decodeHtmlEntities(text3);
+      const cleaned = this.decodeHtmlEntities(text3);
       return cleaned.trim().replace(/\s+/g, " ").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
     }
     /**
@@ -14808,14 +14808,14 @@
       decoded = decoded.replace(/&#(\d+);/g, (match, code) => {
         try {
           return String.fromCharCode(parseInt(code, 10));
-        } catch (e) {
+        } catch {
           return match;
         }
       });
       decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (match, code) => {
         try {
           return String.fromCharCode(parseInt(code, 16));
-        } catch (e) {
+        } catch {
           return match;
         }
       });
@@ -14885,7 +14885,7 @@
       }
       return instructions;
     }
-    validateRecipe(recipe) {
+    validateRecipe(_recipe) {
       const missingFields = [];
       return {
         isValid: true,
@@ -14932,7 +14932,7 @@
         /\.css\(/,
         /typeof\s+/,
         /return\s+/,
-        /\+\+|\-\-/,
+        /\+\+|--/,
         /===|!==|&&|\|\|/,
         /ai_\w+/,
         // Ad injection patterns
@@ -14996,10 +14996,10 @@
           tags: Array.isArray(jsonLd.recipeCategory) ? jsonLd.recipeCategory.map((c) => this.sanitizeText(c)) : jsonLd.recipeCategory ? [this.sanitizeText(jsonLd.recipeCategory)] : []
         };
       } else {
-        let title = this.sanitizeText(
+        const title = this.sanitizeText(
           $2(".jetpack-recipe-title, h1.entry-title, h1.post-title, h1").first().text() || $2("h1").first().text() || ""
         );
-        let author = this.sanitizeText(
+        const author = this.sanitizeText(
           $2(
             ".jetpack-recipe-source, p.recipe-meta + p, .author-meta, .author, .byline .author"
           ).first().text().replace(/Source:\s*|Author:\s*/gi, "").trim() || "Deb Perelman"
@@ -15043,7 +15043,7 @@
         }
         const entryContent = $2(".entry-content");
         const recipeTitleP = entryContent.find('p b:contains("Ina Garten")').parent();
-        let ingredientP = recipeTitleP.next("p");
+        const ingredientP = recipeTitleP.next("p");
         if (ingredientP.length) {
           const raw = ingredientP.html();
           if (raw) {
@@ -15133,7 +15133,7 @@
             }
           });
         }
-        let instrIdx = ingredientP.index();
+        const instrIdx = ingredientP.index();
         entryContent.find("p").slice(instrIdx + 1).each((i, el) => {
           const html4 = $2(el).html();
           if (html4 && (html4.includes("Preheat oven") || html4.match(
@@ -15168,13 +15168,13 @@
         const cookTime = this.sanitizeText(
           $2(".jetpack-recipe-cook-time, .recipe-cook-time").first().text().replace(/Cook.*?:\s*/gi, "").trim() || $2(".recipe-meta-cook, .cook-time").first().text().replace(/Cook.*?:\s*/gi, "").trim() || $2("[data-cook-time], .cooking-time").first().text()
         ) || void 0;
-        let totalTime = this.sanitizeText(
+        const totalTime = this.sanitizeText(
           $2(".jetpack-recipe-time time, .jetpack-recipe-time").first().text().replace(/Time:\s*/gi, "").trim() || $2(".recipe-total-time, .total-time").first().text().replace(/Total.*?:\s*/gi, "").trim() || $2("[data-total-time], .recipe-duration").first().text()
         ) || void 0;
-        let servings = this.sanitizeText(
+        const servings = this.sanitizeText(
           $2(".jetpack-recipe-servings").first().text().replace(/Servings:\s*/gi, "").trim() || $2(".recipe-servings, .recipe-yield").first().text().replace(/Serves?:?\s*/gi, "").trim() || $2("[data-servings], .servings-value").first().text()
         ) || void 0;
-        let tags = ["Cocktail", "Drinks"];
+        const tags = ["Cocktail", "Drinks"];
         recipe = {
           title: typeof title === "string" && title.trim().length > 0 ? title.trim() : "Untitled Recipe",
           source: url && url.length > 0 ? url : "https://smittenkitchen.com/",
@@ -15255,7 +15255,7 @@
           $2(".chef-name").text()
         ].find((a) => a && a.trim().length > 0) || "Food Network"
       );
-      let ingredients = [];
+      const ingredients = [];
       $2(
         ".o-Ingredients__a-Ingredient, .ingredients-list__item, .ingredient, .recipe-ingredients li, ul li, .entry-content ul li"
       ).each((_, el) => {
@@ -15273,7 +15273,7 @@
           });
         });
       }
-      let instructionsRaw = [];
+      const instructionsRaw = [];
       const instructionSelectors = [
         ".o-Method__m-Step",
         ".recipe-instructions .o-Method__m-Step",
@@ -15294,7 +15294,7 @@
           if (text3 && text3.length > 0) instructionsRaw.push(text3);
         });
       }
-      let instructions = this.processInstructions(
+      const instructions = this.processInstructions(
         instructionsRaw.filter(
           (text3) => typeof text3 === "string" && text3.trim().length > 0
         )
