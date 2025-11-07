@@ -15,6 +15,7 @@ readonly COLOR_BLUE='\033[0;34m'
 readonly COLOR_CYAN='\033[0;36m'
 readonly COLOR_MAGENTA='\033[0;35m'
 readonly COLOR_BOLD='\033[1m'
+readonly COLOR_DIM='\033[2m'
 readonly COLOR_RESET='\033[0m'
 
 # Status prefixes
