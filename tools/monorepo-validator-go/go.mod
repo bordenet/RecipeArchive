@@ -1,6 +1,8 @@
 module github.com/bordenet/recipe-archive/tools/monorepo-validator-go
 
-go 1.25.0
+go 1.24.0
+
+toolchain go1.24.7
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.32.2
