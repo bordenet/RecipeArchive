@@ -614,6 +614,7 @@ func getInfraValidations() []ValidationTask {
 	return []ValidationTask{
 		{"AWS Infrastructure Tests", runAwsInfrastructureTests, false, "Infra"},
 		{"Validate Deployment Infrastructure", validateDeploymentInfrastructure, false, "Infra"},
+		{"Validate Extension Downloads", validateExtensionDownloads, false, "Infra"},
 	}
 }
 
