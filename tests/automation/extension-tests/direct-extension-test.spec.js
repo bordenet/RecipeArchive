@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const { test, expect, chromium } = require("@playwright/test");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -90,7 +91,7 @@ test.describe("Chrome Extension Direct Test", () => {
     const popupPage = await context.newPage();
 
     // Try common extension popup URLs
-    const possibleUrls = [
+    const _possibleUrls = [
       "chrome-extension://*/popup.html",
       // We'll need to find the actual extension ID
     ];

@@ -12,7 +12,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { fileURLToPath } = require("url");
+const { fileURLToPath: _fileURLToPath } = require("url");
 
 class DocOrganizer {
   constructor() {

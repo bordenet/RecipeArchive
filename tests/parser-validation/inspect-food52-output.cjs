@@ -1,7 +1,7 @@
 // Targeted output inspection for Food52 parser
 const fs = require("fs");
 const path = require("path");
-const cheerio = require("cheerio");
+const _cheerio = require("cheerio");
 const { default: Food52Parser } = require("../../parsers/dist/sites/food52.js");
 
 const fixturePath = path.resolve(

@@ -11,7 +11,7 @@ import * as snsSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as cloudwatchActions from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as budgets from "aws-cdk-lib/aws-budgets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
-import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
+import * as _lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as crypto from "crypto";
 
 export interface RecipeArchiveSecureStackProps extends cdk.StackProps {

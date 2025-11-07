@@ -141,7 +141,7 @@ export abstract class BaseParser {
     decoded = decoded.replace(/&#(\d+);/g, (match, code) => {
       try {
         return String.fromCharCode(parseInt(code, 10));
-      } catch (e) {
+      } catch {
         return match; // Return original if parsing fails
       }
     });
@@ -150,7 +150,7 @@ export abstract class BaseParser {
     decoded = decoded.replace(/&#x([0-9A-Fa-f]+);/g, (match, code) => {
       try {
         return String.fromCharCode(parseInt(code, 16));
-      } catch (e) {
+      } catch {
         return match; // Return original if parsing fails
       }
     });
@@ -250,7 +250,7 @@ export abstract class BaseParser {
     return instructions;
   }
 
-  protected validateRecipe(recipe: Recipe): ValidationResult {
+  protected validateRecipe(_recipe: Recipe): ValidationResult {
     const missingFields: string[] = [];
     // ...rest of validation logic...
     return {

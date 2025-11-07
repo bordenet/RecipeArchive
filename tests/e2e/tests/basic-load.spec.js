@@ -11,7 +11,7 @@ test.describe("Basic App Loading", () => {
     await page.screenshot({ path: "flutter-debug.png", fullPage: true });
 
     // Check if Flutter app body exists
-    const flutterApp = page
+    const _flutterApp = page
       .locator("flt-platform-view")
       .or(
         page

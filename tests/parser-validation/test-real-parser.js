@@ -18,7 +18,7 @@ global.fetch = async (url) => {
 
 // Mock DOMParser for real HTML parsing
 class MockDOMParser {
-  parseFromString(html, type) {
+  parseFromString(html, _type) {
     // Simple regex-based HTML parsing for testing
     return {
       documentElement: { outerHTML: html },

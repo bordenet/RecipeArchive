@@ -400,7 +400,7 @@ class RecipeArchiveMinimalStack extends cdk.Stack {
         // Subscribe admin email to cost alerts
         costAlertTopic.addSubscription(new subscriptions.EmailSubscription(props.adminEmail));
         // AWS Budget for cost control ($5/month limit with alerts)
-        const budget = new budgets.CfnBudget(this, "RecipeArchiveBudget", {
+        const _budget = new budgets.CfnBudget(this, "RecipeArchiveBudget", {
             budget: {
                 budgetName: `RecipeArchive-Budget-${secureId}`,
                 budgetType: "COST",

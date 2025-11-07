@@ -10,7 +10,7 @@ describe("Automated diagnostic coverage", () => {
   SITE_REGISTRY.forEach((site) => {
     it(`should submit diagnostic payload on failed extraction for ${site.name}`, async () => {
       const ParserClass = loadParser(site.parserFile);
-      const fixtureHtml = await loadFixture(site.fixtureFile);
+      const _fixtureHtml = await loadFixture(site.fixtureFile);
       // Simulate a failure by passing empty HTML or corrupt data
       const result = extractRecipeFromFixture(ParserClass, "");
       const diagnosticPayload = {

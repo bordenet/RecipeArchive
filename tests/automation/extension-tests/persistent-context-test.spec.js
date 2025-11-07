@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const { test, expect, chromium } = require("@playwright/test");
 const path = require("path");
 

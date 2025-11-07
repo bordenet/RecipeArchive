@@ -335,7 +335,7 @@ function transformRecipeDataForAWS(recipeData) {
   };
 }
 
-async function saveToAWSBackend(recipeData, originalUrl) {
+async function saveToAWSBackend(recipeData, _originalUrl) {
   try {
     // In production, you'd need proper authentication
     // For now, this is a placeholder that would connect to your AWS backend

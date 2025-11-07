@@ -1,7 +1,7 @@
 // ...existing code...
 import { BaseParser } from "../base-parser.js";
 import * as cheerio from "cheerio";
-import { Recipe, Ingredient, Instruction } from "../types";
+import { Recipe } from "../types";
 
 export class NYTCookingParser extends BaseParser {
   canParse(url: string): boolean {

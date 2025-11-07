@@ -488,7 +488,7 @@ describe("Invitation Flow Integration Tests", () => {
 });
 
 // Mock function implementations
-async function createInvitation(adminUserId, request) {
+async function createInvitation(_adminUserId, _request) {
   // Simulate invitation creation logic
   const token = require("crypto").randomBytes(32).toString("hex");
   const invitationId = require("crypto").randomUUID();
@@ -502,7 +502,7 @@ async function createInvitation(adminUserId, request) {
   };
 }
 
-async function getInvitationStatus(token) {
+async function getInvitationStatus(_token) {
   const queryResult = await mockDynamoDB.query();
 
   if (!queryResult.Items || queryResult.Items.length === 0) {

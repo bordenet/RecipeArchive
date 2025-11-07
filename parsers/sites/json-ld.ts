@@ -2,7 +2,7 @@ import { BaseParser } from "../base-parser";
 import { Recipe } from "../types";
 
 export class JsonLdParser extends BaseParser {
-  canParse(url: string): boolean {
+  canParse(_url: string): boolean {
     // Accept any URL for universal JSON-LD extraction
     return true;
   }

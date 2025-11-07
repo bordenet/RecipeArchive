@@ -10,7 +10,7 @@ import * as sns from "aws-cdk-lib/aws-sns";
 import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as budgets from "aws-cdk-lib/aws-budgets";
 import * as sqs from "aws-cdk-lib/aws-sqs";
-import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
+import * as _lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as crypto from "crypto";
@@ -488,7 +488,7 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
     );
 
     // AWS Budget for cost control ($5/month limit with alerts)
-    const budget = new budgets.CfnBudget(this, "RecipeArchiveBudget", {
+    const _budget = new budgets.CfnBudget(this, "RecipeArchiveBudget", {
       budget: {
         budgetName: `RecipeArchive-Budget-${secureId}`,
         budgetType: "COST",
