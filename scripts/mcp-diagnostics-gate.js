@@ -5,14 +5,14 @@
  * Validates codebase health using native tools when MCP diagnostics unavailable
  */
 
-import { execSync } from 'child_process';
-import { readdirSync, statSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { execSync } from "child_process";
+import { readdirSync, statSync, readFileSync } from "fs";
+import { join } from "path";
 
-const RED = '\x1b[31m';
-const GREEN = '\x1b[32m';
-const YELLOW = '\x1b[33m';
-const RESET = '\x1b[0m';
+const RED = "\x1b[31m";
+const GREEN = "\x1b[32m";
+const YELLOW = "\x1b[33m";
+const RESET = "\x1b[0m";
 
 class QualityGate {
   constructor() {
@@ -26,91 +26,91 @@ class QualityGate {
   }
 
   async checkTypeScript() {
-    console.log('🔍 Checking TypeScript compilation...');
+    console.log("🔍 Checking TypeScript compilation...");
     try {
       // Check if TypeScript files exist
-      const tsFiles = this.findFiles('.', /\.ts$/);
+      const tsFiles = this.findFiles(".", /\.ts$/);
       if (tsFiles.length === 0) return;
 
       // Run TypeScript compiler check
       // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
-      const output = execSync('npx tsc --noEmit --skipLibCheck', {
-        stdio: 'pipe',
-        encoding: 'utf8',
+      const output = execSync("npx tsc --noEmit --skipLibCheck", {
+        stdio: "pipe",
+        encoding: "utf8",
       });
       if (output) console.log(output);
-      this.log(GREEN, '✅ TypeScript compilation: PASSED');
+      this.log(GREEN, "✅ TypeScript compilation: PASSED");
     } catch (error) {
       // Handle "no inputs found" error gracefully - this is expected when root tsconfig excludes everything
-      const errorOutput = (error.stdout || '') + (error.stderr || '');
-      if (errorOutput.includes('TS18003: No inputs were found')) {
-        this.log(GREEN, '✅ TypeScript compilation: PASSED (no root-level files to compile)');
+      const errorOutput = (error.stdout || "") + (error.stderr || "");
+      if (errorOutput.includes("TS18003: No inputs were found")) {
+        this.log(GREEN, "✅ TypeScript compilation: PASSED (no root-level files to compile)");
         return;
       }
 
       if (error.stdout) console.log(error.stdout);
       if (error.stderr) console.error(error.stderr);
-      this.errors.push('TypeScript compilation failed');
-      this.log(RED, '❌ TypeScript compilation: FAILED');
+      this.errors.push("TypeScript compilation failed");
+      this.log(RED, "❌ TypeScript compilation: FAILED");
     }
   }
 
   async checkFlutterAnalyze() {
-    console.log('🔍 Checking Flutter code quality...');
+    console.log("🔍 Checking Flutter code quality...");
     try {
       // Check if Flutter project exists
-      if (!this.fileExists('recipe_archive/pubspec.yaml')) return;
+      if (!this.fileExists("recipe_archive/pubspec.yaml")) return;
 
       // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
-      const output = execSync('cd recipe_archive && flutter analyze', {
-        stdio: 'pipe',
-        encoding: 'utf8',
+      const output = execSync("cd recipe_archive && flutter analyze", {
+        stdio: "pipe",
+        encoding: "utf8",
       });
       if (output) console.log(output);
-      this.log(GREEN, '✅ Flutter analyze: PASSED');
+      this.log(GREEN, "✅ Flutter analyze: PASSED");
     } catch (error) {
       if (error.stdout) console.log(error.stdout);
       if (error.stderr) console.error(error.stderr);
-      this.errors.push('Flutter analyze failed');
-      this.log(RED, '❌ Flutter analyze: FAILED');
+      this.errors.push("Flutter analyze failed");
+      this.log(RED, "❌ Flutter analyze: FAILED");
     }
   }
 
   async checkGoCompilation() {
-    console.log('🔍 Checking Go compilation...');
+    console.log("🔍 Checking Go compilation...");
     try {
-      const goFiles = this.findFiles('aws-backend/functions', /\.go$/);
+      const goFiles = this.findFiles("aws-backend/functions", /\.go$/);
       if (goFiles.length === 0) return;
 
       // Check each Go module
-      const goDirs = this.findGoDirs('aws-backend/functions');
+      const goDirs = this.findGoDirs("aws-backend/functions");
       for (const dir of goDirs) {
         try {
-          execSync(`cd ${dir} && go build ./...`, { stdio: 'pipe' });
+          execSync(`cd ${dir} && go build ./...`, { stdio: "pipe" });
         } catch (error) {
           this.errors.push(`Go compilation failed in ${dir}`);
         }
       }
 
       if (
-        this.errors.filter((e) => e.includes('Go compilation')).length === 0
+        this.errors.filter((e) => e.includes("Go compilation")).length === 0
       ) {
-        this.log(GREEN, '✅ Go compilation: PASSED');
+        this.log(GREEN, "✅ Go compilation: PASSED");
       }
     } catch (error) {
-      this.errors.push('Go compilation check failed');
-      this.log(RED, '❌ Go compilation: FAILED');
+      this.errors.push("Go compilation check failed");
+      this.log(RED, "❌ Go compilation: FAILED");
     }
   }
 
   async checkPackageJsonIntegrity() {
-    console.log('🔍 Checking package.json integrity...');
+    console.log("🔍 Checking package.json integrity...");
     try {
-      const packageFiles = this.findFiles('.', /package\.json$/);
+      const packageFiles = this.findFiles(".", /package\.json$/);
 
       for (const file of packageFiles) {
         try {
-          const content = JSON.parse(readFileSync(file, 'utf8'));
+          const content = JSON.parse(readFileSync(file, "utf8"));
           if (!content.name) {
             this.warnings.push(`${file}: Missing name field`);
           }
@@ -119,11 +119,11 @@ class QualityGate {
         }
       }
 
-      if (this.errors.filter((e) => e.includes('Invalid JSON')).length === 0) {
-        this.log(GREEN, '✅ Package.json integrity: PASSED');
+      if (this.errors.filter((e) => e.includes("Invalid JSON")).length === 0) {
+        this.log(GREEN, "✅ Package.json integrity: PASSED");
       }
     } catch (error) {
-      this.errors.push('Package.json integrity check failed');
+      this.errors.push("Package.json integrity check failed");
     }
   }
 
@@ -136,8 +136,8 @@ class QualityGate {
 
         if (
           stat.isDirectory() &&
-          !item.startsWith('.') &&
-          item !== 'node_modules'
+          !item.startsWith(".") &&
+          item !== "node_modules"
         ) {
           this.findFiles(fullPath, pattern, files);
         } else if (stat.isFile() && pattern.test(item)) {
@@ -157,10 +157,10 @@ class QualityGate {
         const fullPath = join(dir, item);
         const stat = statSync(fullPath);
 
-        if (stat.isDirectory() && !item.startsWith('.')) {
+        if (stat.isDirectory() && !item.startsWith(".")) {
           // Check if directory contains .go files
           const goFiles = readdirSync(fullPath).filter((f) =>
-            f.endsWith('.go')
+            f.endsWith(".go")
           );
           if (goFiles.length > 0) {
             dirs.push(fullPath);
@@ -184,14 +184,14 @@ class QualityGate {
   }
 
   async run() {
-    console.log('🚀 MCP-Inspired Quality Gate Starting...\n');
+    console.log("🚀 MCP-Inspired Quality Gate Starting...\n");
 
     await this.checkPackageJsonIntegrity();
     await this.checkTypeScript();
     await this.checkFlutterAnalyze();
     await this.checkGoCompilation();
 
-    console.log('\n📊 Quality Gate Results:');
+    console.log("\n📊 Quality Gate Results:");
 
     if (this.warnings.length > 0) {
       this.log(YELLOW, `⚠️  ${this.warnings.length} warnings:`);
@@ -221,7 +221,7 @@ class QualityGate {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const gate = new QualityGate();
   gate.run().catch((error) => {
-    console.error('Quality gate crashed:', error);
+    console.error("Quality gate crashed:", error);
     process.exit(1);
   });
 }

@@ -1,7 +1,7 @@
 // Jest setup file for browser extension tests
 
 // TextEncoder/TextDecoder polyfill for Node.js environment
-const { TextEncoder, TextDecoder } = require('util');
+const { TextEncoder, TextDecoder } = require("util");
 
 if (!global.TextEncoder) {
   global.TextEncoder = TextEncoder;
@@ -48,8 +48,8 @@ global.console = {
 };
 
 // Load security modules for testing
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Mock crypto.getRandomValues for SecureStorage
 global.crypto = {
@@ -71,25 +71,25 @@ global.crypto = {
 try {
   const securityValidatorPath = path.join(
     __dirname,
-    '../extensions/shared/security-validator.js'
+    "../extensions/shared/security-validator.js"
   );
   const jwtValidatorPath = path.join(
     __dirname,
-    '../extensions/shared/jwt-validator.js'
+    "../extensions/shared/jwt-validator.js"
   );
   const secureStoragePath = path.join(
     __dirname,
-    '../extensions/shared/secure-storage.js'
+    "../extensions/shared/secure-storage.js"
   );
 
-  const securityValidatorCode = fs.readFileSync(securityValidatorPath, 'utf8');
-  const jwtValidatorCode = fs.readFileSync(jwtValidatorPath, 'utf8');
-  const secureStorageCode = fs.readFileSync(secureStoragePath, 'utf8');
+  const securityValidatorCode = fs.readFileSync(securityValidatorPath, "utf8");
+  const jwtValidatorCode = fs.readFileSync(jwtValidatorPath, "utf8");
+  const secureStorageCode = fs.readFileSync(secureStoragePath, "utf8");
 
   // Execute the code in global context
   eval(securityValidatorCode);
   eval(jwtValidatorCode);
   eval(secureStorageCode);
 } catch (error) {
-  console.warn('Failed to load security modules:', error.message);
+  console.warn("Failed to load security modules:", error.message);
 }

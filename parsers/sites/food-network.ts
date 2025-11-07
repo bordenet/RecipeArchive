@@ -1,11 +1,11 @@
 // ...existing code...
-import { BaseParser } from '../base-parser.js';
-import * as cheerio from 'cheerio';
-import { Recipe, Ingredient, Instruction } from '../types';
+import { BaseParser } from "../base-parser.js";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
 
 export class FoodNetworkParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('foodnetwork.com');
+    return url.includes("foodnetwork.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -18,26 +18,26 @@ export class FoodNetworkParser extends BaseParser {
         title: this.sanitizeText(jsonLd.name),
         source: url,
         author:
-          typeof jsonLd.author === 'string'
+          typeof jsonLd.author === "string"
             ? this.sanitizeText(jsonLd.author)
-            : this.sanitizeText(jsonLd.author?.name) || 'Food Network',
+            : this.sanitizeText(jsonLd.author?.name) || "Food Network",
         ingredients: (jsonLd.recipeIngredient || [])
           .map((i) => ({ text: this.sanitizeText(i) }))
-          .filter((ing: any) => typeof ing.text === 'string' && ing.text.length > 0),
+          .filter((ing: any) => typeof ing.text === "string" && ing.text.length > 0),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || [])
             .map((i) =>
-              typeof i === 'string'
+              typeof i === "string"
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text: any) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === "string" && text.length > 0)
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -59,41 +59,41 @@ export class FoodNetworkParser extends BaseParser {
     // Fallback to DOM parsing for Food Network specific selectors
     const title = this.sanitizeText(
       [
-        $('h1.o-AssetTitle__a-HeadlineText').text(),
-        $('h1.recipe-title').text(),
-        $('h1').text(),
-      ].find((t: any) => t && t.trim().length > 0) || ''
+        $("h1.o-AssetTitle__a-HeadlineText").text(),
+        $("h1.recipe-title").text(),
+        $("h1").text(),
+      ].find((t: any) => t && t.trim().length > 0) || ""
     );
 
     const author = this.sanitizeText(
       [
-        $('.o-Attribution__a-Name').text(),
-        $('.recipe-author').text(),
-        $('.chef-name').text(),
-      ].find((a: any) => a && a.trim().length > 0) || 'Food Network'
+        $(".o-Attribution__a-Name").text(),
+        $(".recipe-author").text(),
+        $(".chef-name").text(),
+      ].find((a: any) => a && a.trim().length > 0) || "Food Network"
     );
 
-    let ingredients: Ingredient[] = [];
+    const ingredients: Ingredient[] = [];
     // Try main selectors first
     $(
-      '.o-Ingredients__a-Ingredient, .ingredients-list__item, .ingredient, .recipe-ingredients li, ul li, .entry-content ul li'
+      ".o-Ingredients__a-Ingredient, .ingredients-list__item, .ingredient, .recipe-ingredients li, ul li, .entry-content ul li"
     ).each((_: any, el: any) => {
       let label = $(el)
-        .find('.o-Ingredients__a-Ingredient--CheckboxLabel')
+        .find(".o-Ingredients__a-Ingredient--CheckboxLabel")
         .text()
         .trim();
       if (!label) label = $(el).text().trim();
-      if (label && label.toLowerCase() !== 'deselect all') {
+      if (label && label.toLowerCase() !== "deselect all") {
         ingredients.push({ text: label });
       }
     });
     // Fallback: all <li> under any <ul> after h2 containing 'Ingredients'
     if (ingredients.length === 0) {
-      $('h2:contains("Ingredients")')
-        .nextAll('ul')
+      $("h2:contains(\"Ingredients\")")
+        .nextAll("ul")
         .each((_: any, ul: any) => {
           $(ul)
-            .find('li')
+            .find("li")
             .each((__: any, el: any) => {
               const text = $(el).text().trim();
               if (text) ingredients.push({ text });
@@ -102,20 +102,20 @@ export class FoodNetworkParser extends BaseParser {
     }
 
     // Extract instructions with Food Network specific selectors
-    let instructionsRaw: string[] = [];
+    const instructionsRaw: string[] = [];
     const instructionSelectors = [
-      '.o-Method__m-Step',
-      '.recipe-instructions .o-Method__m-Step',
-      '.o-Method__m-Body li',
-      '.o-Method li',
-      '[data-module="InstructionsList"] li',
-      '.recipe-instructions ol li',
-      '.recipe-instructions li',
-      '.recipe-directions li',
-      'section[aria-labelledby="recipe-instructions-section"] li',
-      'ul.instructions li',
-      'li.instruction',
-      'span.instruction-text',
+      ".o-Method__m-Step",
+      ".recipe-instructions .o-Method__m-Step",
+      ".o-Method__m-Body li",
+      ".o-Method li",
+      "[data-module=\"InstructionsList\"] li",
+      ".recipe-instructions ol li",
+      ".recipe-instructions li",
+      ".recipe-directions li",
+      "section[aria-labelledby=\"recipe-instructions-section\"] li",
+      "ul.instructions li",
+      "li.instruction",
+      "span.instruction-text",
     ];
     for (const selector of instructionSelectors) {
       $(selector).each((_: any, el: any) => {
@@ -123,18 +123,18 @@ export class FoodNetworkParser extends BaseParser {
         if (text && text.length > 0) instructionsRaw.push(text);
       });
     }
-    let instructions: Instruction[] = this.processInstructions(
+    const instructions: Instruction[] = this.processInstructions(
       instructionsRaw.filter(
-        (text) => typeof text === 'string' && text.trim().length > 0
+        (text) => typeof text === "string" && text.trim().length > 0
       )
     );
     // Fallback: all <li> under any <ul> after h2 containing 'Directions' or 'Instructions'
     if (instructions.length === 0) {
-      $('h2:contains("Directions"), h2:contains("Instructions")')
-        .nextAll('ul')
+      $("h2:contains(\"Directions\"), h2:contains(\"Instructions\")")
+        .nextAll("ul")
         .each((ulIdx: any, ul: any) => {
           $(ul)
-            .find('li')
+            .find("li")
             .each((liIdx: any, el: any) => {
               const text = $(el).text().trim();
               if (text)
@@ -148,76 +148,76 @@ export class FoodNetworkParser extends BaseParser {
 
     // Extract image
     let imageUrl =
-      $('.recipe-hero img, .o-AssetPhoto img, img').first().attr('src') ||
+      $(".recipe-hero img, .o-AssetPhoto img, img").first().attr("src") ||
       undefined;
     // Try to find a better image if available
-    const ogImage = $('meta[property="og:image"]').attr('content');
+    const ogImage = $("meta[property=\"og:image\"]").attr("content");
     if (ogImage) imageUrl = ogImage;
 
     // Extract timing and serving info with comprehensive selectors
     const prepTime = this.sanitizeText(
       $(
-        '.recipe-timing .prep-time, [data-testid="prep-time"], .preparation-time'
+        ".recipe-timing .prep-time, [data-testid=\"prep-time\"], .preparation-time"
       )
         .first()
         .text() ||
-        $('.recipe-meta-prep, .prep-time-value, [data-prep-time]')
+        $(".recipe-meta-prep, .prep-time-value, [data-prep-time]")
           .first()
           .text() ||
-        $('[aria-label*="prep"], [title*="prep"], .recipe-times .prep')
+        $("[aria-label*=\"prep\"], [title*=\"prep\"], .recipe-times .prep")
           .first()
           .text() ||
-        $('.recipe-time:contains("prep") ~ .time-value, .time-prep')
+        $(".recipe-time:contains(\"prep\") ~ .time-value, .time-prep")
           .first()
           .text()
     );
 
     const cookTime = this.sanitizeText(
-      $('.recipe-timing .cook-time, [data-testid="cook-time"], .cooking-time')
+      $(".recipe-timing .cook-time, [data-testid=\"cook-time\"], .cooking-time")
         .first()
         .text() ||
-        $('.recipe-meta-cook, .cook-time-value, [data-cook-time]')
+        $(".recipe-meta-cook, .cook-time-value, [data-cook-time]")
           .first()
           .text() ||
-        $('[aria-label*="cook"], [title*="cook"], .recipe-times .cook')
+        $("[aria-label*=\"cook\"], [title*=\"cook\"], .recipe-times .cook")
           .first()
           .text() ||
-        $('.recipe-time:contains("cook") ~ .time-value, .time-cook')
+        $(".recipe-time:contains(\"cook\") ~ .time-value, .time-cook")
           .first()
           .text()
     );
 
     const totalTime = this.sanitizeText(
       $(
-        '.recipe-timing .total-time, [data-testid="total-time"], .recipe-duration'
+        ".recipe-timing .total-time, [data-testid=\"total-time\"], .recipe-duration"
       )
         .first()
         .text() ||
-        $('.recipe-meta-total, .total-time-value, [data-total-time]')
+        $(".recipe-meta-total, .total-time-value, [data-total-time]")
           .first()
           .text() ||
-        $('[aria-label*="total"], [title*="total"], .recipe-times .total')
+        $("[aria-label*=\"total\"], [title*=\"total\"], .recipe-times .total")
           .first()
           .text() ||
-        $('.recipe-time:contains("total") ~ .time-value, .time-total')
+        $(".recipe-time:contains(\"total\") ~ .time-value, .time-total")
           .first()
           .text()
     );
 
     const servings = this.sanitizeText(
-      $('.recipe-servings, [data-testid="servings"], [data-servings]')
+      $(".recipe-servings, [data-testid=\"servings\"], [data-servings]")
         .first()
         .text() ||
-        $('.recipe-yield, .servings-value, .recipe-meta-servings')
+        $(".recipe-yield, .servings-value, .recipe-meta-servings")
           .first()
           .text() ||
-        $('[aria-label*="servings"], [title*="servings"], .recipe-serving-size')
+        $("[aria-label*=\"servings\"], [title*=\"servings\"], .recipe-serving-size")
           .first()
           .text() ||
-        $('.nutrition-info .servings, .recipe-facts .servings')
+        $(".nutrition-info .servings, .recipe-facts .servings")
           .first()
           .text() ||
-        $('.recipe-info:contains("serves") .value, .serves-value')
+        $(".recipe-info:contains(\"serves\") .value, .serves-value")
           .first()
           .text()
     );

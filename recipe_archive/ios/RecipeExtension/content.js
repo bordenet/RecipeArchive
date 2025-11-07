@@ -1,12 +1,12 @@
 // Content script that runs on all web pages
 // Extracts HTML and sends to popup/background script
 
-console.log('RecipeArchive content script loaded');
+console.log("RecipeArchive content script loaded");
 
 // Listen for messages from popup
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'extractHTML') {
-    console.log('Extracting HTML from page...');
+  if (message.action === "extractHTML") {
+    console.log("Extracting HTML from page...");
 
     try {
       // Get the full HTML content
@@ -28,7 +28,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       });
     } catch (error) {
-      console.error('Error extracting HTML:', error);
+      console.error("Error extracting HTML:", error);
       sendResponse({
         success: false,
         error: error.message
@@ -43,7 +43,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Extract structured recipe data if available (JSON-LD)
 function extractRecipeSchema() {
   try {
-    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    const scripts = document.querySelectorAll("script[type=\"application/ld+json\"]");
     for (const script of scripts) {
       try {
         const data = JSON.parse(script.textContent);
@@ -52,9 +52,9 @@ function extractRecipeSchema() {
         const schemas = Array.isArray(data) ? data : [data];
 
         for (const schema of schemas) {
-          if (schema['@type'] === 'Recipe' ||
-              (Array.isArray(schema['@type']) && schema['@type'].includes('Recipe'))) {
-            console.log('Found recipe schema!');
+          if (schema["@type"] === "Recipe" ||
+              (Array.isArray(schema["@type"]) && schema["@type"].includes("Recipe"))) {
+            console.log("Found recipe schema!");
             return schema;
           }
         }
@@ -64,7 +64,7 @@ function extractRecipeSchema() {
       }
     }
   } catch (error) {
-    console.warn('Error extracting recipe schema:', error);
+    console.warn("Error extracting recipe schema:", error);
   }
 
   return null;

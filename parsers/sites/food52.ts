@@ -1,11 +1,11 @@
 // ...existing code...
-import { BaseParser } from '../base-parser.js';
-import * as cheerio from 'cheerio';
-import { Recipe, Ingredient, Instruction } from '../types';
+import { BaseParser } from "../base-parser.js";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
 
 export class Food52Parser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('food52.com');
+    return url.includes("food52.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -14,11 +14,11 @@ export class Food52Parser extends BaseParser {
     if (jsonLd) {
       // Author extraction
       let author = undefined;
-      if (typeof jsonLd.author === 'string') {
+      if (typeof jsonLd.author === "string") {
         author = this.sanitizeText(jsonLd.author);
       } else if (
         jsonLd.author &&
-        typeof jsonLd.author === 'object' &&
+        typeof jsonLd.author === "object" &&
         jsonLd.author.name
       ) {
         author = this.sanitizeText(jsonLd.author.name);
@@ -30,7 +30,7 @@ export class Food52Parser extends BaseParser {
           tags = (jsonLd.keywords as string[]).map((k: string) =>
             this.sanitizeText(k)
           );
-        } else if (typeof jsonLd.keywords === 'string') {
+        } else if (typeof jsonLd.keywords === "string") {
           tags = (jsonLd.keywords as string)
             .split(/,|;/)
             .map((k: string) => this.sanitizeText(k))
@@ -45,7 +45,7 @@ export class Food52Parser extends BaseParser {
               this.sanitizeText(c)
             )
           );
-        } else if (typeof jsonLd.recipeCategory === 'string') {
+        } else if (typeof jsonLd.recipeCategory === "string") {
           tags.push(
             ...(jsonLd.recipeCategory as string)
               .split(/,|;/)
@@ -59,24 +59,24 @@ export class Food52Parser extends BaseParser {
         source: url,
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
           text: this.sanitizeText(i)
-            .replace(/\bundefined\s+/g, '')
-            .replace(/\s+undefined\b/g, '')
+            .replace(/\bundefined\s+/g, "")
+            .replace(/\s+undefined\b/g, "")
             .trim(),
         })),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || [])
             .map((i) =>
-              typeof i === 'string'
+              typeof i === "string"
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text: any) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === "string" && text.length > 0)
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -93,45 +93,45 @@ export class Food52Parser extends BaseParser {
     } else {
       // Fallback: extract from HTML
       const $ = cheerio.load(html);
-      const title = $('h1').first().text().trim();
+      const title = $("h1").first().text().trim();
       const ingredients: Ingredient[] = [];
-      $('h2:contains("Ingredients")')
-        .nextAll('ul')
+      $("h2:contains(\"Ingredients\")")
+        .nextAll("ul")
         .first()
-        .find('li')
+        .find("li")
         .each((_: any, el: any) => {
           const text = $(el)
             .text()
             .trim()
-            .replace(/\bundefined\s+/g, '')
-            .replace(/\s+undefined\b/g, '')
+            .replace(/\bundefined\s+/g, "")
+            .replace(/\s+undefined\b/g, "")
             .trim();
           if (text) ingredients.push({ text });
         });
       const instructions: Instruction[] = [];
-      $('h2:contains("Directions")')
-        .nextAll('ul')
+      $("h2:contains(\"Directions\")")
+        .nextAll("ul")
         .first()
-        .find('li')
+        .find("li")
         .each((i: any, el: any) => {
-          const text = $(el).find('p').text().trim();
+          const text = $(el).find("p").text().trim();
           if (text) instructions.push({ stepNumber: i + 1, text });
         });
       // Fallback image extraction: look for main recipe image
-      let imageUrl = $('img').first().attr('src');
+      let imageUrl = $("img").first().attr("src");
       // Try to find a better image if available
-      const ogImage = $('meta[property="og:image"]').attr('content');
+      const ogImage = $("meta[property=\"og:image\"]").attr("content");
       if (ogImage) imageUrl = ogImage;
       // Fallback author extraction
       let author = undefined;
-      const authorEl = $('a[href*="/author/"]').first();
+      const authorEl = $("a[href*=\"/author/\"]").first();
       if (authorEl.length) {
         author = authorEl.text().trim();
       }
       // Fallback tags extraction
       let tags: string[] | undefined = undefined;
       const tagEls = $(
-        'span.text-approved, .tags, meta[property="og:keywords"]'
+        "span.text-approved, .tags, meta[property=\"og:keywords\"]"
       );
       if (tagEls.length) {
         tags = [];

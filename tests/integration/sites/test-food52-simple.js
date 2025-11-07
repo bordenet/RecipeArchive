@@ -1,20 +1,20 @@
 /* eslint-env node, browser */
 /* eslint-env node, browser */
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 // Food52 test recipes
 const FOOD52_TEST_RECIPES = [
   {
-    url: 'https://food52.com/recipes/78143-chocolate-chip-cookies',
-    expected: 'Chocolate Chip Cookies',
+    url: "https://food52.com/recipes/78143-chocolate-chip-cookies",
+    expected: "Chocolate Chip Cookies",
   },
   {
-    url: 'https://food52.com/recipes/34243-aunt-lolly-s-oatmeal-chocolate-chip-cookies',
+    url: "https://food52.com/recipes/34243-aunt-lolly-s-oatmeal-chocolate-chip-cookies",
     expected: "Aunt Lolly's Oatmeal Chocolate Chip Cookies",
   },
   {
-    url: 'https://food52.com/recipes/22155-gingerbread-cookies',
-    expected: 'Gingerbread Cookies',
+    url: "https://food52.com/recipes/22155-gingerbread-cookies",
+    expected: "Gingerbread Cookies",
   },
 ];
 
@@ -28,7 +28,7 @@ async function testFood52Recipe(url, expectedTitle) {
   try {
     // Navigate to recipe
     await page.goto(url, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: "domcontentloaded",
       timeout: 60000,
     });
 
@@ -39,34 +39,34 @@ async function testFood52Recipe(url, expectedTitle) {
     await page.evaluate(() => {
       // Remove popup overlays
       const popupSelectors = [
-        '.modal',
-        '.overlay',
-        '.popup',
-        '.newsletter',
-        '.signup',
-        '[data-modal]',
-        '[data-overlay]',
-        '[data-popup]',
-        '.gdpr',
-        '.cookie',
-        '.privacy',
-        '.subscription',
-        '[class*="modal"]',
-        '[class*="popup"]',
-        '[class*="overlay"]',
-        '[id*="modal"]',
-        '[id*="popup"]',
-        '[id*="overlay"]',
-        '.newsletter-signup',
-        '.email-capture',
-        '.subscribe-modal',
+        ".modal",
+        ".overlay",
+        ".popup",
+        ".newsletter",
+        ".signup",
+        "[data-modal]",
+        "[data-overlay]",
+        "[data-popup]",
+        ".gdpr",
+        ".cookie",
+        ".privacy",
+        ".subscription",
+        "[class*=\"modal\"]",
+        "[class*=\"popup\"]",
+        "[class*=\"overlay\"]",
+        "[id*=\"modal\"]",
+        "[id*=\"popup\"]",
+        "[id*=\"overlay\"]",
+        ".newsletter-signup",
+        ".email-capture",
+        ".subscribe-modal",
       ];
 
       popupSelectors.forEach((selector) => {
         const elements = document.querySelectorAll(selector);
         elements.forEach((el) => {
           if (el) {
-            el.style.display = 'none';
+            el.style.display = "none";
             el.remove();
           }
         });
@@ -74,20 +74,20 @@ async function testFood52Recipe(url, expectedTitle) {
 
       // Click dismiss buttons
       const dismissButtons = document.querySelectorAll(
-        'button, [role="button"], .close, .dismiss'
+        "button, [role=\"button\"], .close, .dismiss"
       );
       dismissButtons.forEach((btn) => {
-        const text = (btn.textContent || '').toLowerCase().trim();
-        const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
+        const text = (btn.textContent || "").toLowerCase().trim();
+        const ariaLabel = (btn.getAttribute("aria-label") || "").toLowerCase();
 
         if (
-          text.includes('close') ||
-          text.includes('dismiss') ||
-          text === '×' ||
-          text.includes('no thanks') ||
-          ariaLabel.includes('close') ||
-          text.includes('skip') ||
-          text.includes('maybe later')
+          text.includes("close") ||
+          text.includes("dismiss") ||
+          text === "×" ||
+          text.includes("no thanks") ||
+          ariaLabel.includes("close") ||
+          text.includes("skip") ||
+          text.includes("maybe later")
         ) {
           try {
             btn.click();
@@ -107,13 +107,13 @@ async function testFood52Recipe(url, expectedTitle) {
       const pageTitle = document.title;
       const url = window.location.href;
 
-      if (pageTitle.includes('404') || url.includes('404')) {
-        return { error: '404 Not Found', title: pageTitle };
+      if (pageTitle.includes("404") || url.includes("404")) {
+        return { error: "404 Not Found", title: pageTitle };
       }
 
       function extractRecipeFromJsonLd() {
         const jsonLdScripts = document.querySelectorAll(
-          'script[type="application/ld+json"]'
+          "script[type=\"application/ld+json\"]"
         );
 
         for (const script of jsonLdScripts) {
@@ -122,20 +122,20 @@ async function testFood52Recipe(url, expectedTitle) {
             let recipe = null;
 
             // Handle different JSON-LD structures
-            if (jsonData['@type'] === 'Recipe') {
+            if (jsonData["@type"] === "Recipe") {
               recipe = jsonData;
             } else if (Array.isArray(jsonData)) {
               recipe = jsonData.find(
-                (item) => item && item['@type'] === 'Recipe'
+                (item) => item && item["@type"] === "Recipe"
               );
-            } else if (jsonData['@graph']) {
-              recipe = jsonData['@graph'].find(
-                (item) => item && item['@type'] === 'Recipe'
+            } else if (jsonData["@graph"]) {
+              recipe = jsonData["@graph"].find(
+                (item) => item && item["@type"] === "Recipe"
               );
             }
 
             if (recipe && recipe.name) {
-              console.log('Food52: Found JSON-LD Recipe data');
+              console.log("Food52: Found JSON-LD Recipe data");
 
               const ingredients = recipe.recipeIngredient
                 ? [
@@ -152,12 +152,12 @@ async function testFood52Recipe(url, expectedTitle) {
               if (recipe.recipeInstructions) {
                 const stepItems = recipe.recipeInstructions
                   .map((instruction) => {
-                    if (typeof instruction === 'string') return instruction;
+                    if (typeof instruction === "string") return instruction;
                     if (instruction && instruction.text)
                       return instruction.text;
                     if (instruction && instruction.name)
                       return instruction.name;
-                    return '';
+                    return "";
                   })
                   .filter(Boolean);
 
@@ -181,12 +181,12 @@ async function testFood52Recipe(url, expectedTitle) {
                     ? recipe.image
                     : [recipe.image]
                   : [],
-                source: 'json-ld',
+                source: "json-ld",
                 success: true,
               };
             }
           } catch (e) {
-            console.log('Food52: JSON-LD parsing failed:', e.message);
+            console.log("Food52: JSON-LD parsing failed:", e.message);
           }
         }
 
@@ -194,13 +194,13 @@ async function testFood52Recipe(url, expectedTitle) {
       }
 
       function extractFood52Manual() {
-        console.log('Food52: Attempting manual extraction...');
+        console.log("Food52: Attempting manual extraction...");
 
         const title =
-          document.querySelector('h1')?.textContent?.trim() ||
-          document.querySelector('.recipe-title')?.textContent?.trim() ||
+          document.querySelector("h1")?.textContent?.trim() ||
+          document.querySelector(".recipe-title")?.textContent?.trim() ||
           document
-            .querySelector('[data-testid="recipe-title"]')
+            .querySelector("[data-testid=\"recipe-title\"]")
             ?.textContent?.trim() ||
           document.title;
 
@@ -209,14 +209,14 @@ async function testFood52Recipe(url, expectedTitle) {
 
         // Try various selectors for ingredients
         const ingredientSelectors = [
-          '.recipe-list--ingredients li',
-          '.recipe-ingredients li',
-          '[data-testid="ingredients"] li',
-          '[data-testid*="ingredient"] li',
-          'ul[data-testid*="ingredient"] li',
-          '.ingredients li',
-          '[class*="ingredient"] li',
-          '.recipe-card-ingredients li',
+          ".recipe-list--ingredients li",
+          ".recipe-ingredients li",
+          "[data-testid=\"ingredients\"] li",
+          "[data-testid*=\"ingredient\"] li",
+          "ul[data-testid*=\"ingredient\"] li",
+          ".ingredients li",
+          "[class*=\"ingredient\"] li",
+          ".recipe-card-ingredients li",
         ];
 
         for (const selector of ingredientSelectors) {
@@ -238,14 +238,14 @@ async function testFood52Recipe(url, expectedTitle) {
 
         // Try various selectors for steps
         const stepSelectors = [
-          '.recipe-list--instructions li',
-          '.recipe-instructions li',
-          '[data-testid="instructions"] li',
-          '[data-testid*="instruction"] li',
-          'ol[data-testid*="instruction"] li',
-          '.instructions li',
-          '[class*="instruction"] li',
-          '.recipe-card-instructions li',
+          ".recipe-list--instructions li",
+          ".recipe-instructions li",
+          "[data-testid=\"instructions\"] li",
+          "[data-testid*=\"instruction\"] li",
+          "ol[data-testid*=\"instruction\"] li",
+          ".instructions li",
+          "[class*=\"instruction\"] li",
+          ".recipe-card-instructions li",
         ];
 
         for (const selector of stepSelectors) {
@@ -266,13 +266,13 @@ async function testFood52Recipe(url, expectedTitle) {
         }
 
         return {
-          title: title || 'Unknown Recipe',
+          title: title || "Unknown Recipe",
           ingredients,
           steps,
           servingSize: null,
           time: null,
           photos: [],
-          source: 'food52-manual',
+          source: "food52-manual",
           success: ingredients.length > 0 && steps.length > 0,
         };
       }
@@ -295,7 +295,7 @@ async function testFood52Recipe(url, expectedTitle) {
     }
 
     const hasTitle =
-      result.title && result.title.length > 0 && !result.title.includes('404');
+      result.title && result.title.length > 0 && !result.title.includes("404");
     const hasIngredients =
       result.ingredients &&
       result.ingredients.some((s) => s.items && s.items.length > 0);
@@ -312,23 +312,23 @@ async function testFood52Recipe(url, expectedTitle) {
     console.log(
       `   Steps: ${result.steps?.reduce((sum, s) => sum + s.items.length, 0) || 0} items`
     );
-    console.log(`   Result: ${success ? '✅ SUCCESS' : '❌ FAILURE'}`);
+    console.log(`   Result: ${success ? "✅ SUCCESS" : "❌ FAILURE"}`);
 
     if (!success) {
       const issues = [];
-      if (!hasTitle) issues.push('Missing title');
-      if (!hasIngredients) issues.push('Missing ingredients');
-      if (!hasSteps) issues.push('Missing steps');
-      console.log(`   Issues: ${issues.join(', ')}`);
+      if (!hasTitle) issues.push("Missing title");
+      if (!hasIngredients) issues.push("Missing ingredients");
+      if (!hasSteps) issues.push("Missing steps");
+      console.log(`   Issues: ${issues.join(", ")}`);
 
       // Debug information
       if (!hasIngredients || !hasSteps) {
         const debugInfo = await page.evaluate(() => {
-          const ulCount = document.querySelectorAll('ul').length;
-          const olCount = document.querySelectorAll('ol').length;
-          const liCount = document.querySelectorAll('li').length;
+          const ulCount = document.querySelectorAll("ul").length;
+          const olCount = document.querySelectorAll("ol").length;
+          const liCount = document.querySelectorAll("li").length;
           const recipeElements = document.querySelectorAll(
-            '[class*="recipe"], [data-recipe]'
+            "[class*=\"recipe\"], [data-recipe]"
           ).length;
 
           return { ulCount, olCount, liCount, recipeElements };
@@ -350,7 +350,7 @@ async function testFood52Recipe(url, expectedTitle) {
 }
 
 async function runFood52Tests() {
-  console.log('🚀 Starting Food52 Recipe Tests');
+  console.log("🚀 Starting Food52 Recipe Tests");
   console.log(`📊 Testing ${FOOD52_TEST_RECIPES.length} Food52 recipes`);
 
   const results = [];
@@ -367,15 +367,15 @@ async function runFood52Tests() {
   }
 
   // Summary
-  console.log('\n📊 FOOD52 TEST SUMMARY');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("\n📊 FOOD52 TEST SUMMARY");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   console.log(
     `\n✅ Success Rate: ${successCount}/${FOOD52_TEST_RECIPES.length} (${((successCount / FOOD52_TEST_RECIPES.length) * 100).toFixed(1)}%)`
   );
 
   results.forEach((r, index) => {
-    const status = r.success ? '✅' : '❌';
+    const status = r.success ? "✅" : "❌";
     console.log(`   ${status} [${index + 1}] ${r.recipe.expected}`);
     if (!r.success && r.error) {
       console.log(`       Error: ${r.error}`);
@@ -383,25 +383,25 @@ async function runFood52Tests() {
   });
 
   // Save results
-  const fs = require('fs');
+  const fs = require("fs");
   fs.writeFileSync(
-    'food52-simple-test-results.json',
+    "food52-simple-test-results.json",
     JSON.stringify(results, null, 2)
   );
-  console.log('\\n💾 Results saved to: food52-simple-test-results.json');
+  console.log("\\n💾 Results saved to: food52-simple-test-results.json");
 
   if (successCount > 0) {
-    console.log('\\n🎉 Some Food52 tests passed! Parser is working.');
+    console.log("\\n🎉 Some Food52 tests passed! Parser is working.");
 
     // If tests pass, we can now update our main parsers
-    console.log('\\nNext steps:');
+    console.log("\\nNext steps:");
     console.log(
-      '1. Update Chrome/Safari content scripts with working Food52 parser'
+      "1. Update Chrome/Safari content scripts with working Food52 parser"
     );
-    console.log('2. Run full test suite with all 60+ Food52 recipes');
-    console.log('3. Move on to Food Network, AllRecipes, etc.');
+    console.log("2. Run full test suite with all 60+ Food52 recipes");
+    console.log("3. Move on to Food Network, AllRecipes, etc.");
   } else {
-    console.log('\\n⚠️  All Food52 tests failed. Need to investigate further.');
+    console.log("\\n⚠️  All Food52 tests failed. Need to investigate further.");
   }
 }
 

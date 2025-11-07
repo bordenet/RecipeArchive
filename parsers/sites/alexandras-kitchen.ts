@@ -1,13 +1,13 @@
 // Alexandra's Kitchen Parser (alexandracooks.com)
 // Uses JSON-LD structured data with fallback selectors
 
-import * as cheerio from 'cheerio';
-import { BaseParser } from '../base-parser.js';
-import { Recipe, Ingredient, Instruction } from '../types.js';
+import * as cheerio from "cheerio";
+import { BaseParser } from "../base-parser.js";
+import { Recipe, Ingredient, Instruction } from "../types.js";
 
 export class AlexandrasKitchenParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('alexandracooks.com');
+    return url.includes("alexandracooks.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -22,29 +22,29 @@ export class AlexandrasKitchenParser extends BaseParser {
           title: this.sanitizeText(jsonLD.name),
           source: url,
           author:
-            typeof jsonLD.author === 'string'
+            typeof jsonLD.author === "string"
               ? jsonLD.author
-              : jsonLD.author?.name || 'Alexandra Stafford',
+              : jsonLD.author?.name || "Alexandra Stafford",
           ingredients: (jsonLD.recipeIngredient || []).map((i) => ({
             text: this.sanitizeText(i),
           })),
           instructions: this.processInstructions(
             (jsonLD.recipeInstructions || []).map((i) =>
-              typeof i === 'string' ? i : i.text
+              typeof i === "string" ? i : i.text
             )
           ),
           imageUrl:
-            typeof jsonLD.image === 'string'
+            typeof jsonLD.image === "string"
               ? jsonLD.image
               : Array.isArray(jsonLD.image)
-                ? typeof jsonLD.image[0] === 'string'
+                ? typeof jsonLD.image[0] === "string"
                   ? jsonLD.image[0]
                   : jsonLD.image[0]?.url
                 : jsonLD.image?.url,
-          prepTime: jsonLD.prepTime || '',
-          cookTime: jsonLD.cookTime || '',
-          totalTime: jsonLD.totalTime || '',
-          servings: jsonLD.recipeYield?.toString() || '',
+          prepTime: jsonLD.prepTime || "",
+          cookTime: jsonLD.cookTime || "",
+          totalTime: jsonLD.totalTime || "",
+          servings: jsonLD.recipeYield?.toString() || "",
           tags: Array.isArray(jsonLD.recipeCategory)
             ? jsonLD.recipeCategory.map((c: string) => this.sanitizeText(c))
             : jsonLD.recipeCategory
@@ -71,19 +71,19 @@ export class AlexandrasKitchenParser extends BaseParser {
     try {
       // Extract basic recipe information using cheerio selectors
       const title = this.sanitizeText(
-        $('h1.entry-title, h1.post-title, .recipe-title h1, h1')
+        $("h1.entry-title, h1.post-title, .recipe-title h1, h1")
           .first()
-          .text() || ''
+          .text() || ""
       );
 
       if (!title) {
-        throw new Error('No recipe title found');
+        throw new Error("No recipe title found");
       }
 
       // Alexandra's Kitchen uses Tasty Recipes plugin - extract ingredients
       const ingredients: Ingredient[] = [];
       $(
-        '.tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li'
+        ".tasty-recipes-ingredients li, .recipe-ingredients li, .ingredients li"
       ).each((_: any, el: any) => {
         const text = $(el).text().trim();
         if (text) ingredients.push({ text: this.sanitizeText(text) });
@@ -92,7 +92,7 @@ export class AlexandrasKitchenParser extends BaseParser {
       // Extract instructions
       const instructions: Instruction[] = [];
       $(
-        '.tasty-recipes-instructions li, .recipe-instructions li, .instructions li'
+        ".tasty-recipes-instructions li, .recipe-instructions li, .instructions li"
       ).each((idx: any, el: any) => {
         const text = $(el).text().trim();
         if (text)
@@ -104,32 +104,32 @@ export class AlexandrasKitchenParser extends BaseParser {
 
       // Extract other recipe data
       const prepTime = this.sanitizeText(
-        $('.tasty-recipes-prep-time, .recipe-prep-time').first().text() || ''
+        $(".tasty-recipes-prep-time, .recipe-prep-time").first().text() || ""
       );
       const cookTime = this.sanitizeText(
-        $('.tasty-recipes-cook-time, .recipe-cook-time').first().text() || ''
+        $(".tasty-recipes-cook-time, .recipe-cook-time").first().text() || ""
       );
       const totalTime = this.sanitizeText(
-        $('.tasty-recipes-total-time, .recipe-total-time').first().text() || ''
+        $(".tasty-recipes-total-time, .recipe-total-time").first().text() || ""
       );
       const servings = this.sanitizeText(
-        $('.tasty-recipes-yield, .recipe-servings').first().text() || ''
+        $(".tasty-recipes-yield, .recipe-servings").first().text() || ""
       );
 
       // Extract image URL
       let imageUrl = $(
-        '.tasty-recipes-image img, .recipe-image img, .entry-content img'
+        ".tasty-recipes-image img, .recipe-image img, .entry-content img"
       )
         .first()
-        .attr('src');
+        .attr("src");
       if (!imageUrl) {
-        imageUrl = $('meta[property="og:image"]').attr('content');
+        imageUrl = $("meta[property=\"og:image\"]").attr("content");
       }
 
       return {
         title,
         source: url,
-        author: 'Alexandra Stafford',
+        author: "Alexandra Stafford",
         ingredients,
         instructions,
         imageUrl: imageUrl || undefined,

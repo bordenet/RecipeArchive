@@ -1,6 +1,6 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 export interface RecipeArchiveApiStackProps extends cdk.StackProps {
     environment: string;
     adminEmail: string;

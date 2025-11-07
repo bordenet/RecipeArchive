@@ -1,11 +1,11 @@
-const { JsonLdParser } = require('../../parsers/sites/json-ld.ts');
-const fs = require('fs');
+const { JsonLdParser } = require("../../parsers/sites/json-ld.ts");
+const fs = require("fs");
 
 const html = fs.readFileSync(
-  'tests/fixtures/html-samples/json-ld-sample.html',
-  'utf8'
+  "tests/fixtures/html-samples/json-ld-sample.html",
+  "utf8"
 );
-const url = 'https://generic-recipe-site.com/chocolate-chip-cookies';
+const url = "https://generic-recipe-site.com/chocolate-chip-cookies";
 
 (async () => {
   const parser = new JsonLdParser();

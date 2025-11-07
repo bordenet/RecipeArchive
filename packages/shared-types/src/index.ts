@@ -33,7 +33,7 @@ export interface Recipe {
 
   // Archive & Backup
   webArchiveUrl?: string; // Full page backup (S3 signed URL)
-  webArchiveFormat: 'html' | 'pdf'; // Archive format
+  webArchiveFormat: "html" | "pdf"; // Archive format
 
   // Future Extensions (Optional)
   tags?: string[]; // User-defined tags
@@ -77,7 +77,7 @@ export interface CreateRecipeRequest {
   servings?: number;
   yield?: string;
   webArchiveUrl?: string;
-  webArchiveFormat?: 'html' | 'pdf';
+  webArchiveFormat?: "html" | "pdf";
   tags?: string[];
   notes?: string;
   rating?: number;
@@ -102,8 +102,8 @@ export interface RecipeSearchParams {
   maxCookTime?: number; // Maximum cook time (minutes)
   source?: string; // Filter by source domain
   tags?: string[]; // Filter by tags
-  sortBy?: 'title' | 'createdAt' | 'updatedAt' | 'rating';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "title" | "createdAt" | "updatedAt" | "rating";
+  sortOrder?: "asc" | "desc";
   limit?: number; // Results per page (max 50)
   offset?: number; // Pagination offset
 }
@@ -159,7 +159,7 @@ export interface DiagnosticData {
   // Recipe Detection
   hasJsonLd: boolean;
   hasRecipeKeywords: boolean;
-  extractionMethod?: 'json-ld' | 'manual' | 'fallback';
+  extractionMethod?: "json-ld" | "manual" | "fallback";
   extractionSuccess: boolean;
   extractionTime: number;
 
@@ -172,7 +172,7 @@ export interface DiagnosticData {
   // Technical Metadata
   userAgent: string;
   extensionVersion: string;
-  platform: 'chrome' | 'safari';
+  platform: "chrome" | "safari";
 
   // Failure Information (for auto-diagnostics)
   failureReason?: string;
@@ -205,7 +205,7 @@ export interface S3UploadRequest {
   fileName: string;
   contentType: string;
   recipeId: string;
-  fileType: 'photo' | 'archive';
+  fileType: "photo" | "archive";
 }
 
 export interface S3UploadResponse {
@@ -229,7 +229,7 @@ export interface ApiConfig {
  * Extension-specific types
  */
 export interface ExtensionMessage {
-  type: 'EXTRACT_RECIPE' | 'SAVE_RECIPE' | 'GET_RECIPES' | 'SYNC_RECIPES';
+  type: "EXTRACT_RECIPE" | "SAVE_RECIPE" | "GET_RECIPES" | "SYNC_RECIPES";
   payload?: unknown;
   requestId: string;
 }
@@ -245,32 +245,32 @@ export interface ExtensionResponse {
  * Type guards for runtime type checking
  */
 export const isRecipe = (obj: unknown): obj is Recipe => {
-  if (typeof obj !== 'object' || obj === null) return false;
+  if (typeof obj !== "object" || obj === null) return false;
   const recipe = obj as Recipe;
   return (
-    typeof recipe.id === 'string' &&
-    typeof recipe.userId === 'string' &&
-    typeof recipe.title === 'string' &&
+    typeof recipe.id === "string" &&
+    typeof recipe.userId === "string" &&
+    typeof recipe.title === "string" &&
     Array.isArray(recipe.ingredients) &&
     Array.isArray(recipe.instructions) &&
-    typeof recipe.sourceUrl === 'string'
+    typeof recipe.sourceUrl === "string"
   );
 };
 
 export const isIngredient = (obj: unknown): obj is Ingredient => {
-  if (typeof obj !== 'object' || obj === null) return false;
+  if (typeof obj !== "object" || obj === null) return false;
   const ingredient = obj as Ingredient;
   return (
-    typeof ingredient.name === 'string' &&
-    typeof ingredient.originalText === 'string'
+    typeof ingredient.name === "string" &&
+    typeof ingredient.originalText === "string"
   );
 };
 
 export const isInstruction = (obj: unknown): obj is Instruction => {
-  if (typeof obj !== 'object' || obj === null) return false;
+  if (typeof obj !== "object" || obj === null) return false;
   const instruction = obj as Instruction;
   return (
-    typeof instruction.stepNumber === 'number' &&
-    typeof instruction.text === 'string'
+    typeof instruction.stepNumber === "number" &&
+    typeof instruction.text === "string"
   );
 };

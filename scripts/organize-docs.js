@@ -10,15 +10,15 @@
  * files are properly organized before commits.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { fileURLToPath } = require('url');
+const fs = require("fs");
+const path = require("path");
+const { fileURLToPath } = require("url");
 
 class DocOrganizer {
   constructor() {
-    this.rootDir = path.resolve(__dirname, '..');
-    this.docsDir = path.join(this.rootDir, 'docs');
-    this.techDocsDir = path.join(this.docsDir, 'technical');
+    this.rootDir = path.resolve(__dirname, "..");
+    this.docsDir = path.join(this.rootDir, "docs");
+    this.techDocsDir = path.join(this.docsDir, "technical");
 
     // Patterns for documentation files that should be moved
     this.docPatterns = [
@@ -39,11 +39,11 @@ class DocOrganizer {
 
     // Files to keep in root (project documentation)
     this.keepInRoot = [
-      'README.md',
-      'CLAUDE.md',
-      'LICENSE.md',
-      'CHANGELOG.md',
-      'CONTRIBUTING.md',
+      "README.md",
+      "CLAUDE.md",
+      "LICENSE.md",
+      "CHANGELOG.md",
+      "CONTRIBUTING.md",
     ];
   }
 
@@ -82,13 +82,13 @@ class DocOrganizer {
   }
 
   organizeDocumentation() {
-    console.log('🔍 Scanning for misplaced documentation files...\n');
+    console.log("🔍 Scanning for misplaced documentation files...\n");
 
     this.ensureDirectoryExists(this.docsDir);
     this.ensureDirectoryExists(this.techDocsDir);
 
     const rootFiles = fs.readdirSync(this.rootDir);
-    const markdownFiles = rootFiles.filter((file) => file.endsWith('.md'));
+    const markdownFiles = rootFiles.filter((file) => file.endsWith(".md"));
 
     let movedCount = 0;
     let scannedCount = 0;
@@ -106,7 +106,7 @@ class DocOrganizer {
       }
     }
 
-    console.log(`\n📊 Documentation Organization Summary:`);
+    console.log("\n📊 Documentation Organization Summary:");
     console.log(`   📄 Scanned: ${scannedCount} markdown files`);
     console.log(`   📁 Moved: ${movedCount} files to docs/technical/`);
     console.log(
@@ -114,13 +114,13 @@ class DocOrganizer {
     );
 
     if (movedCount > 0) {
-      console.log(`\n💡 Moved files are now organized in: docs/technical/`);
+      console.log("\n💡 Moved files are now organized in: docs/technical/");
       console.log(
-        `   This keeps the root directory focused on project essentials.`
+        "   This keeps the root directory focused on project essentials."
       );
     } else {
       console.log(
-        `\n✨ All documentation files are already properly organized!`
+        "\n✨ All documentation files are already properly organized!"
       );
     }
 
@@ -136,11 +136,11 @@ class DocOrganizer {
 
     const techFiles = fs
       .readdirSync(techDocsPath)
-      .filter((file) => file.endsWith('.md'))
+      .filter((file) => file.endsWith(".md"))
       .sort();
 
     if (techFiles.length > 0) {
-      console.log(`\n📚 Technical Documentation Available:`);
+      console.log("\n📚 Technical Documentation Available:");
       techFiles.forEach((file) => {
         console.log(`   • ${file}`);
       });
@@ -155,9 +155,9 @@ if (require.main === module) {
   organizer.generateReport();
 
   if (movedCount > 0) {
-    console.log(`\n🔄 Remember to add moved files to git:`);
-    console.log(`   git add docs/technical/`);
-    console.log(`   git add . # (to stage deletions from root)`);
+    console.log("\n🔄 Remember to add moved files to git:");
+    console.log("   git add docs/technical/");
+    console.log("   git add . # (to stage deletions from root)");
   }
 }
 

@@ -1,19 +1,19 @@
-import { BaseParser } from './base-parser';
-import { SmittenKitchenParser } from './sites/smitten-kitchen';
-import { FoodNetworkParser } from './sites/food-network';
-import { NYTCookingParser } from './sites/nyt-cooking';
-import { AllRecipesParser } from './sites/allrecipes';
-import { LoveAndLemonsParser } from './sites/loveandlemons';
-import { Food52Parser } from './sites/food52';
-import { EpicuriousParser } from './sites/epicurious';
-import { WashingtonPostParser } from './sites/washington-post';
-import { FoodAndWineParser } from './sites/food-and-wine';
-import { DamnDeliciousParser } from './sites/damn-delicious';
-import { SeriousEatsParser } from './sites/serious-eats';
-import { AlexandrasKitchenParser } from './sites/alexandras-kitchen';
-import { LemonsAndZestParser } from './sites/lemonsandzest';
-import { AnthonyKitchenParser } from './sites/anthony-kitchen';
-import { Recipe } from './types';
+import { BaseParser } from "./base-parser";
+import { SmittenKitchenParser } from "./sites/smitten-kitchen";
+import { FoodNetworkParser } from "./sites/food-network";
+import { NYTCookingParser } from "./sites/nyt-cooking";
+import { AllRecipesParser } from "./sites/allrecipes";
+import { LoveAndLemonsParser } from "./sites/loveandlemons";
+import { Food52Parser } from "./sites/food52";
+import { EpicuriousParser } from "./sites/epicurious";
+import { WashingtonPostParser } from "./sites/washington-post";
+import { FoodAndWineParser } from "./sites/food-and-wine";
+import { DamnDeliciousParser } from "./sites/damn-delicious";
+import { SeriousEatsParser } from "./sites/serious-eats";
+import { AlexandrasKitchenParser } from "./sites/alexandras-kitchen";
+import { LemonsAndZestParser } from "./sites/lemonsandzest";
+import { AnthonyKitchenParser } from "./sites/anthony-kitchen";
+import { Recipe } from "./types";
 
 export class ParserRegistry {
   private static instance: ParserRegistry | null = null;

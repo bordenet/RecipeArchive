@@ -1,11 +1,11 @@
 // ...existing code...
-import { BaseParser } from '../base-parser.js';
-import * as cheerio from 'cheerio';
-import { Recipe, Ingredient, Instruction } from '../types';
+import { BaseParser } from "../base-parser.js";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
 
 export class NYTCookingParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('cooking.nytimes.com');
+    return url.includes("cooking.nytimes.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -16,26 +16,26 @@ export class NYTCookingParser extends BaseParser {
         title: this.sanitizeText(jsonLd.name),
         source: url,
         author:
-          typeof jsonLd.author === 'string'
+          typeof jsonLd.author === "string"
             ? jsonLd.author
-            : jsonLd.author?.name || 'NYT Cooking',
+            : jsonLd.author?.name || "NYT Cooking",
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
           text: this.sanitizeText(i),
         })),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || [])
             .map((i) =>
-              typeof i === 'string'
+              typeof i === "string"
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text: any) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === "string" && text.length > 0)
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -55,25 +55,25 @@ export class NYTCookingParser extends BaseParser {
     // Fallback selectors using Cheerio
     const title = this.sanitizeText(
       $(
-        'h1.recipe-title, h1[data-testid="recipe-title"], h1.pantry-recipe-title, h1'
+        "h1.recipe-title, h1[data-testid=\"recipe-title\"], h1.pantry-recipe-title, h1"
       )
         .first()
-        .text() || ''
+        .text() || ""
     );
     const author = this.sanitizeText(
       $(
-        '.recipe-author, [data-testid="recipe-author"], .byline-author, .author'
+        ".recipe-author, [data-testid=\"recipe-author\"], .byline-author, .author"
       )
         .first()
-        .text() || 'NYT Cooking'
+        .text() || "NYT Cooking"
     );
     const ingredients = $(
-      '[data-testid="IngredientList"] li, .recipe-ingredients li, .ingredients-section li, [data-module="Ingredients"] li, ul[data-testid="ingredients"] li'
+      "[data-testid=\"IngredientList\"] li, .recipe-ingredients li, .ingredients-section li, [data-module=\"Ingredients\"] li, ul[data-testid=\"ingredients\"] li"
     )
       .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
       .get();
     const instructions = $(
-      '[data-testid="MethodList"] li, .recipe-instructions li, .instructions-section li, [data-module="Instructions"] li, ol[data-testid="instructions"] li'
+      "[data-testid=\"MethodList\"] li, .recipe-instructions li, .instructions-section li, [data-module=\"Instructions\"] li, ol[data-testid=\"instructions\"] li"
     )
       .map((_: any, el: any) => ({
         stepNumber: _ + 1,
@@ -81,9 +81,9 @@ export class NYTCookingParser extends BaseParser {
       }))
       .get();
     const imageUrl =
-      $('.recipe-photo img, [data-testid="recipe-image"] img, img')
+      $(".recipe-photo img, [data-testid=\"recipe-image\"] img, img")
         .first()
-        .attr('src') || undefined;
+        .attr("src") || undefined;
     const recipe: Recipe = {
       title,
       source: url,

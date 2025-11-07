@@ -138,9 +138,9 @@ function extractWashingtonPostRecipe() {
 }
 `;
 
-console.log('\n📋 PARSER LOGIC REFERENCE:');
+console.log("\n📋 PARSER LOGIC REFERENCE:");
 console.log(
-  'The extension uses this logic to extract Washington Post recipes:'
+  "The extension uses this logic to extract Washington Post recipes:"
 );
 console.log(washingtonPostParserLogic);
 

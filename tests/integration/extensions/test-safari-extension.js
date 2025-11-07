@@ -27,8 +27,8 @@ global.chrome = {
   },
   tabs: {
     query: jest.fn((query, callback) => {
-      if (callback) callback([{ id: 1, url: 'https://example.com' }]);
-      return Promise.resolve([{ id: 1, url: 'https://example.com' }]);
+      if (callback) callback([{ id: 1, url: "https://example.com" }]);
+      return Promise.resolve([{ id: 1, url: "https://example.com" }]);
     }),
     sendMessage: jest.fn(),
   },
@@ -43,7 +43,7 @@ global.browser = global.chrome;
 // Mock Safari-specific APIs if needed
 global.safari = {
   extension: {
-    baseURI: 'safari-extension://test/',
+    baseURI: "safari-extension://test/",
   },
 };
 
@@ -54,7 +54,7 @@ console.error = (...args) => {
   if (
     args[0] &&
     args[0].includes &&
-    args[0].includes('chrome is not defined')
+    args[0].includes("chrome is not defined")
   ) {
     return;
   }

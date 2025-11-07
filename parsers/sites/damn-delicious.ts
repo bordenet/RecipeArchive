@@ -1,10 +1,10 @@
-import { BaseParser } from '../base-parser';
-import * as cheerio from 'cheerio';
-import { Recipe, Ingredient, Instruction } from '../types';
+import { BaseParser } from "../base-parser";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
 
 export class DamnDeliciousParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('damndelicious.net');
+    return url.includes("damndelicious.net");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -17,22 +17,22 @@ export class DamnDeliciousParser extends BaseParser {
         title: this.sanitizeText(jsonLd.name),
         source: url,
         author:
-          typeof jsonLd.author === 'string'
+          typeof jsonLd.author === "string"
             ? jsonLd.author
-            : jsonLd.author?.name || 'Chungah Rhee',
+            : jsonLd.author?.name || "Chungah Rhee",
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
           text: this.sanitizeText(i),
         })),
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || []).map((i) =>
-            typeof i === 'string' ? i : i?.text || ''
+            typeof i === "string" ? i : i?.text || ""
           )
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -53,38 +53,38 @@ export class DamnDeliciousParser extends BaseParser {
 
     // Fallback selectors for Damn Delicious specific structure
     const title = this.sanitizeText(
-      $('h1.entry-title, h1.post-title, h1').first().text() || ''
+      $("h1.entry-title, h1.post-title, h1").first().text() || ""
     );
 
     // Damn Delicious is authored by Chungah Rhee
     const author = this.sanitizeText(
-      $('.author, .by-author').first().text() || 'Chungah Rhee'
+      $(".author, .by-author").first().text() || "Chungah Rhee"
     );
 
     // Extract ingredients - Damn Delicious often uses recipe cards
     let ingredients: Ingredient[] = [];
     const ingredientSelectors = [
-      '.recipe-card-ingredients li',
-      '.wp-block-recipe-card-ingredients li',
-      '.ingredients li',
-      '.recipe-ingredients li',
-      '.entry-content ul li',
-      'h3:contains("Ingredients") + ul li, h3:contains("INGREDIENTS") + ul li',
+      ".recipe-card-ingredients li",
+      ".wp-block-recipe-card-ingredients li",
+      ".ingredients li",
+      ".recipe-ingredients li",
+      ".entry-content ul li",
+      "h3:contains(\"Ingredients\") + ul li, h3:contains(\"INGREDIENTS\") + ul li",
     ];
 
     for (const selector of ingredientSelectors) {
-      if (selector.includes(':contains')) {
+      if (selector.includes(":contains")) {
         // Handle jQuery :contains selector separately
         const headerSelectors = [
-          'h3:contains("Ingredients")',
-          'h3:contains("INGREDIENTS")',
+          "h3:contains(\"Ingredients\")",
+          "h3:contains(\"INGREDIENTS\")",
         ];
         for (const headerSelector of headerSelectors) {
-          const headerElements = $(headerSelector.split(':contains')[0]).filter(
-            (_: any, el: any) => $(el).text().toLowerCase().includes('ingredients')
+          const headerElements = $(headerSelector.split(":contains")[0]).filter(
+            (_: any, el: any) => $(el).text().toLowerCase().includes("ingredients")
           );
           if (headerElements.length > 0) {
-            const ingredientsList = headerElements.next('ul').find('li');
+            const ingredientsList = headerElements.next("ul").find("li");
             if (ingredientsList.length > 0) {
               ingredients = ingredientsList
                 .map((_: any, el: any) => ({
@@ -111,27 +111,27 @@ export class DamnDeliciousParser extends BaseParser {
     // Extract instructions - Damn Delicious often uses ordered lists
     let instructions: Instruction[] = [];
     const instructionSelectors = [
-      '.recipe-card-directions li',
-      '.wp-block-recipe-card-directions li',
-      '.instructions ol li',
-      '.recipe-instructions ol li',
-      '.entry-content ol li',
-      'h3:contains("Directions") + ol li, h3:contains("DIRECTIONS") + ol li',
+      ".recipe-card-directions li",
+      ".wp-block-recipe-card-directions li",
+      ".instructions ol li",
+      ".recipe-instructions ol li",
+      ".entry-content ol li",
+      "h3:contains(\"Directions\") + ol li, h3:contains(\"DIRECTIONS\") + ol li",
     ];
 
     for (const selector of instructionSelectors) {
-      if (selector.includes(':contains')) {
+      if (selector.includes(":contains")) {
         // Handle jQuery :contains selector separately
         const headerSelectors = [
-          'h3:contains("Directions")',
-          'h3:contains("DIRECTIONS")',
+          "h3:contains(\"Directions\")",
+          "h3:contains(\"DIRECTIONS\")",
         ];
         for (const headerSelector of headerSelectors) {
-          const headerElements = $(headerSelector.split(':contains')[0]).filter(
-            (_: any, el: any) => $(el).text().toLowerCase().includes('directions')
+          const headerElements = $(headerSelector.split(":contains")[0]).filter(
+            (_: any, el: any) => $(el).text().toLowerCase().includes("directions")
           );
           if (headerElements.length > 0) {
-            const instructionsList = headerElements.next('ol').find('li');
+            const instructionsList = headerElements.next("ol").find("li");
             if (instructionsList.length > 0) {
               instructions = instructionsList
                 .map((i: any, el: any) => ({
@@ -159,32 +159,32 @@ export class DamnDeliciousParser extends BaseParser {
 
     // Extract image
     let imageUrl = $(
-      '.recipe-card-image img, .post-thumbnail img, .wp-post-image'
+      ".recipe-card-image img, .post-thumbnail img, .wp-post-image"
     )
       .first()
-      .attr('src');
+      .attr("src");
     if (!imageUrl) {
-      imageUrl = $('meta[property="og:image"]').attr('content');
+      imageUrl = $("meta[property=\"og:image\"]").attr("content");
     }
 
     // Extract timing and serving info
     const prepTime = this.sanitizeText(
-      $('.recipe-card-prep-time, .prep-time, [itemprop="prepTime"]')
+      $(".recipe-card-prep-time, .prep-time, [itemprop=\"prepTime\"]")
         .first()
         .text()
     );
     const cookTime = this.sanitizeText(
-      $('.recipe-card-cook-time, .cook-time, [itemprop="cookTime"]')
+      $(".recipe-card-cook-time, .cook-time, [itemprop=\"cookTime\"]")
         .first()
         .text()
     );
     const totalTime = this.sanitizeText(
-      $('.recipe-card-total-time, .total-time, [itemprop="totalTime"]')
+      $(".recipe-card-total-time, .total-time, [itemprop=\"totalTime\"]")
         .first()
         .text()
     );
     const servings = this.sanitizeText(
-      $('.recipe-card-servings, .servings, [itemprop="recipeYield"]')
+      $(".recipe-card-servings, .servings, [itemprop=\"recipeYield\"]")
         .first()
         .text()
     );

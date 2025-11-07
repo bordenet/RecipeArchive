@@ -1,21 +1,21 @@
-const { test, expect, chromium } = require('@playwright/test');
-const path = require('path');
+const { test, expect, chromium } = require("@playwright/test");
+const path = require("path");
 
-test.describe('Minimal Extension Test', () => {
-  test('Test minimal extension loading', async () => {
-    console.log('🔍 Testing minimal extension...');
+test.describe("Minimal Extension Test", () => {
+  test("Test minimal extension loading", async () => {
+    console.log("🔍 Testing minimal extension...");
 
-    const testExtensionPath = path.resolve(__dirname, '../test-extension');
-    console.log('📁 Test extension path:', testExtensionPath);
+    const testExtensionPath = path.resolve(__dirname, "../test-extension");
+    console.log("📁 Test extension path:", testExtensionPath);
 
     const browser = await chromium.launch({
       headless: false,
       args: [
         `--load-extension=${testExtensionPath}`,
-        '--disable-extensions-except=' + testExtensionPath,
-        '--no-first-run',
-        '--no-default-browser-check',
-        '--disable-default-apps',
+        "--disable-extensions-except=" + testExtensionPath,
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-default-apps",
       ],
     });
 
@@ -28,28 +28,28 @@ test.describe('Minimal Extension Test', () => {
       // Check background pages
       const backgroundPages = context.backgroundPages();
       console.log(
-        '🔧 Test extension background pages:',
+        "🔧 Test extension background pages:",
         backgroundPages.length
       );
 
       if (backgroundPages.length > 0) {
-        console.log('✅ Minimal extension loaded successfully!');
+        console.log("✅ Minimal extension loaded successfully!");
         const bg = backgroundPages[0];
 
-        bg.on('console', (msg) => {
+        bg.on("console", (msg) => {
           console.log(`🔧 Test BG [${msg.type()}]:`, msg.text());
         });
 
         // Wait for any console messages
         await new Promise((resolve) => setTimeout(resolve, 2000));
       } else {
-        console.log('❌ Minimal extension failed to load');
+        console.log("❌ Minimal extension failed to load");
       }
 
       await context.close();
     } finally {
       await browser.close();
-      console.log('✅ Minimal extension test complete');
+      console.log("✅ Minimal extension test complete");
     }
   });
 });

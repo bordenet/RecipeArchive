@@ -8,35 +8,35 @@
  * like __ENV_VAR_NAME__ with actual values.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync: _execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync: _execSync } = require("child_process");
 
 // Load environment variables
-const envPath = path.join(__dirname, '../.env');
+const envPath = path.join(__dirname, "../.env");
 console.log(`Loading environment from: ${envPath}`);
-require('dotenv').config({ path: envPath });
+require("dotenv").config({ path: envPath });
 
 // Debug environment variable loading
-console.log('Environment variables loaded:');
-console.log('- AWS_REGION:', process.env.AWS_REGION);
-console.log('- COGNITO_USER_POOL_ID:', process.env.COGNITO_USER_POOL_ID);
-console.log('- API_BASE_URL:', process.env.API_BASE_URL);
+console.log("Environment variables loaded:");
+console.log("- AWS_REGION:", process.env.AWS_REGION);
+console.log("- COGNITO_USER_POOL_ID:", process.env.COGNITO_USER_POOL_ID);
+console.log("- API_BASE_URL:", process.env.API_BASE_URL);
 
 const EXTENSION_ENV_VARS = [
-  'AWS_REGION',
-  'COGNITO_USER_POOL_ID',
-  'COGNITO_APP_CLIENT_ID',
-  'API_BASE_URL',
-  'WEB_APP_URL',
-  'S3_RECIPE_STORAGE_BUCKET',
+  "AWS_REGION",
+  "COGNITO_USER_POOL_ID",
+  "COGNITO_APP_CLIENT_ID",
+  "API_BASE_URL",
+  "WEB_APP_URL",
+  "S3_RECIPE_STORAGE_BUCKET",
 ];
 
 const TEST_ENV_VARS = [
-  'TEST_USER_EMAIL',
-  'TEST_USER_PASSWORD',
-  'RECIPE_USER_EMAIL',
-  'RECIPE_USER_PASSWORD',
+  "TEST_USER_EMAIL",
+  "TEST_USER_PASSWORD",
+  "RECIPE_USER_EMAIL",
+  "RECIPE_USER_PASSWORD",
 ];
 
 class ExtensionEnvBuilder {
@@ -54,7 +54,7 @@ class ExtensionEnvBuilder {
       if (!value) {
         console.warn(`⚠️  Warning: Environment variable ${key} not found`);
       }
-      vars[key] = value || '';
+      vars[key] = value || "";
     });
 
     // Load test variables (optional)
@@ -74,7 +74,7 @@ class ExtensionEnvBuilder {
       return false;
     }
 
-    let content = fs.readFileSync(filePath, 'utf8');
+    let content = fs.readFileSync(filePath, "utf8");
     let modified = false;
 
     // Replace __ENV_VAR_NAME__ patterns with actual values
@@ -82,7 +82,7 @@ class ExtensionEnvBuilder {
       const placeholder = `__${key}__`;
       if (content.includes(placeholder)) {
         console.log(`🔧 Injecting ${key} into ${path.basename(filePath)}`);
-        content = content.replace(new RegExp(placeholder, 'g'), value);
+        content = content.replace(new RegExp(placeholder, "g"), value);
         modified = true;
       }
     });
@@ -90,7 +90,7 @@ class ExtensionEnvBuilder {
     // Replace process.env.VAR_NAME patterns (browser extensions can't use process.env)
     Object.entries(this.envVars).forEach(([key, value]) => {
       const processEnvPattern = `process\\.env\\.${key}`;
-      const regex = new RegExp(processEnvPattern, 'g');
+      const regex = new RegExp(processEnvPattern, "g");
       if (regex.test(content)) {
         console.log(
           `🔧 Replacing process.env.${key} with literal value in ${path.basename(filePath)}`
@@ -101,7 +101,7 @@ class ExtensionEnvBuilder {
     });
 
     if (modified) {
-      fs.writeFileSync(filePath, content, 'utf8');
+      fs.writeFileSync(filePath, content, "utf8");
       return true;
     }
 
@@ -128,16 +128,16 @@ class ExtensionEnvBuilder {
 
   findJavaScriptFiles() {
     const files = [];
-    const extensions = ['.js', '.ts'];
+    const extensions = [".js", ".ts"];
 
     // Exclude certain files
     const excludePatterns = [
-      'node_modules',
-      '__tests__',
-      'tests',
-      '.test.',
-      '.spec.',
-      'typescript-parser-bundle.js', // Don't modify compiled bundles
+      "node_modules",
+      "__tests__",
+      "tests",
+      ".test.",
+      ".spec.",
+      "typescript-parser-bundle.js", // Don't modify compiled bundles
     ];
 
     const scanDirectory = (dir) => {
@@ -169,7 +169,7 @@ class ExtensionEnvBuilder {
   }
 
   generateEnvConfig() {
-    const configPath = path.join(this.extensionPath, 'env-config.js');
+    const configPath = path.join(this.extensionPath, "env-config.js");
     const config = {
       AWS_REGION: this.envVars.AWS_REGION,
       COGNITO_USER_POOL_ID: this.envVars.COGNITO_USER_POOL_ID,
@@ -202,8 +202,8 @@ if (typeof module !== "undefined" && module.exports) {
   }
 
   generateManifest() {
-    const templatePath = path.join(this.extensionPath, 'manifest.template.json');
-    const outputPath = path.join(this.extensionPath, 'manifest.json');
+    const templatePath = path.join(this.extensionPath, "manifest.template.json");
+    const outputPath = path.join(this.extensionPath, "manifest.json");
 
     if (!fs.existsSync(templatePath)) {
       console.warn(`⚠️  No manifest template found at: ${templatePath}`);
@@ -211,7 +211,7 @@ if (typeof module !== "undefined" && module.exports) {
     }
 
     // Read template
-    let templateContent = fs.readFileSync(templatePath, 'utf8');
+    let templateContent = fs.readFileSync(templatePath, "utf8");
 
     // Parse as JSON to work with it properly
     let manifest;
@@ -223,8 +223,8 @@ if (typeof module !== "undefined" && module.exports) {
     }
 
     // Replace environment variable placeholders in host_permissions
-    const awsRegion = this.envVars.AWS_REGION || 'us-west-2';
-    const apiBaseUrl = this.envVars.API_BASE_URL || '';
+    const awsRegion = this.envVars.AWS_REGION || "us-west-2";
+    const apiBaseUrl = this.envVars.API_BASE_URL || "";
 
     if (manifest.host_permissions) {
       manifest.host_permissions = manifest.host_permissions.map(permission => {
@@ -232,12 +232,12 @@ if (typeof module !== "undefined" && module.exports) {
         let updated = permission.replace(/__AWS_REGION__/g, awsRegion);
 
         // Replace API_BASE_URL placeholder - only if we have a value
-        if (apiBaseUrl && updated.includes('__API_BASE_URL__')) {
-          const cleanUrl = apiBaseUrl.replace(/\/+$/, ''); // Remove trailing slashes
+        if (apiBaseUrl && updated.includes("__API_BASE_URL__")) {
+          const cleanUrl = apiBaseUrl.replace(/\/+$/, ""); // Remove trailing slashes
           updated = updated.replace(/__API_BASE_URL__/g, cleanUrl);
-        } else if (updated.includes('__API_BASE_URL__')) {
+        } else if (updated.includes("__API_BASE_URL__")) {
           // If no API_BASE_URL, use a safe default
-          updated = updated.replace('__API_BASE_URL__/*', 'https://localhost:8080/*');
+          updated = updated.replace("__API_BASE_URL__/*", "https://localhost:8080/*");
         }
 
         return updated;
@@ -245,7 +245,7 @@ if (typeof module !== "undefined" && module.exports) {
     }
 
     // Write generated manifest with proper formatting
-    fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2) + '\n');
+    fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2) + "\n");
     console.log(
       `📝 Generated manifest.json for ${path.basename(this.extensionPath)}`
     );
@@ -256,35 +256,35 @@ function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    console.log('🔧 Building environment variables for all extensions...');
+    console.log("🔧 Building environment variables for all extensions...");
 
     // Process Chrome, Safari, and shared extensions
-    const extensions = ['chrome', 'safari', 'shared'];
+    const extensions = ["chrome", "safari", "shared"];
     let totalModified = 0;
 
     extensions.forEach((ext) => {
-      const extPath = path.join(__dirname, '../extensions', ext);
+      const extPath = path.join(__dirname, "../extensions", ext);
       if (fs.existsSync(extPath)) {
         const builder = new ExtensionEnvBuilder(extPath);
         builder.generateEnvConfig();
         // Only generate manifest for Chrome and Safari (not shared)
-        if (ext !== 'shared') {
+        if (ext !== "shared") {
           builder.generateManifest();
         }
         totalModified += builder.processExtension();
       }
     });
 
-    console.log(`\n✅ Environment variable injection complete!`);
+    console.log("\n✅ Environment variable injection complete!");
     console.log(`   Modified ${totalModified} files across all extensions`);
   } else {
     // Process specific extension
     const extensionName = args[0];
-    const extPath = path.join(__dirname, '../extensions', extensionName);
+    const extPath = path.join(__dirname, "../extensions", extensionName);
 
     if (!fs.existsSync(extPath)) {
       console.error(`❌ Extension not found: ${extensionName}`);
-      throw new Error('Extension not found');
+      throw new Error("Extension not found");
     }
 
     const builder = new ExtensionEnvBuilder(extPath);

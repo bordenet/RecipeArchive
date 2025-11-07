@@ -1,17 +1,17 @@
 // Automated JavaScript Variable Scope and Error Detection Tests
 // Catches runtime errors like undefined variables before they reach users
 
-if (typeof global.TextEncoder === 'undefined') {
-  global.TextEncoder = require('util').TextEncoder;
+if (typeof global.TextEncoder === "undefined") {
+  global.TextEncoder = require("util").TextEncoder;
 }
-if (typeof global.TextDecoder === 'undefined') {
-  global.TextDecoder = require('util').TextDecoder;
+if (typeof global.TextDecoder === "undefined") {
+  global.TextDecoder = require("util").TextDecoder;
 }
-const { JSDOM } = require('jsdom');
-const fs = require('fs');
-const path = require('path');
+const { JSDOM } = require("jsdom");
+const fs = require("fs");
+const path = require("path");
 
-describe('Extension JavaScript Error Detection', () => {
+describe("Extension JavaScript Error Detection", () => {
   let dom;
   let window;
   let console;
@@ -39,9 +39,9 @@ describe('Extension JavaScript Error Detection', () => {
       </html>
     `,
       {
-        url: 'chrome-extension://test/',
+        url: "chrome-extension://test/",
         pretendToBeVisual: true,
-        resources: 'usable',
+        resources: "usable",
       }
     );
 
@@ -70,7 +70,7 @@ describe('Extension JavaScript Error Detection', () => {
       errors: [],
       log: jest.fn(),
       error: (...args) => {
-        console.errors.push(args.join(' '));
+        console.errors.push(args.join(" "));
       },
       warn: jest.fn(),
     };
@@ -81,8 +81,8 @@ describe('Extension JavaScript Error Detection', () => {
     dom.window.close();
   });
 
-  describe('Variable Scope Error Detection', () => {
-    it('should detect undefined variable references in async functions', async () => {
+  describe("Variable Scope Error Detection", () => {
+    it("should detect undefined variable references in async functions", async () => {
       // Simulate a reference error for someVar in the catch block
       async function testFunction() {
         try {
@@ -92,7 +92,7 @@ describe('Extension JavaScript Error Detection', () => {
           try {
             // This will throw ReferenceError
             // eslint-disable-next-line no-undef
-            console.log('Error with var:', someVar);
+            console.log("Error with var:", someVar);
           } catch (refError) {
             console.error(refError.message);
             throw refError;
@@ -101,7 +101,7 @@ describe('Extension JavaScript Error Detection', () => {
       }
 
       global.someAsyncOperation = async () => {
-        throw new Error('Test error');
+        throw new Error("Test error");
       };
 
       try {
@@ -111,19 +111,19 @@ describe('Extension JavaScript Error Detection', () => {
         expect(
           console.errors.some(
             (err) =>
-              err.includes('someVar') ||
-              err.includes('not defined') ||
+              err.includes("someVar") ||
+              err.includes("not defined") ||
               err.includes("Can't find variable")
           )
         ).toBe(true);
       }
     });
 
-    it('should validate Safari popup.js for variable scope issues', () => {
-      const safariPopupPath = path.join(__dirname, '../../safari/popup.js');
+    it("should validate Safari popup.js for variable scope issues", () => {
+      const safariPopupPath = path.join(__dirname, "../../safari/popup.js");
 
       if (fs.existsSync(safariPopupPath)) {
-        const popupContent = fs.readFileSync(safariPopupPath, 'utf8');
+        const popupContent = fs.readFileSync(safariPopupPath, "utf8");
 
         // Check for common variable scope patterns that cause issues
         const problematicPatterns = [
@@ -150,11 +150,11 @@ describe('Extension JavaScript Error Detection', () => {
       }
     });
 
-    it('should validate Chrome popup.js for variable scope issues', () => {
-      const chromePopupPath = path.join(__dirname, '../../chrome/popup.js');
+    it("should validate Chrome popup.js for variable scope issues", () => {
+      const chromePopupPath = path.join(__dirname, "../../chrome/popup.js");
 
       if (fs.existsSync(chromePopupPath)) {
-        const popupContent = fs.readFileSync(chromePopupPath, 'utf8');
+        const popupContent = fs.readFileSync(chromePopupPath, "utf8");
 
         // Check for the same patterns in Chrome extension
         expect(popupContent).not.toMatch(/catch[\s\S]*?tokenResult(?!\s*=)/);
@@ -165,18 +165,18 @@ describe('Extension JavaScript Error Detection', () => {
     });
   });
 
-  describe('Runtime Error Simulation', () => {
-    it('should simulate the tokenResult error scenario', async () => {
+  describe("Runtime Error Simulation", () => {
+    it("should simulate the tokenResult error scenario", async () => {
       // Set up mocks
       global.CONFIG = {
-        getCognitoConfig: () => ({ region: 'us-west-2' }),
-        getCurrentAPI: () => ({ recipes: 'https://api.test.com/recipes' }),
+        getCognitoConfig: () => ({ region: "us-west-2" }),
+        getCurrentAPI: () => ({ recipes: "https://api.test.com/recipes" }),
       };
 
       global.SafariCognitoAuth = class {
         constructor() {}
         async getIdToken() {
-          throw new Error('Network error'); // Simulate failure
+          throw new Error("Network error"); // Simulate failure
         }
       };
 
@@ -197,7 +197,7 @@ describe('Extension JavaScript Error Detection', () => {
           tokenResult = await cognitoAuth.getIdToken();
 
           if (!tokenResult.success) {
-            throw new Error('Authentication required');
+            throw new Error("Authentication required");
           }
 
           return { success: true };
@@ -210,14 +210,14 @@ describe('Extension JavaScript Error Detection', () => {
 
       // This should not throw a variable scope error
       try {
-        await testFunction({ title: 'Test Recipe' });
+        await testFunction({ title: "Test Recipe" });
       } catch (error) {
         expect(error.message).not.toContain("Can't find variable");
-        expect(error.message).toContain('token status'); // Should be able to access tokenResult
+        expect(error.message).toContain("token status"); // Should be able to access tokenResult
       }
     });
 
-    it('should detect missing global variables', () => {
+    it("should detect missing global variables", () => {
       // Test for undefined global variable access
       const testCode = `
         function testGlobals() {
@@ -230,13 +230,13 @@ describe('Extension JavaScript Error Detection', () => {
 
       expect(() => {
         eval(testCode);
-        eval('testGlobals()');
+        eval("testGlobals()");
       }).not.toThrow(); // Should handle undefined gracefully
     });
   });
 
-  describe('Extension-Specific Error Patterns', () => {
-    it('should validate authentication flow error handling', async () => {
+  describe("Extension-Specific Error Patterns", () => {
+    it("should validate authentication flow error handling", async () => {
       // Mock extension APIs
       global.chrome = {
         tabs: {
@@ -247,11 +247,11 @@ describe('Extension JavaScript Error Detection', () => {
 
       // Test authentication error scenarios
       const authScenarios = [
-        { name: 'Network failure', error: new Error('Network error') },
-        { name: 'Invalid token', error: new Error('Token expired') },
+        { name: "Network failure", error: new Error("Network error") },
+        { name: "Invalid token", error: new Error("Token expired") },
         {
-          name: 'Service unavailable',
-          error: new Error('Service unavailable'),
+          name: "Service unavailable",
+          error: new Error("Service unavailable"),
         },
       ];
 

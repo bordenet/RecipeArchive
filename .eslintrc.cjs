@@ -55,12 +55,17 @@ module.exports = {
           varsIgnorePattern: "^_"
         }],
         "no-unused-vars": "off", // Use TypeScript version
+        "@typescript-eslint/no-explicit-any": "warn", // Warn instead of error
+        "@typescript-eslint/no-require-imports": "warn", // Warn instead of error for legacy code
       },
     },
     {
-      files: ["**/*.test.js", "**/__tests__/**/*.js"],
+      files: ["**/*.test.js", "**/*.test.ts", "**/__tests__/**/*.js", "**/__tests__/**/*.ts", "**/tests/**/*.js", "**/tests/**/*.ts", "tests/setup.js"],
       env: {
-        jest: true, // Enable Jest globals
+        jest: true, // Enable Jest globals (describe, it, expect, etc.)
+      },
+      globals: {
+        fail: "readonly", // Jest fail function
       },
     },
   ],

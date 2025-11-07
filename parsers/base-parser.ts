@@ -1,10 +1,10 @@
-import { Recipe, ValidationResult, JsonLdRecipe, Instruction } from './types';
-import * as cheerio from 'cheerio';
+import { Recipe, ValidationResult, JsonLdRecipe, Instruction } from "./types";
+import * as cheerio from "cheerio";
 
 export abstract class BaseParser {
   constructor() {
     if (this.constructor === BaseParser) {
-      throw new Error('Cannot instantiate abstract BaseParser class');
+      throw new Error("Cannot instantiate abstract BaseParser class");
     }
   }
 
@@ -15,31 +15,32 @@ export abstract class BaseParser {
   // Utility methods
   protected extractJsonLD(html: string): JsonLdRecipe | null {
     const $ = cheerio.load(html);
-    const scripts = $('script[type="application/ld+json"]');
+    const scripts = $("script[type=\"application/ld+json\"]");
 
     for (let i = 0; i < scripts.length; i++) {
       try {
         const script = scripts[i];
-        let jsonText = $(script).html() || $(script).text() || '';
+        let jsonText = $(script).html() || $(script).text() || "";
         // Remove control characters that break JSON.parse
-        jsonText = jsonText.replace(/[\u0000-\u001F\u007F]/g, '');
+        // eslint-disable-next-line no-control-regex
+        jsonText = jsonText.replace(/[\u0000-\u001F\u007F]/g, "");
         // Fix undefined values in JSON (common Food52 issue)
         jsonText = jsonText
-          .replace(/:\s*undefined\b/g, ': null')
-          .replace(/,\s*undefined\b/g, ', null')
-          .replace(/\[\s*undefined\b/g, '[null');
+          .replace(/:\s*undefined\b/g, ": null")
+          .replace(/,\s*undefined\b/g, ", null")
+          .replace(/\[\s*undefined\b/g, "[null");
         const jsonData = JSON.parse(jsonText);
 
         // Helper to check if @type is Recipe (string or array)
         const isRecipeType = (type: unknown): boolean => {
           if (!type) return false;
-          if (typeof type === 'string') return type === 'Recipe';
-          if (Array.isArray(type)) return (type as string[]).includes('Recipe');
+          if (typeof type === "string") return type === "Recipe";
+          if (Array.isArray(type)) return (type as string[]).includes("Recipe");
           return false;
         };
 
         // Handle single recipe
-        if (isRecipeType(jsonData['@type'])) {
+        if (isRecipeType(jsonData["@type"])) {
           return jsonData as JsonLdRecipe;
         }
 
@@ -47,21 +48,21 @@ export abstract class BaseParser {
         if (Array.isArray(jsonData)) {
           const recipe = jsonData.find(
             (item: any) =>
-              item && typeof item === 'object' && isRecipeType(item['@type'])
+              item && typeof item === "object" && isRecipeType(item["@type"])
           );
           if (recipe) return recipe as JsonLdRecipe;
         }
 
         // Handle @graph structure
-        if (jsonData['@graph']) {
-          const recipe = jsonData['@graph'].find(
+        if (jsonData["@graph"]) {
+          const recipe = jsonData["@graph"].find(
             (item: any) =>
-              item && typeof item === 'object' && isRecipeType(item['@type'])
+              item && typeof item === "object" && isRecipeType(item["@type"])
           );
           if (recipe) return recipe as JsonLdRecipe;
         }
       } catch (err) {
-        console.warn('Error parsing JSON-LD:', err);
+        console.warn("Error parsing JSON-LD:", err);
       }
     }
 
@@ -69,16 +70,16 @@ export abstract class BaseParser {
   }
 
   protected sanitizeText(text?: string): string {
-    if (!text) return '';
+    if (!text) return "";
 
     // First decode HTML entities
-    let cleaned = this.decodeHtmlEntities(text);
+    const cleaned = this.decodeHtmlEntities(text);
 
     // Then normalize whitespace and remove zero-width characters
     return cleaned
       .trim()
-      .replace(/\s+/g, ' ')
-      .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width spaces
+      .replace(/\s+/g, " ")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width spaces
       .trim();
   }
 
@@ -92,48 +93,48 @@ export abstract class BaseParser {
     // Common HTML entities mapping
     const entityMap: { [key: string]: string } = {
       // Numeric entities (including the problematic em dash)
-      '&#8211;': '–', // En dash - this fixes the reported issue
-      '&#8212;': '—', // Em dash
-      '&#39;': "'", // Apostrophe
-      '&#x27;': "'", // Apostrophe (hex)
-      '&#34;': '"', // Double quote
-      '&#x22;': '"', // Double quote (hex)
-      '&#38;': '&', // Ampersand
-      '&#x26;': '&', // Ampersand (hex)
-      '&#60;': '<', // Less than
-      '&#x3C;': '<', // Less than (hex)
-      '&#62;': '>', // Greater than
-      '&#x3E;': '>', // Greater than (hex)
-      '&#32;': ' ', // Space
-      '&#x20;': ' ', // Space (hex)
-      '&#160;': ' ', // Non-breaking space
-      '&#xa0;': ' ', // Non-breaking space (hex)
+      "&#8211;": "–", // En dash - this fixes the reported issue
+      "&#8212;": "—", // Em dash
+      "&#39;": "'", // Apostrophe
+      "&#x27;": "'", // Apostrophe (hex)
+      "&#34;": "\"", // Double quote
+      "&#x22;": "\"", // Double quote (hex)
+      "&#38;": "&", // Ampersand
+      "&#x26;": "&", // Ampersand (hex)
+      "&#60;": "<", // Less than
+      "&#x3C;": "<", // Less than (hex)
+      "&#62;": ">", // Greater than
+      "&#x3E;": ">", // Greater than (hex)
+      "&#32;": " ", // Space
+      "&#x20;": " ", // Space (hex)
+      "&#160;": " ", // Non-breaking space
+      "&#xa0;": " ", // Non-breaking space (hex)
 
       // Named entities
-      '&quot;': '"',
-      '&apos;': "'",
-      '&amp;': '&',
-      '&lt;': '<',
-      '&gt;': '>',
-      '&nbsp;': ' ', // Non-breaking space
-      '&ndash;': '–', // En dash
-      '&mdash;': '—', // Em dash
-      '&hellip;': '…', // Horizontal ellipsis
-      '&rsquo;': "'", // Right single quotation mark
-      '&lsquo;': "'", // Left single quotation mark
-      '&rdquo;': '"', // Right double quotation mark
-      '&ldquo;': '"', // Left double quotation mark
-      '&deg;': '°', // Degree symbol
-      '&frac12;': '½', // Fraction 1/2
-      '&frac14;': '¼', // Fraction 1/4
-      '&frac34;': '¾', // Fraction 3/4
+      "&quot;": "\"",
+      "&apos;": "'",
+      "&amp;": "&",
+      "&lt;": "<",
+      "&gt;": ">",
+      "&nbsp;": " ", // Non-breaking space
+      "&ndash;": "–", // En dash
+      "&mdash;": "—", // Em dash
+      "&hellip;": "…", // Horizontal ellipsis
+      "&rsquo;": "'", // Right single quotation mark
+      "&lsquo;": "'", // Left single quotation mark
+      "&rdquo;": "\"", // Right double quotation mark
+      "&ldquo;": "\"", // Left double quotation mark
+      "&deg;": "°", // Degree symbol
+      "&frac12;": "½", // Fraction 1/2
+      "&frac14;": "¼", // Fraction 1/4
+      "&frac34;": "¾", // Fraction 3/4
     };
 
     let decoded = text;
 
     // Replace all known entities
     for (const [entity, replacement] of Object.entries(entityMap)) {
-      decoded = decoded.replace(new RegExp(entity, 'g'), replacement);
+      decoded = decoded.replace(new RegExp(entity, "g"), replacement);
     }
 
     // Handle generic numeric entities (&#123; format)
@@ -161,7 +162,7 @@ export abstract class BaseParser {
     doc: Document,
     selectors: string | string[]
   ): string[] {
-    if (typeof selectors === 'string') {
+    if (typeof selectors === "string") {
       selectors = [selectors];
     }
 
@@ -216,7 +217,7 @@ export abstract class BaseParser {
       .map((part) => {
         // Ensure each part ends with a period if it doesn't already have punctuation
         if (!/[.!?]$/.test(part)) {
-          part += '.';
+          part += ".";
         }
         return part;
       });
@@ -233,7 +234,7 @@ export abstract class BaseParser {
 
     for (const rawInstruction of rawInstructions) {
       const text =
-        typeof rawInstruction === 'string'
+        typeof rawInstruction === "string"
           ? rawInstruction
           : rawInstruction.text;
       const splitSteps = this.splitInstructions(text);

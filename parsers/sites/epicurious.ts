@@ -1,11 +1,11 @@
 // ...existing code...
-import { BaseParser } from '../base-parser';
-import * as cheerio from 'cheerio';
-import { Recipe, Ingredient, Instruction } from '../types';
+import { BaseParser } from "../base-parser";
+import * as cheerio from "cheerio";
+import { Recipe, Ingredient, Instruction } from "../types";
 
 export class EpicuriousParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('epicurious.com');
+    return url.includes("epicurious.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -18,7 +18,7 @@ export class EpicuriousParser extends BaseParser {
         title: this.sanitizeText(jsonLd.name),
         source: url,
         author:
-          typeof jsonLd.author === 'string'
+          typeof jsonLd.author === "string"
             ? jsonLd.author
             : jsonLd.author?.name,
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
@@ -27,17 +27,17 @@ export class EpicuriousParser extends BaseParser {
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || [])
             .map((i) =>
-              typeof i === 'string'
+              typeof i === "string"
                 ? this.sanitizeText(i)
                 : this.sanitizeText(i.text)
             )
-            .filter((text: any) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === "string" && text.length > 0)
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -58,24 +58,24 @@ export class EpicuriousParser extends BaseParser {
 
     // Fallback selectors for Epicurious specific structure
     const title = this.sanitizeText(
-      $('h1.recipe-hed, h1').first().text() || ''
+      $("h1.recipe-hed, h1").first().text() || ""
     );
 
     const author = this.sanitizeText(
-      $('.author-name, .by-author, [data-testid="BylineWrapper"]')
+      $(".author-name, .by-author, [data-testid=\"BylineWrapper\"]")
         .first()
         .text()
-        .replace(/^by\s*/i, '') || ''
+        .replace(/^by\s*/i, "") || ""
     );
 
     // Extract ingredients - Epicurious often uses structured lists
     let ingredients: Ingredient[] = [];
     const ingredientSelectors = [
-      '[data-testid="IngredientList"] li',
-      '.recipe-ingredients li',
-      '.ingredients li',
-      '.ingredient',
-      'ul li',
+      "[data-testid=\"IngredientList\"] li",
+      ".recipe-ingredients li",
+      ".ingredients li",
+      ".ingredient",
+      "ul li",
     ];
 
     for (const selector of ingredientSelectors) {
@@ -95,11 +95,11 @@ export class EpicuriousParser extends BaseParser {
     // Extract instructions - Epicurious often uses ordered lists
     let instructions: Instruction[] = [];
     const instructionSelectors = [
-      '[data-testid="InstructionsWrapper"] li',
-      '.recipe-instructions li',
-      '.instructions li',
-      '.preparation li',
-      'ol li',
+      "[data-testid=\"InstructionsWrapper\"] li",
+      ".recipe-instructions li",
+      ".instructions li",
+      ".preparation li",
+      "ol li",
     ];
 
     for (const selector of instructionSelectors) {
@@ -118,26 +118,26 @@ export class EpicuriousParser extends BaseParser {
 
     // Extract image
     let imageUrl = $(
-      '.recipe-header-image img, .recipe-image img, .hero-image img'
+      ".recipe-header-image img, .recipe-image img, .hero-image img"
     )
       .first()
-      .attr('src');
+      .attr("src");
     if (!imageUrl) {
-      imageUrl = $('meta[property="og:image"]').attr('content');
+      imageUrl = $("meta[property=\"og:image\"]").attr("content");
     }
 
     // Extract timing and serving info
     const prepTime = this.sanitizeText(
-      $('.prep-time, [data-testid="PrepTime"]').first().text()
+      $(".prep-time, [data-testid=\"PrepTime\"]").first().text()
     );
     const cookTime = this.sanitizeText(
-      $('.cook-time, [data-testid="CookTime"]').first().text()
+      $(".cook-time, [data-testid=\"CookTime\"]").first().text()
     );
     const totalTime = this.sanitizeText(
-      $('.total-time, [data-testid="TotalTime"]').first().text()
+      $(".total-time, [data-testid=\"TotalTime\"]").first().text()
     );
     const servings = this.sanitizeText(
-      $('.servings, .recipe-yield, [data-testid="Yield"]').first().text()
+      $(".servings, .recipe-yield, [data-testid=\"Yield\"]").first().text()
     );
 
     const recipe: Recipe = {
