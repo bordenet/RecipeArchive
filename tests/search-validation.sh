@@ -13,11 +13,10 @@
 #
 # ENVIRONMENT VARIABLES:
 #   - API_BASE_URL: The base URL of the API to test.
-#   - TEST_USER_ID: The user ID to use for testing.
 #
 # NOTES:
 #   - This script is designed to be run from the root of the monorepo.
-#   - It requires curl and python to be installed.
+#   - It requires curl to be installed.
 #
 ################################################################################
 
@@ -31,9 +30,9 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Test configuration
-if [ -z "$API_BASE_URL" ] || [ -z "$TEST_USER_ID" ]; then
-    echo "❌ Missing required environment variables: API_BASE_URL, TEST_USER_ID"
-    echo "💡 Please set them in your environment or in a .env file."
+if [ -z "$API_BASE_URL" ]; then
+    echo "❌ Missing required environment variable: API_BASE_URL"
+    echo "💡 Please set it in your environment or in a .env file."
     exit 1
 fi
 
