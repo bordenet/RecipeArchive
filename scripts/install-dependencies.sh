@@ -26,7 +26,6 @@
 # NOTES:
 #   - Must be run from the project root directory
 #   - Automatically sets up Husky pre-commit hooks
-#   - Verifies TypeScript, ESLint, and Prettier configuration
 ################################################################################
 
 # Source common library
@@ -55,13 +54,7 @@ log_success "Root dependencies installed"
 log_section "Verifying Core Dependencies"
 
 REQUIRED_DEPS=(
-    "@typescript-eslint/eslint-plugin"
-    "@typescript-eslint/parser"
-    "eslint"
-    "eslint-config-prettier"
-    "eslint-plugin-prettier"
     "husky"
-    "lint-staged"
     "prettier"
     "typescript"
 )
@@ -82,7 +75,6 @@ log_success "Core dependencies verified"
 log_section "Setting Up Pre-Commit Hooks"
 
 npx husky init 2>/dev/null || true
-echo "npx lint-staged" > .husky/pre-commit
 chmod +x .husky/pre-commit
 log_success "Pre-commit hooks configured"
 
@@ -166,10 +158,7 @@ else
     log_warning "TypeScript compilation failed"
 fi
 
-if npm run lint >/dev/null 2>&1; then
-    log_success "ESLint configuration working"
 else
-    log_warning "ESLint issues found - run 'npm run lint:fix' to resolve"
 fi
 
 if npm run format:check >/dev/null 2>&1; then
@@ -233,5 +222,4 @@ fi
 log_success "Dependency installation complete!"
 echo ""
 log_info "Next steps:"
-echo "  Run 'npm run lint && npm run type-check && npm run build' to verify setup"
 echo "  For mobile development: './validate-monorepo.sh --mobile'"

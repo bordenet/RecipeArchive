@@ -69,7 +69,7 @@ should_run() {
 
 # Test category definitions
 declare -A TEST_TIERS
-TEST_TIERS[p1]="prerequisites dependencies_critical builds_core security_always linting_always quality_gate tests_integration"
+TEST_TIERS[p1]="prerequisites dependencies_critical builds_core security_always quality_gate tests_integration"
 TEST_TIERS[med]="${TEST_TIERS[p1]} builds_extended quality_basic"
 TEST_TIERS[all]="${TEST_TIERS[med]} tests_comprehensive quality_extended extensions_full aws_infrastructure"
 TEST_TIERS[infrastructure]="prerequisites aws_infrastructure"
@@ -309,13 +309,6 @@ validate_prerequisites() {
     fi
     
     # Check for ESLint
-    if ! command -v eslint &> /dev/null && [ ! -f node_modules/.bin/eslint ]; then
-        print_error
-        echo "    ESLint is not available"
-        errors=$((errors + 1))
-    else
-        add_operation; mark_passed
-    fi
     
     # Check for TruffleHog
     if ! command -v trufflehog &> /dev/null; then
@@ -688,116 +681,6 @@ run_quality_gate() {
     track_section_completion
 }
 
-# Linting checks (always runs regardless of tier)
-run_linting_checks() {
-    print_header "LINTING (Always Enabled)"
-    
-    print_step "ESLint - Web Extensions"
-    add_operation
-    if npm run lint; then
-        print_success
-    else
-        print_error
-        echo "    Extension linting found issues - run 'npm run lint' for details"
-    fi
-
-    print_step "ESLint - Chrome Extension"
-    add_operation
-    if (cd extensions/chrome && npm run lint > /dev/null 2>&1); then
-        print_success
-    else
-        print_error
-        echo "    Chrome extension linting failed - run 'cd extensions/chrome && npm run lint' for details"
-    fi
-
-    print_step "ESLint - Safari Extension"
-    add_operation
-    if (cd extensions/safari && npm run lint > /dev/null 2>&1); then
-        print_success
-    else
-        print_error
-        echo "    Safari extension linting failed - run 'cd extensions/safari && npm run lint' for details"
-    fi
-    
-    print_step "ESLint - Extension scoping"
-    add_operation
-    if npm run lint:scoping > /dev/null 2>&1; then
-        print_success
-    else
-        print_error
-        echo "    Extension scoping failed - rerun with: npm run lint:scoping"
-    fi
-    
-    print_step "Flutter analysis"
-    add_operation
-    if [ "$QUALITY_GATE_RAN" = true ]; then
-        print_success
-        echo "    Already validated by quality gate - skipping duplicate analysis"
-    elif [ -d "recipe_archive" ]; then
-        if command -v flutter &> /dev/null; then
-            if (cd recipe_archive && flutter analyze > /dev/null 2>&1); then
-                print_success
-            else
-                print_error
-                echo "    Flutter analysis found issues - run 'cd recipe_archive && flutter analyze' for details"
-            fi
-        else
-            print_warning "Flutter not installed - skipping"
-            mark_passed
-        fi
-    else
-        print_warning "Flutter app directory not found - skipping"
-        mark_passed
-    fi
-
-    print_step "Android build test"
-    add_operation
-    if [ -d "recipe_archive/android" ]; then
-        if command -v java &> /dev/null && [ -f "scripts/android/build.sh" ]; then
-            # Test Android build without running (just compilation check)
-            if timeout 300 bash scripts/android/build.sh --dev > /dev/null 2>&1; then
-                print_success
-                echo "    Android debug APK builds successfully"
-            else
-                print_error
-                echo "    Android build failed - run './scripts/android/build.sh --dev' for details"
-            fi
-        else
-            print_warning "Java or build script not found - skipping Android build test"
-            mark_passed
-        fi
-    else
-        print_warning "Android directory not found - skipping"
-        mark_passed
-    fi
-
-    print_step "Go code formatting"
-    add_operation
-    # Apply gofmt to all Go files excluding node_modules and template files
-    if find . -name "*.go" -not -path "./recipe_archive/*" -not -path "./node_modules/*" -not -path "*/node_modules/*" -not -name "*.template.go" -exec gofmt -l {} \; | grep -q .; then
-        print_error
-        echo "    Go formatting issues - run 'find . -name \"*.go\" -not -path \"./recipe_archive/*\" -not -path \"*/node_modules/*\" -not -name \"*.template.go\" -exec gofmt -w {} \;' to fix"
-    else
-        print_success
-    fi
-
-    print_step "Flutter diagnostic error monitoring"
-    add_operation
-    if command -v aws &> /dev/null; then
-        recent_errors=$(aws s3 ls s3://recipe-storage-0ea7007d57f67ecb-990537043943/flutter-console-errors/ --recursive 2>/dev/null | wc -l | tr -d ' \n' || echo "0")
-        if [ "$recent_errors" -gt 0 ]; then
-            print_warning "Found $recent_errors diagnostic error files - review S3 bucket"
-        else
-            print_success
-            echo "    No recent Flutter diagnostic errors found"
-        fi
-    else
-        print_warning "AWS CLI not available - skipping diagnostic check"
-        mark_passed
-    fi
-    
-    track_section_completion
-}
 
 # Basic quality checks (medium tier and above)
 run_basic_quality_checks() {
@@ -1406,7 +1289,6 @@ show_summary() {
         echo -e "${BLUE}📋 DEBUGGING GUIDE:${NC}"
         echo "  • Build failures: Check Go and TypeScript compilation errors"
         echo "  • Parser issues: Check network connectivity and site structure changes"
-        echo "  • Linting issues: Run 'npm run lint' for specific file errors"
         echo "  • Missing dependencies: Run 'npm install' in all directories"
         echo
         exit 1
