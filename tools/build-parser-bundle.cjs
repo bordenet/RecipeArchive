@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
-console.log('🔨 Building TypeScript parser bundle for browser extensions...');
+console.log("🔨 Building TypeScript parser bundle for browser extensions...");
 
 // Define paths
-const projectRoot = path.join(__dirname, '..');
-const parsersDir = path.join(projectRoot, 'parsers');
-const entryFile = path.join(parsersDir, 'index.ts');
-const lockFile = path.join(parsersDir, '.build-lock');
+const projectRoot = path.join(__dirname, "..");
+const parsersDir = path.join(projectRoot, "parsers");
+const entryFile = path.join(parsersDir, "index.ts");
+const lockFile = path.join(parsersDir, ".build-lock");
 const chromeBundle = path.join(
   projectRoot,
-  'extensions/chrome/typescript-parser-bundle.js'
+  "extensions/chrome/typescript-parser-bundle.js"
 );
 const safariBundle = path.join(
   projectRoot,
-  'extensions/safari/typescript-parser-bundle.js'
+  "extensions/safari/typescript-parser-bundle.js"
 );
 
 // Acquire lock with timeout to prevent concurrent builds
@@ -25,19 +25,20 @@ function acquireLock(maxWaitSeconds = 30) {
   const startTime = Date.now();
   const maxWaitMs = maxWaitSeconds * 1000;
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       // Try to create lock file exclusively (fails if exists)
-      fs.writeFileSync(lockFile, process.pid.toString(), { flag: 'wx' });
+      fs.writeFileSync(lockFile, process.pid.toString(), { flag: "wx" });
       return true; // Lock acquired
     } catch (error) {
-      if (error.code !== 'EEXIST') {
+      if (error.code !== "EEXIST") {
         throw error; // Unexpected error
       }
 
       // Lock file exists - check if it's stale
       try {
-        const lockContent = fs.readFileSync(lockFile, 'utf8');
+        const lockContent = fs.readFileSync(lockFile, "utf8");
         const lockPid = parseInt(lockContent, 10);
 
         // Check if the process holding the lock is still running
@@ -53,7 +54,10 @@ function acquireLock(maxWaitSeconds = 30) {
         // Can't read lock file - remove it
         try {
           fs.unlinkSync(lockFile);
-        } catch {}
+        // eslint-disable-next-line no-empty
+        } catch {
+          // Best-effort cleanup
+        }
         continue; // Retry acquisition
       }
 
@@ -166,7 +170,7 @@ console.log("🎯 TypeScript parser bundle loaded");
 // and then both create locks, breaking the mutual exclusion guarantee
 if (fs.existsSync(lockFile)) {
   try {
-    const lockContent = fs.readFileSync(lockFile, 'utf8');
+    const lockContent = fs.readFileSync(lockFile, "utf8");
     const lockPid = parseInt(lockContent, 10);
     try {
       process.kill(lockPid, 0); // Signal 0 just checks if process exists
@@ -179,7 +183,10 @@ if (fs.existsSync(lockFile)) {
     // Can't read lock file (corrupted?) - safe to remove
     try {
       fs.unlinkSync(lockFile);
-    } catch {}
+    // eslint-disable-next-line no-empty
+    } catch {
+      // Best-effort cleanup
+    }
   }
 }
 
@@ -187,31 +194,31 @@ if (fs.existsSync(lockFile)) {
 try {
   acquireLock();
 } catch (error) {
-  console.error('❌ Failed to acquire build lock:', error.message);
+  console.error("❌ Failed to acquire build lock:", error.message);
   process.exit(1);
 }
 
 // Write entry file
-console.log('📝 Creating entry file...');
+console.log("📝 Creating entry file...");
 fs.writeFileSync(entryFile, entryContent);
 
 try {
   // Run esbuild to create bundle, explicitly setting working directory to parsers
-  console.log('⚙️  Building bundle with esbuild...');
+  console.log("⚙️  Building bundle with esbuild...");
   const command = `npx esbuild "${entryFile}" --bundle --format=iife --outfile="${chromeBundle}" --platform=browser --target=es2020 --loader:.ts=ts`;
   // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
   const output = execSync(command, {
     cwd: parsersDir,
-    stdio: 'pipe',
-    encoding: 'utf8',
+    stdio: "pipe",
+    encoding: "utf8",
   });
   if (output) console.log(output);
 
   // Copy to Safari extension
-  console.log('📋 Copying bundle to Safari extension...');
+  console.log("📋 Copying bundle to Safari extension...");
   fs.copyFileSync(chromeBundle, safariBundle);
 
-  console.log('✅ Parser bundle built successfully!');
+  console.log("✅ Parser bundle built successfully!");
   console.log(`   Chrome: ${chromeBundle}`);
   console.log(`   Safari: ${safariBundle}`);
 
@@ -221,7 +228,7 @@ try {
   // Release lock
   releaseLock();
 } catch (error) {
-  console.error('❌ Bundle build failed:', error.message);
+  console.error("❌ Bundle build failed:", error.message);
   if (error.stdout) console.log(error.stdout);
   if (error.stderr) console.error(error.stderr);
   // Clean up entry file on error
@@ -230,5 +237,5 @@ try {
   }
   // Release lock on error
   releaseLock();
-  throw new Error('Bundle build failed');
+  throw new Error("Bundle build failed");
 }

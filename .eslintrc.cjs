@@ -55,12 +55,25 @@ module.exports = {
           varsIgnorePattern: "^_"
         }],
         "no-unused-vars": "off", // Use TypeScript version
+        "@typescript-eslint/no-explicit-any": "warn", // Warn instead of error
+        "@typescript-eslint/no-require-imports": "warn", // Warn instead of error for legacy code
       },
     },
     {
-      files: ["**/*.test.js", "**/__tests__/**/*.js"],
+      // Parser files deal with scraped HTML/JSON of unknown structure
+      // `any` type is appropriate here as type safety comes from validation after parsing
+      files: ["parsers/**/*.ts"],
+      rules: {
+        "@typescript-eslint/no-explicit-any": "off",
+      },
+    },
+    {
+      files: ["**/*.test.js", "**/*.test.ts", "**/__tests__/**/*.js", "**/__tests__/**/*.ts", "**/tests/**/*.js", "**/tests/**/*.ts", "tests/setup.js"],
       env: {
-        jest: true, // Enable Jest globals
+        jest: true, // Enable Jest globals (describe, it, expect, etc.)
+      },
+      globals: {
+        fail: "readonly", // Jest fail function
       },
     },
   ],

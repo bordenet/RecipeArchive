@@ -1,10 +1,10 @@
-import { BaseParser } from '../base-parser';
-import * as cheerio from 'cheerio';
-import { Recipe } from '../types';
+import { BaseParser } from "../base-parser";
+import * as cheerio from "cheerio";
+import { Recipe } from "../types";
 
 export class AnthonyKitchenParser extends BaseParser {
   canParse(url: string): boolean {
-    return url.includes('theanthonykitchen.com');
+    return url.includes("theanthonykitchen.com");
   }
 
   async parse(html: string, url: string): Promise<Recipe> {
@@ -21,27 +21,27 @@ export class AnthonyKitchenParser extends BaseParser {
         instructions: this.processInstructions(
           (jsonLd.recipeInstructions || [])
             .flatMap((section: any) => {
-              if (typeof section === 'string') {
+              if (typeof section === "string") {
                 return [this.sanitizeText(section)];
               }
               // Handle HowToSection with itemListElement array
               if (section.itemListElement && Array.isArray(section.itemListElement)) {
                 return section.itemListElement.map((step: any) =>
-                  typeof step === 'string'
+                  typeof step === "string"
                     ? this.sanitizeText(step)
-                    : this.sanitizeText(step.text || step.name || '')
+                    : this.sanitizeText(step.text || step.name || "")
                 );
               }
               // Handle direct HowToStep objects
-              return [this.sanitizeText(section.text || section.name || '')];
+              return [this.sanitizeText(section.text || section.name || "")];
             })
-            .filter((text: any) => typeof text === 'string' && text.length > 0)
+            .filter((text: any) => typeof text === "string" && text.length > 0)
         ),
         imageUrl:
-          typeof jsonLd.image === 'string'
+          typeof jsonLd.image === "string"
             ? jsonLd.image
             : Array.isArray(jsonLd.image)
-              ? typeof jsonLd.image[0] === 'string'
+              ? typeof jsonLd.image[0] === "string"
                 ? jsonLd.image[0]
                 : jsonLd.image[0]?.url
               : jsonLd.image?.url,
@@ -58,11 +58,11 @@ export class AnthonyKitchenParser extends BaseParser {
     }
 
     // Fallback selectors if JSON-LD is not available or invalid
-    const title = this.sanitizeText($('h1.entry-title, h1.wp-block-post-title').first().text() || '');
-    const ingredients = $('.wp-block-recipe-ingredient, .recipe-ingredient')
+    const title = this.sanitizeText($("h1.entry-title, h1.wp-block-post-title").first().text() || "");
+    const ingredients = $(".wp-block-recipe-ingredient, .recipe-ingredient")
       .map((_: any, el: any) => ({ text: this.sanitizeText($(el).text()) }))
       .get();
-    const instructions = $('.wp-block-recipe-instruction, .recipe-instruction')
+    const instructions = $(".wp-block-recipe-instruction, .recipe-instruction")
       .map((_: any, el: any) => ({
         stepNumber: _ + 1,
         text: this.sanitizeText($(el).text()),

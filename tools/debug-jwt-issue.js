@@ -36,15 +36,15 @@ Run this in console to check your stored tokens:
 
 // Manual token validation function for console debugging
 function _debugJWTTokens() {
-  const authData = localStorage.getItem('recipeArchive.auth');
+  const authData = localStorage.getItem("recipeArchive.auth");
   if (!authData) {
-    console.error('❌ No auth data found');
+    console.error("❌ No auth data found");
     return;
   }
 
   try {
     const auth = JSON.parse(authData);
-    console.log('🔧 Auth object keys:', Object.keys(auth));
+    console.log("🔧 Auth object keys:", Object.keys(auth));
 
     const tokens = {
       idToken: auth.idToken,
@@ -52,14 +52,14 @@ function _debugJWTTokens() {
       accessToken: auth.accessToken,
     };
 
-    console.log('🔧 Token status:');
+    console.log("🔧 Token status:");
     for (const [name, token] of Object.entries(tokens)) {
       if (!token) {
         console.log(`  ${name}: ❌ missing`);
         continue;
       }
 
-      const parts = token.split('.');
+      const parts = token.split(".");
       if (parts.length === 3) {
         try {
           const payload = JSON.parse(atob(parts[1]));
@@ -78,7 +78,7 @@ function _debugJWTTokens() {
       }
     }
   } catch (e) {
-    console.error('❌ Error parsing auth data:', e);
+    console.error("❌ Error parsing auth data:", e);
   }
 }
 

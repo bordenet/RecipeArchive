@@ -18,9 +18,9 @@ class RecipeArchiveSecureStack extends cdk.Stack {
     constructor(scope, id, props) {
         super(scope, id, props);
         // Generate secure random suffix for all resources
-        const secureId = crypto.randomBytes(8).toString('hex');
+        const secureId = crypto.randomBytes(8).toString("hex");
         // Cognito User Pool for Authentication with secure name
-        this.userPool = new cognito.UserPool(this, 'SecureUserPool', {
+        this.userPool = new cognito.UserPool(this, "SecureUserPool", {
             userPoolName: `recipe-users-${secureId}`,
             selfSignUpEnabled: true,
             signInAliases: {
@@ -63,7 +63,7 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.RETAIN,
         });
         // Cognito User Pool Client with secure name
-        this.userPoolClient = new cognito.UserPoolClient(this, 'SecureUserPoolClient', {
+        this.userPoolClient = new cognito.UserPoolClient(this, "SecureUserPoolClient", {
             userPool: this.userPool,
             userPoolClientName: `recipe-client-${secureId}`,
             generateSecret: false,
@@ -89,65 +89,65 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             enableTokenRevocation: true,
         });
         // Primary Storage Bucket with secure random name (matching original retention policies)
-        this.storageBucket = new s3.Bucket(this, 'SecureStorageBucket', {
+        this.storageBucket = new s3.Bucket(this, "SecureStorageBucket", {
             bucketName: `recipe-storage-${secureId}-${this.account}`,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-            versioned: props.environment === 'prod',
+            versioned: props.environment === "prod",
             lifecycleRules: [
                 {
-                    id: 'delete-incomplete-uploads',
+                    id: "delete-incomplete-uploads",
                     abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
                 },
                 // Environment-specific retention policies (matching original)
-                ...(props.environment === 'prod'
+                ...(props.environment === "prod"
                     ? [
                         {
-                            id: 'archive-old-files',
+                            id: "archive-old-files",
                             expiration: cdk.Duration.days(2555), // 7 years for production
                         },
                         {
-                            id: 'archive-old-versions',
+                            id: "archive-old-versions",
                             noncurrentVersionExpiration: cdk.Duration.days(365),
                         },
                     ]
                     : [
                         {
                             // STRICT 14-DAY RETENTION FOR PRE-PROD TESTING
-                            id: 'delete-test-data',
+                            id: "delete-test-data",
                             expiration: cdk.Duration.days(14),
                             enabled: true,
                         },
                     ]),
             ],
-            removalPolicy: props.environment === 'prod'
+            removalPolicy: props.environment === "prod"
                 ? cdk.RemovalPolicy.RETAIN
                 : cdk.RemovalPolicy.DESTROY,
         });
         // Temporary/Processing Bucket with secure random name (matching original policies)
-        this.tempBucket = new s3.Bucket(this, 'SecureTempBucket', {
+        this.tempBucket = new s3.Bucket(this, "SecureTempBucket", {
             bucketName: `recipe-temp-${secureId}-${this.account}`,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
             versioned: false,
             lifecycleRules: [
                 {
-                    id: 'delete-temp-files',
-                    expiration: cdk.Duration.days(props.environment === 'prod' ? 7 : 1),
+                    id: "delete-temp-files",
+                    expiration: cdk.Duration.days(props.environment === "prod" ? 7 : 1),
                     abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
                 },
             ],
             removalPolicy: cdk.RemovalPolicy.DESTROY, // Always destroy temp bucket
         });
         // Failed Parsing Storage Bucket with secure random name (matching original policies)
-        this.failedParsingBucket = new s3.Bucket(this, 'SecureFailedParsingBucket', {
+        this.failedParsingBucket = new s3.Bucket(this, "SecureFailedParsingBucket", {
             bucketName: `recipe-failed-${secureId}-${this.account}`,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
             versioned: false,
             lifecycleRules: [
                 {
-                    id: 'delete-failed-parsing-data',
+                    id: "delete-failed-parsing-data",
                     expiration: cdk.Duration.days(30),
                     abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
                 },
@@ -155,11 +155,11 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.DESTROY, // Always safe to destroy failed parsing data
         });
         // IAM Role for Lambda Functions with secure naming
-        const lambdaRole = new iam.Role(this, 'SecureLambdaRole', {
-            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+        const lambdaRole = new iam.Role(this, "SecureLambdaRole", {
+            assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
             roleName: `recipe-lambda-role-${secureId}`,
             managedPolicies: [
-                iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
             ],
             inlinePolicies: {
                 S3Access: new iam.PolicyDocument({
@@ -167,11 +167,11 @@ class RecipeArchiveSecureStack extends cdk.Stack {
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
                             actions: [
-                                's3:GetObject',
-                                's3:PutObject',
-                                's3:DeleteObject',
-                                's3:ListBucket',
-                                's3:GetObjectAttributes',
+                                "s3:GetObject",
+                                "s3:PutObject",
+                                "s3:DeleteObject",
+                                "s3:ListBucket",
+                                "s3:GetObjectAttributes",
                             ],
                             resources: [
                                 this.storageBucket.bucketArn,
@@ -185,10 +185,10 @@ class RecipeArchiveSecureStack extends cdk.Stack {
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
                             actions: [
-                                'cognito-idp:AdminGetUser',
-                                'cognito-idp:AdminCreateUser',
-                                'cognito-idp:AdminSetUserPassword',
-                                'cognito-idp:AdminListGroupsForUser',
+                                "cognito-idp:AdminGetUser",
+                                "cognito-idp:AdminCreateUser",
+                                "cognito-idp:AdminSetUserPassword",
+                                "cognito-idp:AdminListGroupsForUser",
                             ],
                             resources: [this.userPool.userPoolArn],
                         }),
@@ -197,12 +197,12 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             },
         });
         // SQS Queue for async recipe normalization with secure naming
-        const recipeNormalizationQueue = new sqs.Queue(this, 'SecureNormalizationQueue', {
+        const recipeNormalizationQueue = new sqs.Queue(this, "SecureNormalizationQueue", {
             queueName: `recipe-normalize-${secureId}`,
             visibilityTimeout: cdk.Duration.seconds(60),
             retentionPeriod: cdk.Duration.days(14),
             deadLetterQueue: {
-                queue: new sqs.Queue(this, 'SecureNormalizationDLQ', {
+                queue: new sqs.Queue(this, "SecureNormalizationDLQ", {
                     queueName: `recipe-normalize-dlq-${secureId}`,
                     retentionPeriod: cdk.Duration.days(14),
                 }),
@@ -210,10 +210,10 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             },
         });
         // Lambda Functions with secure naming and environment variables
-        const healthFunction = new lambda.Function(this, 'SecureHealthFunction', {
+        const healthFunction = new lambda.Function(this, "SecureHealthFunction", {
             runtime: lambda.Runtime.PROVIDED_AL2,
-            handler: 'bootstrap',
-            code: lambda.Code.fromAsset('../functions/dist/health-package'),
+            handler: "bootstrap",
+            code: lambda.Code.fromAsset("../functions/dist/health-package"),
             functionName: `recipe-health-${secureId}`,
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
@@ -227,10 +227,10 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             },
             role: lambdaRole,
         });
-        const recipesFunction = new lambda.Function(this, 'SecureRecipesFunction', {
+        const recipesFunction = new lambda.Function(this, "SecureRecipesFunction", {
             runtime: lambda.Runtime.PROVIDED_AL2,
-            handler: 'bootstrap',
-            code: lambda.Code.fromAsset('../functions/dist/recipes-package'),
+            handler: "bootstrap",
+            code: lambda.Code.fromAsset("../functions/dist/recipes-package"),
             functionName: `recipe-recipes-${secureId}`,
             timeout: cdk.Duration.seconds(15),
             memorySize: 256,
@@ -246,35 +246,35 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             role: lambdaRole,
         });
         // API Gateway with secure naming and DDoS protection
-        this.api = new apigateway.RestApi(this, 'SecureAPI', {
+        this.api = new apigateway.RestApi(this, "SecureAPI", {
             restApiName: `recipe-api-${secureId}`,
-            description: 'RecipeArchive Secure Backend API',
+            description: "RecipeArchive Secure Backend API",
             defaultCorsPreflightOptions: {
-                allowOrigins: ['https://localhost:3000', 'https://recipearchive.com'],
-                allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                allowOrigins: ["https://localhost:3000", "https://recipearchive.com"],
+                allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allowHeaders: [
-                    'Content-Type',
-                    'Authorization',
-                    'X-Amz-Date',
-                    'X-Api-Key',
-                    'X-Amz-Security-Token',
+                    "Content-Type",
+                    "Authorization",
+                    "X-Amz-Date",
+                    "X-Api-Key",
+                    "X-Amz-Security-Token",
                 ],
                 allowCredentials: true,
             },
             deployOptions: {
-                stageName: 'prod',
+                stageName: "prod",
             },
         });
         // Usage Plan with Rate Limiting for DDoS Protection (added after deployment)
         // Note: This will be added after the API deployment to avoid circular dependency
         // Cognito Authorizer for secure authentication
-        const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'SecureCognitoAuthorizer', {
+        const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, "SecureCognitoAuthorizer", {
             cognitoUserPools: [this.userPool],
             authorizerName: `recipe-cognito-auth-${secureId}`,
             resultsCacheTtl: cdk.Duration.minutes(5),
         });
         // Request Validator for input validation
-        const requestValidator = new apigateway.RequestValidator(this, 'SecureRequestValidator', {
+        const requestValidator = new apigateway.RequestValidator(this, "SecureRequestValidator", {
             restApi: this.api,
             requestValidatorName: `recipe-validator-${secureId}`,
             validateRequestBody: true,
@@ -282,71 +282,71 @@ class RecipeArchiveSecureStack extends cdk.Stack {
         });
         // API Gateway Integrations and Resources
         const healthIntegration = new apigateway.LambdaIntegration(healthFunction, {
-            requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+            requestTemplates: { "application/json": "{ \"statusCode\": \"200\" }" },
         });
         // API Resources
-        const healthResource = this.api.root.addResource('health');
-        healthResource.addMethod('GET', healthIntegration);
-        const v1 = this.api.root.addResource('v1');
-        const recipesResource = v1.addResource('recipes');
+        const healthResource = this.api.root.addResource("health");
+        healthResource.addMethod("GET", healthIntegration);
+        const v1 = this.api.root.addResource("v1");
+        const recipesResource = v1.addResource("recipes");
         const recipesIntegration = new apigateway.LambdaIntegration(recipesFunction);
         // Recipe CRUD operations with Authentication
-        recipesResource.addMethod('GET', recipesIntegration, {
+        recipesResource.addMethod("GET", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
-        recipesResource.addMethod('POST', recipesIntegration, {
+        recipesResource.addMethod("POST", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
-        const recipeResource = recipesResource.addResource('{id}');
-        recipeResource.addMethod('GET', recipesIntegration, {
+        const recipeResource = recipesResource.addResource("{id}");
+        recipeResource.addMethod("GET", recipesIntegration, {
             authorizer: cognitoAuthorizer,
         });
-        recipeResource.addMethod('PUT', recipesIntegration, {
+        recipeResource.addMethod("PUT", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
-        recipeResource.addMethod('DELETE', recipesIntegration, {
+        recipeResource.addMethod("DELETE", recipesIntegration, {
             authorizer: cognitoAuthorizer,
         });
         // Update Lambda functions with new API Gateway URL
-        recipesFunction.addEnvironment('API_GATEWAY_URL', this.api.url);
+        recipesFunction.addEnvironment("API_GATEWAY_URL", this.api.url);
         // Output secure resource identifiers
-        new cdk.CfnOutput(this, 'SecureUserPoolId', {
+        new cdk.CfnOutput(this, "SecureUserPoolId", {
             value: this.userPool.userPoolId,
-            description: 'Secure Cognito User Pool ID',
+            description: "Secure Cognito User Pool ID",
         });
-        new cdk.CfnOutput(this, 'SecureUserPoolClientId', {
+        new cdk.CfnOutput(this, "SecureUserPoolClientId", {
             value: this.userPoolClient.userPoolClientId,
-            description: 'Secure Cognito User Pool Client ID',
+            description: "Secure Cognito User Pool Client ID",
         });
-        new cdk.CfnOutput(this, 'SecureStorageBucketName', {
+        new cdk.CfnOutput(this, "SecureStorageBucketName", {
             value: this.storageBucket.bucketName,
-            description: 'Secure S3 Storage Bucket Name',
+            description: "Secure S3 Storage Bucket Name",
         });
-        new cdk.CfnOutput(this, 'SecureTempBucketName', {
+        new cdk.CfnOutput(this, "SecureTempBucketName", {
             value: this.tempBucket.bucketName,
-            description: 'Secure S3 Temporary Bucket Name',
+            description: "Secure S3 Temporary Bucket Name",
         });
-        new cdk.CfnOutput(this, 'SecureFailedParsingBucketName', {
+        new cdk.CfnOutput(this, "SecureFailedParsingBucketName", {
             value: this.failedParsingBucket.bucketName,
-            description: 'Secure S3 Failed Parsing Bucket Name',
+            description: "Secure S3 Failed Parsing Bucket Name",
         });
-        new cdk.CfnOutput(this, 'SecureRandomId', {
+        new cdk.CfnOutput(this, "SecureRandomId", {
             value: secureId,
-            description: 'Secure Random ID used for resource naming',
+            description: "Secure Random ID used for resource naming",
         });
-        new cdk.CfnOutput(this, 'SecureApiGatewayUrl', {
+        new cdk.CfnOutput(this, "SecureApiGatewayUrl", {
             value: this.api.url,
-            description: 'Secure API Gateway URL',
+            description: "Secure API Gateway URL",
         });
-        new cdk.CfnOutput(this, 'SecureApiGatewayId', {
+        new cdk.CfnOutput(this, "SecureApiGatewayId", {
             value: this.api.restApiId,
-            description: 'Secure API Gateway ID',
+            description: "Secure API Gateway ID",
         });
         // CloudWatch Alarms for monitoring
-        const apiGateway4xxAlarm = new cloudwatch.Alarm(this, 'SecureApiGateway4xxAlarm', {
+        const apiGateway4xxAlarm = new cloudwatch.Alarm(this, "SecureApiGateway4xxAlarm", {
             alarmName: `recipe-api-4xx-errors-${secureId}`,
             metric: this.api.metricClientError(),
             threshold: 10,
@@ -354,7 +354,7 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             datapointsToAlarm: 1,
             treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
         });
-        const apiGateway5xxAlarm = new cloudwatch.Alarm(this, 'SecureApiGateway5xxAlarm', {
+        const apiGateway5xxAlarm = new cloudwatch.Alarm(this, "SecureApiGateway5xxAlarm", {
             alarmName: `recipe-api-5xx-errors-${secureId}`,
             metric: this.api.metricServerError(),
             threshold: 5,
@@ -363,9 +363,9 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
         });
         // SNS Topic for billing alerts
-        this.billingAlertTopic = new sns.Topic(this, 'SecureBillingAlertTopic', {
+        this.billingAlertTopic = new sns.Topic(this, "SecureBillingAlertTopic", {
             topicName: `recipe-billing-alerts-${secureId}`,
-            displayName: 'RecipeArchive Billing Alerts',
+            displayName: "RecipeArchive Billing Alerts",
         });
         // Email subscription for billing alerts
         this.billingAlertTopic.addSubscription(new snsSubscriptions.EmailSubscription(props.adminEmail));
@@ -373,45 +373,45 @@ class RecipeArchiveSecureStack extends cdk.Stack {
         apiGateway4xxAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.billingAlertTopic));
         apiGateway5xxAlarm.addAlarmAction(new cloudwatchActions.SnsAction(this.billingAlertTopic));
         // Budget for cost control
-        new budgets.CfnBudget(this, 'SecureMonthlyBudget', {
+        new budgets.CfnBudget(this, "SecureMonthlyBudget", {
             budget: {
                 budgetName: `recipe-monthly-budget-${secureId}`,
                 budgetLimit: {
                     amount: 50,
-                    unit: 'USD',
+                    unit: "USD",
                 },
-                timeUnit: 'MONTHLY',
-                budgetType: 'COST',
+                timeUnit: "MONTHLY",
+                budgetType: "COST",
                 costFilters: {
-                    TagKey: ['Project'],
+                    TagKey: ["Project"],
                     TagValue: [`RecipeArchive-${secureId}`],
                 },
             },
             notificationsWithSubscribers: [
                 {
                     notification: {
-                        notificationType: 'ACTUAL',
-                        comparisonOperator: 'GREATER_THAN',
+                        notificationType: "ACTUAL",
+                        comparisonOperator: "GREATER_THAN",
                         threshold: 80,
-                        thresholdType: 'PERCENTAGE',
+                        thresholdType: "PERCENTAGE",
                     },
                     subscribers: [
                         {
-                            subscriptionType: 'EMAIL',
+                            subscriptionType: "EMAIL",
                             address: props.adminEmail,
                         },
                     ],
                 },
                 {
                     notification: {
-                        notificationType: 'FORECASTED',
-                        comparisonOperator: 'GREATER_THAN',
+                        notificationType: "FORECASTED",
+                        comparisonOperator: "GREATER_THAN",
                         threshold: 100,
-                        thresholdType: 'PERCENTAGE',
+                        thresholdType: "PERCENTAGE",
                     },
                     subscribers: [
                         {
-                            subscriptionType: 'EMAIL',
+                            subscriptionType: "EMAIL",
                             address: props.adminEmail,
                         },
                     ],
@@ -419,10 +419,10 @@ class RecipeArchiveSecureStack extends cdk.Stack {
             ],
         });
         // Add tags to all resources for cost tracking
-        cdk.Tags.of(this).add('Project', `RecipeArchive-${secureId}`);
-        cdk.Tags.of(this).add('Environment', props.environment);
-        cdk.Tags.of(this).add('SecureStack', 'true');
-        cdk.Tags.of(this).add('CreatedBy', 'RecipeArchive-Secure-CDK');
+        cdk.Tags.of(this).add("Project", `RecipeArchive-${secureId}`);
+        cdk.Tags.of(this).add("Environment", props.environment);
+        cdk.Tags.of(this).add("SecureStack", "true");
+        cdk.Tags.of(this).add("CreatedBy", "RecipeArchive-Secure-CDK");
     }
 }
 exports.RecipeArchiveSecureStack = RecipeArchiveSecureStack;

@@ -19,7 +19,7 @@ class RecipeArchiveStack extends cdk.Stack {
         // Store environment for singleton methods
         this.stackEnvironment = props.environment;
         // Cognito User Pool for Authentication
-        this.userPool = new cognito.UserPool(this, 'RecipeArchiveUserPool', {
+        this.userPool = new cognito.UserPool(this, "RecipeArchiveUserPool", {
             userPoolName: `recipeArchive-users-${props.environment}`,
             selfSignUpEnabled: true,
             signInAliases: {
@@ -50,12 +50,12 @@ class RecipeArchiveStack extends cdk.Stack {
                 requireSymbols: false,
             },
             accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-            removalPolicy: props.environment === 'prod'
+            removalPolicy: props.environment === "prod"
                 ? cdk.RemovalPolicy.RETAIN
                 : cdk.RemovalPolicy.DESTROY,
         });
         // Cognito User Pool Client
-        this.userPoolClient = new cognito.UserPoolClient(this, 'RecipeArchiveUserPoolClient', {
+        this.userPoolClient = new cognito.UserPoolClient(this, "RecipeArchiveUserPoolClient", {
             userPool: this.userPool,
             userPoolClientName: `recipeArchive-client-${props.environment}`,
             generateSecret: false,
@@ -82,7 +82,7 @@ class RecipeArchiveStack extends cdk.Stack {
         });
         // S3 Buckets with Environment-Specific Retention Policies
         // Primary Storage Bucket for Recipe Photos and Documents
-        this.storageBucket = new s3.Bucket(this, 'RecipeArchiveStorage', {
+        this.storageBucket = new s3.Bucket(this, "RecipeArchiveStorage", {
             bucketName: `recipearchive-storage-${props.environment}-${this.account}`,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: new s3.BlockPublicAccess({
@@ -91,69 +91,69 @@ class RecipeArchiveStack extends cdk.Stack {
                 blockPublicPolicy: false,
                 restrictPublicBuckets: false, // Allow public read access via bucket policy
             }),
-            versioned: props.environment === 'prod',
+            versioned: props.environment === "prod",
             lifecycleRules: [
                 {
-                    id: 'delete-incomplete-uploads',
+                    id: "delete-incomplete-uploads",
                     abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
                 },
                 // Environment-specific retention policies
-                ...(props.environment === 'prod'
+                ...(props.environment === "prod"
                     ? [
                         {
-                            id: 'archive-old-files',
+                            id: "archive-old-files",
                             expiration: cdk.Duration.days(2555), // 7 years for production
                         },
                         {
-                            id: 'archive-old-versions',
+                            id: "archive-old-versions",
                             noncurrentVersionExpiration: cdk.Duration.days(365),
                         },
                     ]
                     : [
                         {
                             // STRICT 14-DAY RETENTION FOR PRE-PROD TESTING
-                            id: 'delete-test-data',
+                            id: "delete-test-data",
                             expiration: cdk.Duration.days(14),
                             enabled: true,
                         },
                     ]),
             ],
-            removalPolicy: props.environment === 'prod'
+            removalPolicy: props.environment === "prod"
                 ? cdk.RemovalPolicy.RETAIN
                 : cdk.RemovalPolicy.DESTROY,
         });
         // Add bucket policy to allow public read access to recipe images
         this.storageBucket.addToResourcePolicy(new iam.PolicyStatement({
-            sid: 'PublicReadGetObject',
+            sid: "PublicReadGetObject",
             effect: iam.Effect.ALLOW,
             principals: [new iam.AnyPrincipal()],
-            actions: ['s3:GetObject'],
+            actions: ["s3:GetObject"],
             resources: [`${this.storageBucket.bucketArn}/recipe-images/*`],
         }));
         // Temporary/Processing Bucket with Ultra-Short Retention
-        this.tempBucket = new s3.Bucket(this, 'RecipeArchiveTemp', {
+        this.tempBucket = new s3.Bucket(this, "RecipeArchiveTemp", {
             bucketName: `recipearchive-temp-${props.environment}-${this.account}`,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
             versioned: false,
             lifecycleRules: [
                 {
-                    id: 'delete-temp-files',
-                    expiration: cdk.Duration.days(props.environment === 'prod' ? 7 : 1),
+                    id: "delete-temp-files",
+                    expiration: cdk.Duration.days(props.environment === "prod" ? 7 : 1),
                     abortIncompleteMultipartUploadAfter: cdk.Duration.days(1), // Fixed: use days instead of hours
                 },
             ],
             removalPolicy: cdk.RemovalPolicy.DESTROY, // Always destroy temp bucket
         });
         // Failed Parsing HTML Storage Bucket with Size and Time Limits
-        this.failedParsingBucket = new s3.Bucket(this, 'RecipeArchiveFailedParsing', {
+        this.failedParsingBucket = new s3.Bucket(this, "RecipeArchiveFailedParsing", {
             bucketName: `recipearchive-failed-parsing-${props.environment}-${this.account}`,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
             versioned: false,
             lifecycleRules: [
                 {
-                    id: 'delete-failed-parsing-data',
+                    id: "delete-failed-parsing-data",
                     expiration: cdk.Duration.days(2),
                     abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
                 },
@@ -162,10 +162,10 @@ class RecipeArchiveStack extends cdk.Stack {
             removalPolicy: cdk.RemovalPolicy.DESTROY, // Always safe to destroy failed parsing data
         });
         // IAM Role for Lambda Functions (shared across all Lambda functions)
-        this.lambdaRole = new iam.Role(this, 'RecipeArchiveLambdaRole', {
-            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+        this.lambdaRole = new iam.Role(this, "RecipeArchiveLambdaRole", {
+            assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
             managedPolicies: [
-                iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+                iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
             ],
             inlinePolicies: {
                 S3Access: new iam.PolicyDocument({
@@ -173,11 +173,11 @@ class RecipeArchiveStack extends cdk.Stack {
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
                             actions: [
-                                's3:GetObject',
-                                's3:PutObject',
-                                's3:DeleteObject',
-                                's3:GetObjectUrl',
-                                's3:PutObjectAcl', // For public image uploads
+                                "s3:GetObject",
+                                "s3:PutObject",
+                                "s3:DeleteObject",
+                                "s3:GetObjectUrl",
+                                "s3:PutObjectAcl", // For public image uploads
                             ],
                             resources: [
                                 `${this.storageBucket.bucketArn}/*`,
@@ -187,7 +187,7 @@ class RecipeArchiveStack extends cdk.Stack {
                         }),
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
-                            actions: ['s3:ListBucket'],
+                            actions: ["s3:ListBucket"],
                             resources: [
                                 this.storageBucket.bucketArn,
                                 this.tempBucket.bucketArn,
@@ -197,26 +197,26 @@ class RecipeArchiveStack extends cdk.Stack {
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
                             actions: [
-                                'sqs:SendMessage',
-                                'sqs:ReceiveMessage',
-                                'sqs:DeleteMessage',
-                                'sqs:GetQueueAttributes',
+                                "sqs:SendMessage",
+                                "sqs:ReceiveMessage",
+                                "sqs:DeleteMessage",
+                                "sqs:GetQueueAttributes",
                             ],
-                            resources: ['*'], // Will be restricted to specific queue in production
+                            resources: ["*"], // Will be restricted to specific queue in production
                         }),
                         // DynamoDB permissions removed - invitation system now uses S3 JSON storage
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
-                            actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-                            resources: ['*'], // SES permissions for invitation emails
+                            actions: ["ses:SendEmail", "ses:SendRawEmail"],
+                            resources: ["*"], // SES permissions for invitation emails
                         }),
                         new iam.PolicyStatement({
                             effect: iam.Effect.ALLOW,
                             actions: [
-                                'cognito-idp:AdminCreateUser',
-                                'cognito-idp:AdminSetUserPassword',
-                                'cognito-idp:AdminUpdateUserAttributes',
-                                'cognito-idp:AdminGetUser',
+                                "cognito-idp:AdminCreateUser",
+                                "cognito-idp:AdminSetUserPassword",
+                                "cognito-idp:AdminUpdateUserAttributes",
+                                "cognito-idp:AdminGetUser",
                             ],
                             resources: [this.userPool.userPoolArn],
                         }),
@@ -225,34 +225,34 @@ class RecipeArchiveStack extends cdk.Stack {
             },
         });
         // API Gateway with DDoS Protection
-        this.api = new apigateway.RestApi(this, 'RecipeArchiveAPI', {
+        this.api = new apigateway.RestApi(this, "RecipeArchiveAPI", {
             restApiName: `recipeArchive-api-${props.environment}`,
-            description: 'RecipeArchive Backend API',
+            description: "RecipeArchive Backend API",
             defaultCorsPreflightOptions: {
                 allowOrigins: [
-                    'https://localhost:3000',
-                    'https://recipearchive.com',
-                    'https://d1jcaphz4458q7.cloudfront.net',
-                    'chrome-extension://*',
-                    'safari-web-extension://*',
+                    "https://localhost:3000",
+                    "https://recipearchive.com",
+                    "https://d1jcaphz4458q7.cloudfront.net",
+                    "chrome-extension://*",
+                    "safari-web-extension://*",
                 ],
-                allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allowHeaders: [
-                    'Content-Type',
-                    'X-Amz-Date',
-                    'Authorization',
-                    'X-Api-Key',
+                    "Content-Type",
+                    "X-Amz-Date",
+                    "Authorization",
+                    "X-Api-Key",
                 ],
                 allowCredentials: true, // Important for authenticated requests
             },
             deployOptions: {
-                stageName: 'prod',
+                stageName: "prod",
             },
         });
         // DDoS Protection: Usage Plan with Rate Limiting
-        const usagePlan = new apigateway.UsagePlan(this, 'RecipeArchiveUsagePlan', {
+        const usagePlan = new apigateway.UsagePlan(this, "RecipeArchiveUsagePlan", {
             name: `recipearchive-usage-plan-${props.environment}`,
-            description: 'Usage plan for DDoS protection',
+            description: "Usage plan for DDoS protection",
             throttle: {
                 rateLimit: 200,
                 burstLimit: 400, // concurrent requests
@@ -266,25 +266,25 @@ class RecipeArchiveStack extends cdk.Stack {
             stage: this.api.deploymentStage,
         });
         // Cognito Authorizer for API Gateway - DDoS Protection & Authentication
-        const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'CognitoAuthorizer', {
+        const cognitoAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(this, "CognitoAuthorizer", {
             cognitoUserPools: [this.userPool],
-            authorizerName: 'recipeArchive-cognito-authorizer',
+            authorizerName: "recipeArchive-cognito-authorizer",
             resultsCacheTtl: cdk.Duration.minutes(5), // Cache auth results to reduce load
         });
         // Request Validator for DDoS Protection - Reject malformed requests early
-        const requestValidator = new apigateway.RequestValidator(this, 'RequestValidator', {
+        const requestValidator = new apigateway.RequestValidator(this, "RequestValidator", {
             restApi: this.api,
-            requestValidatorName: 'recipe-request-validator',
+            requestValidatorName: "recipe-request-validator",
             validateRequestBody: true,
             validateRequestParameters: true,
         });
         // SQS Queue for async recipe normalization (shared resource)
-        this.recipeNormalizationQueue = new sqs.Queue(this, 'RecipeNormalizationQueue', {
+        this.recipeNormalizationQueue = new sqs.Queue(this, "RecipeNormalizationQueue", {
             queueName: `recipe-normalization-${props.environment}`,
             visibilityTimeout: cdk.Duration.seconds(60),
             retentionPeriod: cdk.Duration.days(14),
             deadLetterQueue: {
-                queue: new sqs.Queue(this, 'RecipeNormalizationDLQ', {
+                queue: new sqs.Queue(this, "RecipeNormalizationDLQ", {
                     queueName: `recipe-normalization-dlq-${props.environment}`,
                     retentionPeriod: cdk.Duration.days(14),
                 }),
@@ -297,241 +297,241 @@ class RecipeArchiveStack extends cdk.Stack {
         // Cost savings: ~70-90% reduction from DynamoDB approach
         // API Gateway Integration
         const healthIntegration = new apigateway.LambdaIntegration(this.getHealthFunction(), {
-            requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+            requestTemplates: { "application/json": "{ \"statusCode\": \"200\" }" },
         });
         // API Resources
-        const healthResource = this.api.root.addResource('health');
-        healthResource.addMethod('GET', healthIntegration);
-        const v1 = this.api.root.addResource('v1');
+        const healthResource = this.api.root.addResource("health");
+        healthResource.addMethod("GET", healthIntegration);
+        const v1 = this.api.root.addResource("v1");
         // Diagnostics endpoint (public - no auth required for error reporting)
-        const diagnosticsResource = this.api.root.addResource('diagnostics');
+        const diagnosticsResource = this.api.root.addResource("diagnostics");
         const diagnosticsIntegration = new apigateway.LambdaIntegration(this.getDiagnosticsFunction());
-        diagnosticsResource.addMethod('POST', diagnosticsIntegration, {
+        diagnosticsResource.addMethod("POST", diagnosticsIntegration, {
             requestValidator: requestValidator,
         });
         // Flutter Console Diagnostics endpoint (public - no auth required)
-        const flutterConsoleResource = this.api.root.addResource('flutter-console-errors');
+        const flutterConsoleResource = this.api.root.addResource("flutter-console-errors");
         const flutterConsoleIntegration = new apigateway.LambdaIntegration(this.getFlutterConsoleDiagnosticsFunction());
-        flutterConsoleResource.addMethod('POST', flutterConsoleIntegration, {
+        flutterConsoleResource.addMethod("POST", flutterConsoleIntegration, {
             requestValidator: requestValidator,
         });
         // Report Error endpoint (public - no auth required, used by web extensions)
-        const reportErrorResource = this.api.root.addResource('report-error');
+        const reportErrorResource = this.api.root.addResource("report-error");
         const reportErrorIntegration = new apigateway.LambdaIntegration(this.getDiagnosticsFunction());
-        reportErrorResource.addMethod('POST', reportErrorIntegration, {
+        reportErrorResource.addMethod("POST", reportErrorIntegration, {
             requestValidator: requestValidator,
         });
         // Content Normalizer endpoint (internal system calls - no auth required)
-        const normalizerResource = v1.addResource('normalize');
+        const normalizerResource = v1.addResource("normalize");
         const normalizerIntegration = new apigateway.LambdaIntegration(this.getContentNormalizerFunction());
-        normalizerResource.addMethod('POST', normalizerIntegration, {
+        normalizerResource.addMethod("POST", normalizerIntegration, {
             // No authorizer - allow internal system calls from recipes function
             requestValidator: requestValidator,
         });
         // Diagnostic Processor endpoint (authenticated)
-        const diagnosticProcessorResource = v1.addResource('diagnostic-summary');
+        const diagnosticProcessorResource = v1.addResource("diagnostic-summary");
         const diagnosticProcessorIntegration = new apigateway.LambdaIntegration(this.getDiagnosticProcessorFunction());
-        diagnosticProcessorResource.addMethod('GET', diagnosticProcessorIntegration, {
+        diagnosticProcessorResource.addMethod("GET", diagnosticProcessorIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Future recipe endpoints
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const recipesResource = v1.addResource('recipes');
+        const recipesResource = v1.addResource("recipes");
         // Recipe CRUD operations with Authentication
         const recipesIntegration = new apigateway.LambdaIntegration(this.getRecipesFunction());
         // List recipes: GET /recipes (requires authentication)
-        recipesResource.addMethod('GET', recipesIntegration, {
+        recipesResource.addMethod("GET", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Create recipe: POST /recipes (requires authentication)
-        recipesResource.addMethod('POST', recipesIntegration, {
+        recipesResource.addMethod("POST", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Single recipe operations: GET/PUT/DELETE /recipes/{id} (requires authentication)
-        const recipeResource = recipesResource.addResource('{id}');
-        recipeResource.addMethod('GET', recipesIntegration, {
+        const recipeResource = recipesResource.addResource("{id}");
+        recipeResource.addMethod("GET", recipesIntegration, {
             authorizer: cognitoAuthorizer,
         });
-        recipeResource.addMethod('PUT', recipesIntegration, {
+        recipeResource.addMethod("PUT", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
-        recipeResource.addMethod('DELETE', recipesIntegration, {
+        recipeResource.addMethod("DELETE", recipesIntegration, {
             authorizer: cognitoAuthorizer,
         });
         // Search endpoint: GET /recipes/search (requires authentication)
-        const searchResource = recipesResource.addResource('search');
-        searchResource.addMethod('GET', recipesIntegration, {
+        const searchResource = recipesResource.addResource("search");
+        searchResource.addMethod("GET", recipesIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Analytics endpoints: POST /v1/analytics/events, GET /v1/analytics/summary (requires authentication)
-        const analyticsResource = v1.addResource('analytics');
+        const analyticsResource = v1.addResource("analytics");
         const analyticsIntegration = new apigateway.LambdaIntegration(this.getAnalyticsFunction());
         // Submit analytics events: POST /v1/analytics/events
-        const analyticsEventsResource = analyticsResource.addResource('events');
-        analyticsEventsResource.addMethod('POST', analyticsIntegration, {
+        const analyticsEventsResource = analyticsResource.addResource("events");
+        analyticsEventsResource.addMethod("POST", analyticsIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Get analytics summary: GET /v1/analytics/summary
-        const analyticsSummaryResource = analyticsResource.addResource('summary');
-        analyticsSummaryResource.addMethod('GET', analyticsIntegration, {
+        const analyticsSummaryResource = analyticsResource.addResource("summary");
+        analyticsSummaryResource.addMethod("GET", analyticsIntegration, {
             authorizer: cognitoAuthorizer,
         });
         // Image upload endpoint: POST /images/upload (requires authentication)
-        const imagesResource = this.api.root.addResource('images');
-        const uploadResource = imagesResource.addResource('upload');
+        const imagesResource = this.api.root.addResource("images");
+        const uploadResource = imagesResource.addResource("upload");
         const imageUploadIntegration = new apigateway.LambdaIntegration(this.getImageUploadFunction());
-        uploadResource.addMethod('POST', imageUploadIntegration, {
+        uploadResource.addMethod("POST", imageUploadIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Admin Endpoints for Multi-Tenant Invitation Management
-        const adminResource = this.api.root.addResource('admin');
-        const adminInvitationsResource = adminResource.addResource('invitations');
+        const adminResource = this.api.root.addResource("admin");
+        const adminInvitationsResource = adminResource.addResource("invitations");
         const invitationManagerIntegration = new apigateway.LambdaIntegration(this.getInvitationManagerFunction());
         // List invitations: GET /admin/invitations (requires admin authentication)
-        adminInvitationsResource.addMethod('GET', invitationManagerIntegration, {
+        adminInvitationsResource.addMethod("GET", invitationManagerIntegration, {
             authorizer: cognitoAuthorizer,
         });
         // Create invitation: POST /admin/invitations (requires admin authentication)
-        adminInvitationsResource.addMethod('POST', invitationManagerIntegration, {
+        adminInvitationsResource.addMethod("POST", invitationManagerIntegration, {
             authorizer: cognitoAuthorizer,
             requestValidator: requestValidator,
         });
         // Revoke invitation: DELETE /admin/invitations/{token} (requires admin authentication)
-        const adminInvitationTokenResource = adminInvitationsResource.addResource('{token}');
-        adminInvitationTokenResource.addMethod('DELETE', invitationManagerIntegration, {
+        const adminInvitationTokenResource = adminInvitationsResource.addResource("{token}");
+        adminInvitationTokenResource.addMethod("DELETE", invitationManagerIntegration, {
             authorizer: cognitoAuthorizer,
         });
         // Check invitation status: GET /admin/invitations/status/{token} (public, no auth required)
-        const adminInvitationStatusResource = adminInvitationsResource.addResource('status');
-        const adminInvitationStatusTokenResource = adminInvitationStatusResource.addResource('{token}');
-        adminInvitationStatusTokenResource.addMethod('GET', invitationManagerIntegration);
+        const adminInvitationStatusResource = adminInvitationsResource.addResource("status");
+        const adminInvitationStatusTokenResource = adminInvitationStatusResource.addResource("{token}");
+        adminInvitationStatusTokenResource.addMethod("GET", invitationManagerIntegration);
         // Auth Endpoints for Registration
-        const authResource = this.api.root.addResource('auth');
-        const authRegisterWithInvitationResource = authResource.addResource('register-with-invitation');
+        const authResource = this.api.root.addResource("auth");
+        const authRegisterWithInvitationResource = authResource.addResource("register-with-invitation");
         const registrationHandlerIntegration = new apigateway.LambdaIntegration(this.getRegistrationHandlerFunction());
         // Register with invitation: POST /auth/register-with-invitation (public, no auth required)
-        authRegisterWithInvitationResource.addMethod('POST', registrationHandlerIntegration, {
+        authRegisterWithInvitationResource.addMethod("POST", registrationHandlerIntegration, {
             requestValidator: requestValidator,
         });
         // Add Gateway Responses to include CORS headers on API Gateway error responses
-        this.api.addGatewayResponse('unauthorized', {
+        this.api.addGatewayResponse("unauthorized", {
             type: apigateway.ResponseType.UNAUTHORIZED,
             responseHeaders: {
-                'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
-                'Access-Control-Allow-Credentials': `'true'`,
-                'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+                "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+                "Access-Control-Allow-Credentials": "'true'",
+                "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
             },
         });
-        this.api.addGatewayResponse('access-denied', {
+        this.api.addGatewayResponse("access-denied", {
             type: apigateway.ResponseType.ACCESS_DENIED,
             responseHeaders: {
-                'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
-                'Access-Control-Allow-Credentials': `'true'`,
-                'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+                "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+                "Access-Control-Allow-Credentials": "'true'",
+                "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
             },
         });
-        this.api.addGatewayResponse('default-4xx', {
+        this.api.addGatewayResponse("default-4xx", {
             type: apigateway.ResponseType.DEFAULT_4XX,
             responseHeaders: {
-                'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
-                'Access-Control-Allow-Credentials': `'true'`,
-                'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+                "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+                "Access-Control-Allow-Credentials": "'true'",
+                "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
             },
         });
-        this.api.addGatewayResponse('default-5xx', {
+        this.api.addGatewayResponse("default-5xx", {
             type: apigateway.ResponseType.DEFAULT_5XX,
             responseHeaders: {
-                'Access-Control-Allow-Origin': `'https://d1jcaphz4458q7.cloudfront.net'`,
-                'Access-Control-Allow-Credentials': `'true'`,
-                'Access-Control-Allow-Headers': `'Content-Type,Authorization'`,
+                "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+                "Access-Control-Allow-Credentials": "'true'",
+                "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
             },
         });
         // 🚨 COST MONITORING & BILLING ALERTS 🚨
         // SNS Topic for billing alerts
-        this.billingAlertTopic = new sns.Topic(this, 'BillingAlerts', {
+        this.billingAlertTopic = new sns.Topic(this, "BillingAlerts", {
             topicName: `recipearchive-billing-alerts-${props.environment}`,
-            displayName: 'RecipeArchive Billing Alerts',
+            displayName: "RecipeArchive Billing Alerts",
         });
         // Email subscription for billing alerts
         this.billingAlertTopic.addSubscription(new snsSubscriptions.EmailSubscription(props.adminEmail));
         // AWS Budget for conservative monthly cost monitoring ($20/month maximum)
-        new budgets.CfnBudget(this, 'MonthlyCostBudget', {
+        new budgets.CfnBudget(this, "MonthlyCostBudget", {
             budget: {
                 budgetName: `RecipeArchive-MonthlyCostWatchdog-${props.environment}`,
-                budgetType: 'COST',
-                timeUnit: 'MONTHLY',
+                budgetType: "COST",
+                timeUnit: "MONTHLY",
                 budgetLimit: {
                     amount: 20,
-                    unit: 'USD',
+                    unit: "USD",
                 },
                 costFilters: {
                 // Only monitor this account's costs
                 },
                 timePeriod: {
-                    start: '1756080093',
-                    end: '2082762102', // December 31, 2035 in epoch seconds
+                    start: "1756080093",
+                    end: "2082762102", // December 31, 2035 in epoch seconds
                 },
             },
             notificationsWithSubscribers: [
                 {
                     notification: {
-                        notificationType: 'ACTUAL',
-                        comparisonOperator: 'GREATER_THAN',
+                        notificationType: "ACTUAL",
+                        comparisonOperator: "GREATER_THAN",
                         threshold: 25,
-                        thresholdType: 'PERCENTAGE',
+                        thresholdType: "PERCENTAGE",
                     },
                     subscribers: [
                         {
-                            subscriptionType: 'SNS',
+                            subscriptionType: "SNS",
                             address: this.billingAlertTopic.topicArn,
                         },
                     ],
                 },
                 {
                     notification: {
-                        notificationType: 'ACTUAL',
-                        comparisonOperator: 'GREATER_THAN',
+                        notificationType: "ACTUAL",
+                        comparisonOperator: "GREATER_THAN",
                         threshold: 50,
-                        thresholdType: 'PERCENTAGE',
+                        thresholdType: "PERCENTAGE",
                     },
                     subscribers: [
                         {
-                            subscriptionType: 'SNS',
+                            subscriptionType: "SNS",
                             address: this.billingAlertTopic.topicArn,
                         },
                     ],
                 },
                 {
                     notification: {
-                        notificationType: 'ACTUAL',
-                        comparisonOperator: 'GREATER_THAN',
+                        notificationType: "ACTUAL",
+                        comparisonOperator: "GREATER_THAN",
                         threshold: 80,
-                        thresholdType: 'PERCENTAGE',
+                        thresholdType: "PERCENTAGE",
                     },
                     subscribers: [
                         {
-                            subscriptionType: 'SNS',
+                            subscriptionType: "SNS",
                             address: this.billingAlertTopic.topicArn,
                         },
                     ],
                 },
                 {
                     notification: {
-                        notificationType: 'FORECASTED',
-                        comparisonOperator: 'GREATER_THAN',
+                        notificationType: "FORECASTED",
+                        comparisonOperator: "GREATER_THAN",
                         threshold: 100,
-                        thresholdType: 'PERCENTAGE',
+                        thresholdType: "PERCENTAGE",
                     },
                     subscribers: [
                         {
-                            subscriptionType: 'SNS',
+                            subscriptionType: "SNS",
                             address: this.billingAlertTopic.topicArn,
                         },
                     ],
@@ -539,16 +539,16 @@ class RecipeArchiveStack extends cdk.Stack {
             ],
         });
         // CloudWatch Alarm for unusual spending patterns
-        const unusualSpendingAlarm = new cloudwatch.Alarm(this, 'UnusualSpendingAlarm', {
+        const unusualSpendingAlarm = new cloudwatch.Alarm(this, "UnusualSpendingAlarm", {
             alarmName: `RecipeArchive-UnusualSpending-${props.environment}`,
-            alarmDescription: 'Alert when estimated monthly charges exceed $20',
+            alarmDescription: "Alert when estimated monthly charges exceed $20",
             metric: new cloudwatch.Metric({
-                namespace: 'AWS/Billing',
-                metricName: 'EstimatedCharges',
+                namespace: "AWS/Billing",
+                metricName: "EstimatedCharges",
                 dimensionsMap: {
-                    Currency: 'USD',
+                    Currency: "USD",
                 },
-                statistic: 'Maximum',
+                statistic: "Maximum",
                 period: cdk.Duration.hours(12), // Check twice daily
             }),
             threshold: 20,
@@ -560,17 +560,17 @@ class RecipeArchiveStack extends cdk.Stack {
             bind: () => ({ alarmActionArn: this.billingAlertTopic.topicArn }),
         });
         // CloudWatch Alarm for Failed Parsing Bucket Size (4MB limit)
-        const failedParsingBucketSizeAlarm = new cloudwatch.Alarm(this, 'FailedParsingBucketSizeAlarm', {
+        const failedParsingBucketSizeAlarm = new cloudwatch.Alarm(this, "FailedParsingBucketSizeAlarm", {
             alarmName: `RecipeArchive-FailedParsingBucketSize-${props.environment}`,
-            alarmDescription: 'Alert when failed parsing bucket exceeds 4MB to prevent cost overruns',
+            alarmDescription: "Alert when failed parsing bucket exceeds 4MB to prevent cost overruns",
             metric: new cloudwatch.Metric({
-                namespace: 'AWS/S3',
-                metricName: 'BucketSizeBytes',
+                namespace: "AWS/S3",
+                metricName: "BucketSizeBytes",
                 dimensionsMap: {
                     BucketName: this.failedParsingBucket.bucketName,
-                    StorageType: 'StandardStorage',
+                    StorageType: "StandardStorage",
                 },
-                statistic: 'Average',
+                statistic: "Average",
                 period: cdk.Duration.hours(6), // Check 4 times daily
             }),
             threshold: 4 * 1024 * 1024,
@@ -582,41 +582,41 @@ class RecipeArchiveStack extends cdk.Stack {
             bind: () => ({ alarmActionArn: this.billingAlertTopic.topicArn }),
         });
         // Outputs
-        new cdk.CfnOutput(this, 'UserPoolId', {
+        new cdk.CfnOutput(this, "UserPoolId", {
             value: this.userPool.userPoolId,
-            description: 'Cognito User Pool ID',
+            description: "Cognito User Pool ID",
         });
-        new cdk.CfnOutput(this, 'UserPoolClientId', {
+        new cdk.CfnOutput(this, "UserPoolClientId", {
             value: this.userPoolClient.userPoolClientId,
-            description: 'Cognito User Pool Client ID',
+            description: "Cognito User Pool Client ID",
         });
-        new cdk.CfnOutput(this, 'StorageBucketName', {
+        new cdk.CfnOutput(this, "StorageBucketName", {
             value: this.storageBucket.bucketName,
-            description: 'S3 Storage Bucket Name (Recipe Photos & Documents)',
+            description: "S3 Storage Bucket Name (Recipe Photos & Documents)",
         });
-        new cdk.CfnOutput(this, 'TempBucketName', {
+        new cdk.CfnOutput(this, "TempBucketName", {
             value: this.tempBucket.bucketName,
-            description: 'S3 Temporary Bucket Name (Processing & Uploads)',
+            description: "S3 Temporary Bucket Name (Processing & Uploads)",
         });
-        new cdk.CfnOutput(this, 'FailedParsingBucketName', {
+        new cdk.CfnOutput(this, "FailedParsingBucketName", {
             value: this.failedParsingBucket.bucketName,
-            description: 'S3 Failed Parsing Bucket Name (HTML from failed recipe extractions)',
+            description: "S3 Failed Parsing Bucket Name (HTML from failed recipe extractions)",
         });
-        new cdk.CfnOutput(this, 'ApiGatewayUrl', {
+        new cdk.CfnOutput(this, "ApiGatewayUrl", {
             value: this.api.url,
-            description: 'API Gateway URL',
+            description: "API Gateway URL",
         });
-        new cdk.CfnOutput(this, 'BillingAlertTopicArn', {
+        new cdk.CfnOutput(this, "BillingAlertTopicArn", {
             value: this.billingAlertTopic.topicArn,
-            description: 'SNS Topic ARN for Billing Alerts',
+            description: "SNS Topic ARN for Billing Alerts",
         });
-        new cdk.CfnOutput(this, 'Region', {
+        new cdk.CfnOutput(this, "Region", {
             value: this.region,
-            description: 'AWS Region',
+            description: "AWS Region",
         });
-        new cdk.CfnOutput(this, 'AdminEmail', {
+        new cdk.CfnOutput(this, "AdminEmail", {
             value: props.adminEmail,
-            description: 'Admin Email for Billing Alerts and Initial User Creation',
+            description: "Admin Email for Billing Alerts and Initial User Creation",
         });
         // DynamoDB outputs removed - invitation system now uses S3 JSON storage
         // Cost savings: ~$4.50-13.50/month for low-volume usage
@@ -626,10 +626,10 @@ class RecipeArchiveStack extends cdk.Stack {
     // Singleton getters for Lambda functions
     getHealthFunction() {
         if (!this._healthFunction) {
-            this._healthFunction = new lambda.Function(this, 'HealthFunction', {
+            this._healthFunction = new lambda.Function(this, "HealthFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/health-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/health-package"),
                 timeout: cdk.Duration.seconds(10),
                 memorySize: 128,
                 environment: {
@@ -647,10 +647,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getRecipesFunction() {
         if (!this._recipesFunction) {
-            this._recipesFunction = new lambda.Function(this, 'RecipesFunction', {
+            this._recipesFunction = new lambda.Function(this, "RecipesFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/recipes-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/recipes-package"),
                 timeout: cdk.Duration.seconds(15),
                 memorySize: 256,
                 environment: {
@@ -660,7 +660,7 @@ class RecipeArchiveStack extends cdk.Stack {
                     S3_TEMP_BUCKET: this.tempBucket.bucketName,
                     S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
                     COGNITO_USER_POOL_ID: this.userPool.userPoolId,
-                    API_GATEWAY_URL: `https://4eprojzbrc.execute-api.us-west-2.amazonaws.com/prod`,
+                    API_GATEWAY_URL: "https://4eprojzbrc.execute-api.us-west-2.amazonaws.com/prod",
                     NORMALIZATION_QUEUE_URL: this.recipeNormalizationQueue.queueUrl,
                 },
                 role: this.lambdaRole,
@@ -670,10 +670,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getDiagnosticsFunction() {
         if (!this._diagnosticsFunction) {
-            this._diagnosticsFunction = new lambda.Function(this, 'DiagnosticsFunction', {
+            this._diagnosticsFunction = new lambda.Function(this, "DiagnosticsFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/diagnostics-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/diagnostics-package"),
                 timeout: cdk.Duration.seconds(15),
                 memorySize: 256,
                 environment: {
@@ -689,10 +689,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getImageUploadFunction() {
         if (!this._imageUploadFunction) {
-            this._imageUploadFunction = new lambda.Function(this, 'ImageUploadFunction', {
+            this._imageUploadFunction = new lambda.Function(this, "ImageUploadFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/image-upload-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/image-upload-package"),
                 timeout: cdk.Duration.seconds(30),
                 memorySize: 512,
                 environment: {
@@ -708,10 +708,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getFlutterConsoleDiagnosticsFunction() {
         if (!this._flutterConsoleDiagnosticsFunction) {
-            this._flutterConsoleDiagnosticsFunction = new lambda.Function(this, 'FlutterConsoleDiagnosticsFunction', {
+            this._flutterConsoleDiagnosticsFunction = new lambda.Function(this, "FlutterConsoleDiagnosticsFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/flutter-console-diagnostics-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/flutter-console-diagnostics-package"),
                 timeout: cdk.Duration.seconds(15),
                 memorySize: 256,
                 environment: {
@@ -726,17 +726,17 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getContentNormalizerFunction() {
         if (!this._contentNormalizerFunction) {
-            this._contentNormalizerFunction = new lambda.Function(this, 'ContentNormalizerFunction', {
+            this._contentNormalizerFunction = new lambda.Function(this, "ContentNormalizerFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/content-normalizer-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/content-normalizer-package"),
                 timeout: cdk.Duration.seconds(30),
                 memorySize: 512,
                 environment: {
                     ENVIRONMENT: this.stackEnvironment,
                     REGION: this.region,
                     COGNITO_USER_POOL_ID: this.userPool.userPoolId,
-                    OPENAI_API_KEY: process.env.OPENAI_API_KEY || '', // Read from environment
+                    OPENAI_API_KEY: process.env.OPENAI_API_KEY || "", // Read from environment
                 },
                 role: this.lambdaRole,
             });
@@ -745,17 +745,17 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getBackgroundNormalizerFunction() {
         if (!this._backgroundNormalizerFunction) {
-            this._backgroundNormalizerFunction = new lambda.Function(this, 'BackgroundNormalizerFunction', {
+            this._backgroundNormalizerFunction = new lambda.Function(this, "BackgroundNormalizerFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/background-normalizer-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/background-normalizer-package"),
                 timeout: cdk.Duration.seconds(45),
                 memorySize: 512,
                 environment: {
                     ENVIRONMENT: this.stackEnvironment,
                     REGION: this.region,
                     S3_STORAGE_BUCKET: this.storageBucket.bucketName,
-                    OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+                    OPENAI_API_KEY: process.env.OPENAI_API_KEY || "",
                 },
                 role: this.lambdaRole,
             });
@@ -769,10 +769,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getDiagnosticProcessorFunction() {
         if (!this._diagnosticProcessorFunction) {
-            this._diagnosticProcessorFunction = new lambda.Function(this, 'DiagnosticProcessorFunction', {
+            this._diagnosticProcessorFunction = new lambda.Function(this, "DiagnosticProcessorFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/diagnostic-processor-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/diagnostic-processor-package"),
                 timeout: cdk.Duration.seconds(60),
                 memorySize: 1024,
                 environment: {
@@ -788,17 +788,17 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getInvitationManagerFunction() {
         if (!this._invitationManagerFunction) {
-            this._invitationManagerFunction = new lambda.Function(this, 'InvitationManagerFunction', {
+            this._invitationManagerFunction = new lambda.Function(this, "InvitationManagerFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/invitation-manager-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/invitation-manager-package"),
                 timeout: cdk.Duration.seconds(15),
                 memorySize: 256,
                 environment: {
                     ENVIRONMENT: this.stackEnvironment,
                     REGION: this.region,
                     COGNITO_USER_POOL_ID: this.userPool.userPoolId,
-                    FRONTEND_BASE_URL: 'https://d1jcaphz4458q7.cloudfront.net',
+                    FRONTEND_BASE_URL: "https://d1jcaphz4458q7.cloudfront.net",
                 },
                 role: this.lambdaRole,
             });
@@ -807,10 +807,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getRegistrationHandlerFunction() {
         if (!this._registrationHandlerFunction) {
-            this._registrationHandlerFunction = new lambda.Function(this, 'RegistrationHandlerFunction', {
+            this._registrationHandlerFunction = new lambda.Function(this, "RegistrationHandlerFunction", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/registration-handler-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/registration-handler-package"),
                 timeout: cdk.Duration.seconds(15),
                 memorySize: 256,
                 environment: {
@@ -826,10 +826,10 @@ class RecipeArchiveStack extends cdk.Stack {
     }
     getAnalyticsFunction() {
         if (!this._analyticsFunction) {
-            this._analyticsFunction = new lambda.Function(this, 'RecipeAnalyticsAggregator', {
+            this._analyticsFunction = new lambda.Function(this, "RecipeAnalyticsAggregator", {
                 runtime: lambda.Runtime.PROVIDED_AL2,
-                handler: 'bootstrap',
-                code: lambda.Code.fromAsset('../functions/dist/analytics-aggregator-package'),
+                handler: "bootstrap",
+                code: lambda.Code.fromAsset("../functions/dist/analytics-aggregator-package"),
                 timeout: cdk.Duration.seconds(15),
                 memorySize: 256,
                 environment: {

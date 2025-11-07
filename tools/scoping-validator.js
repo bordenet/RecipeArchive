@@ -1,10 +1,10 @@
 // Advanced JavaScript Variable Scoping Validator
 // Custom AST-based analyzer to catch complex scoping bugs that ESLint might miss
 
-const fs = require('fs');
-const _path = require('path');
-const { parse } = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
+const fs = require("fs");
+const _path = require("path");
+const { parse } = require("@babel/parser");
+const traverse = require("@babel/traverse").default;
 
 class ScopingValidator {
   constructor() {
@@ -16,22 +16,22 @@ class ScopingValidator {
   validateFile(filePath) {
     console.log(`🔍 Analyzing: ${filePath}`);
 
-    const code = fs.readFileSync(filePath, 'utf8');
+    const code = fs.readFileSync(filePath, "utf8");
     let ast;
 
     try {
       ast = parse(code, {
-        sourceType: 'module',
+        sourceType: "module",
         allowImportExportEverywhere: true,
         plugins: [
-          'asyncGenerators',
-          'functionBind',
-          'decorators-legacy',
-          'classProperties',
-          'objectRestSpread',
-          'optionalCatchBinding',
-          'optionalChaining',
-          'nullishCoalescingOperator',
+          "asyncGenerators",
+          "functionBind",
+          "decorators-legacy",
+          "classProperties",
+          "objectRestSpread",
+          "optionalCatchBinding",
+          "optionalChaining",
+          "nullishCoalescingOperator",
         ],
       });
     } catch (parseError) {
@@ -40,7 +40,7 @@ class ScopingValidator {
         line: parseError.loc?.line || 1,
         column: parseError.loc?.column || 1,
         message: `Parse error: ${parseError.message}`,
-        type: 'PARSE_ERROR',
+        type: "PARSE_ERROR",
       });
       return;
     }
@@ -48,26 +48,26 @@ class ScopingValidator {
     traverse(ast, {
       // Track function scope
       FunctionDeclaration: (path) => {
-        this.enterScope('function', path);
+        this.enterScope("function", path);
       },
       FunctionExpression: (path) => {
-        this.enterScope('function', path);
+        this.enterScope("function", path);
       },
       ArrowFunctionExpression: (path) => {
-        this.enterScope('function', path);
+        this.enterScope("function", path);
       },
 
       // Track block scope
       BlockStatement: (path) => {
-        this.enterScope('block', path);
+        this.enterScope("block", path);
       },
 
       // Track try/catch scope
       TryStatement: (path) => {
-        this.enterScope('try', path);
+        this.enterScope("try", path);
       },
       CatchClause: (path) => {
-        this.enterScope('catch', path);
+        this.enterScope("catch", path);
       },
 
       // Track variable declarations
@@ -146,23 +146,23 @@ class ScopingValidator {
   checkVariableReference(varName, line, path, filePath) {
     // Skip built-in globals
     const builtIns = [
-      'console',
-      'window',
-      'document',
-      'localStorage',
-      'fetch',
-      'chrome',
-      'browser',
-      'CONFIG',
-      'SafariCognitoAuth',
-      'ChromeCognitoAuth',
-      'process',
-      'global',
-      'require',
-      'module',
-      'exports',
-      '__dirname',
-      '__filename',
+      "console",
+      "window",
+      "document",
+      "localStorage",
+      "fetch",
+      "chrome",
+      "browser",
+      "CONFIG",
+      "SafariCognitoAuth",
+      "ChromeCognitoAuth",
+      "process",
+      "global",
+      "require",
+      "module",
+      "exports",
+      "__dirname",
+      "__filename",
     ];
 
     if (builtIns.includes(varName)) {
@@ -178,7 +178,7 @@ class ScopingValidator {
         line,
         column: path.node.loc.start.column,
         message: `Variable '${varName}' is referenced but not defined in accessible scope`,
-        type: 'UNDEFINED_VARIABLE',
+        type: "UNDEFINED_VARIABLE",
         variable: varName,
       });
     }
@@ -193,7 +193,7 @@ class ScopingValidator {
         const variable = scope.variables.get(varName);
 
         // Special check for block-scoped variables (let/const)
-        if (variable.kind === 'let' || variable.kind === 'const') {
+        if (variable.kind === "let" || variable.kind === "const") {
           // For try/catch blocks, check if variable declared in try is used in catch
           if (this.isVariableDeclaredInTryUsedInCatch(varName, path)) {
             return false; // This is the tokenResult bug pattern!
@@ -226,14 +226,14 @@ class ScopingValidator {
     for (let i = this.scopeStack.length - 1; i >= 0; i--) {
       const scope = this.scopeStack[i];
 
-      if (scope.type === 'try' && scope.variables.has(varName)) {
+      if (scope.type === "try" && scope.variables.has(varName)) {
         // Found variable declared in try block, being used in catch block
         this.warnings.push({
-          file: 'current',
+          file: "current",
           line: usagePath.node.loc.start.line,
           column: usagePath.node.loc.start.column,
           message: `Variable '${varName}' declared in try block is not accessible in catch block`,
-          type: 'TRY_CATCH_SCOPE_VIOLATION',
+          type: "TRY_CATCH_SCOPE_VIOLATION",
           variable: varName,
         });
         return true;
@@ -253,7 +253,7 @@ class ScopingValidator {
 
   printResults() {
     if (this.errors.length > 0) {
-      console.log('\n❌ SCOPING ERRORS:');
+      console.log("\n❌ SCOPING ERRORS:");
       this.errors.forEach((error) => {
         console.log(
           `  ${error.file}:${error.line}:${error.column} - ${error.message}`
@@ -262,7 +262,7 @@ class ScopingValidator {
     }
 
     if (this.warnings.length > 0) {
-      console.log('\n⚠️  SCOPING WARNINGS:');
+      console.log("\n⚠️  SCOPING WARNINGS:");
       this.warnings.forEach((warning) => {
         console.log(
           `  ${warning.file}:${warning.line}:${warning.column} - ${warning.message}`
@@ -271,7 +271,7 @@ class ScopingValidator {
     }
 
     if (this.errors.length === 0 && this.warnings.length === 0) {
-      console.log('\n✅ No scoping issues found');
+      console.log("\n✅ No scoping issues found");
     }
 
     return this.errors.length === 0;
@@ -284,8 +284,8 @@ if (require.main === module) {
   const filesToCheck = process.argv.slice(2);
 
   if (filesToCheck.length === 0) {
-    console.log('Usage: node scoping-validator.js <file1.js> [file2.js ...]');
-    throw new Error('Validation failed');
+    console.log("Usage: node scoping-validator.js <file1.js> [file2.js ...]");
+    throw new Error("Validation failed");
   }
 
   filesToCheck.forEach((file) => {
@@ -297,7 +297,7 @@ if (require.main === module) {
   });
 
   const success = validator.printResults();
-  if (!success) throw new Error('Validation failed');
+  if (!success) throw new Error("Validation failed");
 }
 
 module.exports = ScopingValidator;

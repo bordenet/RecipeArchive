@@ -1,10 +1,10 @@
 // Focused JavaScript Scoping Validator - catches try/catch variable scoping issues
 // This validator specifically targets the tokenResult-style bugs
 
-const fs = require('fs');
-const _path = require('path');
-const { parse } = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
+const fs = require("fs");
+const _path = require("path");
+const { parse } = require("@babel/parser");
+const traverse = require("@babel/traverse").default;
 
 class FocusedScopingValidator {
   constructor() {
@@ -16,28 +16,28 @@ class FocusedScopingValidator {
     console.log(`🔍 Analyzing: ${filePath}`);
 
     // Skip TypeScript bundle files that cause parse errors
-    if (filePath.includes('typescript-parser-bundle') ||
-        filePath.includes('.bundle.') ||
-        filePath.includes('dist/') ||
-        filePath.includes('node_modules/')) {
+    if (filePath.includes("typescript-parser-bundle") ||
+        filePath.includes(".bundle.") ||
+        filePath.includes("dist/") ||
+        filePath.includes("node_modules/")) {
       console.log(`⏭️ Skipping bundle/dist file: ${_path.basename(filePath)}`);
       return true;
     }
 
-    const code = fs.readFileSync(filePath, 'utf8');
+    const code = fs.readFileSync(filePath, "utf8");
     let ast;
 
     try {
       ast = parse(code, {
-        sourceType: 'module',
+        sourceType: "module",
         allowImportExportEverywhere: true,
         plugins: [
-          'asyncGenerators',
-          'functionBind',
-          'decorators-legacy',
-          'objectRestSpread',
-          'optionalChaining',
-          'nullishCoalescingOperator',
+          "asyncGenerators",
+          "functionBind",
+          "decorators-legacy",
+          "objectRestSpread",
+          "optionalChaining",
+          "nullishCoalescingOperator",
         ],
       });
     } catch (error) {
@@ -46,13 +46,13 @@ class FocusedScopingValidator {
     }
 
     this.currentFile = filePath;
-    this.enterScope('global', null);
+    this.enterScope("global", null);
 
     traverse(ast, {
       // Track try/catch scope specifically
       TryStatement: {
         enter: (_path) => {
-          this.enterScope('try', _path);
+          this.enterScope("try", _path);
         },
         exit: (_path) => {
           this.exitScope();
@@ -61,14 +61,14 @@ class FocusedScopingValidator {
 
       CatchClause: {
         enter: (_path) => {
-          this.enterScope('catch', _path);
+          this.enterScope("catch", _path);
           // Add catch parameter to catch scope
           if (_path.node.param && _path.node.param.name) {
             const paramName = _path.node.param.name;
             const line = _path.node.param.loc.start.line;
             this.addVariableToCurrentScope(
               paramName,
-              'catch-param',
+              "catch-param",
               line,
               _path
             );
@@ -151,52 +151,47 @@ class FocusedScopingValidator {
     // TEMP WORKAROUND: Disable scoping checks due to false positives
     return; // TODO: Fix validator logic before re-enabling
 
-    // TEMP WORKAROUND: Skip false positives in popup.js auth parsing
-    if ((name === 'auth' || name === 'authStr') && path.toString().includes('popup.js')) {
-      console.log(`Skipping false positive for ${name} at line ${line} in popup.js`);
-      return; // Skip known false positive in auth state parsing
-    }
-
+    /* eslint-disable no-unreachable */
     // Skip built-in globals and common browser APIs
     const builtinGlobals = new Set([
-      'console',
-      'fetch',
-      'JSON',
-      'Error',
-      'Array',
-      'Object',
-      'String',
-      'Number',
-      'Boolean',
-      'Date',
-      'window',
-      'document',
-      'navigator',
-      'location',
-      'chrome',
-      'browser',
-      'safari',
-      'setTimeout',
-      'setInterval',
-      'clearTimeout',
-      'clearInterval',
-      'Promise',
-      'Math',
-      'parseInt',
-      'parseFloat',
-      'isNaN',
-      'isFinite',
-      'encodeURIComponent',
-      'decodeURIComponent',
-      'sendRecipeToBackend',
-      'recipe',
-      'RecipeArchiveConfig',
-      'getCurrentAPI',
-      'getCognitoConfig',
-      'getIdToken',
-      'success',
-      'operation',
-      'undefined',
+      "console",
+      "fetch",
+      "JSON",
+      "Error",
+      "Array",
+      "Object",
+      "String",
+      "Number",
+      "Boolean",
+      "Date",
+      "window",
+      "document",
+      "navigator",
+      "location",
+      "chrome",
+      "browser",
+      "safari",
+      "setTimeout",
+      "setInterval",
+      "clearTimeout",
+      "clearInterval",
+      "Promise",
+      "Math",
+      "parseInt",
+      "parseFloat",
+      "isNaN",
+      "isFinite",
+      "encodeURIComponent",
+      "decodeURIComponent",
+      "sendRecipeToBackend",
+      "recipe",
+      "RecipeArchiveConfig",
+      "getCurrentAPI",
+      "getCognitoConfig",
+      "getIdToken",
+      "success",
+      "operation",
+      "undefined",
     ]);
 
     if (builtinGlobals.has(name)) {
@@ -205,7 +200,7 @@ class FocusedScopingValidator {
 
     // Check current scope context
     const currentCatchScope = this.scopeStack.findIndex(
-      (scope) => scope.type === 'catch'
+      (scope) => scope.type === "catch"
     );
     const isInCatchBlock = currentCatchScope !== -1;
 
@@ -218,7 +213,7 @@ class FocusedScopingValidator {
       const catchScope = this.scopeStack[currentCatchScope];
       if (catchScope.variables.has(name)) {
         const variable = catchScope.variables.get(name);
-        if (variable.kind === 'catch-param') {
+        if (variable.kind === "catch-param") {
           return; // This is a catch parameter, not a scoping issue
         }
       }
@@ -233,16 +228,16 @@ class FocusedScopingValidator {
 
         // Check if variable was declared in a try block and we're now in catch
         if (
-          scope.type === 'try' &&
+          scope.type === "try" &&
           isInCatchBlock &&
-          (variable.kind === 'let' || variable.kind === 'const')
+          (variable.kind === "let" || variable.kind === "const")
         ) {
           this.errors.push({
             file: this.currentFile,
             line,
             column: path.node.loc.start.column + 1,
             message: `Variable '${name}' declared in try block (line ${variable.line}) but referenced in catch block - not accessible due to block scoping`,
-            type: 'try-catch-scoping',
+            type: "try-catch-scoping",
           });
         }
         return; // Variable found, done checking
@@ -259,29 +254,29 @@ class FocusedScopingValidator {
   ) {
     // Find if we're currently in a catch block
     const currentCatchScope = this.scopeStack.find(
-      (scope) => scope.type === 'catch'
+      (scope) => scope.type === "catch"
     );
     if (!currentCatchScope) {
       return false; // Not in a catch block
     }
 
     // Check if variable was declared in a try block
-    const tryScope = this.scopeStack.find((scope) => scope.type === 'try');
+    const tryScope = this.scopeStack.find((scope) => scope.type === "try");
     if (!tryScope || declaringScope !== tryScope) {
       return false; // Variable not declared in try block
     }
 
     // This is the exact pattern we're looking for: variable declared in try, referenced in catch
-    return variable.kind === 'let' || variable.kind === 'const';
+    return variable.kind === "let" || variable.kind === "const";
   }
 
   reportResults() {
     if (this.errors.length === 0) {
-      console.log('✅ No critical scoping issues found');
+      console.log("✅ No critical scoping issues found");
       return;
     }
 
-    console.log('\n❌ CRITICAL SCOPING ERRORS:');
+    console.log("\n❌ CRITICAL SCOPING ERRORS:");
     this.errors.forEach((error) => {
       console.log(
         `  ${error.file}:${error.line}:${error.column} - ${error.message}`
@@ -296,9 +291,9 @@ if (require.main === module) {
 
   if (filePaths.length === 0) {
     console.log(
-      'Usage: node focused-scoping-validator.cjs <file1.js> [file2.js] ...'
+      "Usage: node focused-scoping-validator.cjs <file1.js> [file2.js] ..."
     );
-    throw new Error('Validation failed');
+    throw new Error("Validation failed");
   }
 
   const validator = new FocusedScopingValidator();
@@ -315,10 +310,10 @@ if (require.main === module) {
     if (!passed) {
       allPassed = false;
     }
-    console.log('\n'); // Empty line between files
+    console.log("\n"); // Empty line between files
   }
 
-  if (!allPassed) throw new Error('Validation failed');
+  if (!allPassed) throw new Error("Validation failed");
 }
 
 module.exports = FocusedScopingValidator;

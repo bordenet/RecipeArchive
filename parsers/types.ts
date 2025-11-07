@@ -41,8 +41,8 @@ export interface ValidationResult {
 }
 
 export interface JsonLdRecipe {
-  '@type': string;
-  '@graph'?: JsonLdRecipe[];
+  "@type": string;
+  "@graph"?: JsonLdRecipe[];
   name?: string;
   author?: string | { name: string };
   recipeIngredient?: string[];

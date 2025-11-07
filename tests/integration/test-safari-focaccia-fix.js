@@ -3,16 +3,16 @@
  * Verify that the recipe extraction now works correctly
  */
 
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 async function testSafariFocacciaFix() {
   console.log(
-    '🧪 Testing Safari extension fix for Smitten Kitchen focaccia page...'
+    "🧪 Testing Safari extension fix for Smitten Kitchen focaccia page..."
   );
 
   const browser = await chromium.launch({
     headless: false,
-    args: ['--disable-web-security', '--disable-features=VizDisplayCompositor'],
+    args: ["--disable-web-security", "--disable-features=VizDisplayCompositor"],
   });
 
   try {
@@ -21,18 +21,18 @@ async function testSafariFocacciaFix() {
 
     // Navigate to the focaccia page that was failing
     const testUrl =
-      'https://smittenkitchen.com/2025/07/focaccia-with-zucchini-and-potatoes/';
+      "https://smittenkitchen.com/2025/07/focaccia-with-zucchini-and-potatoes/";
     console.log(`📍 Navigating to: ${testUrl}`);
 
-    await page.goto(testUrl, { waitUntil: 'domcontentloaded' });
+    await page.goto(testUrl, { waitUntil: "domcontentloaded" });
 
     // Wait for page to load completely
     await page.waitForTimeout(3000);
 
     // Inject our fixed Safari content script
-    const contentScript = require('fs').readFileSync(
-      '/Users/matt/GitHub/RecipeArchive/extensions/safari/content.js',
-      'utf8'
+    const contentScript = require("fs").readFileSync(
+      "/Users/matt/GitHub/RecipeArchive/extensions/safari/content.js",
+      "utf8"
     );
 
     await page.addScriptTag({ content: contentScript });
@@ -40,6 +40,7 @@ async function testSafariFocacciaFix() {
     // Test the extraction
     const result = await page.evaluate(() => {
       // Simulate the Safari extension flow
+      /* global extractRecipeGeneric, isExtractionFailed */
       try {
         const data = extractRecipeGeneric();
         const extractionFailed = isExtractionFailed(data);
@@ -71,7 +72,7 @@ async function testSafariFocacciaFix() {
       }
     });
 
-    console.log('📊 Extraction Results:');
+    console.log("📊 Extraction Results:");
     console.log(`✅ Success: ${result.success}`);
     console.log(`📝 Title Found: ${result.hasTitle}`);
     console.log(
@@ -94,12 +95,12 @@ async function testSafariFocacciaFix() {
 
     if (testPassed) {
       console.log(
-        '🎉 TEST PASSED: Safari extension now correctly extracts the focaccia recipe!'
+        "🎉 TEST PASSED: Safari extension now correctly extracts the focaccia recipe!"
       );
 
       // Show sample of extracted data
       if (result.data.ingredients && result.data.ingredients.length > 0) {
-        console.log('\n📋 Sample Ingredients:');
+        console.log("\n📋 Sample Ingredients:");
         result.data.ingredients[0].items
           .slice(0, 3)
           .forEach((ingredient, i) => {
@@ -108,20 +109,20 @@ async function testSafariFocacciaFix() {
       }
 
       if (result.data.steps && result.data.steps.length > 0) {
-        console.log('\n📝 Sample Steps:');
+        console.log("\n📝 Sample Steps:");
         result.data.steps[0].items.slice(0, 2).forEach((step, i) => {
           console.log(`  ${i + 1}. ${step.substring(0, 80)}...`);
         });
       }
     } else {
       console.log(
-        '❌ TEST FAILED: Safari extension still not extracting the recipe correctly'
+        "❌ TEST FAILED: Safari extension still not extracting the recipe correctly"
       );
     }
 
     return testPassed;
   } catch (error) {
-    console.error('❌ Test error:', error.message);
+    console.error("❌ Test error:", error.message);
     return false;
   } finally {
     await browser.close();
@@ -134,6 +135,6 @@ testSafariFocacciaFix()
     process.exit(passed ? 0 : 1);
   })
   .catch((error) => {
-    console.error('❌ Test failed with error:', error);
+    console.error("❌ Test failed with error:", error);
     process.exit(1);
   });

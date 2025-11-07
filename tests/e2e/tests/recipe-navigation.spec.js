@@ -1,51 +1,51 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Recipe Navigation and Units Toggle', () => {
+test.describe("Recipe Navigation and Units Toggle", () => {
   // Login helper
   async function login(page) {
     const testEmail =
-      process.env.TEST_USER_EMAIL || 'susan.cameron42@gmail.com';
-    const testPassword = process.env.TEST_USER_PASSWORD || 'Bear901206!!';
+      process.env.TEST_USER_EMAIL || "susan.cameron42@gmail.com";
+    const testPassword = process.env.TEST_USER_PASSWORD || "Bear901206!!";
 
-    await page.goto('/');
+    await page.goto("/");
     await page.waitForTimeout(3000);
 
-    await page.locator('input[type="email"]').first().fill(testEmail);
-    await page.locator('input[type="password"]').first().fill(testPassword);
+    await page.locator("input[type=\"email\"]").first().fill(testEmail);
+    await page.locator("input[type=\"password\"]").first().fill(testPassword);
     await page
-      .locator('button:has-text("Sign In")')
-      .or(page.locator('text="Sign In"'))
+      .locator("button:has-text(\"Sign In\")")
+      .or(page.locator("text=\"Sign In\""))
       .click();
 
     // Wait for recipes to load
     await expect(
       page
-        .locator('text="Recipe Archive"')
+        .locator("text=\"Recipe Archive\"")
         .or(
           page
-            .locator('button:has-text("Refresh")')
-            .or(page.locator('[role="button"]').filter({ hasText: 'Refresh' }))
+            .locator("button:has-text(\"Refresh\")")
+            .or(page.locator("[role=\"button\"]").filter({ hasText: "Refresh" }))
         )
     ).toBeVisible({ timeout: 15000 });
   }
 
-  test('should navigate from gallery to recipe details page', async ({
+  test("should navigate from gallery to recipe details page", async ({
     page,
   }) => {
     await login(page);
 
     // Wait for recipes to load and click on the first recipe card
     const recipeCard = page
-      .locator('[role="button"]')
-      .or(page.locator('div'))
+      .locator("[role=\"button\"]")
+      .or(page.locator("div"))
       .filter({ hasText: /[A-Za-z]/ })
       .first();
     await expect(recipeCard).toBeVisible({ timeout: 10000 });
 
     // Look for clickable recipe elements (cards, buttons, or text)
     const clickableRecipe = page
-      .locator('text=')
-      .or(page.locator('button').or(page.locator('[role="button"]')))
+      .locator("text=")
+      .or(page.locator("button").or(page.locator("[role=\"button\"]")))
       .filter({ hasText: /recipe|ingredient|cook|bake|preparation/i })
       .first();
 
@@ -55,17 +55,17 @@ test.describe('Recipe Navigation and Units Toggle', () => {
       // Wait for navigation to recipe details page
       await expect(
         page
-          .locator('text="Ingredients"')
+          .locator("text=\"Ingredients\"")
           .or(
             page
-              .locator('text="Instructions"')
-              .or(page.locator('h1').or(page.locator('h2')))
+              .locator("text=\"Instructions\"")
+              .or(page.locator("h1").or(page.locator("h2")))
           )
       ).toBeVisible({ timeout: 10000 });
     }
   });
 
-  test('should display and toggle units conversion on recipe details page', async ({
+  test("should display and toggle units conversion on recipe details page", async ({
     page,
   }) => {
     await login(page);
@@ -75,8 +75,8 @@ test.describe('Recipe Navigation and Units Toggle', () => {
 
     // Look for recipe cards or navigation elements
     const recipeElement = page
-      .locator('div')
-      .or(page.locator('button'))
+      .locator("div")
+      .or(page.locator("button"))
       .filter({ hasText: /\w+/ })
       .first();
 
@@ -88,14 +88,14 @@ test.describe('Recipe Navigation and Units Toggle', () => {
 
       // Look for units toggle (Imperial/Metric button)
       const unitsToggle = page
-        .locator('text="Imperial"')
+        .locator("text=\"Imperial\"")
         .or(
           page
-            .locator('text="Metric"')
+            .locator("text=\"Metric\"")
             .or(
               page
-                .locator('button:has-text("Imperial")')
-                .or(page.locator('button:has-text("Metric")'))
+                .locator("button:has-text(\"Imperial\")")
+                .or(page.locator("button:has-text(\"Metric\")"))
             )
         );
 
@@ -111,13 +111,13 @@ test.describe('Recipe Navigation and Units Toggle', () => {
 
         // Verify toggle switched (text should change from Imperial to Metric or vice versa)
         await expect(
-          page.locator('text="Imperial"').or(page.locator('text="Metric"'))
+          page.locator("text=\"Imperial\"").or(page.locator("text=\"Metric\""))
         ).toBeVisible();
       }
     }
   });
 
-  test('should display recipe ingredients and instructions', async ({
+  test("should display recipe ingredients and instructions", async ({
     page,
   }) => {
     await login(page);
@@ -125,8 +125,8 @@ test.describe('Recipe Navigation and Units Toggle', () => {
     // Navigate to recipe details
     await page.waitForTimeout(2000);
     const recipeElement = page
-      .locator('div')
-      .or(page.locator('button'))
+      .locator("div")
+      .or(page.locator("button"))
       .filter({ hasText: /\w+/ })
       .first();
 
@@ -137,38 +137,38 @@ test.describe('Recipe Navigation and Units Toggle', () => {
       // Check for ingredients section
       await expect(
         page
-          .locator('text="Ingredients"')
+          .locator("text=\"Ingredients\"")
           .or(
             page
-              .locator('h2:has-text("Ingredients")')
-              .or(page.locator('h3:has-text("Ingredients")'))
+              .locator("h2:has-text(\"Ingredients\")")
+              .or(page.locator("h3:has-text(\"Ingredients\")"))
           )
       ).toBeVisible({ timeout: 10000 });
 
       // Check for instructions section
       await expect(
         page
-          .locator('text="Instructions"')
+          .locator("text=\"Instructions\"")
           .or(
             page
-              .locator('h2:has-text("Instructions")')
-              .or(page.locator('h3:has-text("Instructions")'))
+              .locator("h2:has-text(\"Instructions\")")
+              .or(page.locator("h3:has-text(\"Instructions\")"))
           )
       ).toBeVisible();
 
       // Look for recipe content (ingredients or instruction steps)
       const hasIngredientContent = await page
-        .locator('li')
+        .locator("li")
         .or(
           page
-            .locator('div')
+            .locator("div")
             .filter({ hasText: /cup|teaspoon|tablespoon|oz|lb|gram|ml/ })
         )
         .first()
         .isVisible();
 
       const hasInstructionContent = await page
-        .locator('div')
+        .locator("div")
         .filter({
           hasText: /mix|stir|bake|cook|heat|add|combine/,
         })
@@ -179,7 +179,7 @@ test.describe('Recipe Navigation and Units Toggle', () => {
     }
   });
 
-  test('should allow returning to gallery from recipe details', async ({
+  test("should allow returning to gallery from recipe details", async ({
     page,
   }) => {
     await login(page);
@@ -187,8 +187,8 @@ test.describe('Recipe Navigation and Units Toggle', () => {
     // Navigate to recipe details
     await page.waitForTimeout(2000);
     const recipeElement = page
-      .locator('div')
-      .or(page.locator('button'))
+      .locator("div")
+      .or(page.locator("button"))
       .filter({ hasText: /\w+/ })
       .first();
 
@@ -198,9 +198,9 @@ test.describe('Recipe Navigation and Units Toggle', () => {
 
       // Look for back button or navigation
       const backButton = page
-        .locator('button')
+        .locator("button")
         .filter({ hasText: /back|return|home/i })
-        .or(page.locator('[role="button"]').filter({ hasText: /←|‹|back/i }))
+        .or(page.locator("[role=\"button\"]").filter({ hasText: /←|‹|back/i }))
         .first();
 
       if (await backButton.isVisible()) {
@@ -209,8 +209,8 @@ test.describe('Recipe Navigation and Units Toggle', () => {
         // Should return to gallery/carousel page
         await expect(
           page
-            .locator('text="Recipe Archive"')
-            .or(page.locator('button:has-text("Refresh")'))
+            .locator("text=\"Recipe Archive\"")
+            .or(page.locator("button:has-text(\"Refresh\")"))
         ).toBeVisible({ timeout: 10000 });
       }
     }

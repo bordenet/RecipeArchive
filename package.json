@@ -29,7 +29,7 @@
     "build:parser-bundle": "node tools/build-parser-bundle.cjs",
     "build:extension-env": "node tools/build-extension-env.cjs",
     "build:extensions": "npm run build:extension-env && npm run build:parser-bundle",
-    "lint": "npx eslint extensions/**/*.js",
+    "lint": "npx eslint '**/*.{js,ts,cjs,mjs}'",
     "security:scan": "node tools/enhanced-security-scan.cjs",
     "security:scan-trufflehog": "trufflehog git file://. --since-commit HEAD~4 --only-verified --fail --no-update >/dev/null 2>&1 || (echo '🚨 Security scan failed - secrets detected!' && exit 1)",
     "security:scan-all": "trufflehog git file://. --only-verified --fail",

@@ -1,26 +1,26 @@
-import { LauraInTheKitchenParser } from '../sites/laurainthekitchen.com';
+import { LauraInTheKitchenParser } from "../sites/laurainthekitchen.com";
 
-describe('LauraInTheKitchen Parser', () => {
+describe("LauraInTheKitchen Parser", () => {
   let parser: LauraInTheKitchenParser;
 
   beforeEach(() => {
     parser = new LauraInTheKitchenParser();
   });
 
-  it('should identify LauraInTheKitchen URLs', () => {
-    const url = 'https://www.laurainthekitchen.com/recipes/stuffed-peppers/';
+  it("should identify LauraInTheKitchen URLs", () => {
+    const url = "https://www.laurainthekitchen.com/recipes/stuffed-peppers/";
     expect(parser.canParse(url)).toBe(true);
   });
 
-  it.skip('should parse basic recipe structure', () => {
+  it.skip("should parse basic recipe structure", () => {
     // Test implementation to be added
   });
 
-  it.skip('should handle missing optional fields gracefully', () => {
+  it.skip("should handle missing optional fields gracefully", () => {
     // Test implementation to be added
   });
 
-  it.skip('should handle complex recipe with all fields', () => {
+  it.skip("should handle complex recipe with all fields", () => {
     // Test implementation to be added
   });
 });

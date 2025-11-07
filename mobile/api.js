@@ -2,16 +2,16 @@
 // Simple Express.js server to handle mobile recipe capture requests
 // Integrates with existing AWS backend infrastructure
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-const fetch = require('node-fetch'); // You'll need: npm install node-fetch
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const fetch = require("node-fetch"); // You'll need: npm install node-fetch
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Load existing configuration and parsers
-const { getCurrentAPI } = require('../extensions/chrome/config.js');
+const { getCurrentAPI } = require("../extensions/chrome/config.js");
 
 // Middleware
 app.use(cors());
@@ -19,19 +19,19 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 // Serve the PWA
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // Mobile recipe capture endpoint
-app.post('/api/mobile/capture', async (req, res) => {
+app.post("/api/mobile/capture", async (req, res) => {
   try {
     const { url, title } = req.body;
 
     if (!url) {
       return res.status(400).json({
         success: false,
-        error: 'URL is required',
+        error: "URL is required",
       });
     }
 
@@ -43,7 +43,7 @@ app.post('/api/mobile/capture', async (req, res) => {
       return res.status(400).json({
         success: false,
         error:
-          'This recipe site is not yet supported. Please use the desktop extension or try again later.',
+          "This recipe site is not yet supported. Please use the desktop extension or try again later.",
         supportedSites: getSupportedSites(),
       });
     }
@@ -55,7 +55,7 @@ app.post('/api/mobile/capture', async (req, res) => {
       return res.status(400).json({
         success: false,
         error:
-          'Could not extract recipe data from this URL. Please check the URL and try again.',
+          "Could not extract recipe data from this URL. Please check the URL and try again.",
       });
     }
 
@@ -71,22 +71,22 @@ app.post('/api/mobile/capture', async (req, res) => {
         success: true,
         id: awsResult.id,
         title: recipeData.title,
-        message: 'Recipe saved successfully!',
+        message: "Recipe saved successfully!",
       });
     } else {
-      throw new Error(awsResult.error || 'Failed to save to AWS backend');
+      throw new Error(awsResult.error || "Failed to save to AWS backend");
     }
   } catch (error) {
-    console.error('❌ Mobile capture error:', error);
+    console.error("❌ Mobile capture error:", error);
     res.status(500).json({
       success: false,
-      error: 'Failed to capture recipe: ' + error.message,
+      error: "Failed to capture recipe: " + error.message,
     });
   }
 });
 
 // Get supported sites endpoint
-app.get('/api/mobile/supported-sites', (req, res) => {
+app.get("/api/mobile/supported-sites", (req, res) => {
   res.json({
     sites: getSupportedSites(),
     count: getSupportedSites().length,
@@ -94,10 +94,10 @@ app.get('/api/mobile/supported-sites', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/api/mobile/health', (req, res) => {
+app.get("/api/mobile/health", (req, res) => {
   res.json({
-    status: 'ok',
-    service: 'RecipeArchive Mobile API',
+    status: "ok",
+    service: "RecipeArchive Mobile API",
     timestamp: new Date().toISOString(),
   });
 });
@@ -112,32 +112,32 @@ async function checkSiteSupported(url) {
     const hostname = urlObj.hostname.toLowerCase();
 
     return supportedSites.some((site) => {
-      const normalizedHostname = hostname.replace(/^www\./, '');
-      const normalizedSite = site.replace(/^www\./, '');
+      const normalizedHostname = hostname.replace(/^www\./, "");
+      const normalizedSite = site.replace(/^www\./, "");
       return (
         normalizedHostname === normalizedSite ||
-        normalizedHostname.endsWith('.' + normalizedSite)
+        normalizedHostname.endsWith("." + normalizedSite)
       );
     });
   } catch (error) {
-    console.error('Error checking site support:', error);
+    console.error("Error checking site support:", error);
     return false;
   }
 }
 
 function getSupportedSites() {
   return [
-    'smittenkitchen.com',
-    'loveandlemons.com',
-    'food52.com',
-    'foodnetwork.com',
-    'epicurious.com',
-    'cooking.nytimes.com',
-    'allrecipes.com',
-    'seriouseats.com',
-    'washingtonpost.com',
-    'foodandwine.com',
-    'damndelicious.net',
+    "smittenkitchen.com",
+    "loveandlemons.com",
+    "food52.com",
+    "foodnetwork.com",
+    "epicurious.com",
+    "cooking.nytimes.com",
+    "allrecipes.com",
+    "seriouseats.com",
+    "washingtonpost.com",
+    "foodandwine.com",
+    "damndelicious.net",
   ];
 }
 
@@ -146,8 +146,8 @@ async function extractRecipeData(url, providedTitle) {
     // Fetch the HTML content
     const response = await fetch(url, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+        "User-Agent":
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
       },
     });
 
@@ -164,23 +164,23 @@ async function extractRecipeData(url, providedTitle) {
     // Use provided title if extraction failed
     if (
       providedTitle &&
-      (!recipeData.title || recipeData.title === 'Unknown Recipe')
+      (!recipeData.title || recipeData.title === "Unknown Recipe")
     ) {
       recipeData.title = providedTitle;
     }
 
     return recipeData;
   } catch (error) {
-    console.error('Error extracting recipe data:', error);
+    console.error("Error extracting recipe data:", error);
 
     // Fallback: create minimal recipe data
     return {
-      title: providedTitle || 'Manual Recipe Entry',
+      title: providedTitle || "Manual Recipe Entry",
       url: url,
       ingredients: [],
       instructions: [],
       timestamp: new Date().toISOString(),
-      source: 'mobile-api-fallback',
+      source: "mobile-api-fallback",
     };
   }
 }
@@ -200,15 +200,15 @@ async function parseRecipeFromHTML(html, url) {
         const jsonData = JSON.parse(match[1]);
         let recipeData = null;
 
-        if (jsonData['@type'] === 'Recipe') {
+        if (jsonData["@type"] === "Recipe") {
           recipeData = jsonData;
         } else if (Array.isArray(jsonData)) {
           recipeData = jsonData.find(
-            (item) => item && item['@type'] === 'Recipe'
+            (item) => item && item["@type"] === "Recipe"
           );
-        } else if (jsonData['@graph']) {
-          recipeData = jsonData['@graph'].find(
-            (item) => item && item['@type'] === 'Recipe'
+        } else if (jsonData["@graph"]) {
+          recipeData = jsonData["@graph"].find(
+            (item) => item && item["@type"] === "Recipe"
           );
         }
 
@@ -216,10 +216,10 @@ async function parseRecipeFromHTML(html, url) {
           const ingredients = recipeData.recipeIngredient || [];
           const instructions = (recipeData.recipeInstructions || [])
             .map((instruction) => {
-              if (typeof instruction === 'string') return instruction;
+              if (typeof instruction === "string") return instruction;
               if (instruction.text) return instruction.text;
               if (instruction.name) return instruction.name;
-              return '';
+              return "";
             })
             .filter(Boolean);
 
@@ -246,11 +246,11 @@ async function parseRecipeFromHTML(html, url) {
                 : [recipeData.image]
               : [],
             timestamp: new Date().toISOString(),
-            source: 'mobile-api-json-ld',
+            source: "mobile-api-json-ld",
           };
         }
       } catch (e) {
-        console.log('JSON-LD parsing failed:', e.message);
+        console.log("JSON-LD parsing failed:", e.message);
         continue;
       }
     }
@@ -258,7 +258,7 @@ async function parseRecipeFromHTML(html, url) {
     // Fallback: basic HTML parsing
     return parseBasicHTML(html, url);
   } catch (error) {
-    console.error('Recipe parsing error:', error);
+    console.error("Recipe parsing error:", error);
     return null;
   }
 }
@@ -269,7 +269,7 @@ function parseBasicHTML(html, url) {
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const title = titleMatch
     ? titleMatch[1].trim()
-    : 'Recipe from ' + new URL(url).hostname;
+    : "Recipe from " + new URL(url).hostname;
 
   return {
     title: title,
@@ -277,7 +277,7 @@ function parseBasicHTML(html, url) {
     ingredients: [],
     instructions: [],
     timestamp: new Date().toISOString(),
-    source: 'mobile-api-basic-html',
+    source: "mobile-api-basic-html",
   };
 }
 
@@ -291,7 +291,7 @@ function transformRecipeDataForAWS(recipeData) {
     recipeData.ingredients.forEach((group) => {
       if (group.items && Array.isArray(group.items)) {
         group.items.forEach((item) => {
-          if (item && typeof item === 'string' && item.trim()) {
+          if (item && typeof item === "string" && item.trim()) {
             ingredients.push({ text: item.trim() });
           }
         });
@@ -305,7 +305,7 @@ function transformRecipeDataForAWS(recipeData) {
     recipeData.instructions.forEach((group) => {
       if (group.items && Array.isArray(group.items)) {
         group.items.forEach((item) => {
-          if (item && typeof item === 'string' && item.trim()) {
+          if (item && typeof item === "string" && item.trim()) {
             instructions.push({
               stepNumber: stepNumber++,
               text: item.trim(),
@@ -317,36 +317,36 @@ function transformRecipeDataForAWS(recipeData) {
   }
 
   return {
-    title: recipeData.title || 'Mobile Recipe',
+    title: recipeData.title || "Mobile Recipe",
     ingredients:
       ingredients.length > 0
         ? ingredients
-        : [{ text: '[Recipe extraction incomplete - mobile fallback]' }],
+        : [{ text: "[Recipe extraction incomplete - mobile fallback]" }],
     instructions:
       instructions.length > 0
         ? instructions
         : [
             {
               stepNumber: 1,
-              text: '[Recipe extraction incomplete - mobile fallback]',
+              text: "[Recipe extraction incomplete - mobile fallback]",
             },
           ],
     sourceUrl: recipeData.url,
   };
 }
 
-async function saveToAWSBackend(recipeData, originalUrl) {
+async function saveToAWSBackend(recipeData, _originalUrl) {
   try {
     // In production, you'd need proper authentication
     // For now, this is a placeholder that would connect to your AWS backend
 
-    console.log('Would save to AWS:', recipeData);
+    console.log("Would save to AWS:", recipeData);
 
     // Simulate AWS save
     return {
       success: true,
-      id: 'mobile-' + Date.now(),
-      message: 'Recipe saved successfully (mobile API)',
+      id: "mobile-" + Date.now(),
+      message: "Recipe saved successfully (mobile API)",
     };
 
     // In production, this would be:
@@ -373,7 +373,7 @@ async function saveToAWSBackend(recipeData, originalUrl) {
         };
         */
   } catch (error) {
-    console.error('AWS save error:', error);
+    console.error("AWS save error:", error);
     return {
       success: false,
       error: error.message,
@@ -386,10 +386,10 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 RecipeArchive Mobile API running on port ${PORT}`);
     console.log(`📱 PWA available at: http://localhost:${PORT}`);
-    console.log(`🔌 API endpoints:`);
-    console.log(`   POST /api/mobile/capture - Capture recipe from URL`);
-    console.log(`   GET  /api/mobile/supported-sites - Get supported sites`);
-    console.log(`   GET  /api/mobile/health - Health check`);
+    console.log("🔌 API endpoints:");
+    console.log("   POST /api/mobile/capture - Capture recipe from URL");
+    console.log("   GET  /api/mobile/supported-sites - Get supported sites");
+    console.log("   GET  /api/mobile/health - Health check");
   });
 }
 

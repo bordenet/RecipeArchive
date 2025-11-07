@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 async function analyzeFood52Structure() {
-  console.log('🔍 Analyzing Food52 site structure...');
+  console.log("🔍 Analyzing Food52 site structure...");
 
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
   try {
     // Test with a Food52 recipe
-    await page.goto('https://food52.com/recipes/78143-chocolate-chip-cookies', {
-      waitUntil: 'domcontentloaded',
+    await page.goto("https://food52.com/recipes/78143-chocolate-chip-cookies", {
+      waitUntil: "domcontentloaded",
       timeout: 60000,
     });
 
-    console.log('✅ Page loaded successfully');
+    console.log("✅ Page loaded successfully");
 
     // Wait for content
     await page.waitForTimeout(8000);
@@ -24,26 +24,26 @@ async function analyzeFood52Structure() {
     await page.evaluate(() => {
       // Remove common Food52 popups/overlays
       const popupSelectors = [
-        '.modal',
-        '.overlay',
-        '[data-modal]',
-        '[data-overlay]',
-        '.newsletter-signup',
-        '.email-signup',
-        '.subscribe-modal',
-        '.gdpr-banner',
-        '.cookie-notice',
-        '.privacy-notice',
-        '[class*="popup"]',
-        '[id*="popup"]',
-        '[class*="modal"]',
+        ".modal",
+        ".overlay",
+        "[data-modal]",
+        "[data-overlay]",
+        ".newsletter-signup",
+        ".email-signup",
+        ".subscribe-modal",
+        ".gdpr-banner",
+        ".cookie-notice",
+        ".privacy-notice",
+        "[class*=\"popup\"]",
+        "[id*=\"popup\"]",
+        "[class*=\"modal\"]",
       ];
 
       popupSelectors.forEach((selector) => {
         const elements = document.querySelectorAll(selector);
         elements.forEach((el) => {
           if (el) {
-            el.style.display = 'none';
+            el.style.display = "none";
             el.remove();
           }
         });
@@ -51,18 +51,18 @@ async function analyzeFood52Structure() {
 
       // Click dismiss buttons
       const dismissButtons = document.querySelectorAll(
-        'button, [role="button"], .close, [class*="close"]'
+        "button, [role=\"button\"], .close, [class*=\"close\"]"
       );
       dismissButtons.forEach((btn) => {
-        const text = (btn.textContent || '').toLowerCase().trim();
-        const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
+        const text = (btn.textContent || "").toLowerCase().trim();
+        const ariaLabel = (btn.getAttribute("aria-label") || "").toLowerCase();
 
         if (
-          text.includes('close') ||
-          text.includes('dismiss') ||
-          text === '×' ||
-          text.includes('no thanks') ||
-          ariaLabel.includes('close')
+          text.includes("close") ||
+          text.includes("dismiss") ||
+          text === "×" ||
+          text.includes("no thanks") ||
+          ariaLabel.includes("close")
         ) {
           try {
             btn.click();
@@ -90,12 +90,12 @@ async function analyzeFood52Structure() {
 
       // Check for title
       const titleSelectors = [
-        'h1',
-        '.recipe-title',
-        '[data-testid="recipe-title"]',
-        '.recipe-header h1',
-        '.recipe-name',
-        '.entry-title',
+        "h1",
+        ".recipe-title",
+        "[data-testid=\"recipe-title\"]",
+        ".recipe-header h1",
+        ".recipe-name",
+        ".entry-title",
       ];
       for (const selector of titleSelectors) {
         const element = document.querySelector(selector);
@@ -108,7 +108,7 @@ async function analyzeFood52Structure() {
 
       // Check for JSON-LD
       const jsonLdScripts = document.querySelectorAll(
-        'script[type="application/ld+json"]'
+        "script[type=\"application/ld+json\"]"
       );
       if (jsonLdScripts.length > 0) {
         results.selectors_found.push(
@@ -119,11 +119,11 @@ async function analyzeFood52Structure() {
           try {
             const jsonData = JSON.parse(jsonLdScripts[i].textContent);
             if (
-              jsonData['@type'] === 'Recipe' ||
+              jsonData["@type"] === "Recipe" ||
               (Array.isArray(jsonData) &&
-                jsonData.find((item) => item['@type'] === 'Recipe')) ||
-              (jsonData['@graph'] &&
-                jsonData['@graph'].find((item) => item['@type'] === 'Recipe'))
+                jsonData.find((item) => item["@type"] === "Recipe")) ||
+              (jsonData["@graph"] &&
+                jsonData["@graph"].find((item) => item["@type"] === "Recipe"))
             ) {
               results.json_ld = jsonData;
               results.selectors_found.push(
@@ -141,16 +141,16 @@ async function analyzeFood52Structure() {
 
       // Check various ingredient selectors Food52 might use
       const ingredientSelectors = [
-        '.recipe-ingredients li',
-        '.ingredients li',
-        '[data-testid="ingredients"] li',
-        '.recipe-list--ingredients li',
-        '[class*="ingredient"] li',
-        '.recipe-card-ingredients li',
-        'ul[class*="ingredient"] li',
-        '[data-ingredient] li',
-        '.ingredients-list li',
-        'section[class*="ingredient"] li',
+        ".recipe-ingredients li",
+        ".ingredients li",
+        "[data-testid=\"ingredients\"] li",
+        ".recipe-list--ingredients li",
+        "[class*=\"ingredient\"] li",
+        ".recipe-card-ingredients li",
+        "ul[class*=\"ingredient\"] li",
+        "[data-ingredient] li",
+        ".ingredients-list li",
+        "section[class*=\"ingredient\"] li",
       ];
 
       for (const selector of ingredientSelectors) {
@@ -172,18 +172,18 @@ async function analyzeFood52Structure() {
 
       // Check various step/instruction selectors
       const stepSelectors = [
-        '.recipe-instructions li',
-        '.instructions li',
-        '[data-testid="instructions"] li',
-        '.recipe-list--instructions li',
-        '[class*="instruction"] li',
-        '.recipe-card-instructions li',
-        'ol[class*="instruction"] li',
-        '[data-instruction] li',
-        '.instructions-list li',
-        'section[class*="instruction"] li',
-        '.recipe-directions li',
-        '.method li',
+        ".recipe-instructions li",
+        ".instructions li",
+        "[data-testid=\"instructions\"] li",
+        ".recipe-list--instructions li",
+        "[class*=\"instruction\"] li",
+        ".recipe-card-instructions li",
+        "ol[class*=\"instruction\"] li",
+        "[data-instruction] li",
+        ".instructions-list li",
+        "section[class*=\"instruction\"] li",
+        ".recipe-directions li",
+        ".method li",
       ];
 
       for (const selector of stepSelectors) {
@@ -197,7 +197,7 @@ async function analyzeFood52Structure() {
             results.steps_selectors.push({
               selector,
               count: elements.length,
-              sample: sample.map((s) => s.slice(0, 100) + '...'),
+              sample: sample.map((s) => s.slice(0, 100) + "..."),
             });
           }
         }
@@ -206,19 +206,19 @@ async function analyzeFood52Structure() {
       // Analyze overall recipe structure
       results.recipe_structure = {
         recipe_containers: document.querySelectorAll(
-          '.recipe, [class*="recipe"], [data-recipe]'
+          ".recipe, [class*=\"recipe\"], [data-recipe]"
         ).length,
         recipe_cards: document.querySelectorAll(
-          '.recipe-card, [class*="recipe-card"]'
+          ".recipe-card, [class*=\"recipe-card\"]"
         ).length,
         food52_specific: {
           recipe_list_elements: document.querySelectorAll(
-            '[class*="recipe-list"]'
+            "[class*=\"recipe-list\"]"
           ).length,
           data_testid_elements: document.querySelectorAll(
-            '[data-testid*="recipe"]'
+            "[data-testid*=\"recipe\"]"
           ).length,
-          recipe_sections: document.querySelectorAll('section[class*="recipe"]')
+          recipe_sections: document.querySelectorAll("section[class*=\"recipe\"]")
             .length,
         },
       };
@@ -226,38 +226,38 @@ async function analyzeFood52Structure() {
       return results;
     });
 
-    console.log('\n📊 FOOD52 ANALYSIS RESULTS:');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("\n📊 FOOD52 ANALYSIS RESULTS:");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     console.log(`\n📝 Title: ${analysis.title}`);
-    console.log(`\n🔍 Selectors Found: ${analysis.selectors_found.join(', ')}`);
+    console.log(`\n🔍 Selectors Found: ${analysis.selectors_found.join(", ")}`);
 
-    console.log('\n🥗 INGREDIENT SELECTORS:');
+    console.log("\n🥗 INGREDIENT SELECTORS:");
     if (analysis.ingredients_selectors.length === 0) {
-      console.log('   ❌ No ingredient selectors found');
+      console.log("   ❌ No ingredient selectors found");
     } else {
       analysis.ingredients_selectors.forEach((ing) => {
         console.log(`   ✅ ${ing.selector} (${ing.count} items)`);
-        console.log(`      Sample: ${ing.sample.join(' | ')}`);
+        console.log(`      Sample: ${ing.sample.join(" | ")}`);
       });
     }
 
-    console.log('\n📋 STEP SELECTORS:');
+    console.log("\n📋 STEP SELECTORS:");
     if (analysis.steps_selectors.length === 0) {
-      console.log('   ❌ No step selectors found');
+      console.log("   ❌ No step selectors found");
     } else {
       analysis.steps_selectors.forEach((step) => {
         console.log(`   ✅ ${step.selector} (${step.count} items)`);
-        console.log(`      Sample: ${step.sample[0] || 'N/A'}`);
+        console.log(`      Sample: ${step.sample[0] || "N/A"}`);
       });
     }
 
-    console.log('\n🏗️ RECIPE STRUCTURE:');
+    console.log("\n🏗️ RECIPE STRUCTURE:");
     console.log(
       `   Recipe containers: ${analysis.recipe_structure.recipe_containers}`
     );
     console.log(`   Recipe cards: ${analysis.recipe_structure.recipe_cards}`);
-    console.log('   Food52 specific elements:');
+    console.log("   Food52 specific elements:");
     console.log(
       `     - recipe-list elements: ${analysis.recipe_structure.food52_specific.recipe_list_elements}`
     );
@@ -269,11 +269,11 @@ async function analyzeFood52Structure() {
     );
 
     if (analysis.json_ld) {
-      console.log('\n📜 JSON-LD Structure:');
+      console.log("\n📜 JSON-LD Structure:");
       if (Array.isArray(analysis.json_ld)) {
         analysis.json_ld.forEach((item, index) => {
-          console.log(`   [${index}] Type: ${item['@type']}`);
-          if (item['@type'] === 'Recipe') {
+          console.log(`   [${index}] Type: ${item["@type"]}`);
+          if (item["@type"] === "Recipe") {
             console.log(`       Name: ${item.name}`);
             console.log(
               `       Ingredients: ${item.recipeIngredient?.length || 0} items`
@@ -284,8 +284,8 @@ async function analyzeFood52Structure() {
           }
         });
       } else {
-        console.log(`   Type: ${analysis.json_ld['@type']}`);
-        if (analysis.json_ld['@type'] === 'Recipe') {
+        console.log(`   Type: ${analysis.json_ld["@type"]}`);
+        if (analysis.json_ld["@type"] === "Recipe") {
           console.log(`   Name: ${analysis.json_ld.name}`);
           console.log(
             `   Ingredients: ${analysis.json_ld.recipeIngredient?.length || 0} items`
@@ -293,12 +293,12 @@ async function analyzeFood52Structure() {
           console.log(
             `   Instructions: ${analysis.json_ld.recipeInstructions?.length || 0} steps`
           );
-        } else if (analysis.json_ld['@graph']) {
-          const recipe = analysis.json_ld['@graph'].find(
-            (g) => g['@type'] === 'Recipe'
+        } else if (analysis.json_ld["@graph"]) {
+          const recipe = analysis.json_ld["@graph"].find(
+            (g) => g["@type"] === "Recipe"
           );
           if (recipe) {
-            console.log('   Recipe in @graph:');
+            console.log("   Recipe in @graph:");
             console.log(`     Name: ${recipe.name}`);
             console.log(
               `     Ingredients: ${recipe.recipeIngredient?.length || 0} items`
@@ -311,7 +311,7 @@ async function analyzeFood52Structure() {
       }
     }
   } catch (error) {
-    console.error('❌ Analysis failed:', error.message);
+    console.error("❌ Analysis failed:", error.message);
   } finally {
     await browser.close();
   }

@@ -11,19 +11,19 @@
  * - Tests both JSON-LD and manual extraction methods
  */
 
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 // Individual Washington Post recipe URLs for testing
 const WASHINGTON_POST_INDIVIDUAL_RECIPES = [
   {
-    url: 'https://www.washingtonpost.com/recipes/eggplant-stir-fry-with-ground-pork/',
-    expected: 'Eggplant Stir-Fry with Ground Pork',
-    description: 'Eggplant stir-fry recipe',
+    url: "https://www.washingtonpost.com/recipes/eggplant-stir-fry-with-ground-pork/",
+    expected: "Eggplant Stir-Fry with Ground Pork",
+    description: "Eggplant stir-fry recipe",
   },
   {
-    url: 'https://www.washingtonpost.com/recipes/shrimp-with-hot-honey-glaze/',
-    expected: 'Shrimp with Hot Honey Glaze',
-    description: 'Shrimp with hot honey glaze and cabbage slaw',
+    url: "https://www.washingtonpost.com/recipes/shrimp-with-hot-honey-glaze/",
+    expected: "Shrimp with Hot Honey Glaze",
+    description: "Shrimp with hot honey glaze and cabbage slaw",
   },
   // Note: Using example URLs - may need to find actual working URLs
   // These can be updated based on real Washington Post recipe URLs
@@ -38,15 +38,15 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
   const browser = await chromium.launch({
     headless: false,
     args: [
-      '--no-sandbox',
-      '--disable-blink-features=AutomationControlled',
-      '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      "--no-sandbox",
+      "--disable-blink-features=AutomationControlled",
+      "--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     ],
   });
 
   const context = await browser.newContext({
     userAgent:
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     viewport: { width: 1280, height: 720 },
   });
 
@@ -55,15 +55,15 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
   try {
     // Navigate to recipe page
     await page.goto(recipe.url, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: "domcontentloaded",
       timeout: 45000,
     });
 
     // Wait for content to load
     await page.waitForTimeout(8000);
 
-    console.log('   📍 Please log in to Washington Post if needed...');
-    console.log('   📍 Waiting 20 seconds for manual login if required...');
+    console.log("   📍 Please log in to Washington Post if needed...");
+    console.log("   📍 Waiting 20 seconds for manual login if required...");
     await page.waitForTimeout(20000);
 
     // Page analysis for debugging
@@ -71,43 +71,43 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
       return {
         title: document.title,
         url: window.location.href,
-        h1Count: document.querySelectorAll('h1').length,
-        h1Texts: Array.from(document.querySelectorAll('h1'))
+        h1Count: document.querySelectorAll("h1").length,
+        h1Texts: Array.from(document.querySelectorAll("h1"))
           .map((h) => h.textContent?.trim())
           .slice(0, 3),
         recipeKeywords: (() => {
           const bodyText = document.body.textContent.toLowerCase();
           const keywords = [
-            'ingredient',
-            'instruction',
-            'step',
-            'cup',
-            'tablespoon',
-            'teaspoon',
-            'oven',
-            'bake',
-            'cook',
-            'recipe',
+            "ingredient",
+            "instruction",
+            "step",
+            "cup",
+            "tablespoon",
+            "teaspoon",
+            "oven",
+            "bake",
+            "cook",
+            "recipe",
           ];
           return keywords.filter((kw) => bodyText.includes(kw)).length;
         })(),
         hasJsonLd: document.querySelectorAll(
-          'script[type="application/ld+json"]'
+          "script[type=\"application/ld+json\"]"
         ).length,
         jsonLdContent: (() => {
           const scripts = document.querySelectorAll(
-            'script[type="application/ld+json"]'
+            "script[type=\"application/ld+json\"]"
           );
           const jsonLdData = [];
           for (let script of scripts) {
             try {
               const data = JSON.parse(script.textContent);
               if (
-                data['@type'] === 'Recipe' ||
+                data["@type"] === "Recipe" ||
                 (Array.isArray(data) &&
-                  data.some((item) => item['@type'] === 'Recipe'))
+                  data.some((item) => item["@type"] === "Recipe"))
               ) {
-                jsonLdData.push('Recipe found');
+                jsonLdData.push("Recipe found");
               }
             } catch (e) {
               // Ignore parsing errors
@@ -117,12 +117,12 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
         })(),
         potentialSelectors: {
           ingredients: [
-            '.recipe-ingredients li',
-            '.ingredients li',
-            '.ingredient-list li',
-            '[class*="ingredient"] li',
-            '.wp-recipe-ingredients li',
-            '[data-testid*="ingredient"] li',
+            ".recipe-ingredients li",
+            ".ingredients li",
+            ".ingredient-list li",
+            "[class*=\"ingredient\"] li",
+            ".wp-recipe-ingredients li",
+            "[data-testid*=\"ingredient\"] li",
           ]
             .map((sel) => ({
               selector: sel,
@@ -133,12 +133,12 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
             }))
             .filter((item) => item.count > 0),
           steps: [
-            '.recipe-instructions li',
-            '.instructions li',
-            '.directions li',
-            '[class*="instruction"] li',
-            '.wp-recipe-instructions li',
-            '[data-testid*="instruction"] li',
+            ".recipe-instructions li",
+            ".instructions li",
+            ".directions li",
+            "[class*=\"instruction\"] li",
+            ".wp-recipe-instructions li",
+            "[data-testid*=\"instruction\"] li",
           ]
             .map((sel) => ({
               selector: sel,
@@ -160,19 +160,19 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
     );
 
     if (pageAnalysis.potentialSelectors.ingredients.length > 0) {
-      console.log('      Found ingredient selectors:');
+      console.log("      Found ingredient selectors:");
       pageAnalysis.potentialSelectors.ingredients.forEach((sel) => {
         console.log(
-          `        ${sel.selector}: ${sel.count} items, preview: ${sel.preview.join(' | ')}`
+          `        ${sel.selector}: ${sel.count} items, preview: ${sel.preview.join(" | ")}`
         );
       });
     }
 
     if (pageAnalysis.potentialSelectors.steps.length > 0) {
-      console.log('      Found step selectors:');
+      console.log("      Found step selectors:");
       pageAnalysis.potentialSelectors.steps.forEach((sel) => {
         console.log(
-          `        ${sel.selector}: ${sel.count} items, preview: ${sel.preview.join(' | ')}`
+          `        ${sel.selector}: ${sel.count} items, preview: ${sel.preview.join(" | ")}`
         );
       });
     }
@@ -182,7 +182,7 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
       function extractWashingtonPostRecipe() {
         // Try JSON-LD first
         const jsonLdScripts = document.querySelectorAll(
-          'script[type="application/ld+json"]'
+          "script[type=\"application/ld+json\"]"
         );
 
         for (const script of jsonLdScripts) {
@@ -191,8 +191,8 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
             const recipes = Array.isArray(jsonData) ? jsonData : [jsonData];
 
             for (const item of recipes) {
-              if (item['@type'] === 'Recipe') {
-                console.log('Found Washington Post JSON-LD Recipe');
+              if (item["@type"] === "Recipe") {
+                console.log("Found Washington Post JSON-LD Recipe");
 
                 const ingredients = item.recipeIngredient
                   ? [{ title: null, items: item.recipeIngredient }]
@@ -202,10 +202,10 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
                 if (item.recipeInstructions) {
                   const stepItems = item.recipeInstructions
                     .map((instruction) => {
-                      if (typeof instruction === 'string') return instruction;
+                      if (typeof instruction === "string") return instruction;
                       if (instruction.text) return instruction.text;
                       if (instruction.name) return instruction.name;
-                      return '';
+                      return "";
                     })
                     .filter(Boolean);
 
@@ -221,31 +221,31 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
                   servingSize: item.recipeYield || item.yield || null,
                   time:
                     item.totalTime || item.cookTime || item.prepTime || null,
-                  source: 'washingtonpost-json-ld',
+                  source: "washingtonpost-json-ld",
                 };
               }
             }
           } catch (e) {
-            console.log('JSON-LD parsing failed:', e.message);
+            console.log("JSON-LD parsing failed:", e.message);
           }
         }
 
         // Manual extraction fallback with extended selectors
         const title =
-          document.querySelector('h1')?.textContent?.trim() ||
-          document.querySelector('.headline')?.textContent?.trim() ||
-          document.querySelector('[data-qa="headline"]')?.textContent?.trim() ||
+          document.querySelector("h1")?.textContent?.trim() ||
+          document.querySelector(".headline")?.textContent?.trim() ||
+          document.querySelector("[data-qa=\"headline\"]")?.textContent?.trim() ||
           document.title;
 
         let ingredients = [];
         const ingredientSelectors = [
-          '.recipe-ingredients li',
-          '.ingredients li',
-          '.ingredient-list li',
-          '[class*="ingredient"] li',
-          '.wp-recipe-ingredients li',
-          '[data-testid*="ingredient"] li',
-          'ul[class*="ingredient"] li',
+          ".recipe-ingredients li",
+          ".ingredients li",
+          ".ingredient-list li",
+          "[class*=\"ingredient\"] li",
+          ".wp-recipe-ingredients li",
+          "[data-testid*=\"ingredient\"] li",
+          "ul[class*=\"ingredient\"] li",
         ];
 
         for (const selector of ingredientSelectors) {
@@ -267,13 +267,13 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
 
         let steps = [];
         const stepSelectors = [
-          '.recipe-instructions li',
-          '.instructions li',
-          '.directions li',
-          '[class*="instruction"] li',
-          '.wp-recipe-instructions li',
-          '[data-testid*="instruction"] li',
-          'ol[class*="instruction"] li',
+          ".recipe-instructions li",
+          ".instructions li",
+          ".directions li",
+          "[class*=\"instruction\"] li",
+          ".wp-recipe-instructions li",
+          "[data-testid*=\"instruction\"] li",
+          "ol[class*=\"instruction\"] li",
         ];
 
         for (const selector of stepSelectors) {
@@ -294,12 +294,12 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
         }
 
         return {
-          title: title || 'Unknown Recipe',
+          title: title || "Unknown Recipe",
           ingredients,
           steps,
           servingSize: null,
           time: null,
-          source: 'washingtonpost-manual',
+          source: "washingtonpost-manual",
         };
       }
 
@@ -323,14 +323,14 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
     console.log(
       `   Steps: ${result.steps?.reduce((sum, s) => sum + s.items.length, 0) || 0} items`
     );
-    console.log(`   Result: ${success ? '✅ SUCCESS' : '❌ FAILURE'}`);
+    console.log(`   Result: ${success ? "✅ SUCCESS" : "❌ FAILURE"}`);
 
     if (hasIngredients && result.ingredients[0].items.length > 0) {
       console.log(
         `   Sample ingredients: ${result.ingredients[0].items
           .slice(0, 3)
           .map((i) => i.slice(0, 30))
-          .join(', ')}`
+          .join(", ")}`
       );
     }
 
@@ -345,9 +345,9 @@ async function testWashingtonPostIndividualRecipe(recipe, index) {
 
 // eslint-disable-next-line no-unused-vars
 async function runWashingtonPostIndividualTests() {
-  console.log('🚀 Starting Washington Post Individual Recipe Tests');
+  console.log("🚀 Starting Washington Post Individual Recipe Tests");
   console.log(
-    '📍 Make sure you are logged into Washington Post for full access\n'
+    "📍 Make sure you are logged into Washington Post for full access\n"
   );
 
   const results = [];
@@ -363,49 +363,49 @@ async function runWashingtonPostIndividualTests() {
     if (result.success) successCount++;
 
     if (i < WASHINGTON_POST_INDIVIDUAL_RECIPES.length - 1) {
-      console.log('   ⏱️  Waiting 3 seconds before next test...');
+      console.log("   ⏱️  Waiting 3 seconds before next test...");
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
   }
 
-  console.log('\n📊 WASHINGTON POST INDIVIDUAL TESTS SUMMARY');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("\n📊 WASHINGTON POST INDIVIDUAL TESTS SUMMARY");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(
     `✅ Success Rate: ${successCount}/${WASHINGTON_POST_INDIVIDUAL_RECIPES.length} (${((successCount / WASHINGTON_POST_INDIVIDUAL_RECIPES.length) * 100).toFixed(1)}%)`
   );
 
   results.forEach((r, index) => {
-    const status = r.success ? '✅' : '❌';
+    const status = r.success ? "✅" : "❌";
     console.log(`   ${status} [${index + 1}] ${r.recipe.expected}`);
   });
 
   // Save results
-  const fs = require('fs');
+  const fs = require("fs");
   fs.writeFileSync(
-    'washington-post-individual-results.json',
+    "washington-post-individual-results.json",
     JSON.stringify(results, null, 2)
   );
-  console.log('\n💾 Results saved to: washington-post-individual-results.json');
+  console.log("\n💾 Results saved to: washington-post-individual-results.json");
 
   if (successCount > 0) {
     console.log(
-      '\n🎉 Washington Post parser is working on individual recipe pages!'
+      "\n🎉 Washington Post parser is working on individual recipe pages!"
     );
   } else {
     console.log(
-      '\n⚠️  Tests failed - may need valid recipe URLs or parser updates'
+      "\n⚠️  Tests failed - may need valid recipe URLs or parser updates"
     );
     console.log(
-      'Check the page analysis in results JSON for selector insights'
+      "Check the page analysis in results JSON for selector insights"
     );
   }
 }
 
 console.log(
-  'NOTE: The test URLs may be examples. Replace with actual Washington Post recipe URLs.'
+  "NOTE: The test URLs may be examples. Replace with actual Washington Post recipe URLs."
 );
 console.log(
-  'You can find individual recipe URLs by browsing Washington Post Food section.\n'
+  "You can find individual recipe URLs by browsing Washington Post Food section.\n"
 );
 
 // Uncomment to run tests:
