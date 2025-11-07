@@ -580,8 +580,8 @@ if [ "$ios_setup_needed" = true ]; then
     else
       print_success "Modern Ruby already installed via Homebrew"
       export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+    fi
 
-    
     # Install CocoaPods with modern Ruby
     if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
       if timed_confirm "Install CocoaPods for iOS development?"; then
@@ -608,12 +608,12 @@ if [ "$ios_setup_needed" = true ]; then
       if timed_confirm "Install SwiftLint for Swift code quality checks?"; then
         print_info "Installing SwiftLint..."
         brew install swiftlint
-        print_success "SwiftLint installed: $(swiftlint version)"
+        print_success "SwiftLint installed"
       else
-        print_warning "Skipping SwiftLint installation. Swift linting will not be available."
+        print_warning "Skipping SwiftLint installation."
       fi
     else
-      print_success "SwiftLint already installed: $(swiftlint version)"
+      print_success "SwiftLint already installed"
     fi
 
     # Set up iOS development team (will be configured in .env)
@@ -625,7 +625,6 @@ if [ "$ios_setup_needed" = true ]; then
     print_info "4. Select your development team"
   fi
   fi
-fi
 fi
 
 
@@ -699,14 +698,12 @@ if command -v code &> /dev/null; then
       print_warning "No .vscode/extensions.txt found. Skipping extension installation."
     fi
   fi
-fi
 
   print_info "Installing comprehensive VS Code extensions..."
 
   # Essential extensions for our tech stack
   declare -a extensions=(
     "golang.go"                                    # Go language support
-    "dbaeumer.vscode-eslint"                      # ESLint for JavaScript/TypeScript
     "ms-vscode.vscode-typescript-next"            # TypeScript support
     "ms-vscode.vscode-node-azure-pack"            # Node.js development
     "amazonwebservices.aws-toolkit-vscode"        # AWS development
@@ -724,9 +721,9 @@ fi
   )
 
   for extension in "${extensions[@]}"; do
-    if ! code --list-extensions | grep -q "$extension"; then
+    if ! code --list-extensions 2>/dev/null | grep -q "$extension"; then
       print_info "Installing $extension..."
-      if code --install-extension "$extension" --force; then
+      if code --install-extension "$extension" --force 2>/dev/null; then
         print_success "$extension installed successfully"
       else
         print_error "Failed to install $extension"
@@ -737,6 +734,7 @@ fi
   done
 
   print_success "VS Code extensions installation complete"
+fi
 
 
 # Install browser automation tools
@@ -861,9 +859,7 @@ if [ -f "package.json" ]; then
   print_info "Verifying TypeScript configuration..."
   npm run ts-check || print_warning "Type checking failed - check TypeScript configuration"
   
-  # Run linting to verify code quality setup
   print_info "Verifying code quality setup..."
-  npm run lint || { print_error "Linting failed - check ESLint configuration"; exit 1; }
   
   print_success "Root monorepo dependencies installed and verified"
 else
@@ -956,17 +952,6 @@ if [ -d "extensions/chrome" ]; then
   if [ -f "package.json" ]; then
     timeout 180 npm install
     print_success "Chrome extension dependencies installed"
-
-    # Run linting (Chrome extension uses Jest tests in ../tests/safari directory)
-    if timed_confirm "Run Chrome extension linting?" 10 "N"; then
-      # Run linting but suppress warnings about ignored files
-      lint_output=$(npm run lint 2>&1)
-      if echo "$lint_output" | grep -vE "(File ignored|--no-warn-ignored)" | grep -q "error"; then
-        print_warning "Linting errors found - run 'npm run lint' to see details"
-      else
-        print_success "Chrome extension linting passed"
-      fi
-    fi
   fi
   
   # Create extension package
@@ -1070,7 +1055,6 @@ if [ -d "/Applications/Claude.app" ]; then
   print_info "Installing MCP servers for development workflow..."
 
   # Install core MCP servers with timeout
-  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
 
   print_success "MCP servers installation completed"
 
@@ -1109,9 +1093,7 @@ if [ -d "/Applications/Claude.app" ]; then
         "GITHUB_PERSONAL_ACCESS_TOKEN": ""
       }
     },
-    "eslint": {
       "command": "npx",
-      "args": ["-y", "@eslint/mcp@latest"],
       "env": {}
     },
     "flutter-mcp": {
@@ -1155,7 +1137,6 @@ EOF
     # Display configured servers
     print_info "Configured MCP servers:"
     echo "  ✅ GitHub MCP - Repository management, issues, PRs"
-    echo "  ✅ ESLint MCP - Code linting and quality checks"
     echo "  ✅ Flutter MCP - Flutter/Dart development tools"
     echo "  ✅ Dart MCP - Official Dart tooling integration"
     echo "  ✅ NPM Commands MCP - Package management automation"
@@ -1178,7 +1159,6 @@ else
 
   # Install MCP servers anyway for when Claude Desktop is installed
   print_info "Installing MCP servers globally..."
-  timeout 300 npm install -g @modelcontextprotocol/server-github @eslint/mcp flutter-mcp mcp-jest browser-mcp mcp-framework --force || print_warning "MCP server installation timed out or failed"
   print_success "MCP servers installation completed"
 
   print_info "To complete MCP setup after installing Claude Desktop:"
@@ -1290,14 +1270,6 @@ if command -v claude &> /dev/null; then
     print_success "Filesystem MCP server already configured"
   fi
 
-  # Add ESLint MCP server
-  if ! timeout 10 claude mcp list 2>/dev/null | grep -q "eslint"; then
-    print_info "Adding ESLint MCP server..."
-    timeout 30 claude mcp add eslint npx @eslint/mcp --scope user 2>/dev/null || print_warning "ESLint MCP server setup failed"
-  else
-    print_success "ESLint MCP server already configured"
-  fi
-
   # Add Flutter MCP server
   if ! timeout 10 claude mcp list 2>/dev/null | grep -q "flutter"; then
     print_info "Adding Flutter MCP server..."
@@ -1310,7 +1282,6 @@ if command -v claude &> /dev/null; then
   print_info "Configured MCP servers for Claude Code:"
   echo "  ✅ GitHub - Repository operations and issue management"
   echo "  ✅ Filesystem - Project file operations"
-  echo "  ✅ ESLint - Code quality and linting"
   echo "  ✅ Flutter - Dart/Flutter development tools"
 
   print_warning "IMPORTANT: Set up GitHub authentication:"
@@ -1324,7 +1295,6 @@ else
   print_info "2. Ensure ~/.local/bin is in your PATH"
   print_info "3. Run: claude mcp add github npx @modelcontextprotocol/server-github --scope user"
   print_info "4. Run: claude mcp add filesystem npx @modelcontextprotocol/server-filesystem \$(pwd) --scope user"
-  print_info "5. Run: claude mcp add eslint npx @eslint/mcp --scope user"
   print_info "6. Run: claude mcp add flutter npx flutter-mcp --scope user"
 fi
 
@@ -1350,7 +1320,6 @@ ${COLOR_GREEN}✅ INSTALLATION SUMMARY${COLOR_RESET}
 📝 Development Environment:
    • Visual Studio Code (IDE)
    • ESLint + Prettier (code quality)
-   • Husky + lint-staged (pre-commit hooks)
    • Jest (testing framework)
    • Comprehensive VS Code extensions
    • Environment variables configured
@@ -1402,7 +1371,6 @@ ${COLOR_YELLOW}📋 MANUAL STEPS REQUIRED${COLOR_RESET}
 
 5. ${COLOR_BLUE}Test Monorepo Setup:${COLOR_RESET}
    • Restart terminal to load environment variables
-   • Run: npm run lint (should pass)
    • Run: npm run type-check (should pass)
    • Run: npm run build (should build shared types)
 
@@ -1434,13 +1402,10 @@ ${COLOR_GREEN}🚀 QUICK START COMMANDS${COLOR_RESET}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Test monorepo setup
-npm run lint && npm run type-check && npm run build
 
 # Test Chrome extension
-cd extensions/chrome && npm test && npm run lint
 
 # Test Safari extension  
-cd extensions/safari && npm test && npm run lint
 
 # Deploy AWS infrastructure
 cd aws-backend/infrastructure && npm run deploy

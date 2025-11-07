@@ -1,22 +1,76 @@
-/* eslint-env node */
+// RecipeArchive ESLint Configuration
+// Simple, minimal configuration for JavaScript/TypeScript linting
+
 module.exports = {
   root: true,
-  parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint"],
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+    webextensions: true, // Enable chrome, browser globals
+  },
+  globals: {
+    // Browser extension globals loaded via <script> tags
+    CONFIG: "readonly",
+    ENV_CONFIG: "readonly",
+    JWTValidator: "readonly",
+    SafariCognitoAuth: "readonly",
+  },
   extends: [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier",
   ],
-  env: {
-    node: true,
-  },
   parserOptions: {
-    ecmaVersion: "latest",
+    ecmaVersion: 2021,
     sourceType: "module",
-    project: ["./tsconfig.json"],
   },
   rules: {
-    quotes: ["error", "double"],
+    // Code Quality
+    "no-unused-vars": ["warn", {
+      argsIgnorePattern: "^_",
+      varsIgnorePattern: "^_"
+    }],
+    "no-console": "off", // Allow console in browser extensions
+
+    // Code Style
+    "quotes": ["error", "double"],
+    "semi": ["error", "always"],
+
+    // Best Practices
+    "no-undef": "error",
+    "no-redeclare": "error",
   },
+  // Override for TypeScript files
+  overrides: [
+    {
+      files: ["*.ts", "*.tsx"],
+      parser: "@typescript-eslint/parser",
+      plugins: ["@typescript-eslint"],
+      extends: [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+      ],
+      rules: {
+        "@typescript-eslint/no-unused-vars": ["warn", {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_"
+        }],
+        "no-unused-vars": "off", // Use TypeScript version
+      },
+    },
+    {
+      files: ["**/*.test.js", "**/__tests__/**/*.js"],
+      env: {
+        jest: true, // Enable Jest globals
+      },
+    },
+  ],
+  // Ignore patterns
+  ignorePatterns: [
+    "node_modules/",
+    "dist/",
+    "build/",
+    "*.min.js",
+    "typescript-parser-bundle.js",
+    "env-config.js",
+  ],
 };

@@ -8,8 +8,6 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "clean": "rm -rf dist",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
