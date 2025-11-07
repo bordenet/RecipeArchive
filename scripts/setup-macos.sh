@@ -333,6 +333,19 @@ else
   check_exists "Go ($(go version | awk '{print $3}'))"
 fi
 
+# Install golangci-lint (Go linter)
+if ! command -v golangci-lint &> /dev/null; then
+  check_installing "golangci-lint"
+  brew install golangci-lint > /dev/null 2>&1
+  if ! command -v golangci-lint &> /dev/null; then
+    print_error "golangci-lint installation failed. Please install manually."
+    die "Setup failed"
+  fi
+  check_done "golangci-lint"
+else
+  check_exists "golangci-lint ($(golangci-lint --version | head -1 | awk '{print $4}'))"
+fi
+
 # Install Xcode CLI tools (required for iOS/Swift development)
 if ! xcode-select -p &> /dev/null; then
   if timed_confirm "Xcode CLI tools are required for iOS development. Install? (Large download ~500MB)"; then
@@ -693,6 +706,24 @@ if [ "$ios_setup_needed" = true ]; then
         /opt/homebrew/opt/ruby/bin/gem install cocoapods > /dev/null 2>&1 || true
         check_done "CocoaPods"
 
+        # Add Ruby gems bin to PATH (where pod executable is installed)
+        RUBY_GEMS_BIN="/opt/homebrew/lib/ruby/gems/3.4.0/bin"
+        export PATH="$RUBY_GEMS_BIN:$PATH"
+
+        # Add to shell profile for persistence
+        SHELL_PROFILE=""
+        if [ -n "$ZSH_VERSION" ]; then
+          SHELL_PROFILE="$HOME/.zshrc"
+        elif [ -n "$BASH_VERSION" ]; then
+          SHELL_PROFILE="$HOME/.bash_profile"
+        fi
+
+        if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+          if ! grep -q "export PATH=\"$RUBY_GEMS_BIN:\$PATH\"" "$SHELL_PROFILE"; then
+            echo "export PATH=\"$RUBY_GEMS_BIN:\$PATH\"" >> "$SHELL_PROFILE"
+          fi
+        fi
+
         # Verify 'pod' command is now available
         if ! command -v pod &> /dev/null; then
             print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal."
@@ -704,6 +735,9 @@ if [ "$ios_setup_needed" = true ]; then
       fi
     else
       check_exists "CocoaPods"
+      # Ensure gems bin is in PATH even if CocoaPods already installed
+      RUBY_GEMS_BIN="/opt/homebrew/lib/ruby/gems/3.4.0/bin"
+      export PATH="$RUBY_GEMS_BIN:$PATH"
     fi
 
     # Install SwiftLint for code quality
