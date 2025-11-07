@@ -55,6 +55,7 @@ class DocOrganizer {
       'CHANGELOG.md',
       'CONTRIBUTING.md',
       '.eslintrc.js', // Main eslint config stays in root
+      '.eslintrc.cjs', // Main eslint config stays in root
       'eslint.config.js', // Main eslint config stays in root
       'package.json',
       'package-lock.json',
