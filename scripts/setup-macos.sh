@@ -257,735 +257,432 @@ timed_confirm() {
 log_header "RecipeArchive Project Setup for macOS"
 cd "$REPO_ROOT"
 
-section_start "Package manager"
+# Discover and execute components
+COMPONENTS_DIR="$SCRIPT_DIR/setup-components"
 
-# Install Homebrew if not present
-if ! command -v brew &> /dev/null; then
-  if timed_confirm "Homebrew is required but not installed. Install Homebrew? (Large download ~100MB)"; then
-    check_installing "Homebrew"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" > /dev/null 2>&1
-    if ! command -v brew &> /dev/null; then
-      print_error "Homebrew installation failed. Please install Homebrew manually."
-      die "Setup failed"
+if [ ! -d "$COMPONENTS_DIR" ]; then
+    die "Components directory not found: $COMPONENTS_DIR"
+fi
+
+# Source all components in numeric order
+for component_file in "$COMPONENTS_DIR"/*.sh; do
+    if [ -f "$component_file" ]; then
+        # ADOPTION NOTE: Component sourcing happens here
+        # Each component exports an install_component() function
+        source "$component_file"
+
+        # Execute the component's installation
+        # ADOPTION NOTE: All helper functions (check_*, section_*, etc.)
+        # are available to components via bash's function scope
+        install_component
+
+        # ADOPTION NOTE: Component failures are tracked automatically
+        # via check_failed() which populates FAILED_INSTALLS array
     fi
-    check_done "Homebrew"
-  else
-    print_error "Homebrew is required for this setup. Exiting."
-    die "Setup failed"
-  fi
-else
-  check_exists "Homebrew"
-fi
-
-section_end
-
-section_start "Essential development tools"
-
-# Install Node.js and npm
-if ! command -v node &> /dev/null; then
-  check_installing "Node.js"
-  brew install node > /dev/null 2>&1
-  if ! command -v node &> /dev/null; then
-    print_error "Node.js installation failed. Please install Node.js manually."
-    die "Setup failed"
-  fi
-  check_done "Node.js"
-else
-  check_exists "Node.js ($(node --version))"
-fi
-
-# Install TypeScript globally
-if ! command -v tsc &> /dev/null; then
-  check_installing "TypeScript"
-  timeout 180 npm install -g typescript > /dev/null 2>&1
-  if ! command -v tsc &> /dev/null; then
-    print_error "TypeScript installation failed. Please install TypeScript manually."
-    die "Setup failed"
-  fi
-  check_done "TypeScript"
-else
-  check_exists "TypeScript ($(tsc --version))"
-fi
-
-# Install AWS CDK globally
-if ! command -v cdk &> /dev/null; then
-  check_installing "AWS CDK"
-  timeout 180 npm install -g aws-cdk@2.87.0 > /dev/null 2>&1
-  if ! command -v cdk &> /dev/null; then
-    print_error "AWS CDK installation failed. Please install AWS CDK manually."
-    die "Setup failed"
-  fi
-  check_done "AWS CDK"
-else
-  check_exists "AWS CDK ($(cdk --version))"
-fi
-
-# Install Go
-if ! command -v go &> /dev/null; then
-  check_installing "Go"
-  brew install go > /dev/null 2>&1
-  if ! command -v go &> /dev/null; then
-    print_error "Go installation failed. Please install Go manually."
-    die "Setup failed"
-  fi
-  check_done "Go"
-else
-  check_exists "Go ($(go version | awk '{print $3}'))"
-fi
-
-# Install golangci-lint (Go linter)
-if ! command -v golangci-lint &> /dev/null; then
-  check_installing "golangci-lint"
-  brew install golangci-lint > /dev/null 2>&1
-  if ! command -v golangci-lint &> /dev/null; then
-    print_error "golangci-lint installation failed. Please install manually."
-    die "Setup failed"
-  fi
-  check_done "golangci-lint"
-else
-  check_exists "golangci-lint ($(golangci-lint --version | head -1 | awk '{print $4}'))"
-fi
-
-# Install Xcode CLI tools (required for iOS/Swift development)
-if ! xcode-select -p &> /dev/null; then
-  if timed_confirm "Xcode CLI tools are required for iOS development. Install? (Large download ~500MB)"; then
-    print_info "Installing Xcode CLI tools (follow on-screen prompts)..."
-    xcode-select --install
-    max_wait=300 # 5 minutes
-    wait_interval=10
-    waited=0
-    while [ $waited -lt $max_wait ]; do
-      if xcode-select -p &> /dev/null; then
-        print_success "Xcode CLI tools installed"
-        break
-      fi
-      sleep $wait_interval
-      waited=$((waited + wait_interval))
-    done
-    if ! xcode-select -p &> /dev/null; then
-      print_error "Xcode CLI tools installation timed out. Please complete the installation and run this script again."
-      die "Setup failed"
-    fi
-  else
-    print_warning "Skipping Xcode CLI tools - iOS development will not be available"
-  fi
-else
-  check_exists "Xcode CLI tools"
-fi
-
-section_end
-
-section_start "Mobile development environment"
-
-# Java Development Kit (required for Android)
-# MUST be installed BEFORE any Android SDK operations
-# Check if Java is actually working, not just if the command exists (macOS has a stub)
-java_working=false
-# The macOS stub at /usr/bin/java returns 0 but outputs an error message
-# Real Java outputs version info without errors
-if java -version 2>&1 | grep -q "openjdk\|java version"; then
-  java_working=true
-fi
-
-if [ "$java_working" = false ]; then
-  # Check if Java is installed but just needs configuration
-  if [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
-    # Java is installed, just needs PATH configuration
-    check_exists "Java (needs PATH configuration)"
-    JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
-    export JAVA_HOME
-    export PATH="$JAVA_HOME/bin:$PATH"
-  else
-    # Actually install Java
-    check_installing "Java Development Kit"
-    brew install openjdk@17 > /dev/null 2>&1
-
-    # Add Java to PATH
-    JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
-    export JAVA_HOME
-    export PATH="$JAVA_HOME/bin:$PATH"
-    check_done "Java Development Kit"
-  fi
-
-  # Add to shell profile
-  SHELL_PROFILE=""
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    SHELL_PROFILE="$HOME/.zshrc"
-  elif [ -n "${BASH_VERSION:-}" ]; then
-    SHELL_PROFILE="$HOME/.bash_profile"
-  fi
-
-  if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-    if ! grep -q "JAVA_HOME" "$SHELL_PROFILE"; then
-      cat >> "$SHELL_PROFILE" <<EOF
-
-# Java Development
-export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
-export PATH=\$JAVA_HOME/bin:\$PATH
-EOF
-    fi
-  fi
-else
-  check_exists "Java ($(java -version 2>&1 | head -1 | awk -F '"' '{print $2}'))"
-
-  # Ensure JAVA_HOME is set even if Java is already installed
-  if [ -z "${JAVA_HOME:-}" ] && [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
-    export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
-    export PATH="$JAVA_HOME/bin:$PATH"
-  fi
-fi
-
-# Flutter SDK Installation
-if ! command -v flutter &> /dev/null; then
-  if timed_confirm "Flutter SDK is required for mobile app development. Install? (Large download ~1GB)"; then
-    check_installing "Flutter SDK"
-    brew install flutter > /dev/null 2>&1
-
-    # Add Flutter to PATH (prioritize Flutter's Dart over Homebrew's)
-    FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
-    export PATH="$FLUTTER_PATH:$PATH"
-
-    # Configure Flutter to use correct Android SDK
-    flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
-
-    # Add to shell profile
-    SHELL_PROFILE=""
-    if [ -n "${ZSH_VERSION:-}" ]; then
-      SHELL_PROFILE="$HOME/.zshrc"
-    elif [ -n "${BASH_VERSION:-}" ]; then
-      SHELL_PROFILE="$HOME/.bash_profile"
-    fi
-
-    if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-      if ! grep -q "export PATH=\"/opt/homebrew/share/flutter/bin:\$PATH\"" "$SHELL_PROFILE"; then
-        echo "export PATH=\"/opt/homebrew/share/flutter/bin:\$PATH\"" >> "$SHELL_PROFILE"
-      fi
-    fi
-
-    check_done "Flutter SDK"
-  else
-    print_warning "Skipping Flutter - mobile development will not be available"
-  fi
-else
-  # Get Flutter version quietly by suppressing verbose output
-  FLUTTER_VERSION=$(flutter --version 2>&1 | grep "Flutter" | head -1 | awk '{print $2}' || echo "")
-  if [ -n "$FLUTTER_VERSION" ]; then
-    check_exists "Flutter ($FLUTTER_VERSION)"
-  else
-    check_exists "Flutter"
-  fi
-
-  # Ensure Flutter is configured correctly even if already installed
-  FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
-  export PATH="$FLUTTER_PATH:$PATH"
-
-  # Set ANDROID_HOME if it exists
-  ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-  if [ -d "$ANDROID_HOME" ]; then
-    export ANDROID_HOME
-    flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
-  fi
-fi
-
-# Android Development Setup
-android_setup_needed=false
-if [ ! -d "/Applications/Android Studio.app" ] || ! command -v sdkmanager &> /dev/null; then
-  android_setup_needed=true
-fi
-
-if [ "$android_setup_needed" = true ]; then
-  if timed_confirm "Set up Android development environment?"; then
-  print_info "Setting up Android development..."
-
-  # CRITICAL: Verify Java is available before proceeding with Android SDK
-  if ! java -version &> /dev/null; then
-    print_error "Java is required for Android development but is not available"
-    print_error "This is a critical setup error - Java should have been installed earlier"
-    die "Java installation failed - cannot proceed with Android setup"
-  fi
-
-  # Install Android Studio
-  if [ ! -d "/Applications/Android Studio.app" ]; then
-    if timed_confirm "Install Android Studio? (Large download ~2GB)"; then
-      check_installing "Android Studio"
-      brew install --cask android-studio > /dev/null 2>&1
-      check_done "Android Studio"
-    else
-      print_warning "Skipping Android Studio installation. You can install it manually later."
-    fi
-  else
-    check_exists "Android Studio"
-  fi
-
-  # Install Android SDK command-line tools
-  if ! command -v sdkmanager &> /dev/null; then
-    if timed_confirm "Install Android SDK command-line tools?"; then
-      check_installing "Android SDK tools"
-      brew install --cask android-commandlinetools > /dev/null 2>&1
-      check_done "Android SDK tools"
-    else
-      print_warning "Skipping Android SDK installation. Android development will not be available."
-    fi
-  else
-    check_exists "Android SDK tools"
-  fi
-
-  # Set up Android SDK environment variables
-  ANDROID_HOME="$HOME/Library/Android/sdk"
-  export ANDROID_HOME
-  export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-
-  # Add to shell profile
-  SHELL_PROFILE=""
-  if [ -n "$ZSH_VERSION" ]; then
-    SHELL_PROFILE="$HOME/.zshrc"
-  elif [ -n "$BASH_VERSION" ]; then
-    SHELL_PROFILE="$HOME/.bash_profile"
-  fi
-
-  if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-    if ! grep -q "ANDROID_HOME" "$SHELL_PROFILE"; then
-      cat >> "$SHELL_PROFILE" <<EOF
-
-# Android Development
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$PATH
-EOF
-      print_success "Added Android environment variables to $SHELL_PROFILE"
-    fi
-  fi
-
-  # Install platform-tools and a system image
-  if command -v sdkmanager &> /dev/null; then
-    check_installing "Android platform-tools"
-    timeout 300 sdkmanager "platform-tools" "system-images;android-33;google_apis;x86_64" > /dev/null 2>&1 || true
-    check_done "Android platform-tools"
-  fi
-
-  # Install Android command-line tools and accept licenses
-  if command -v sdkmanager &> /dev/null; then
-    timeout 30 sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
-
-    print_info "Accepting Android SDK licenses..."
-    yes | flutter doctor --android-licenses > /dev/null 2>&1 || print_warning "Failed to accept Android licenses. Run 'flutter doctor --android-licenses' manually."
-  fi
-
-  print_success "Android development configured"
-  print_warning "MANUAL STEP: Complete Android Studio setup if needed"
-  print_info "1. Open Android Studio (first launch will complete SDK setup)"
-  print_info "2. Follow setup wizard if prompted"
-  print_info "3. Install additional SDK components as needed"
-  else
-    print_warning "Skipping Android setup - Android development will not be available"
-  fi
-else
-  check_exists "Android development"
-
-  # Update Android SDK components (default YES)
-  if command -v sdkmanager &> /dev/null; then
-    # CRITICAL: Verify Java is available before running SDK operations
-    if ! java -version &> /dev/null; then
-      print_warning "Java is not available - skipping Android SDK updates"
-    else
-      # Set up environment for sdkmanager
-      ANDROID_HOME="$HOME/Library/Android/sdk"
-      export ANDROID_HOME
-      export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-
-    # Fix cmdline-tools path inconsistency BEFORE prompting (Android Studio upgrade issue)
-    CMDLINE_DIR="$ANDROID_HOME/cmdline-tools"
-    if [ -d "$CMDLINE_DIR" ]; then
-      # Find the actual latest version directory (latest-2, latest-3, etc.)
-      LATEST_VERSION=$(find "$CMDLINE_DIR" -maxdepth 1 -type d \( -name "latest-*" -o -name "[0-9]*" \) | sort -V | tail -1)
-
-      if [ -n "$LATEST_VERSION" ]; then
-        EXPECTED_TARGET=$(basename "$LATEST_VERSION")
-
-        # Check if 'latest' exists and what it is
-        if [ -L "$CMDLINE_DIR/latest" ]; then
-          # It's a symlink - verify it points to the right place
-          CURRENT_TARGET=$(readlink "$CMDLINE_DIR/latest")
-          if [ "$CURRENT_TARGET" != "$EXPECTED_TARGET" ]; then
-            print_info "Updating cmdline-tools symlink: $CURRENT_TARGET -> $EXPECTED_TARGET"
-            rm "$CMDLINE_DIR/latest"
-            ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
-            print_success "Command-line tools symlink updated"
-          fi
-        elif [ -d "$CMDLINE_DIR/latest" ]; then
-          # It's a directory (Android Studio bug) - replace with symlink
-          print_info "Replacing cmdline-tools directory with symlink: latest -> $EXPECTED_TARGET"
-          rm -rf "$CMDLINE_DIR/latest"
-          ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
-          print_success "Command-line tools path fixed"
-        elif [ ! -e "$CMDLINE_DIR/latest" ]; then
-          # Doesn't exist - create symlink
-          print_info "Creating cmdline-tools symlink: latest -> $EXPECTED_TARGET"
-          ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
-          print_success "Command-line tools symlink created"
-        fi
-      fi
-    fi
-
-      # Automatically update SDK components
-      print_info "Updating Android SDK components..."
-
-      # Update SDK manager itself
-      UPDATE_OUTPUT=$(timeout 120 sdkmanager --update 2>&1 || true)
-      if echo "$UPDATE_OUTPUT" | grep -q "Update available"; then
-        print_info "Applying SDK updates..."
-      fi
-
-      # Update platform-tools, build-tools, and latest platform
-      yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" > /dev/null 2>&1 || true
-
-      # Update emulator
-      timeout 120 sdkmanager "emulator" > /dev/null 2>&1 || true
-
-      # Check if updates were applied
-      if echo "$UPDATE_OUTPUT" | grep -q "No updates available"; then
-        print_info "No SDK updates available"
-      else
-        print_success "Android SDK components updated"
-      fi
-    fi
-  fi
-fi
-
-# iOS Development Setup
-ios_setup_needed=false
-if [ ! -d "/Applications/Xcode.app" ] || ! command -v pod &> /dev/null; then
-  ios_setup_needed=true
-fi
-
-if [ "$ios_setup_needed" = true ]; then
-  if timed_confirm "Set up iOS development environment?"; then
-  # Check if Xcode is installed
-  if [ ! -d "/Applications/Xcode.app" ]; then
-    print_warning "Xcode not found. Install from App Store and run script again."
-  else
-    check_exists "Xcode"
-    
-    # Install modern Ruby (required for CocoaPods)
-    if ! brew list ruby &> /dev/null; then
-      if timed_confirm "Install modern Ruby for CocoaPods?"; then
-        check_installing "Ruby"
-        brew install ruby > /dev/null 2>&1
-
-        # Add Homebrew Ruby to PATH
-        RUBY_PATH="/opt/homebrew/opt/ruby/bin"
-        export PATH="$RUBY_PATH:$PATH"
-
-        # Add to shell profile
-        SHELL_PROFILE=""
-        if [ -n "$ZSH_VERSION" ]; then
-          SHELL_PROFILE="$HOME/.zshrc"
-        elif [ -n "$BASH_VERSION" ]; then
-          SHELL_PROFILE="$HOME/.bash_profile"
-        fi
-
-        if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-          if ! grep -q "export PATH=\"$RUBY_PATH:\$PATH\"" "$SHELL_PROFILE"; then
-            echo "export PATH=\"$RUBY_PATH:\$PATH\"" >> "$SHELL_PROFILE"
-          fi
-        fi
-
-        check_done "Ruby"
-      else
-        print_warning "Skipping Ruby installation. CocoaPods installation may fail."
-      fi
-    else
-      check_exists "Ruby"
-      export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-    fi
-
-    # Install CocoaPods with modern Ruby
-    if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
-      if timed_confirm "Install CocoaPods for iOS development?"; then
-        check_installing "CocoaPods"
-        sudo gem install cocoapods > /dev/null 2>&1 || true
-        /opt/homebrew/opt/ruby/bin/gem install cocoapods > /dev/null 2>&1 || true
-        check_done "CocoaPods"
-
-        # Add Ruby gems bin to PATH (where pod executable is installed)
-        RUBY_GEMS_BIN="/opt/homebrew/lib/ruby/gems/3.4.0/bin"
-        export PATH="$RUBY_GEMS_BIN:$PATH"
-
-        # Add to shell profile for persistence
-        SHELL_PROFILE=""
-        if [ -n "$ZSH_VERSION" ]; then
-          SHELL_PROFILE="$HOME/.zshrc"
-        elif [ -n "$BASH_VERSION" ]; then
-          SHELL_PROFILE="$HOME/.bash_profile"
-        fi
-
-        if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
-          if ! grep -q "export PATH=\"$RUBY_GEMS_BIN:\$PATH\"" "$SHELL_PROFILE"; then
-            echo "export PATH=\"$RUBY_GEMS_BIN:\$PATH\"" >> "$SHELL_PROFILE"
-          fi
-        fi
-
-        # Verify 'pod' command is now available
-        if ! command -v pod &> /dev/null; then
-            print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal."
-            die "Setup failed"
-        fi
-      else
-        brew install cocoapods > /dev/null 2>&1 || true
-        print_warning "Skipping CocoaPods installation."
-      fi
-    else
-      check_exists "CocoaPods"
-      # Ensure gems bin is in PATH even if CocoaPods already installed
-      RUBY_GEMS_BIN="/opt/homebrew/lib/ruby/gems/3.4.0/bin"
-      export PATH="$RUBY_GEMS_BIN:$PATH"
-    fi
-
-    # Install SwiftLint for code quality
-    if ! command -v swiftlint &> /dev/null; then
-      if timed_confirm "Install SwiftLint for Swift code quality checks?"; then
-        check_installing "SwiftLint"
-        brew install swiftlint > /dev/null 2>&1
-        check_done "SwiftLint"
-      else
-        print_warning "Skipping SwiftLint installation."
-      fi
-    else
-      check_exists "SwiftLint"
-    fi
-
-    print_success "iOS development configured"
-    print_warning "MANUAL: Configure Apple Developer account in Xcode (Preferences > Accounts)"
-  fi
-  fi
-fi
-
-
-
-# AWS CLI
-if ! aws --version &> /dev/null; then
-  check_installing "AWS CLI"
-  brew reinstall awscli > /dev/null 2>&1
-  if ! aws --version &> /dev/null; then
-    print_error "AWS CLI reinstall failed. Please check your Homebrew and Python setup."
-    die "Setup failed"
-  fi
-  check_done "AWS CLI"
-else
-  check_exists "AWS CLI ($(aws --version | awk '{print $1}'))"
-fi
-
-section_end
-
-section_start "Web development tools"
-
-# ImageMagick (for icon generation)
-if ! command -v magick &> /dev/null; then
-  check_installing "ImageMagick"
-  brew install imagemagick > /dev/null 2>&1
-  check_done "ImageMagick"
-else
-  check_exists "ImageMagick"
-fi
-
-# Git (usually pre-installed but ensure latest)
-if ! command -v git &> /dev/null; then
-  check_installing "Git"
-  brew install git > /dev/null 2>&1
-  check_done "Git"
-else
-  check_exists "Git ($(git --version | awk '{print $3}'))"
-fi
-
-# Visual Studio Code
-if ! command -v code &> /dev/null; then
-  if timed_confirm "Visual Studio Code is recommended for development. Install? (Large download ~200MB)"; then
-    check_installing "Visual Studio Code"
-    brew install --cask visual-studio-code > /dev/null 2>&1
-    check_done "Visual Studio Code"
-  else
-    print_warning "Skipping VS Code - you can install it later with: brew install --cask visual-studio-code"
-  fi
-else
-  check_exists "Visual Studio Code"
-fi
-
-
-
-# Install VS Code extensions
-if command -v code &> /dev/null; then
-  if timed_confirm "Install VS Code extensions from .vscode/extensions.txt?"; then
-    if [ -f ".vscode/extensions.txt" ]; then
-      print_info "Installing VS Code extensions from .vscode/extensions.txt..."
-      while IFS= read -r extension; do
-        if [ -n "$extension" ]; then
-          # Use 'code --install-extension' but suppress all output for already-installed extensions
-          if ! code --list-extensions 2>/dev/null | grep -q "^${extension}$"; then
-            check_installing "$extension"
-            if code --install-extension "$extension" > /dev/null 2>&1; then
-              check_done "$extension"
-            else
-              check_failed "$extension"
-            fi
-          fi
-        fi
-      done < ".vscode/extensions.txt"
-      print_success "Extensions from .vscode/extensions.txt installed"
-    else
-      print_warning "No .vscode/extensions.txt found. Skipping extension installation."
-    fi
-  fi
-
-  print_info "Installing comprehensive VS Code extensions..."
-
-  # Essential extensions for our tech stack
-  declare -a extensions=(
-    "golang.go"                                    # Go language support
-    "ms-vscode.vscode-typescript-next"            # TypeScript support
-    "ms-vscode.vscode-node-azure-pack"            # Node.js development
-    "amazonwebservices.aws-toolkit-vscode"        # AWS development
-    "hashicorp.terraform"                         # Infrastructure as Code
-    "ms-vscode-remote.remote-containers"          # Container development
-    "ms-vscode-remote.remote-ssh"                 # Remote development
-    "vscode-icons-team.vscode-icons"              # File icons
-    "redhat.vscode-yaml"                          # YAML support
-    "ms-python.python"                            # Python support (for automation)
-    "bradlc.vscode-tailwindcss"                   # Tailwind CSS (future web app)
-    "esbenp.prettier-vscode"                      # Code formatting
-    "ms-vscode.test-adapter-converter"            # Testing support
-    "hbenl.vscode-test-explorer"                  # Test explorer
-    "ms-playwright.playwright"                    # Playwright test support
-  )
-
-  new_installs=0
-  already_installed=0
-
-  for extension in "${extensions[@]}"; do
-    if ! code --list-extensions 2>/dev/null | grep -q "^${extension}$"; then
-      check_installing "$extension"
-      if code --install-extension "$extension" --force > /dev/null 2>&1; then
-        check_done "$extension"
-        new_installs=$((new_installs + 1))
-      else
-        check_failed "$extension"
-      fi
-    else
-      already_installed=$((already_installed + 1))
-    fi
-  done
-
-  if [ $new_installs -gt 0 ]; then
-    print_success "Installed $new_installs new VS Code extensions"
-  fi
-  if [ $already_installed -gt 0 ]; then
-    print_info "$already_installed extensions already installed"
-  fi
-fi
-
-section_end
+done
+
+# section_start "Mobile development environment"
+#
+# # Java Development Kit (required for Android)
+# # MUST be installed BEFORE any Android SDK operations
+# # Check if Java is actually working, not just if the command exists (macOS has a stub)
+# java_working=false
+# # The macOS stub at /usr/bin/java returns 0 but outputs an error message
+# # Real Java outputs version info without errors
+# if java -version 2>&1 | grep -q "openjdk\|java version"; then
+#   java_working=true
+# fi
+#
+# if [ "$java_working" = false ]; then
+#   # Check if Java is installed but just needs configuration
+#   if [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
+#     # Java is installed, just needs PATH configuration
+#     check_exists "Java (needs PATH configuration)"
+#     JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+#     export JAVA_HOME
+#     export PATH="$JAVA_HOME/bin:$PATH"
+#   else
+#     # Actually install Java
+#     check_installing "Java Development Kit"
+#     brew install openjdk@17 > /dev/null 2>&1
+#
+#     # Add Java to PATH
+#     JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+#     export JAVA_HOME
+#     export PATH="$JAVA_HOME/bin:$PATH"
+#     check_done "Java Development Kit"
+#   fi
+#
+#   # Add to shell profile
+#   SHELL_PROFILE=""
+#   if [ -n "${ZSH_VERSION:-}" ]; then
+#     SHELL_PROFILE="$HOME/.zshrc"
+#   elif [ -n "${BASH_VERSION:-}" ]; then
+#     SHELL_PROFILE="$HOME/.bash_profile"
+#   fi
+#
+#   if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+#     if ! grep -q "JAVA_HOME" "$SHELL_PROFILE"; then
+#       cat >> "$SHELL_PROFILE" <<EOF
+#
+# # Java Development
+# export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+# export PATH=\$JAVA_HOME/bin:\$PATH
+# EOF
+#     fi
+#   fi
+# else
+#   check_exists "Java ($(java -version 2>&1 | head -1 | awk -F '"' '{print $2}'))"
+#
+#   # Ensure JAVA_HOME is set even if Java is already installed
+#   if [ -z "${JAVA_HOME:-}" ] && [ -d "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" ]; then
+#     export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+#     export PATH="$JAVA_HOME/bin:$PATH"
+#   fi
+# fi
+#
+# # Flutter SDK Installation
+# if ! command -v flutter &> /dev/null; then
+#   if timed_confirm "Flutter SDK is required for mobile app development. Install? (Large download ~1GB)"; then
+#     check_installing "Flutter SDK"
+#     brew install flutter > /dev/null 2>&1
+#
+#     # Add Flutter to PATH (prioritize Flutter's Dart over Homebrew's)
+#     FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
+#     export PATH="$FLUTTER_PATH:$PATH"
+#
+#     # Configure Flutter to use correct Android SDK
+#     flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
+#
+#     # Add to shell profile
+#     SHELL_PROFILE=""
+#     if [ -n "${ZSH_VERSION:-}" ]; then
+#       SHELL_PROFILE="$HOME/.zshrc"
+#     elif [ -n "${BASH_VERSION:-}" ]; then
+#       SHELL_PROFILE="$HOME/.bash_profile"
+#     fi
+#
+#     if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+#       if ! grep -q "export PATH=\"/opt/homebrew/share/flutter/bin:\$PATH\"" "$SHELL_PROFILE"; then
+#         echo "export PATH=\"/opt/homebrew/share/flutter/bin:\$PATH\"" >> "$SHELL_PROFILE"
+#       fi
+#     fi
+#
+#     check_done "Flutter SDK"
+#   else
+#     print_warning "Skipping Flutter - mobile development will not be available"
+#   fi
+# else
+#   # Get Flutter version quietly by suppressing verbose output
+#   FLUTTER_VERSION=$(flutter --version 2>&1 | grep "Flutter" | head -1 | awk '{print $2}' || echo "")
+#   if [ -n "$FLUTTER_VERSION" ]; then
+#     check_exists "Flutter ($FLUTTER_VERSION)"
+#   else
+#     check_exists "Flutter"
+#   fi
+#
+#   # Ensure Flutter is configured correctly even if already installed
+#   FLUTTER_PATH="/opt/homebrew/share/flutter/bin"
+#   export PATH="$FLUTTER_PATH:$PATH"
+#
+#   # Set ANDROID_HOME if it exists
+#   ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+#   if [ -d "$ANDROID_HOME" ]; then
+#     export ANDROID_HOME
+#     flutter config --android-sdk "$ANDROID_HOME" > /dev/null 2>&1 || true
+#   fi
+# fi
+#
+# # Android Development Setup
+# android_setup_needed=false
+# if [ ! -d "/Applications/Android Studio.app" ] || ! command -v sdkmanager &> /dev/null; then
+#   android_setup_needed=true
+# fi
+#
+# if [ "$android_setup_needed" = true ]; then
+#   if timed_confirm "Set up Android development environment?"; then
+#   print_info "Setting up Android development..."
+#
+#   # CRITICAL: Verify Java is available before proceeding with Android SDK
+#   if ! java -version &> /dev/null; then
+#     print_error "Java is required for Android development but is not available"
+#     print_error "This is a critical setup error - Java should have been installed earlier"
+#     die "Java installation failed - cannot proceed with Android setup"
+#   fi
+#
+#   # Install Android Studio
+#   if [ ! -d "/Applications/Android Studio.app" ]; then
+#     if timed_confirm "Install Android Studio? (Large download ~2GB)"; then
+#       check_installing "Android Studio"
+#       brew install --cask android-studio > /dev/null 2>&1
+#       check_done "Android Studio"
+#     else
+#       print_warning "Skipping Android Studio installation. You can install it manually later."
+#     fi
+#   else
+#     check_exists "Android Studio"
+#   fi
+#
+#   # Install Android SDK command-line tools
+#   if ! command -v sdkmanager &> /dev/null; then
+#     if timed_confirm "Install Android SDK command-line tools?"; then
+#       check_installing "Android SDK tools"
+#       brew install --cask android-commandlinetools > /dev/null 2>&1
+#       check_done "Android SDK tools"
+#     else
+#       print_warning "Skipping Android SDK installation. Android development will not be available."
+#     fi
+#   else
+#     check_exists "Android SDK tools"
+#   fi
+#
+#   # Set up Android SDK environment variables
+#   ANDROID_HOME="$HOME/Library/Android/sdk"
+#   export ANDROID_HOME
+#   export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+#
+#   # Add to shell profile
+#   SHELL_PROFILE=""
+#   if [ -n "$ZSH_VERSION" ]; then
+#     SHELL_PROFILE="$HOME/.zshrc"
+#   elif [ -n "$BASH_VERSION" ]; then
+#     SHELL_PROFILE="$HOME/.bash_profile"
+#   fi
+#
+#   if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+#     if ! grep -q "ANDROID_HOME" "$SHELL_PROFILE"; then
+#       cat >> "$SHELL_PROFILE" <<EOF
+#
+# # Android Development
+# export ANDROID_HOME=$HOME/Library/Android/sdk
+# export PATH=\$ANDROID_HOME/cmdline-tools/latest/bin:\$ANDROID_HOME/platform-tools:\$PATH
+# EOF
+#       print_success "Added Android environment variables to $SHELL_PROFILE"
+#     fi
+#   fi
+#
+#   # Install platform-tools and a system image
+#   if command -v sdkmanager &> /dev/null; then
+#     check_installing "Android platform-tools"
+#     timeout 300 sdkmanager "platform-tools" "system-images;android-33;google_apis;x86_64" > /dev/null 2>&1 || true
+#     check_done "Android platform-tools"
+#   fi
+#
+#   # Install Android command-line tools and accept licenses
+#   if command -v sdkmanager &> /dev/null; then
+#     timeout 30 sdkmanager "cmdline-tools;latest" > /dev/null 2>&1 || true
+#
+#     print_info "Accepting Android SDK licenses..."
+#     yes | flutter doctor --android-licenses > /dev/null 2>&1 || print_warning "Failed to accept Android licenses. Run 'flutter doctor --android-licenses' manually."
+#   fi
+#
+#   print_success "Android development configured"
+#   print_warning "MANUAL STEP: Complete Android Studio setup if needed"
+#   print_info "1. Open Android Studio (first launch will complete SDK setup)"
+#   print_info "2. Follow setup wizard if prompted"
+#   print_info "3. Install additional SDK components as needed"
+#   else
+#     print_warning "Skipping Android setup - Android development will not be available"
+#   fi
+# else
+#   check_exists "Android development"
+#
+#   # Update Android SDK components (default YES)
+#   if command -v sdkmanager &> /dev/null; then
+#     # CRITICAL: Verify Java is available before running SDK operations
+#     if ! java -version &> /dev/null; then
+#       print_warning "Java is not available - skipping Android SDK updates"
+#     else
+#       # Set up environment for sdkmanager
+#       ANDROID_HOME="$HOME/Library/Android/sdk"
+#       export ANDROID_HOME
+#       export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+#
+#     # Fix cmdline-tools path inconsistency BEFORE prompting (Android Studio upgrade issue)
+#     CMDLINE_DIR="$ANDROID_HOME/cmdline-tools"
+#     if [ -d "$CMDLINE_DIR" ]; then
+#       # Find the actual latest version directory (latest-2, latest-3, etc.)
+#       LATEST_VERSION=$(find "$CMDLINE_DIR" -maxdepth 1 -type d \( -name "latest-*" -o -name "[0-9]*" \) | sort -V | tail -1)
+#
+#       if [ -n "$LATEST_VERSION" ]; then
+#         EXPECTED_TARGET=$(basename "$LATEST_VERSION")
+#
+#         # Check if 'latest' exists and what it is
+#         if [ -L "$CMDLINE_DIR/latest" ]; then
+#           # It's a symlink - verify it points to the right place
+#           CURRENT_TARGET=$(readlink "$CMDLINE_DIR/latest")
+#           if [ "$CURRENT_TARGET" != "$EXPECTED_TARGET" ]; then
+#             print_info "Updating cmdline-tools symlink: $CURRENT_TARGET -> $EXPECTED_TARGET"
+#             rm "$CMDLINE_DIR/latest"
+#             ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
+#             print_success "Command-line tools symlink updated"
+#           fi
+#         elif [ -d "$CMDLINE_DIR/latest" ]; then
+#           # It's a directory (Android Studio bug) - replace with symlink
+#           print_info "Replacing cmdline-tools directory with symlink: latest -> $EXPECTED_TARGET"
+#           rm -rf "$CMDLINE_DIR/latest"
+#           ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
+#           print_success "Command-line tools path fixed"
+#         elif [ ! -e "$CMDLINE_DIR/latest" ]; then
+#           # Doesn't exist - create symlink
+#           print_info "Creating cmdline-tools symlink: latest -> $EXPECTED_TARGET"
+#           ln -s "$EXPECTED_TARGET" "$CMDLINE_DIR/latest"
+#           print_success "Command-line tools symlink created"
+#         fi
+#       fi
+#     fi
+#
+#       # Automatically update SDK components
+#       print_info "Updating Android SDK components..."
+#
+#       # Update SDK manager itself
+#       UPDATE_OUTPUT=$(timeout 120 sdkmanager --update 2>&1 || true)
+#       if echo "$UPDATE_OUTPUT" | grep -q "Update available"; then
+#         print_info "Applying SDK updates..."
+#       fi
+#
+#       # Update platform-tools, build-tools, and latest platform
+#       yes | sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34" > /dev/null 2>&1 || true
+#
+#       # Update emulator
+#       timeout 120 sdkmanager "emulator" > /dev/null 2>&1 || true
+#
+#       # Check if updates were applied
+#       if echo "$UPDATE_OUTPUT" | grep -q "No updates available"; then
+#         print_info "No SDK updates available"
+#       else
+#         print_success "Android SDK components updated"
+#       fi
+#     fi
+#   fi
+# fi
+#
+# # iOS Development Setup
+# ios_setup_needed=false
+# if [ ! -d "/Applications/Xcode.app" ] || ! command -v pod &> /dev/null; then
+#   ios_setup_needed=true
+# fi
+#
+# if [ "$ios_setup_needed" = true ]; then
+#   if timed_confirm "Set up iOS development environment?"; then
+#   # Check if Xcode is installed
+#   if [ ! -d "/Applications/Xcode.app" ]; then
+#     print_warning "Xcode not found. Install from App Store and run script again."
+#   else
+#     check_exists "Xcode"
+#
+#     # Install modern Ruby (required for CocoaPods)
+#     if ! brew list ruby &> /dev/null; then
+#       if timed_confirm "Install modern Ruby for CocoaPods?"; then
+#         check_installing "Ruby"
+#         brew install ruby > /dev/null 2>&1
+#
+#         # Add Homebrew Ruby to PATH
+#         RUBY_PATH="/opt/homebrew/opt/ruby/bin"
+#         export PATH="$RUBY_PATH:$PATH"
+#
+#         # Add to shell profile
+#         SHELL_PROFILE=""
+#         if [ -n "$ZSH_VERSION" ]; then
+#           SHELL_PROFILE="$HOME/.zshrc"
+#         elif [ -n "$BASH_VERSION" ]; then
+#           SHELL_PROFILE="$HOME/.bash_profile"
+#         fi
+#
+#         if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+#           if ! grep -q "export PATH=\"$RUBY_PATH:\$PATH\"" "$SHELL_PROFILE"; then
+#             echo "export PATH=\"$RUBY_PATH:\$PATH\"" >> "$SHELL_PROFILE"
+#           fi
+#         fi
+#
+#         check_done "Ruby"
+#       else
+#         print_warning "Skipping Ruby installation. CocoaPods installation may fail."
+#       fi
+#     else
+#       check_exists "Ruby"
+#       export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+#     fi
+#
+#     # Install CocoaPods with modern Ruby
+#     if ! /opt/homebrew/opt/ruby/bin/gem list cocoapods | grep -q cocoapods; then
+#       if timed_confirm "Install CocoaPods for iOS development?"; then
+#         check_installing "CocoaPods"
+#         sudo gem install cocoapods > /dev/null 2>&1 || true
+#         /opt/homebrew/opt/ruby/bin/gem install cocoapods > /dev/null 2>&1 || true
+#         check_done "CocoaPods"
+#
+#         # Add Ruby gems bin to PATH (where pod executable is installed)
+#         RUBY_GEMS_BIN="/opt/homebrew/lib/ruby/gems/3.4.0/bin"
+#         export PATH="$RUBY_GEMS_BIN:$PATH"
+#
+#         # Add to shell profile for persistence
+#         SHELL_PROFILE=""
+#         if [ -n "$ZSH_VERSION" ]; then
+#           SHELL_PROFILE="$HOME/.zshrc"
+#         elif [ -n "$BASH_VERSION" ]; then
+#           SHELL_PROFILE="$HOME/.bash_profile"
+#         fi
+#
+#         if [ -n "$SHELL_PROFILE" ] && [ -f "$SHELL_PROFILE" ]; then
+#           if ! grep -q "export PATH=\"$RUBY_GEMS_BIN:\$PATH\"" "$SHELL_PROFILE"; then
+#             echo "export PATH=\"$RUBY_GEMS_BIN:\$PATH\"" >> "$SHELL_PROFILE"
+#           fi
+#         fi
+#
+#         # Verify 'pod' command is now available
+#         if ! command -v pod &> /dev/null; then
+#             print_error "CocoaPods installed but 'pod' command not found in PATH. Please restart your terminal."
+#             die "Setup failed"
+#         fi
+#       else
+#         brew install cocoapods > /dev/null 2>&1 || true
+#         print_warning "Skipping CocoaPods installation."
+#       fi
+#     else
+#       check_exists "CocoaPods"
+#       # Ensure gems bin is in PATH even if CocoaPods already installed
+#       RUBY_GEMS_BIN="/opt/homebrew/lib/ruby/gems/3.4.0/bin"
+#       export PATH="$RUBY_GEMS_BIN:$PATH"
+#     fi
+#
+#     # Install SwiftLint for code quality
+#     if ! command -v swiftlint &> /dev/null; then
+#       if timed_confirm "Install SwiftLint for Swift code quality checks?"; then
+#         check_installing "SwiftLint"
+#         brew install swiftlint > /dev/null 2>&1
+#         check_done "SwiftLint"
+#       else
+#         print_warning "Skipping SwiftLint installation."
+#       fi
+#     else
+#       check_exists "SwiftLint"
+#     fi
+#
+#     print_success "iOS development configured"
+#     print_warning "MANUAL: Configure Apple Developer account in Xcode (Preferences > Accounts)"
+#   fi
+#   fi
+# fi
+#
+#
+#
+# # AWS CLI
+# if ! aws --version &> /dev/null; then
+#   check_installing "AWS CLI"
+#   brew reinstall awscli > /dev/null 2>&1
+#   if ! aws --version &> /dev/null; then
+#     print_error "AWS CLI reinstall failed. Please check your Homebrew and Python setup."
+#     die "Setup failed"
+#   fi
+#   check_done "AWS CLI"
+# else
+#   check_exists "AWS CLI ($(aws --version | awk '{print $1}'))"
+# fi
+#
+# section_end
 
 section_start "Browser automation and testing tools"
-
-# Check if Playwright browsers are already installed
-playwright_browsers_installed=false
-if [ -d "$HOME/Library/Caches/ms-playwright" ] && [ -n "$(ls -A "$HOME/Library/Caches/ms-playwright" 2>/dev/null)" ]; then
-  playwright_browsers_installed=true
-fi
-
-if [ "$playwright_browsers_installed" = true ]; then
-  check_exists "Playwright browsers"
-else
-  if timed_confirm "Install Playwright browsers? (~500MB download)" 10 "N"; then
-    check_installing "Playwright browsers"
-    if npx playwright install > /dev/null 2>&1; then
-      check_done "Playwright browsers"
-    else
-      check_failed "Playwright browsers"
-    fi
-  else
-    print_warning "Skipping Playwright browsers."
-  fi
-fi
-
-# Install Jest testing framework globally (for compatibility)
-if ! command -v jest &> /dev/null; then
-  check_installing "Jest"
-  npm install -g jest@^29.5.0 > /dev/null 2>&1
-  check_done "Jest"
-else
-  check_exists "Jest"
-fi
-
-section_end
-
-section_start "Additional utilities"
-
-# jq for JSON processing
-if ! command -v jq &> /dev/null; then
-  check_installing "jq"
-  brew install jq > /dev/null 2>&1
-  check_done "jq"
-else
-  check_exists "jq"
-fi
-
-# coreutils for timeout command (needed for multi-tenant tests)
-if ! command -v gtimeout &> /dev/null; then
-  check_installing "coreutils"
-  brew install coreutils > /dev/null 2>&1
-  check_done "coreutils"
-else
-  check_exists "coreutils"
-fi
-
-# curl and wget (usually pre-installed but ensure availability)
-if ! command -v curl &> /dev/null; then
-  check_installing "curl"
-  brew install curl > /dev/null 2>&1
-  check_done "curl"
-fi
-
-if ! command -v wget &> /dev/null; then
-  check_installing "wget"
-  brew install wget > /dev/null 2>&1
-  check_done "wget"
-fi
-
-# Tree for directory visualization
-if ! command -v tree &> /dev/null; then
-  check_installing "tree"
-  brew install tree > /dev/null 2>&1
-  check_done "tree"
-fi
-
-# Git repository tools for large file management and history cleanup
-if ! command -v bfg &> /dev/null; then
-  check_installing "BFG Repo-Cleaner"
-  brew install bfg > /dev/null 2>&1
-  check_done "BFG Repo-Cleaner"
-else
-  check_exists "BFG Repo-Cleaner"
-fi
-
-if ! command -v git-lfs &> /dev/null; then
-  check_installing "Git LFS"
-  brew install git-lfs > /dev/null 2>&1
-  git lfs install --system 2>/dev/null || git lfs install 2>/dev/null || true
-  check_done "Git LFS"
-else
-  check_exists "Git LFS"
-fi
-
-if ! command -v git-filter-repo &> /dev/null; then
-  check_installing "git-filter-repo"
-  brew install git-filter-repo > /dev/null 2>&1
-  check_done "git-filter-repo"
-else
-  check_exists "git-filter-repo"
-fi
-
-section_end
-
-section_start "RecipeArchive monorepo setup"
 
 # Install root dependencies first
 if [ -f "package.json" ]; then
