@@ -95,7 +95,7 @@ aws cognito-idp admin-set-user-password \
 ✓ Flutter build complete
 ✓ Uploaded to S3: recipe-web-XXXXX
 ✓ CloudFront invalidation created
-✓ Web app deployed: https://d1234567890.cloudfront.net
+✓ Web app deployed: https://xxxxxxxxxxx.cloudfront.net
 ```
 
 ## Step 5: Verify Installation (1 minute)
