@@ -94,7 +94,7 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 | Component | Status | Version | Endpoint |
 |-----------|--------|---------|----------|
-| Web App (Flutter) | 🟢 Deployed | 1.0.0 | <https://d1jcaphz4458q7.cloudfront.net> |
+| Web App (Flutter) | 🟢 Deployed | 1.0.0 | https://xxxxxxxxxxxx.cloudfront.net |
 | API Gateway | 🟢 Live | v1 | `<https://api.YOUR_DOMAIN>` |
 | Lambda Functions | 🟢 Running | Go 1.21 | 10 functions deployed |
 | S3 Storage | 🟢 Active | - | 3 buckets (recipes, images, temp) |
