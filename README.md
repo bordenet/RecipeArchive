@@ -1,240 +1,190 @@
-# RecipeArchive v1.3.0
+# RecipeArchive
 
-**Production-ready recipe management system for personal use**
+**A comprehensive recipe archiving platform for home cooks**
 
-Save, normalize, and search recipes with browser extensions, native mobile apps, and AWS serverless backend. Get started in 15 minutes with complete infrastructure automation.
+![Star RecipeArchive](https://img.shields.io/github/stars/bordenet/RecipeArchive)
 
-**Production Demo:** <https://d1jcaphz4458q7.cloudfront.net>
+<img src="./WebExtensionSample.png"
+     alt="WebExtension screenshot"
+     width="25%"
+     style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
 
-<table style="width:100%; border-collapse: collapse;">
-  <!-- Top row: Gallery image -->
-  <tr>
-    <td colspan="2" style="text-align: center;">
-      <img src="./docs/img/Desktop_Gallery.png" alt="v1.0 desktop website gallery view" width="85%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-      <div style="margin-top: 4px; font-size: 0.9em;">
-        <a href="https://d1jcaphz4458q7.cloudfront.net"><b>Production Website Sample</b></a>
-      </div>
-    </td>
-  </tr>
+<img src="./FlutterSample.png"
+     alt="Flutter app screenshot"
+     width="75%"
+     style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
 
-  <!-- Second row: Desktop Details + Web Extension side-by-side -->
-  <tr>
-    <td style="text-align: left; vertical-align: top;">
-      <img src="./docs/img/Desktop_Details.png" alt="v1.0 desktop website details view" width="560px" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-      <div style="font-size: 0.9em;">Desktop Details View</div>
-    </td>
-    <td>
-      <table style="width:100%; border-collapse: collapse;">
-      <tr>
-        <td style="text-align: left; vertical-align: top;">
-          <img src="./docs/img/WebExtensionSample.png" alt="Web Extension - Chrome" width="362px" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-          <div style="font-size: 0.9em;">Web Extension</div>
-        </td>
-      </tr>
-      <tr>
-        <td style="text-align: left; vertical-align: top; padding-top: 64px;">
-          <img src="./docs/img/iOS_Native_Sharing.png" alt="Web Extension - Chrome" width="362px" style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-          <div style="font-size: 0.9em;">iOS Native Sharing</div>
-        </td>
-      </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+> **AI Collaboration Note**: This project has been a fun opportunity to experiment with collaboration between Claude Code and Google Gemini. As such, there are Gemini artifacts in parts of the repo (primarily tools development). Unfortunately, Gemini's track record has been poor compared to Claude's reliability, so Gemini is relegated to secondary tooling tasks.
 
+Capture, organize, and access your favorite recipes from 13+ supported website with intelligent parsing, cross-device synchronization, and a modern web interface. Features OpenAI-powered recipe normalization with automatic time estimates and serving calculations, plus multi-tenant user provisioning for controlled expansion.
 
-## Quick Links
+## Supported Recipe Sites
 
-- **[Get Started in 15 Minutes →](docs/setup/GETTING_STARTED.md)** - Complete setup from zero to production
-- **[System Health Dashboard →](PROJECT_STATUS.md)** - SLOs, metrics, and known issues
-- **[Command Reference →](COMMANDS.md)** - Quick lookup for all commands
-- **[Development Guide →](CLAUDE.md)** - Conventions and best practices
+**Currently Supported (13 sites):**
 
-## Supported Recipe Sites (15)
+- Smitten Kitchen, Food Network, NYT Cooking, Food52
+- AllRecipes, Epicurious, Serious Eats, Love & Lemons
+- Washington Post, Food & Wine, Damn Delicious, Alexandra's Kitchen
 
-| Supported Sites |  |  |
-|-----------------|--|--|
-| [Smitten Kitchen](https://smittenkitchen.com) | [Food Network](https://foodnetwork.com) | [NYT Cooking](https://cooking.nytimes.com) |
-| [Food52](https://food52.com) | [AllRecipes](https://allrecipes.com) | [Epicurious](https://epicurious.com) |
-| [Serious Eats](https://seriouseats.com) | [Love & Lemons](https://loveandlemons.com) | [Washington Post](https://washingtonpost.com) |
-| [Food & Wine](https://foodandwine.com) | [Damn Delicious](https://damndelicious.net) | [Alexandra's Kitchen](https://alexandracooks.com) |
-| [Lemons and Zest](https://lemonsandzest.com) | [The Anthony Kitchen](https://theanthonykitchen.com) | [Laura in the Kitchen](https://laurainthekitchen.com) |
+All sites have comprehensive JSON-LD and HTML parsing with full test coverage.
 
+## 🚀 Quick Start
 
-<details>
-  <summary>Mobile Features</summary>
-
-- **📤 iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
-- **🔒 Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
-- **🎯 Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
-- **🍎 iOS Development**: Complete toolchain with Xcode integration and simulator management
-- **🤖 Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
-- **🔍 Search**: Full-text search across all saved recipes with feature parity to web client
-- **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. Native apps can be built from this project but are not yet available in respective app stores. Browser extensions are similarly not available in browser extension marketplaces. This is a homebrew project, where you get to build and deploy all by yourself. More fun that way. Probably not, but you can't beat the price.
-
-### iOS Share Extension in Action
-
-<img src="./docs/img/iOS_Native_Sharing.png" alt="iOS Share Extension - Share recipes from Safari browser" width="45%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-
-**Native iOS Integration**: Share any recipe from Safari mobile directly to the RecipeArchive app. The backend automatically fetches and parses the recipe HTML, extracts ingredients and instructions, downloads and stores the recipe image in S3, and normalizes the content with OpenAI. Android behaves similarly.
-
-**How it works:**
-1. Browse recipe in a web browser of your choice on iPhone/iPad or Android
-2. Tap the platform-native Share button → Select "RecipeArchive"
-3. App opens and processes the URL automatically
-4. Recipe appears in your collection with full content and images
-
-No manual copying, no desktop workflow required—just native iOS sharing!
-</details>
-<details>
-  <summary>Screenshots -- Native Apps</summary>
-  These screenshots were taken from XCode and Android Studio emulators. The mobile website looks identical in these form factors.
-<table style="width:100%; margin-top: 4px; margin-bottom: 4px; border: 0;">
-  <tr style="border: 0;">
-    <td style="text-align: center;">
-        <img src="./docs/img/iOS_Signin.png" alt="iOS: Signin Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td style="text-align: center;">
-        <img src="./docs/img/iOS_Gallery.png" alt="iOS: Gallery Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td style="text-align: center;">
-        <img src="./docs/img/iOS_Details.png" alt="iOS: Recipe Details Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td style="text-align: center;">
-        <img src="./docs/img/Android_Signin.png" alt="Android: Signin Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td style="text-align: center;">
-        <img src="./docs/img/Android_Gallery.png" alt="Android: Gallery Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td style="text-align: center;">
-        <img src="./docs/img/Android_Details.png" alt="Android: Recipe Details Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td colspan="2" style="text-align: center;">
-      <img src="./docs/img/iOS_Search.png" alt="iOS: Search Page" width="25%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-  </tr>
-  <tr style="border: 0;">
-    <td colspan="3" style="text-align: center;">
-      <img src="./docs/img/iOS_Gallery_Horizontal.png" alt="iOS: Gallery Page" width="50%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-    <td colspan="4" style="text-align: center;">
-      <img src="./docs/img/iOS_Details_Horizontal.png" alt="iOS: Recipe Details Page" width="45%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
-    </td>
-  </tr>
-</table>
-</details>
-<details>
-  <summary>Platform Support</summary>
-
-- **🌐 Web App**: Flutter web app with responsive design and mobile optimization
-- **📱 iOS Apps**: Complete development toolchain with device targeting (iPhone 16e, iPad on Mac, iPhone 17 Pro Max)
-- **🤖 Android Apps**: Full development environment with emulator management and APK builds
-- **🔒 Mobile Features**: Screen wakelock for hands-free cooking, optimized mobile UX
-- **🔌 Browser Extensions**: Chrome and Safari extensions with intelligent parsing for 14+ recipe sites
-- **☁️ Cloud Backend**: AWS Lambda functions with real-time sync and multi-tenant architecture
-</details>
-
-## Key Features
-
-✅ **Multi-Platform Capture**
-
-- Chrome & Safari browser extensions
-- iOS Share Extension (WKWebView-based)
-- Android Share Intent (planned)
-- Direct URL import in web/mobile apps
-
-✅ **Smart Recipe Processing**
-
-- OpenAI-powered normalization
-- Ingredient & instruction extraction
-- Metadata enrichment (prep time, servings, etc.)
-- Automatic image downloading and storage
-
-✅ **Cooking-Optimized UX**
-
-- Yield scaling (2x, 3x, ½x, etc.)
-- Unit conversion (metric ↔ imperial)
-- Screen wakelock for hands-free cooking
-- Clean, distraction-free recipe view
-
-✅ **Multi-Tenant Architecture**
-
-- Secure invitation system
-- Shared recipe collections
-- Per-tenant AWS Cognito authentication
-- S3-based storage with encryption
-
-## Quick Start
-
-**Complete setup guide:** [docs/setup/GETTING_STARTED.md](docs/setup/GETTING_STARTED.md)
+### Automatic Setup (macOS)
 
 ```bash
-# 1. Clone and install
+# Clone the repository
 git clone https://github.com/bordenet/RecipeArchive
-cd RecipeArchive && npm install
+cd RecipeArchive
 
-# 2. Deploy AWS infrastructure (8 minutes)
-./scripts/deploy-aws-infrastructure.sh
+# Run the automated setup script (installs all dependencies)
+./scripts/setup-macos.sh
 
-# 3. Deploy web application (3 minutes)
-./scripts/web/deploy.sh
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your AWS credentials (see AWS Setup section below)
 
-# 4. Validate installation (1 minute)
+# Validate setup using the wrapper script (recommended for new users)
 ./validate-monorepo.sh --all
 ```
 
-**Prerequisites:** macOS, AWS account, OpenAI API key
+### Manual Setup (All Platforms)
 
-**Cost:** ~$4-7/month for active personal use (AWS Free Tier available)
+If you prefer manual setup or aren't on macOS, install these dependencies:
 
-## Development
+**Required:**
 
-### Common Commands
+- [Node.js 18+](https://nodejs.org/) - JavaScript runtime
+- [Go 1.19+](https://golang.org/) - Backend services
+- [Flutter 3.10+](https://flutter.dev/) - Web app development
+- [AWS CLI](https://aws.amazon.com/cli/) - Cloud deployment
+
+**Optional but recommended:**
+
+- [Git](https://git-scm.com/) - Version control
+- [Visual Studio Code](https://code.visualstudio.com/) - IDE
+
+After installing dependencies:
 
 ```bash
-# Validation
-./validate-monorepo.sh --all      # Full test suite (17 modules)
-./validate-monorepo.sh --p1       # Quick validation
-./validate-monorepo.sh --mobile   # Mobile-only validation
+# Install project dependencies
+npm install
 
-# Deployment
-./scripts/web/deploy.sh           # Deploy web app
-./scripts/aws/lambda.sh --all     # Deploy all Lambda functions (10 functions)
+# Build TypeScript parsers
+npm run build:parser-bundle
 
-# Mobile Development
-./scripts/ios/build.sh --dev --run              # iOS development build
-./scripts/android/build.sh --dev --run          # Android development build
-./scripts/ios/build.sh --prod --release --version 1.0.1    # iOS production
+# Validate setup using the wrapper script (recommended)
+./validate-monorepo.sh --all
 ```
 
-### Lambda Deployment Notes
+## AWS Setup
 
-The deployment script skips three development tools that are not deployed to AWS:
-- `local-server` - Local development HTTP server for testing
-- `s3-manager` - CLI utility for S3 operations
-- `test-tools` - Testing and validation utilities
+RecipeArchive uses AWS for backend services. You'll need:
 
-These warnings are expected and can be safely ignored. All 10 production Lambda functions deploy successfully.
+1. **AWS Account** - [Create one here](https://aws.amazon.com/) (free tier eligible)
+2. **Configure AWS CLI:**
+   ```bash
+   aws configure
+   # Enter your Access Key ID, Secret Key, and region (us-west-2)
+   ```
+3. **Edit `.env` file** with your AWS details:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual AWS credentials
+   ```
 
-**Complete command reference:** [COMMANDS.md](COMMANDS.md)
+**Expected AWS costs:** ~$1-5/month during development
 
-### Documentation
+## Architecture
 
-| Category | Document | Purpose |
-|----------|----------|---------|
-| **Setup** | [Getting Started](docs/setup/GETTING_STARTED.md) | 15-minute production deployment |
-| **Operations** | [System Health Dashboard](PROJECT_STATUS.md) | SLOs, metrics, known issues |
-| **Development** | [Project Guide](CLAUDE.md) | Conventions and best practices |
-| **Reference** | [Command Reference](COMMANDS.md) | Quick command lookup |
-| **Testing** | [E2E Parser Testing](docs/testing/e2e-parser-testing.md) | Automated parser validation |
-| **API** | [API Specification](docs/api/api-specification.md) | Backend API reference |
-| **Mobile** | [Mobile Deployment](recipe_archive/MOBILE_DEPLOYMENT.md) | iOS/Android builds |
-| **Extensions** | [Browser Extensions](extensions/README.md) | Chrome/Safari development |
+- **Extensions:** Chrome/Safari with TypeScript parsers + AWS Cognito auth
+- **Parsers:** Registry system for 13+ recipe sites with JSON-LD + HTML extraction
+- **Content Normalization:** OpenAI GPT-4o-mini integration for recipe enhancement at ingestion
+  - Title standardization, ingredient normalization, instruction clarity
+  - Metadata inference (cuisine type, cooking methods, dietary info, difficulty)
+  - Graceful fallback when OpenAI unavailable
+- **Backend:** Go serverless functions (AWS Lambda) + S3 storage + Cognito auth
+- **Frontend:** Flutter web app with responsive design + CloudFront deployment
 
-### Architecture
+## Development Workflow
 
-**Tech Stack:** Go (Lambda), Flutter (web/mobile), TypeScript (extensions), AWS (S3, Cognito, API Gateway)
+```bash
+# Full monorepo validation (recommended before commits)
+go run tools/monorepo-validator --med
 
-## About the Developer
+# Individual component testing
+npm run lint           # Code quality checks
+npm run test:parsers   # Parser functionality
+npm run test:go        # Backend services
 
-_[View my other projects](https://github.com/bordenet) and my [LinkedIn profile](https://www.linkedin.com/in/bordenet)_
+# Build and deploy
+npm run build:parser-bundle  # Compile parsers
+cd aws-backend && cdk deploy # Deploy infrastructure
+```
+
+## Documentation
+
+### Setup Guides
+
+- [Flutter Web Deployment](docs/flutter-web-deployment.md) - Step-by-step deployment guide
+- [AWS Setup Guide](docs/setup/aws-setup.md) - Detailed AWS configuration
+- [Environment Setup](docs/setup/ENVIRONMENT_SETUP.md) - Environment variable configuration
+- [macOS Setup Script](scripts/setup-macos.sh) - Automated development environment setup
+
+### Development Environment
+
+**AI-Powered Development with MCP Servers:**
+
+- **Claude Desktop**: 6 MCP servers (GitHub, ESLint, Flutter, Jest, Browser, NPM)
+- **Claude Code**: 4 MCP servers (GitHub, Filesystem, ESLint, Flutter)
+- **Cross-platform workflow**: Repository management, code quality, testing automation
+- **Setup**: Run `./scripts/setup-macos.sh` for complete automated configuration
+
+### Development
+
+- [CLAUDE.md](CLAUDE.md) - Current project status and priorities
+- [API Documentation](docs/api/api-specification.md) - Backend API specification
+- [Test Coverage](docs/VERSIONING.md) - Version management and testing strategy
+
+## Security
+
+- **No hardcoded secrets** - All credentials via environment variables
+- **TruffleHog scanning** - Automated secret detection in CI/CD
+- **Multi-tenant isolation** - Complete user data separation with JWT validation
+- **AWS best practices** - IAM roles, VPC, encryption at rest
+
+## Current Status
+
+### Features
+
+- ✅ Chrome & Safari extensions with 13-site parser support and authentication
+- ✅ AWS serverless backend with S3 storage and multi-tenant architecture
+- ✅ Flutter web app with responsive design, pagination, and admin tools
+- ✅ OpenAI-powered recipe normalization with automatic time estimates
+- ✅ Invitation-only user provisioning system with quota management
+- ✅ Comprehensive automated test suite (32 extension tests + build validation)
+- ✅ Star rating system with per-user personal ratings (whole numbers only)
+- ✅ Recipe deduplication system prevents duplicate URL submissions
+- ✅ Complete end-to-end pipeline: Web extension → AWS processing → Flutter display
+
+### Next Phase Development
+
+- Web extension recipe detection enhancement (prevent empty submissions)
+- Content operations tooling for multi-tenant management
+- Extension store enrollment (Chrome Web Store, Safari Extensions)
+- Android, iOS native apps
+
+---
+
+## Tech Stack
+
+**Backend:** Go (AWS Lambda), TypeScript (AWS CDK), AWS Cognito + S3 + DynamoDB  
+**Frontend:** Flutter/Dart (web), JavaScript (browser extensions)  
+**Testing:** Jest, Go testing, Flutter widget tests, integration tests, security scanning  
+**Infrastructure:** AWS CDK, CloudFront, API Gateway, SES for email delivery
+
+---
+
+_Transform your recipe collection with intelligent capture, organization, and cross-device access_
+
+Have a look through [my other work](https://github.com/bordenet).
