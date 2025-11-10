@@ -6,7 +6,7 @@
 
 Cross-platform recipe management system with web app, browser extensions (Chrome/Safari), mobile apps (iOS/Android), and AWS serverless backend.
 
-**Production URL:** <https://d1jcaphz4458q7.cloudfront.net>
+**Production URL:** <https://xxxxxxxxxxxx.cloudfront.net>
 
 ## Service Level Objectives (SLOs)
 
