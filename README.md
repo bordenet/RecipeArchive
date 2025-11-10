@@ -4,15 +4,13 @@
 
 Save, normalize, and search recipes with browser extensions, native mobile apps, and AWS serverless backend. Get started in 15 minutes with complete infrastructure automation.
 
-**Production Demo:** <https://d1jcaphz4458q7.cloudfront.net>
-
 <table style="width:100%; border-collapse: collapse;">
   <!-- Top row: Gallery image -->
   <tr>
     <td colspan="2" style="text-align: center;">
       <img src="./docs/img/Desktop_Gallery.png" alt="v1.0 desktop website gallery view" width="85%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
       <div style="margin-top: 4px; font-size: 0.9em;">
-        <a href="https://d1jcaphz4458q7.cloudfront.net"><b>Production Website Sample</b></a>
+        <b>Production Website Sample</b>
       </div>
     </td>
   </tr>
