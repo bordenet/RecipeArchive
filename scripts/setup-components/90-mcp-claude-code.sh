@@ -105,10 +105,29 @@ install_component() {
       # Configure essential MCP servers for Claude Code
       print_info "Configuring MCP servers for Claude Code development workflow..."
 
+      # Check if MCP server exists by reading config file directly (faster than claude mcp list health check)
+      CLAUDE_CONFIG="$HOME/.claude.json"
+      server_exists() {
+        local server_name="$1"
+        if [ -f "$CLAUDE_CONFIG" ]; then
+          # Use jq if available, otherwise fall back to grep
+          if command -v jq &> /dev/null; then
+            jq -e ".mcpServers.\"$server_name\"" "$CLAUDE_CONFIG" &> /dev/null
+          else
+            grep -q "\"$server_name\"" "$CLAUDE_CONFIG"
+          fi
+        else
+          return 1
+        fi
+      }
+
       # Add GitHub MCP server (requires authentication)
-      if ! timeout 10 claude mcp list 2>/dev/null | grep -q "github"; then
+      if ! server_exists "github"; then
         check_installing "GitHub MCP server"
-        if timeout 30 claude mcp add github npx @modelcontextprotocol/server-github --scope user 2>/dev/null; then
+        # Capture both stdout and stderr to handle "already exists" gracefully
+        MCP_OUTPUT=$(timeout 30 claude mcp add github npx @modelcontextprotocol/server-github --scope user 2>&1)
+        MCP_EXIT_CODE=$?
+        if [ $MCP_EXIT_CODE -eq 0 ] || echo "$MCP_OUTPUT" | grep -q "already exists"; then
           check_done "GitHub MCP server"
         else
           check_failed "GitHub MCP server"
@@ -118,9 +137,12 @@ install_component() {
       fi
 
       # Add filesystem MCP server for project directory
-      if ! timeout 10 claude mcp list 2>/dev/null | grep -q "filesystem"; then
+      if ! server_exists "filesystem"; then
         check_installing "Filesystem MCP server"
-        if timeout 30 claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>/dev/null; then
+        # Capture both stdout and stderr to handle "already exists" gracefully
+        MCP_OUTPUT=$(timeout 30 claude mcp add filesystem npx @modelcontextprotocol/server-filesystem "$(pwd)" --scope user 2>&1)
+        MCP_EXIT_CODE=$?
+        if [ $MCP_EXIT_CODE -eq 0 ] || echo "$MCP_OUTPUT" | grep -q "already exists"; then
           check_done "Filesystem MCP server"
         else
           check_failed "Filesystem MCP server"
@@ -130,9 +152,12 @@ install_component() {
       fi
 
       # Add Flutter MCP server
-      if ! timeout 10 claude mcp list 2>/dev/null | grep -q "flutter"; then
+      if ! server_exists "flutter"; then
         check_installing "Flutter MCP server"
-        if timeout 30 claude mcp add flutter npx flutter-mcp --scope user 2>/dev/null; then
+        # Capture both stdout and stderr to handle "already exists" gracefully
+        MCP_OUTPUT=$(timeout 30 claude mcp add flutter npx flutter-mcp --scope user 2>&1)
+        MCP_EXIT_CODE=$?
+        if [ $MCP_EXIT_CODE -eq 0 ] || echo "$MCP_OUTPUT" | grep -q "already exists"; then
           check_done "Flutter MCP server"
         else
           check_failed "Flutter MCP server"
