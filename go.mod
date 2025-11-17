@@ -1,6 +1,6 @@
 module github.com/RecipeArchive/monorepo-validator-go
 
-go 1.25.1
+go 1.24
 
 require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.216.0

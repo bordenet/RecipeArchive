@@ -61,6 +61,14 @@ class QualityGate {
       // Check if Flutter project exists
       if (!this.fileExists("recipe_archive/pubspec.yaml")) return;
 
+      // Check if Flutter is installed
+      try {
+        execSync("flutter --version", { stdio: "pipe" });
+      } catch (error) {
+        this.log(YELLOW, "⚠️  Flutter not installed - skipping Flutter analyze");
+        return;
+      }
+
       // Use 'pipe' instead of 'inherit' to avoid stdout/stderr race conditions during parallel validation
       const output = execSync("cd recipe_archive && flutter analyze", {
         stdio: "pipe",
