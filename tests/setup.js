@@ -35,6 +35,16 @@ global.chrome = {
 // Mock browser for Safari extension compatibility
 global.browser = global.chrome;
 
+// Mock localStorage to prevent SecurityError in newer Jest/Node versions
+global.localStorage = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+  length: 0,
+  key: jest.fn(),
+};
+
 // Mock fetch for tests
 global.fetch = jest.fn();
 

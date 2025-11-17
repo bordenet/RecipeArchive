@@ -51,11 +51,6 @@ init_script
 
 readonly REPO_ROOT="$(get_repo_root)"
 readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
-
-if ! is_macos; then
-    die "iOS builds are only available on macOS"
-fi
-
 IOS_DIR="$FLUTTER_DIR/ios"
 UNIFIED_BUILD_DIR="$REPO_ROOT/build"
 
@@ -177,6 +172,11 @@ if [ -z "$MODE" ]; then
 fi
 [ "$MODE" = "prod" ] && [ "$TARGET" = "simulator" ] && die "Production builds require --device"
 [ "$MODE" = "dev" ] && [ -n "$VERSION" ] && die "Version only applies to production builds"
+
+# Check for macOS after argument parsing (allows --help on other platforms)
+if ! is_macos; then
+    die "iOS builds are only available on macOS"
+fi
 [ "$RUN_AFTER" = true ] && [ "$MODE" = "prod" ] && die "--run only applies to dev builds"
 
 # Convert config to Xcode format
