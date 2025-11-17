@@ -51,34 +51,6 @@ readonly ANDROID_DIR="$FLUTTER_DIR/android"
 readonly UNIFIED_BUILD_DIR="$REPO_ROOT/build"
 readonly BUILD_DIR="$FLUTTER_DIR/build"
 
-# Helper functions
-print_header() {
-    echo -e "\n${COLOR_CYAN}╔════════════════════════════════════════════════════════════════╗"
-    echo -e "${COLOR_CYAN}║  $1"
-    echo -e "${COLOR_CYAN}╚════════════════════════════════════════════════════════════════╝${COLOR_RESET}\n"
-}
-
-print_status() {
-    log_info "▸ $1"
-}
-
-print_success() {
-    log_success "✓ $1"
-}
-
-print_error() {
-    log_error "✗ $1${COLOR_RESET}" >&2
-}
-
-print_warning() {
-    log_warning "⚠ $1"
-}
-
-error_exit() {
-    print_error "$1"
-    die "Build failed"
-}
-
 # Usage
 usage() {
     cat << EOF
@@ -140,12 +112,12 @@ CLEAN=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
-            [ -n "$MODE" ] && error_exit "Cannot specify both --dev and --prod"
+            [ -n "$MODE" ] && die "Cannot specify both --dev and --prod"
             MODE="dev"
             shift
             ;;
         --prod)
-            [ -n "$MODE" ] && error_exit "Cannot specify both --dev and --prod"
+            [ -n "$MODE" ] && die "Cannot specify both --dev and --prod"
             MODE="prod"
             shift
             ;;
@@ -179,8 +151,8 @@ while [[ $# -gt 0 ]]; do
             ;;
         --version)
             VERSION="$2"
-            [ -z "$VERSION" ] && error_exit "Version required after --version"
-            [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && error_exit "Version must be X.Y.Z format"
+            [ -z "$VERSION" ] && die "Version required after --version"
+            [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && die "Version must be X.Y.Z format"
             shift 2
             ;;
         --run)
@@ -195,7 +167,7 @@ while [[ $# -gt 0 ]]; do
             usage
             ;;
         *)
-            error_exit "Unknown option: $1 (use --help)"
+            die "Unknown option: $1 (use --help)"
             ;;
     esac
 done
@@ -205,10 +177,10 @@ if [ -z "$MODE" ]; then
     log_warning "No mode specified, defaulting to --dev mode"
     MODE="dev"
 fi
-[ "$MODE" = "prod" ] && [ "$TARGET" = "emulator" ] && error_exit "Production builds require --device"
-[ "$MODE" = "dev" ] && [ -n "$VERSION" ] && error_exit "Version only applies to production builds"
-[ "$RUN_AFTER" = true ] && [ "$MODE" = "prod" ] && error_exit "--run only applies to dev builds"
-[ "$MODE" = "prod" ] && [ "$CONFIG" != "release" ] && error_exit "Production builds must use --release"
+[ "$MODE" = "prod" ] && [ "$TARGET" = "emulator" ] && die "Production builds require --device"
+[ "$MODE" = "dev" ] && [ -n "$VERSION" ] && die "Version only applies to production builds"
+[ "$RUN_AFTER" = true ] && [ "$MODE" = "prod" ] && die "--run only applies to dev builds"
+[ "$MODE" = "prod" ] && [ "$CONFIG" != "release" ] && die "Production builds must use --release"
 
 # Convert config to Gradle format
 GRADLE_TASK="assemble$(echo "${CONFIG}" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')"
@@ -227,7 +199,7 @@ if [ -z "$VERSION" ]; then
 fi
 
 # Banner
-print_header "Android Build - RecipeArchive"
+log_header "Android Build - RecipeArchive"
 log_info "Mode:${COLOR_RESET}          ${COLOR_GREEN}$MODE"
 log_info "Target:${COLOR_RESET}        ${COLOR_GREEN}$TARGET"
 log_info "Configuration:${COLOR_RESET} ${COLOR_GREEN}$CONFIG"
@@ -235,8 +207,8 @@ log_info "Format:${COLOR_RESET}        ${COLOR_GREEN}$FORMAT"
 log_info "Version:${COLOR_RESET}       ${COLOR_GREEN}$VERSION"
 
 # Validate environment
-print_status "Validating environment..."
-command -v flutter &>/dev/null || error_exit "Flutter not found."
+log_section "Validating Environment"
+command -v flutter &>/dev/null || die "Flutter not found."
 
 # Check for Java - try Homebrew installation first
 JAVA_HOME_DETECTED=""
@@ -255,7 +227,7 @@ fi
 
 # Verify Java is accessible
 if ! command -v java &>/dev/null; then
-    error_exit "Java not found. Install OpenJDK via: brew install openjdk"
+    die "Java not found. Install OpenJDK via: brew install openjdk"
 fi
 
 # Check for Android SDK
@@ -266,25 +238,25 @@ elif [ -n "$ANDROID_HOME" ]; then
     ANDROID_SDK_ROOT="$ANDROID_HOME"
 fi
 
-[ -z "$ANDROID_SDK_ROOT" ] && error_exit "Android SDK not found. Set ANDROID_HOME or run ./scripts/setup-macos.sh"
+[ -z "$ANDROID_SDK_ROOT" ] && die "Android SDK not found. Set ANDROID_HOME or run ./scripts/setup-macos.sh"
 export ANDROID_HOME="$ANDROID_SDK_ROOT"
 export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
 
-print_success "Environment validated"
+log_success "Environment validated"
 
 # Navigate to Flutter directory
-cd "$FLUTTER_DIR" || error_exit "Cannot access $FLUTTER_DIR"
+cd "$FLUTTER_DIR" || die "Cannot access $FLUTTER_DIR"
 
 # Ensure .env file is copied from root (Flutter doesn't follow symlinks in assets)
 if [ -f "$REPO_ROOT/.env" ]; then
-    print_status "Syncing .env file from repository root..."
+    log_info "Syncing .env file from repository root..."
     cp "$REPO_ROOT/.env" .env
-    print_success ".env file synced"
+    log_success ".env file synced"
 fi
 
 # Set version if specified (prod mode only)
 if [ -n "$VERSION" ] && [ "$MODE" = "prod" ]; then
-    print_status "Setting version to $VERSION..."
+    log_info "Setting version to $VERSION..."
 
     # Get current build number
     CURRENT_VERSION=$(grep "^version:" pubspec.yaml | awk '{print $2}')
@@ -298,49 +270,49 @@ if [ -n "$VERSION" ] && [ "$MODE" = "prod" ]; then
     sed -i.bak "s/^version:.*/version: $VERSION+$BUILD_NUMBER/" pubspec.yaml
     rm -f pubspec.yaml.bak
 
-    print_success "Version set to $VERSION+$BUILD_NUMBER"
+    log_success "Version set to $VERSION+$BUILD_NUMBER"
 fi
 
 # Clean if requested
 if [ "$CLEAN" = true ]; then
-    print_status "Cleaning build..."
+    log_info "Cleaning build..."
     flutter clean
     cd android
-    ./gradlew clean || error_exit "Gradle clean failed"
+    ./gradlew clean || die "Gradle clean failed"
     cd ..
-    print_success "Clean complete"
+    log_success "Clean complete"
 fi
 
 # Step 1: Get Flutter dependencies
-print_status "Getting Flutter dependencies..."
+log_info "Getting Flutter dependencies..."
 flutter pub get
-print_success "Dependencies fetched"
+log_success "Dependencies fetched"
 
 # Step 1.5: Ensure Gradle wrapper exists
 if [ ! -f "$ANDROID_DIR/gradlew" ]; then
-    print_warning "Gradle wrapper not found - generating..."
+    log_warning "Gradle wrapper not found - generating..."
     # Flutter will generate the wrapper when building with --config-only
     if ! flutter build apk --config-only > /dev/null 2>&1; then
-        print_warning "Flutter config-only failed, trying direct gradle wrapper generation..."
+        log_warning "Flutter config-only failed, trying direct gradle wrapper generation..."
         cd "$ANDROID_DIR"
         if command -v gradle > /dev/null 2>&1; then
             gradle wrapper --gradle-version 8.3
         else
-            error_exit "Gradle wrapper missing and cannot be generated. Install gradle or run 'flutter build apk --config-only' manually."
+            die "Gradle wrapper missing and cannot be generated. Install gradle or run 'flutter build apk --config-only' manually."
         fi
         cd ..
     fi
     if [ -f "$ANDROID_DIR/gradlew" ]; then
         chmod +x "$ANDROID_DIR/gradlew"
-        print_success "Gradle wrapper generated"
+        log_success "Gradle wrapper generated"
     else
-        error_exit "Failed to generate Gradle wrapper"
+        die "Failed to generate Gradle wrapper"
     fi
 fi
 
 # Step 2: Gradle build
-print_header "Gradle Build"
-print_status "Building with Gradle..."
+log_section "Gradle Build"
+log_info "Building with Gradle..."
 
 cd android
 
@@ -349,7 +321,7 @@ TIMEOUT_DURATION=600
 
 if [ "$MODE" = "dev" ]; then
     # Development mode: Quick build
-    print_status "Running: ./gradlew $GRADLE_TASK --no-daemon"
+    log_info "Running: ./gradlew $GRADLE_TASK --no-daemon"
 
     # Run build and capture output to temp file while preserving exit code
     # Use --no-daemon to prevent Gradle daemon from hanging waiting for input
@@ -365,8 +337,8 @@ if [ "$MODE" = "dev" ]; then
     rm -f "$TEMP_OUTPUT"
 else
     # Production mode: Signed release build
-    print_status "Running: ./gradlew $GRADLE_TASK --no-daemon"
-    print_warning "Note: Requires signing configuration in android/key.properties"
+    log_info "Running: ./gradlew $GRADLE_TASK --no-daemon"
+    log_warning "Note: Requires signing configuration in android/key.properties"
 
     # Run build and capture output to temp file while preserving exit code
     # Use --no-daemon to prevent Gradle daemon from hanging waiting for input
@@ -385,7 +357,7 @@ fi
 cd ..
 
 if [ $BUILD_EXIT_CODE -eq 0 ]; then
-    print_success "Build complete"
+    log_success "Build complete"
 
     # Find the output file
     CONFIG_LOWER=$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')
@@ -429,7 +401,7 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
     fi
 
     if [ -n "$OUTPUT_FILE" ] && [ -f "$OUTPUT_FILE" ]; then
-        print_success "Output location: $OUTPUT_FILE"
+        log_success "Output location: $OUTPUT_FILE"
 
         # Create unified build directory with semantic naming
         OUTPUT_DIR="$UNIFIED_BUILD_DIR/android/$CONFIG_LOWER"
@@ -445,13 +417,13 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
 
         # Copy artifact to unified build directory
         cp "$OUTPUT_FILE" "$OUTPUT_PATH"
-        print_success "Artifact: $OUTPUT_PATH"
+        log_success "Artifact: $OUTPUT_PATH"
 
         # Create convenience symlink
         SYMLINK_NAME="$OUTPUT_DIR/artifacts/$OUTPUT_NAME"
         rm -f "$SYMLINK_NAME"
         ln -s "../$SEMANTIC_NAME" "$SYMLINK_NAME"
-        print_success "Symlink: $SYMLINK_NAME"
+        log_success "Symlink: $SYMLINK_NAME"
 
         # Show size
         SIZE=$(du -h "$OUTPUT_PATH" | cut -f1)
@@ -459,13 +431,13 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
 
         # Auto-run if requested
         if [ "$RUN_AFTER" = true ] && [ "$TARGET" = "emulator" ]; then
-            print_status "Launching on emulator..."
+            log_info "Launching on emulator..."
 
             # Check if emulator is running
             EMULATOR_RUNNING=$(adb devices | grep -c "emulator" || echo "0")
 
             if [ "$EMULATOR_RUNNING" = "0" ]; then
-                print_warning "No emulator running. Starting emulator..."
+                log_warning "No emulator running. Starting emulator..."
                 # This will be handled by the emulator script
                 timeout 600 "$SCRIPT_DIR/android/android-emulator.sh" start &
                 EMULATOR_PID=$!
@@ -475,7 +447,7 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
                 WAIT_COUNT=0
                 while [ $WAIT_COUNT -lt 60 ]; do
                     if adb devices | grep -q "emulator"; then
-                        print_success "Emulator ready"
+                        log_success "Emulator ready"
                         break
                     fi
                     sleep 5
@@ -485,23 +457,23 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
 
             # Install and launch
             if adb devices | grep -q "emulator"; then
-                print_status "Installing APK..."
+                log_info "Installing APK..."
                 adb install -r "$OUTPUT_FILE"
 
                 # Get package name from AndroidManifest.xml
                 PACKAGE_NAME=$(grep "package=" android/app/src/main/AndroidManifest.xml | sed 's/.*package="\([^"]*\)".*/\1/')
 
                 if [ -n "$PACKAGE_NAME" ]; then
-                    print_status "Launching app..."
+                    log_info "Launching app..."
                     adb shell monkey -p "$PACKAGE_NAME" -c android.intent.category.LAUNCHER 1
-                    print_success "App launched on emulator"
+                    log_success "App launched on emulator"
                 fi
             else
-                print_error "Emulator not available"
+                log_error "Emulator not available"
             fi
         fi
     else
-        print_error "Build succeeded but output file not found"
+        log_error "Build succeeded but output file not found"
         echo ""
         echo "Checked the following locations:"
         for location in "${POSSIBLE_LOCATIONS[@]}"; do
@@ -522,10 +494,10 @@ if [ $BUILD_EXIT_CODE -eq 0 ]; then
         die "Build failed: output artifact not found in expected locations"
     fi
 else
-    error_exit "Build failed (exit code: $BUILD_EXIT_CODE)"
+    die "Build failed (exit code: $BUILD_EXIT_CODE)"
 fi
 
-print_header "Build Complete"
+log_header "Build Complete"
 
 # Next steps for production builds
 if [ "$MODE" = "prod" ]; then
