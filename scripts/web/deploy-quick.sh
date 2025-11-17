@@ -35,6 +35,31 @@ readonly BUILD_DIR="$REPO_ROOT/recipe_archive/build/web"
 readonly S3_BUCKET="recipearchive-web-app-prod-990537043943"
 readonly CLOUDFRONT_DISTRIBUTION_ID="E1D19F7SLOJM5H"
 
+# Parse arguments
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+    cat << EOF
+Usage: $(basename "$0")
+
+Quick web deployment - deploys existing build without rebuilding
+
+Description:
+    Deploys existing Flutter web build to S3 and invalidates CloudFront cache.
+    Skips build step for speed - ideal for rapid deployment iterations.
+
+Prerequisites:
+    - Existing Flutter web build in recipe_archive/build/web
+    - AWS CLI configured with appropriate permissions
+
+Examples:
+    $(basename "$0")
+
+See also:
+    deploy-simple.sh - Full build + deploy workflow
+    deploy.sh        - Production deployment with extensions
+EOF
+    exit 0
+fi
+
 log_header "Quick Web Deployment"
 
 # Validate build exists
