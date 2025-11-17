@@ -1,6 +1,6 @@
 module recipe-archive/diagnostics-mobile-share
 
-go 1.25.3
+go 1.24
 
 require (
 	github.com/aws/aws-lambda-go v1.50.0

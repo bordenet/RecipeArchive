@@ -514,7 +514,7 @@ run_meaningful_tests() {
     
     print_step "Extension integration tests"
     add_test
-    if jest tests/parser-registry-integration.test.js > /dev/null 2>&1; then
+    if npx jest tests/parser-registry-integration.test.js > /dev/null 2>&1; then
         print_test_success
     else
         print_test_error
