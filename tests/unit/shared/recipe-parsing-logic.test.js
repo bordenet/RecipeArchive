@@ -444,7 +444,7 @@ describe("Recipe Parsing Logic Tests", () => {
         "<div><li>Orphaned list item</li><h1>Title</h1></div>";
       const recipe = RecipeParsers.parseSmittenKitchen();
       expect(recipe).toBeDefined();
-      expect(recipe.title).toBe(""); // Parser expects .entry-title or h1 at root, not inside div
+      expect(recipe.title).toBe("Title"); // Parser finds h1 anywhere in document
     });
 
     test("extracts serving information with various patterns", () => {
