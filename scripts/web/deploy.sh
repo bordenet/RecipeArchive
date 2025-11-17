@@ -81,82 +81,83 @@ else
 fi
 
 # Build Flutter web app
-echo "📦 Building Flutter web app for production..."
+log_section "Building Flutter Web App"
+log_info "Building Flutter web app for production..."
 cd "$APP_DIR"
 
 # Use compatibility flags to avoid build issues
-echo "🔧 Building with compatibility flags..."
+log_info "Building with compatibility flags..."
 if ! flutter build web --release --no-tree-shake-icons --no-wasm-dry-run > /tmp/deploy-web-app.log 2>&1; then
-    echo "❌ Flutter build failed. See /tmp/deploy-web-app.log for details."
-    echo "💡 Try: flutter clean && flutter pub get"
-    echo "💡 Then: flutter build web --release --no-tree-shake-icons"
+    log_error "Flutter build failed. See /tmp/deploy-web-app.log for details."
+    log_info "Try: flutter clean && flutter pub get"
+    log_info "Then: flutter build web --release --no-tree-shake-icons"
     die "Deployment failed"
 fi
 
-log_success " Flutter web app built successfully"
-echo ""
+log_success "Flutter web app built successfully"
 
 # Build and package extensions with latest configurations
-echo "🔧 Building and packaging browser extensions..."
+log_section "Building Browser Extensions"
+log_info "Building and packaging browser extensions..."
 cd "$REPO_ROOT"
 
 # Build extensions with latest parser fixes and configurations
-echo "📦 Building extensions with latest parsers..."
+log_info "Building extensions with latest parsers..."
 if ! npm run build:extensions > /tmp/deploy-web-app.log 2>&1; then
-    echo "❌ Extension build failed. See /tmp/deploy-web-app.log for details."
+    log_error "Extension build failed. See /tmp/deploy-web-app.log for details."
     die "Deployment failed"
 fi
 
 # Package extensions with semantic versioning and upload to S3
-echo "📋 Packaging extensions with semantic versioning..."
+log_info "Packaging extensions with semantic versioning..."
 if ! ./scripts/extensions/package.sh > /tmp/deploy-web-app.log 2>&1; then
-    echo "❌ Extension packaging failed. See /tmp/deploy-web-app.log for details."
+    log_error "Extension packaging failed. See /tmp/deploy-web-app.log for details."
     die "Deployment failed"
 fi
 
-log_success " Extensions built, packaged and uploaded successfully"
-echo ""
+log_success "Extensions built, packaged and uploaded successfully"
 
 # Deploy to S3
-echo "☁️  Uploading to S3..."
+log_section "Uploading to S3"
+log_info "Uploading to S3..."
 if ! aws s3 sync "$APP_DIR/build/web/" s3://$S3_BUCKET/ --delete > /tmp/deploy-web-app.log 2>&1; then
-    echo "⚠️  S3 upload encountered issues. Retrying with timeout adjustments..."
+    log_warning "S3 upload encountered issues. Retrying with timeout adjustments..."
     if ! aws s3 sync "$APP_DIR/build/web/" s3://$S3_BUCKET/ --delete \
         --cli-read-timeout 0 --cli-connect-timeout 60 > /tmp/deploy-web-app.log 2>&1; then
-        echo "❌ S3 upload failed. See /tmp/deploy-web-app.log for details."
+        log_error "S3 upload failed. See /tmp/deploy-web-app.log for details."
         die "Deployment failed"
     fi
 fi
 
-log_success " Files uploaded to S3 successfully"
-echo ""
+log_success "Files uploaded to S3 successfully"
 
 # Invalidate CloudFront cache
-echo "🔄 Invalidating CloudFront cache..."
+log_section "Invalidating CloudFront Cache"
+log_info "Invalidating CloudFront cache..."
 INVALIDATION_ID=$(aws cloudfront create-invalidation \
     --distribution-id $DISTRIBUTION_ID \
     --paths "/*" \
     --query "Invalidation.Id" \
     --output text)
 
-echo "📍 Invalidation ID: $INVALIDATION_ID"
-echo "⏳ Waiting for cache invalidation to complete..."
+log_info "Invalidation ID: $INVALIDATION_ID"
+log_info "Waiting for cache invalidation to complete..."
 
 # Wait for invalidation to complete
 aws cloudfront wait invalidation-completed \
     --distribution-id $DISTRIBUTION_ID \
     --id $INVALIDATION_ID
 
-log_success " Cache invalidation completed"
+log_success "Cache invalidation completed"
 # Get actual extension versions from manifest files
 CHROME_VERSION=$(grep '"version":' "$REPO_ROOT/extensions/chrome/manifest.json" | sed 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/' || echo "unknown")
 SAFARI_VERSION=$(grep '"version":' "$REPO_ROOT/extensions/safari/manifest.json" | sed 's/.*"version":[[:space:]]*"\([^"]*\)".*/\1/' || echo "unknown")
 
 echo ""
-echo "🎉 Deployment successful!"
-echo "📍 Web app URL: $CLOUDFRONT_URL"
+log_success "🎉 Deployment successful!"
+log_info "📍 Web app URL: $CLOUDFRONT_URL"
 echo ""
-echo "Extension distribution features are now live:"
-echo "• Navigate to the hamburger menu → Browser Extensions"
-echo "• Download Chrome extension: Chrome v$CHROME_VERSION"
-echo "• Download Safari extension: Safari v$SAFARI_VERSION"
+log_info "Extension distribution features are now live:"
+log_info "• Navigate to the hamburger menu → Browser Extensions"
+log_info "• Download Chrome extension: Chrome v$CHROME_VERSION"
+log_info "• Download Safari extension: Safari v$SAFARI_VERSION"

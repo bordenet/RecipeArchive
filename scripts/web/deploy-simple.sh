@@ -38,6 +38,32 @@ readonly S3_BUCKET="recipearchive-web-app-prod-990537043943"
 readonly CLOUDFRONT_DISTRIBUTION_ID="E1D19F7SLOJM5H"
 readonly CLOUDFRONT_URL="https://d1jcaphz4458q7.cloudfront.net"
 
+# Parse arguments
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+    cat << EOF
+Usage: $(basename "$0")
+
+Simple web deployment - full build and deploy workflow
+
+Description:
+    Cleans previous build, builds Flutter web in release mode, deploys to S3
+    with caching headers, creates CloudFront invalidation, and waits for completion.
+
+Prerequisites:
+    - Flutter SDK installed
+    - AWS CLI configured with permissions
+    - jq installed (brew install jq)
+
+Examples:
+    $(basename "$0")
+
+Notes:
+    - For faster deploys without rebuild, use deploy-quick.sh
+    - Hard refresh browser (Cmd+Shift+R) to see changes after deployment
+EOF
+    exit 0
+fi
+
 log_header "Flutter Web Deployment"
 
 # Validate dependencies
