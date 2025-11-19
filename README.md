@@ -46,7 +46,7 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 - **[Get Started in 15 Minutes →](docs/setup/GETTING_STARTED.md)** - Complete setup from zero to production
 - **[System Health Dashboard →](PROJECT_STATUS.md)** - SLOs, metrics, and known issues
 - **[Command Reference →](COMMANDS.md)** - Quick lookup for all commands
-- **[Development Guide →](CLAUDE.md)** - Conventions and best practices
+- **[Development Guide →](CONTRIBUTING.md)** - Conventions and best practices
 
 ## Supported Recipe Sites (15)
 
@@ -62,13 +62,13 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 <details>
   <summary>Mobile Features</summary>
 
-- **📤 iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
-- **🔒 Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
-- **🎯 Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
-- **🍎 iOS Development**: Complete toolchain with Xcode integration and simulator management
-- **🤖 Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
-- **🔍 Search**: Full-text search across all saved recipes with feature parity to web client
-- **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. Native apps can be built from this project but are not yet available in respective app stores. Browser extensions are similarly not available in browser extension marketplaces. This is a homebrew project, where you get to build and deploy all by yourself. More fun that way. Probably not, but you can't beat the price.
+- **iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
+- **Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
+- **Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
+- **iOS Development**: Complete toolchain with Xcode integration and simulator management
+- **Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
+- **Search**: Full-text search across all saved recipes with feature parity to web client
+- **Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. This is a self-hosted project designed for technical users who prefer full control over their infrastructure. All components (mobile apps, browser extensions, backend) are built and deployed locally, ensuring complete data ownership and customization flexibility.
 
 ### iOS Share Extension in Action
 
@@ -124,12 +124,12 @@ No manual copying, no desktop workflow required—just native iOS sharing!
 <details>
   <summary>Platform Support</summary>
 
-- **🌐 Web App**: Flutter web app with responsive design and mobile optimization
-- **📱 iOS Apps**: Complete development toolchain with device targeting (iPhone 16e, iPad on Mac, iPhone 17 Pro Max)
-- **🤖 Android Apps**: Full development environment with emulator management and APK builds
-- **🔒 Mobile Features**: Screen wakelock for hands-free cooking, optimized mobile UX
-- **🔌 Browser Extensions**: Chrome and Safari extensions with intelligent parsing for 14+ recipe sites
-- **☁️ Cloud Backend**: AWS Lambda functions with real-time sync and multi-tenant architecture
+- **Web App**: Flutter web app with responsive design and mobile optimization
+- **iOS Apps**: Complete development toolchain with device targeting (iPhone 16e, iPad on Mac, iPhone 17 Pro Max)
+- **Android Apps**: Full development environment with emulator management and APK builds
+- **Mobile Features**: Screen wakelock for hands-free cooking, optimized mobile UX
+- **Browser Extensions**: Chrome and Safari extensions with intelligent parsing for 14+ recipe sites
+- **Cloud Backend**: AWS Lambda functions with real-time sync and multi-tenant architecture
 </details>
 
 ## Key Features
@@ -222,7 +222,7 @@ These warnings are expected and can be safely ignored. All 10 production Lambda 
 |----------|----------|---------|
 | **Setup** | [Getting Started](docs/setup/GETTING_STARTED.md) | 15-minute production deployment |
 | **Operations** | [System Health Dashboard](PROJECT_STATUS.md) | SLOs, metrics, known issues |
-| **Development** | [Project Guide](CLAUDE.md) | Conventions and best practices |
+| **Development** | [Contributing Guide](CONTRIBUTING.md) | Conventions and best practices |
 | **Reference** | [Command Reference](COMMANDS.md) | Quick command lookup |
 | **Testing** | [E2E Parser Testing](docs/testing/e2e-parser-testing.md) | Automated parser validation |
 | **API** | [API Specification](docs/api/api-specification.md) | Backend API reference |

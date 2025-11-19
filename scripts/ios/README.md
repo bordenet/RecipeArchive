@@ -301,7 +301,7 @@ After each build, the script resets `ios/Runner.xcodeproj/project.pbxproj` to av
 - Platform-specific scripts in `./scripts/ios/`
 - NEVER create scripts directories in subdirectories
 
-See [../../CLAUDE.md](../../CLAUDE.md) for complete development conventions.
+See [../../CONTRIBUTING.md](../../CONTRIBUTING.md) for complete development conventions.
 
 ## Physical Device Testing
 
