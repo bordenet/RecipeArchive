@@ -223,6 +223,6 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 - [API Integration Diagram](docs/diagrams/claude_api-integration.md)
 
 ### Developer Guides
-- [Project Guide](CLAUDE.md) - Development workflows and critical instructions
+- [Contributing Guide](CONTRIBUTING.md) - Development workflows and best practices
 - [Command Reference](COMMANDS.md) - Complete command lookup tables
 - [Browser Extensions](extensions/README.md)
