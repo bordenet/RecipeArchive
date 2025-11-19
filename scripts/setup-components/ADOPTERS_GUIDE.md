@@ -412,7 +412,7 @@ If you have an existing monolithic setup script:
 
 For questions or issues with this architecture:
 - Review component headers for ADOPTION NOTES
-- Check CLAUDE.md for project-specific guidance
+- Check CONTRIBUTING.md for project-specific guidance
 - Examine existing components for patterns
 - Test changes in a VM or container before running on main system
 

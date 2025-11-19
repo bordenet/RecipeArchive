@@ -96,4 +96,4 @@ _Scripts are designed for automation and integration into CI/CD pipelines, while
 - **`save-rendered-fixture-stealth.cjs`**: Saves a fully rendered HTML fixture using Playwright Extra Stealth, handling potential 404s and retries.
 - **`save-rendered-fixture.cjs` / `save-rendered-fixture.js`**: Saves a fully rendered HTML fixture using Playwright, handling potential 404s and retries.
 - **`mcp-diagnostics-gate.js`**: An MCP-inspired quality gate for Husky pre-commit hooks, validating codebase health using native tools when MCP diagnostics are unavailable.
-- **`review-claude-md.js`**: Reviews `CLAUDE.md` on every commit to suggest pruning/consolidation opportunities, aiming to keep the project guide concise and current.
+- **`review-claude-md.js`**: Reviews `.claude/instructions.md` on every commit to suggest pruning/consolidation opportunities, aiming to keep the AI assistant instructions concise and current.

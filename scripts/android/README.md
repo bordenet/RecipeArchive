@@ -262,4 +262,4 @@ adb devices
 - Platform-specific scripts in `./scripts/android/`
 - NEVER create scripts directories in subdirectories
 
-See [../../CLAUDE.md](../../CLAUDE.md) for complete development conventions.
+See [../../CONTRIBUTING.md](../../CONTRIBUTING.md) for complete development conventions.
