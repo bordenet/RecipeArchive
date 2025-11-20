@@ -274,7 +274,7 @@ junit.xml
 test-output/
 
 # Package managers
-package-lock.json
+# package-lock.json - COMMITTED for CI stability (npm cache requires it)
 pnpm-lock.yaml
 yarn.lock
 
