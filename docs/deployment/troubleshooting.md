@@ -56,16 +56,16 @@ aws s3 sync build/web/ s3://bucket-name/ --delete \
 
 ### Distribution Details
 
-- **ID:** E1D19F7SLOJM5H
-- **Domain:** Your CloudFront distribution (from `.env` CLOUDFRONT_URL)
-- **Origin:** recipearchive-web-app-prod-990537043943.s3-website-us-west-2.amazonaws.com
+- **ID:** Your CloudFront distribution ID (from `.env` CLOUDFRONT_DISTRIBUTION_ID)
+- **Domain:** Your CloudFront distribution domain (from `.env` CLOUDFRONT_URL)
+- **Origin:** Your S3 website bucket (for example: `recipearchive-web-app-prod-<ACCOUNT_ID>.s3-website-us-west-2.amazonaws.com`)
 
 ### Cache Invalidation
 
 Scripts automatically invalidate cache after deployment:
 
 ```bash
-aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
+aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 ```
 
 ## Recovery Procedures
@@ -75,8 +75,8 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 1. **Create missing bucket:**
 
    ```bash
-   aws s3 mb s3://recipearchive-web-app-prod-990537043943 --region us-west-2
-   aws s3 website s3://recipearchive-web-app-prod-990537043943 \
+   aws s3 mb s3://YOUR_WEB_APP_BUCKET --region us-west-2
+   aws s3 website s3://YOUR_WEB_APP_BUCKET \
      --index-document index.html --error-document index.html
    ```
 
@@ -86,12 +86,12 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
    cd recipe_archive
    flutter clean && flutter pub get
    flutter build web --release --no-tree-shake-icons --no-wasm-dry-run
-   aws s3 sync build/web/ s3://recipearchive-web-app-prod-990537043943 --delete
+   aws s3 sync build/web/ s3://YOUR_WEB_APP_BUCKET --delete
    ```
 
 3. **Invalidate CloudFront:**
    ```bash
-   aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
+   aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
    ```
 
 ### Automated Recovery
@@ -134,7 +134,7 @@ aws lambda get-function-configuration --function-name "FUNCTION_NAME" --region u
 aws lambda update-function-configuration \
   --function-name "FUNCTION_NAME" \
   --region us-west-2 \
-  --environment 'Variables={API_GATEWAY_URL=https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod,COGNITO_USER_POOL_ID=us-west-2_rpBcEEhYK,...}'
+  --environment 'Variables={API_BASE_URL=https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod,COGNITO_USER_POOL_ID=your-user-pool-id-here,...}'
 ```
 
 **Fixed in:** Systematic Lambda environment variable updates (September 19, 2025) - All 6 Lambda functions updated with correct Cognito User Pool ID and API Gateway URLs

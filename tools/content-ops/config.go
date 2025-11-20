@@ -9,9 +9,9 @@ import (
 
 var (
 	AWSRegion     = getEnv("AWS_REGION", "us-west-2")
-	UserPoolID    = getEnv("COGNITO_USER_POOL_ID", "us-west-2_rpBcEEhYK")
-	ClientID      = getEnv("COGNITO_CLIENT_ID", "7lm8mqr03s0m0fn17dnv373s4h")
-	DefaultBucket = getEnv("S3_RECIPE_STORAGE_BUCKET", "recipe-storage-0ea7007d57f67ecb-990537043943")
+	UserPoolID    = getEnv("COGNITO_USER_POOL_ID", "")
+	ClientID      = getEnv("COGNITO_APP_CLIENT_ID", "")
+	DefaultBucket = getEnv("S3_RECIPE_STORAGE_BUCKET", "your-s3-recipe-storage-bucket")
 	RecipePath    = "recipes/"
 	FailurePath   = "failed-parsing/"
 	ErrorPath     = "errors/"

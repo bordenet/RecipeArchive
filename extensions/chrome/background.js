@@ -1,8 +1,20 @@
 console.log("🎯 Minimal background script loaded");
 
 // Global error handling for background script
-const DIAGNOSTIC_ENDPOINT =
-  "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/report-error";
+const DIAGNOSTIC_ENDPOINT = (function resolveDiagnosticEndpoint() {
+  try {
+    if (typeof CONFIG !== "undefined" && CONFIG.getCurrentAPI) {
+      const api = CONFIG.getCurrentAPI();
+      if (api && api.diagnostics) {
+        return api.diagnostics;
+      }
+    }
+  } catch (_e) {
+    // Ignore CONFIG resolution errors and fall back to placeholder
+  }
+  // Placeholder URL – configure API_BASE_URL via .env and env-config.js for real deployments
+  return "https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod/report-error";
+})();
 
 // Diagnostic reporting function
 async function reportDiagnostic(errorType, error, additionalData = {}) {

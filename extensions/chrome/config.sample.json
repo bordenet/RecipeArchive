@@ -4,6 +4,6 @@
     "password": "your-password"
   },
   "api": {
-    "baseUrl": "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod"
+    "baseUrl": "https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod"
   }
 }

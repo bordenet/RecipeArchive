@@ -1,10 +1,14 @@
 import axios from "axios";
 
 export async function submitDiagnostic(payload: any): Promise<any> {
-  // Replace with your real diagnostic API endpoint and authentication
-  const endpoint =
-    process.env.DIAGNOSTIC_API_URL ||
-    "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/report-error";
+  // Diagnostic API endpoint must be provided via environment; no hard-coded defaults
+  const endpoint = process.env.DIAGNOSTIC_API_URL;
+  if (!endpoint) {
+    throw new Error(
+      "DIAGNOSTIC_API_URL must be set in the test environment to submit diagnostics."
+    );
+  }
+
   const token = process.env.DIAGNOSTIC_API_TOKEN || "";
   try {
     const response = await axios.post(endpoint, payload, {

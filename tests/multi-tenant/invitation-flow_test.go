@@ -19,16 +19,9 @@ import (
 )
 
 var (
-	testAPIGatewayURL = getEnvOrDefault("API_BASE_URL", "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod")
-	testBucketName    = getEnvOrDefault("S3_RECIPE_STORAGE_BUCKET", "recipe-storage-92e63ea21a6fb18c-990537043943")
+	testAPIGatewayURL = os.Getenv("API_BASE_URL")
+	testBucketName    = os.Getenv("S3_RECIPE_STORAGE_BUCKET")
 )
-
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
 
 // Test structures
 type CreateInvitationRequest struct {
@@ -105,6 +98,10 @@ func TestMultiTenantInvitationFlow(t *testing.T) {
 		t.Skip("No admin token provided - set RECIPE_ADMIN_TOKEN environment variable")
 	}
 
+	if testAPIGatewayURL == "" {
+		t.Skip("API_BASE_URL not set - skipping multi-tenant invitation flow tests")
+	}
+
 	// Test 1: Create invitation
 	t.Run("CreateInvitation", func(t *testing.T) {
 		testEmail := fmt.Sprintf("test+%d@example.com", time.Now().Unix())
@@ -172,6 +169,10 @@ func TestMultiTenantInvitationFlow(t *testing.T) {
 
 	// Test 4: S3 storage validation
 	t.Run("S3StorageValidation", func(t *testing.T) {
+		if testBucketName == "" {
+			t.Skip("S3_RECIPE_STORAGE_BUCKET not set - skipping S3 storage validation")
+		}
+
 		// Verify that invitation data is properly stored in S3 with correct structure
 		cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
 		require.NoError(t, err)
@@ -250,8 +251,11 @@ func TestInvitationTokenFormat(t *testing.T) {
 	assert.Regexp(t, "^[a-f0-9]{64}$", createResp.Token, "Token should be hex-encoded")
 
 	// Validate invitation link format
-	expectedPrefix := "https://d1jcaphz4458q7.cloudfront.net"
-	assert.Contains(t, createResp.InvitationLink, expectedPrefix, "Link should use correct domain")
+	webAppURL := strings.TrimRight(os.Getenv("WEB_APP_URL"), "/")
+	if webAppURL == "" {
+		t.Skip("WEB_APP_URL not set - skipping invitation link domain validation")
+	}
+	assert.Contains(t, createResp.InvitationLink, webAppURL, "Link should use correct domain")
 	assert.Contains(t, createResp.InvitationLink, createResp.Token, "Link should contain token")
 
 	// Cleanup

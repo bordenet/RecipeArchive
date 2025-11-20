@@ -54,7 +54,8 @@ func initAWSClients(ctx context.Context) error {
 		// Get S3 bucket name from environment variable (matches .env naming)
 		bucketName = os.Getenv("S3_STORAGE_BUCKET")
 		if bucketName == "" {
-			bucketName = "recipe-storage-0ea7007d57f67ecb-990537043943" // fallback
+			initErr = fmt.Errorf("S3_STORAGE_BUCKET environment variable is not set")
+			return
 		}
 
 		// Initialize AWS clients

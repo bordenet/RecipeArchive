@@ -37,8 +37,8 @@ load_env_file
 # Script variables
 readonly REPO_ROOT="$(get_repo_root)"
 readonly FLUTTER_DIR="$REPO_ROOT/recipe_archive"
-readonly S3_BUCKET="${S3_WEB_APP_BUCKET:-recipearchive-web-app-prod-990537043943}"
-readonly CLOUDFRONT_DISTRIBUTION_ID="${CLOUDFRONT_DISTRIBUTION_ID:-E1D19F7SLOJM5H}"
+readonly S3_BUCKET="${S3_WEB_APP_BUCKET:-recipearchive-web-app-<ACCOUNT_ID>}"
+readonly CLOUDFRONT_DISTRIBUTION_ID="${CLOUDFRONT_DISTRIBUTION_ID:-<CLOUDFRONT_DISTRIBUTION_ID>}"
 readonly CLOUDFRONT_URL="${CLOUDFRONT_URL:-https://your-cloudfront-distribution.cloudfront.net}"
 
 # Parse arguments

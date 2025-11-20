@@ -164,7 +164,7 @@ func getOpenAIClient() *openai.Client {
 1. **README.md** - Brief mention in testing section
 2. **docs/testing/ai-mock-testing.md** - This comprehensive guide
 3. **.env.example** - Add `AI_MOCK_TESTING=false` with clear comment
-4. **CLAUDE.md** - Add section on using mock testing
+4. **.claude/instructions.md** - Keep AI behavior and environment policies for mock testing up to date
 
 ## Benefits
 

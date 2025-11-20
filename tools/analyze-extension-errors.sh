@@ -47,7 +47,7 @@
 
 set -e
 
-S3_BUCKET="recipe-failed-0ea7007d57f67ecb-990537043943"
+S3_BUCKET="${S3_FAILED_PARSING_BUCKET:-recipe-failed-<RANDOM_ID>-<ACCOUNT_ID>}"
 OUTPUT_DIR="./extension-error-analysis"
 HOURS_BACK=${1:-24}
 

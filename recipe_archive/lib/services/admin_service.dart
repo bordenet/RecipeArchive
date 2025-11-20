@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/invitation.dart';
 import 'auth_service.dart';
 
 class AdminService {
-  static const String baseUrl = 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
-  
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ??
+      'https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod';
+
   final AuthenticationService _authService;
 
   AdminService(this._authService);

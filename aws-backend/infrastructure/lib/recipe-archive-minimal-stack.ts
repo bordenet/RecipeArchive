@@ -376,7 +376,6 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
           allowOrigins: [
             "https://localhost:3000",
             "https://recipearchive.com",
-            "https://d1jcaphz4458q7.cloudfront.net",
             "chrome-extension://*",
             "moz-extension://*",
             "*", // Allow all origins for development
@@ -401,7 +400,7 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
       this.api.addGatewayResponse("unauthorized", {
         type: apigateway.ResponseType.UNAUTHORIZED,
         responseHeaders: {
-          "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+          "Access-Control-Allow-Origin": "'https://recipearchive.com'",
           "Access-Control-Allow-Credentials": "'true'",
           "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
           "Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
@@ -411,7 +410,7 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
       this.api.addGatewayResponse("accessDenied", {
         type: apigateway.ResponseType.ACCESS_DENIED,
         responseHeaders: {
-          "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+          "Access-Control-Allow-Origin": "'https://recipearchive.com'",
           "Access-Control-Allow-Credentials": "'true'",
           "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
           "Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
@@ -421,7 +420,7 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
       this.api.addGatewayResponse("badRequestBody", {
         type: apigateway.ResponseType.BAD_REQUEST_BODY,
         responseHeaders: {
-          "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+          "Access-Control-Allow-Origin": "'https://recipearchive.com'",
           "Access-Control-Allow-Credentials": "'true'",
           "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
           "Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",

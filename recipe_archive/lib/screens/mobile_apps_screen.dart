@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MobileAppsScreen extends StatelessWidget {
@@ -452,7 +453,8 @@ The app will appear on your home screen like a native app with offline capabilit
   }
 
   void _openPWA() async {
-    const url = 'https://d1jcaphz4458q7.cloudfront.net';
+    final url = dotenv.env['WEB_APP_URL'] ??
+        'https://your-cloudfront-distribution-id.cloudfront.net';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url));
     }

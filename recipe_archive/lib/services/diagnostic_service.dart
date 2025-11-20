@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DiagnosticSummary {
   final int totalFailures;
@@ -124,7 +125,9 @@ class ParserSuggestion {
 }
 
 class DiagnosticService {
-  static const String _baseUrl = 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
+  static final String _baseUrl =
+      dotenv.env['API_BASE_URL'] ??
+      'https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod';
 
   /// Report a Flutter error to the diagnostic endpoint
   Future<bool> reportError({
@@ -177,7 +180,7 @@ class DiagnosticService {
   Future<DiagnosticSummary?> getDiagnosticSummary() async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/diagnostic-processor'),
+        Uri.parse('$_baseUrl/v1/diagnostic-summary'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -266,7 +269,7 @@ class DiagnosticService {
       };
 
       final response = await http.post(
-        Uri.parse('https://d1jcaphz4458q7.cloudfront.net/api/v1/diagnostics/mobile-share-failure'),
+        Uri.parse('$_baseUrl/v1/diagnostics/mobile-share-failure'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $authToken',

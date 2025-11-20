@@ -35,7 +35,7 @@ class RecipeService {
 
   String get apiUrl =>
       dotenv.env['API_BASE_URL'] ??
-      'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
+      'https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod';
 
   // Get all recipes from API
   Future<List<Recipe>> getRecipes({

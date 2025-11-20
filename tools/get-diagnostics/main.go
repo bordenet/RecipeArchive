@@ -19,7 +19,7 @@ func main() {
 	// Get defaults from environment variables
 	defaultBucket := os.Getenv("S3_RECIPE_STORAGE_BUCKET")
 	if defaultBucket == "" {
-		defaultBucket = "recipe-storage-0ea7007d57f67ecb-990537043943"
+		defaultBucket = "your-s3-recipe-storage-bucket"
 	}
 
 	// Command line flags

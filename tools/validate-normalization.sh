@@ -76,9 +76,9 @@ check_dependencies() {
 }
 
 # Configuration
-BUCKET_NAME="recipe-storage-0ea7007d57f67ecb-990537043943"
+BUCKET_NAME="${S3_RECIPE_STORAGE_BUCKET:-recipe-storage-<RANDOM_ID>-<ACCOUNT_ID>}"
 USER_ID="d801a380-d0e1-703b-93fd-513a8ae33f5b"
-SQS_QUEUE_URL="https://sqs.us-west-2.amazonaws.com/990537043943/recipe-normalization-dev"
+SQS_QUEUE_URL="${NORMALIZATION_QUEUE_URL:-https://sqs.${AWS_REGION:-us-west-2}.amazonaws.com/<ACCOUNT_ID>/recipe-normalization-dev}"
 
 # Colors for output
 RED='\033[0;31m'

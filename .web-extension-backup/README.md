@@ -35,7 +35,7 @@ iOS Safari's Share Sheet **only provides URLs** (`["public.url"]`), not HTML con
 
 ## Setup
 
-**See [SAFARI_WEB_EXTENSION_SETUP.md](../../../SAFARI_WEB_EXTENSION_SETUP.md) in the repository root for complete setup instructions.**
+**See [SAFARI_WEB_EXTENSION_SETUP.md](../docs/technical/SAFARI_WEB_EXTENSION_SETUP.md) for complete setup instructions.**
 
 Key steps:
 1. Add Safari Web Extension target in Xcode

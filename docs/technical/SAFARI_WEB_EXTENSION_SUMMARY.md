@@ -38,13 +38,13 @@ recipe_archive/ios/RecipeExtension/
 
 ### Updated Files
 - `recipe_archive/ios/Runner/AppDelegate.swift` - Added CFNotification listener
-- `CLAUDE.md` - Documented new architecture
-- `SAFARI_WEB_EXTENSION_SETUP.md` - Complete setup guide
+- `recipe_archive/ios/RecipeExtension/` - Safari Web Extension target configuration
+- `docs/technical/SAFARI_WEB_EXTENSION_SETUP.md` - Complete setup guide
 
 ### Documentation
-- `recipe_archive/ios/RecipeExtension/README.md` - Technical details
-- `SAFARI_WEB_EXTENSION_SETUP.md` - Step-by-step Xcode setup
-- `SAFARI_WEB_EXTENSION_SUMMARY.md` - This file
+- `docs/adr/002-ios-recipe-capture-architecture.md` - Detailed architecture and design decisions
+- `docs/technical/SAFARI_WEB_EXTENSION_SETUP.md` - Step-by-step Xcode and Safari Web Extension setup
+- `docs/technical/SAFARI_WEB_EXTENSION_SUMMARY.md` - This summary
 
 ## How It Works
 

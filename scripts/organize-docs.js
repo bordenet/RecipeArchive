@@ -40,7 +40,6 @@ class DocOrganizer {
     // Files to keep in root (project documentation)
     this.keepInRoot = [
       "README.md",
-      "CLAUDE.md",
       "LICENSE.md",
       "CHANGELOG.md",
       "CONTRIBUTING.md",

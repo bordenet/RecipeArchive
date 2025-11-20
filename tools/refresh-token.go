@@ -17,12 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 )
 
-const (
-	CognitoAWSRegion  = "us-west-2"
-	CognitoUserPoolID = "us-west-2_rpBcEEhYK"
-	CognitoClientID   = "7lm8mqr03s0m0fn17dnv373s4h"
-)
-
 type JWTClaims struct {
 	Sub      string  `json:"sub"`
 	Email    string  `json:"email"`
@@ -58,11 +52,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	clientID := os.Getenv("COGNITO_APP_CLIENT_ID")
+	if clientID == "" {
+		fmt.Println("\n❌ Error: COGNITO_APP_CLIENT_ID must be set in .env file")
+		os.Exit(1)
+	}
+
+	awsRegion := os.Getenv("AWS_REGION")
+	if awsRegion == "" {
+		awsRegion = "us-west-2"
+	}
+
 	fmt.Printf("\n🔄 Refreshing token for user: %s\n", username)
 
 	// Initialize AWS Cognito client
 	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(CognitoAWSRegion))
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(awsRegion))
 	if err != nil {
 		fmt.Printf("❌ Failed to load AWS config: %v\n", err)
 		os.Exit(1)
@@ -72,7 +77,7 @@ func main() {
 
 	// Authenticate and get new token
 	input := &cognitoidentityprovider.InitiateAuthInput{
-		ClientId: aws.String(CognitoClientID),
+		ClientId: aws.String(clientID),
 		AuthFlow: "USER_PASSWORD_AUTH",
 		AuthParameters: map[string]string{
 			"USERNAME": username,

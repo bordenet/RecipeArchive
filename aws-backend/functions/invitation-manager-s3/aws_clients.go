@@ -52,7 +52,7 @@ func initAWSClients(ctx context.Context) error {
 
 		baseURL = os.Getenv("FRONTEND_BASE_URL")
 		if baseURL == "" {
-			baseURL = "https://d1jcaphz4458q7.cloudfront.net"
+			baseURL = "https://localhost:3000"
 		}
 
 		logger.Info("S3-Based Invitation Manager initialized", "bucket", utils.GetS3BucketName(), "baseURL", baseURL)

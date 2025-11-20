@@ -75,11 +75,17 @@ require_file "$REPO_ROOT/.env" ".env file not found at $REPO_ROOT/.env"
 
 # Set API Gateway ID
 if [[ "$USE_DEV_API" == true ]]; then
-    export API_GATEWAY_ID="4eprojzbrc"
-    log_info "Targeting development API Gateway"
+    if [[ -z "${DEV_API_GATEWAY_ID:-}" ]]; then
+        die "DEV_API_GATEWAY_ID must be set in your environment or .env to validate the development API"
+    fi
+    export API_GATEWAY_ID="$DEV_API_GATEWAY_ID"
+    log_info "Targeting development API Gateway ($API_GATEWAY_ID)"
 else
-    export API_GATEWAY_ID="1ym0pqnaib"
-    log_info "Targeting production API Gateway"
+    if [[ -z "${SECURE_API_GATEWAY_ID:-}" ]]; then
+        die "SECURE_API_GATEWAY_ID must be set in your environment or .env to validate the production API"
+    fi
+    export API_GATEWAY_ID="$SECURE_API_GATEWAY_ID"
+    log_info "Targeting production API Gateway ($API_GATEWAY_ID)"
 fi
 
 # Validate integrations

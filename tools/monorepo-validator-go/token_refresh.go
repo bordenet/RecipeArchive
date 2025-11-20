@@ -16,13 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 )
 
-const (
-	// AWS Cognito Configuration (matches content-ops tool)
-	CognitoAWSRegion  = "us-west-2"
-	CognitoUserPoolID = "us-west-2_rpBcEEhYK"
-	CognitoClientID   = "7lm8mqr03s0m0fn17dnv373s4h"
-)
-
 // TokenRefresher handles Cognito authentication and token refresh
 type TokenRefresher struct {
 	cognitoClient *cognitoidentityprovider.Client
@@ -43,7 +36,12 @@ type JWTClaims struct {
 func NewTokenRefresher(projectRoot string) (*TokenRefresher, error) {
 	ctx := context.Background()
 
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(CognitoAWSRegion))
+	awsRegion := os.Getenv("AWS_REGION")
+	if awsRegion == "" {
+		awsRegion = "us-west-2"
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(awsRegion))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
@@ -100,8 +98,13 @@ func (tr *TokenRefresher) RefreshToken() (string, error) {
 	fmt.Printf("🔐 Refreshing RECIPE_ADMIN_TOKEN using Cognito authentication...\n")
 
 	// Authenticate with Cognito
+	clientID := os.Getenv("COGNITO_APP_CLIENT_ID")
+	if clientID == "" {
+		return "", fmt.Errorf("COGNITO_APP_CLIENT_ID must be set in environment")
+	}
+
 	input := &cognitoidentityprovider.InitiateAuthInput{
-		ClientId: aws.String(CognitoClientID),
+		ClientId: aws.String(clientID),
 		AuthFlow: "USER_PASSWORD_AUTH",
 		AuthParameters: map[string]string{
 			"USERNAME": username,

@@ -205,7 +205,7 @@ s3://recipe-archive-dev/
 ## Related Documentation
 
 - [Project Status](../../PROJECT_STATUS.md)
-- [Project Guide](../../CLAUDE.md)
+- [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - [API Specification](../api/api-specification.md)
 - [AWS Setup Guide](../setup/aws-setup.md)
 - [Infrastructure README](../../aws-backend/infrastructure/README.md)

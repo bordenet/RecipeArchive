@@ -52,7 +52,6 @@ class SecurityScanner {
       // Exclude all documentation files
       "docs/",
       "README.md",
-      "CLAUDE.md",
       "GEMINI.md",
       ".md",
       // Allow extension configuration files and diffs (need hardcoded endpoints)

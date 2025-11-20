@@ -3,7 +3,7 @@
 # Configuration
 TEST_USER_ID := test-user-001
 DYNAMODB_TABLE_NAME := RecipeArchive-Recipes-Dev  
-S3_STORAGE_BUCKET := recipearchive-storage-dev-990537043943
+S3_STORAGE_BUCKET := recipearchive-storage-dev-YOUR_AWS_ACCOUNT_ID
 TEST_DATA_FILE := functions/testdata/test-recipes.json
 
 # Build variables

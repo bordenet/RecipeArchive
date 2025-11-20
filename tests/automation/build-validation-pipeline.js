@@ -197,7 +197,7 @@ class BuildValidationPipeline {
 
     // 3. Critical File Presence
     const criticalFiles = [
-      "CLAUDE.md",
+      ".claude/instructions.md",
       "package.json",
       "extensions/chrome/manifest.json",
       "recipe_archive/pubspec.yaml",

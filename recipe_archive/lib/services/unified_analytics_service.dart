@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'advanced_search_service.dart';
 import 'auth_service.dart';
@@ -158,7 +159,9 @@ class UnifiedAnalyticsService {
   static const int _syncIntervalMinutes = 5; // Sync every 5 minutes for better UX
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  static const String _baseUrl = 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
+  static String get _baseUrl =>
+      dotenv.env['API_BASE_URL'] ??
+      'https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod';
 
   final AuthenticationService _authService;
 

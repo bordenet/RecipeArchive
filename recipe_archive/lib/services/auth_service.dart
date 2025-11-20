@@ -86,11 +86,9 @@ class AuthenticationService {
 
   void _initializeCognito() {
     try {
-      // Use hardcoded values as fallback if .env not loaded
-      final userPoolId =
-          dotenv.env['COGNITO_USER_POOL_ID'] ?? 'us-west-2_rpBcEEhYK';
-      final clientId =
-          dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '7lm8mqr03s0m0fn17dnv373s4h';
+      // Load Cognito configuration from environment (.env)
+      final userPoolId = dotenv.env['COGNITO_USER_POOL_ID'] ?? '';
+      final clientId = dotenv.env['COGNITO_APP_CLIENT_ID'] ?? '';
 
       AppLogger.auth.info("Initializing Cognito UserPool", metadata: {
         "poolId": AppLogger.auth.redact(userPoolId),
@@ -99,7 +97,7 @@ class AuthenticationService {
 
       if (userPoolId.isEmpty || clientId.isEmpty) {
         throw Exception(
-            "Missing Cognito configuration: userPoolId=$userPoolId, clientId=$clientId");
+            "Missing Cognito configuration from .env: userPoolId or clientId is empty");
       }
 
       _userPool = CognitoUserPool(userPoolId, clientId);

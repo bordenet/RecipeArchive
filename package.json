@@ -37,6 +37,7 @@
     "security:clean": "echo '🚨 SECURITY VIOLATION DETECTED! Remove all PII/secrets before committing.' && exit 1",
     "docs:review": "node scripts/review-claude-md.js",
     "docs:organize": "node scripts/organize-docs.cjs",
+    "docs:check-links": "find . -name '*.md' -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/Pods/*' -not -path '*/build/*' -print0 | xargs -0 -n1 markdown-link-check -q",
     "quality:gate": "node scripts/mcp-diagnostics-gate.js",
     "prepare": "husky"
   },

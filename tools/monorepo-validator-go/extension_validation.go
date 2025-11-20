@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -28,7 +29,11 @@ func validateExtensionDownloads(projectRoot string) bool {
 	fmt.Printf("  Extension Downloads... ")
 
 	// S3 versions.json URL
-	versionsURL := "https://recipe-storage-0ea7007d57f67ecb-990537043943.s3.us-west-2.amazonaws.com/extensions/versions.json"
+	versionsURL := os.Getenv("EXTENSIONS_VERSIONS_URL")
+	if versionsURL == "" {
+		fmt.Println("⚠ (EXTENSIONS_VERSIONS_URL not set - skipping extension download validation)")
+		return true
+	}
 
 	// Fetch versions.json
 	client := &http.Client{Timeout: 30 * time.Second}

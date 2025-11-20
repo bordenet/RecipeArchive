@@ -31,6 +31,8 @@ export declare class RecipeArchiveStack extends cdk.Stack {
     private _invitationManagerFunction;
     private _registrationHandlerFunction;
     private _analyticsFunction;
+    private _backupFunction;
+    private _diagnosticsMobileShareFunction;
     constructor(scope: Construct, id: string, props: RecipeArchiveStackProps);
     getHealthFunction(): lambda.Function;
     getRecipesFunction(): lambda.Function;
@@ -43,4 +45,6 @@ export declare class RecipeArchiveStack extends cdk.Stack {
     getInvitationManagerFunction(): lambda.Function;
     getRegistrationHandlerFunction(): lambda.Function;
     getAnalyticsFunction(): lambda.Function;
+    getBackupFunction(): lambda.Function;
+    getDiagnosticsMobileShareFunction(): lambda.Function;
 }

@@ -115,8 +115,8 @@ COGNITO_USER_POOL_ID=us-west-2_XXXXXXXXX
 COGNITO_APP_CLIENT_ID=XXXXXXXXXXXXXXXXXX
 
 # S3 Configuration (SECURE - New buckets with randomized names)
-S3_RECIPE_STORAGE_BUCKET=recipe-storage-XXXXXXXXXXXXXXXX-990537043943
-S3_TEMP_BUCKET_NAME=recipe-temp-XXXXXXXXXXXXXXXX-990537043943
+S3_RECIPE_STORAGE_BUCKET=recipe-storage-XXXXXXXXXXXXXXXX-<ACCOUNT_ID>
+S3_TEMP_BUCKET_NAME=recipe-temp-XXXXXXXXXXXXXXXX-<ACCOUNT_ID>
 
 # Admin Token (SECURE - From new Cognito pool)
 RECIPE_ADMIN_TOKEN=eyJxxxxxxxxxxxxxxxxxxxxxxx...
@@ -159,7 +159,7 @@ aws cognito-idp initiate-auth \
   --region us-west-2
 
 # Test S3 bucket access
-aws s3 ls s3://recipe-storage-XXXXXXXXXXXXXXXX-990537043943/
+aws s3 ls s3://recipe-storage-XXXXXXXXXXXXXXXX-<ACCOUNT_ID>/
 
 # Run application tests
 npm run test
@@ -185,7 +185,7 @@ If issues are encountered during recovery:
 
 ## Contact Information
 
-- **AWS Account**: 990537043943
+- **AWS Account**: YOUR_AWS_ACCOUNT_ID
 - **Primary Region**: us-west-2
 - **Emergency Contact**: [Add emergency contact information]
 

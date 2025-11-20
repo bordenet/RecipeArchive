@@ -43,7 +43,7 @@ COGNITO_APP_CLIENT_ID=TBD
 
 ```bash
 # Automated AWS setup
-./scripts/deploy-aws-infrastructure.sh
+./scripts/aws/deploy-infrastructure.sh
 
 # This script will:
 # 1. Verify AWS credentials and region
@@ -128,7 +128,7 @@ aws cognito-idp admin-set-user-password \
 
 ### Development Workflow
 - [Command Reference](../../COMMANDS.md) - Quick lookup for all commands
-- [Project Guide](../../CLAUDE.md) - Development conventions and patterns
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Contribution workflow and development conventions
 - [API Documentation](../api/api-specification.md) - Backend API reference
 
 ## Common Issues
@@ -220,4 +220,4 @@ aws configure
 
 ---
 
-**Next:** [Development Workflow →](../../CLAUDE.md) | [Command Reference →](../../COMMANDS.md)
+**Next:** [Development Workflow →](../../CONTRIBUTING.md) | [Command Reference →](../../COMMANDS.md)

@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web/web.dart' as web;
 
 class ExtensionVersion {
@@ -52,8 +53,12 @@ class ExtensionVersions {
 }
 
 class ExtensionService {
-  static const String _versionsUrl =
-    'https://recipe-storage-0ea7007d57f67ecb-990537043943.s3.us-west-2.amazonaws.com/extensions/versions.json';
+  static String get _versionsUrl {
+    final bucket =
+        dotenv.env['S3_RECIPE_STORAGE_BUCKET'] ?? 'your-recipe-storage-bucket';
+    final region = dotenv.env['AWS_REGION'] ?? 'us-west-2';
+    return 'https://$bucket.s3.$region.amazonaws.com/extensions/versions.json';
+  }
 
   Future<ExtensionVersions?> getAvailableVersions() async {
     try {
