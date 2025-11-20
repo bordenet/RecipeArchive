@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml)
 [![Parser Health](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml)
-[![Coverage](https://img.shields.io/badge/Coverage-0.3%25-critical?logo=jest)](#testing--quality)
+[![Coverage](https://img.shields.io/badge/Coverage-4.9%25-critical?logo=jest)](#testing--quality)
 [![Go Version](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go)](https://go.dev/)
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.35.4-02569B?logo=flutter)](https://flutter.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org/)
