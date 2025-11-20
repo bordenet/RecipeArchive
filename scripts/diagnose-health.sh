@@ -29,8 +29,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 init_script
 
+# Load environment variables
+load_env_file
+
 # Script variables
 readonly REPO_ROOT="$(get_repo_root)"
+readonly CLOUDFRONT_URL="${CLOUDFRONT_URL:?CLOUDFRONT_URL not set in .env}"
 
 # Component flags
 CHECK_WEB=true
@@ -116,11 +120,11 @@ check_web_health() {
     log_section "Web Application"
 
     check_component "CloudFront endpoint" \
-        "curl -sf -o /dev/null https://d1jcaphz4458q7.cloudfront.net" \
+        "curl -sf -o /dev/null ${CLOUDFRONT_URL}" \
         ""
 
     check_component "Initial load time < 5s" \
-        "test \$(curl -s -o /dev/null -w '%{time_total}' https://d1jcaphz4458q7.cloudfront.net | cut -d. -f1) -lt 5" \
+        "test \$(curl -s -o /dev/null -w '%{time_total}' ${CLOUDFRONT_URL} | cut -d. -f1) -lt 5" \
         ""
 }
 

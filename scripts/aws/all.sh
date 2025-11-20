@@ -38,8 +38,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/common.sh"
 init_script
 
+# Load environment variables
+load_env_file
+
 readonly REPO_ROOT="$(get_repo_root)"
 readonly ENVIRONMENT="${1:-dev}"
+readonly CLOUDFRONT_URL="${CLOUDFRONT_URL:?CLOUDFRONT_URL not set in .env}"
 
 log_header "Complete AWS Deployment"
 log_info "Environment: $ENVIRONMENT"
@@ -376,7 +380,7 @@ configure_api_cors() {
             --resource-id "$recipes_resource_id" \
             --http-method OPTIONS \
             --status-code 200 \
-            --response-parameters '{"method.response.header.Access-Control-Allow-Headers":"Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token","method.response.header.Access-Control-Allow-Methods":"GET,POST,PUT,DELETE,OPTIONS","method.response.header.Access-Control-Allow-Origin":"https://d1jcaphz4458q7.cloudfront.net"}' \
+            --response-parameters "{\"method.response.header.Access-Control-Allow-Headers\":\"Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token\",\"method.response.header.Access-Control-Allow-Methods\":\"GET,POST,PUT,DELETE,OPTIONS\",\"method.response.header.Access-Control-Allow-Origin\":\"${CLOUDFRONT_URL}\"}" \
             --region "$AWS_REGION" > /tmp/deploy-all.log 2>&1
 
         # Deploy API changes

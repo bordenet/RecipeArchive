@@ -1,0 +1,28 @@
+{
+  "title": "Simple Pasta Recipe",
+  "description": "A basic pasta dish",
+  "ingredients": [],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Boil water in a large pot."
+    },
+    {
+      "step": 2,
+      "text": "Add pasta and cook according to package directions."
+    },
+    {
+      "step": 3,
+      "text": "Drain and serve."
+    }
+  ],
+  "prepTime": "5 minutes",
+  "cookTime": "10 minutes",
+  "totalTime": "15 minutes",
+  "servings": 2,
+  "cuisine": "Italian",
+  "mealType": ["lunch", "dinner"],
+  "dietaryRestrictions": [],
+  "tags": ["pasta", "quick", "easy"]
+}
+

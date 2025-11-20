@@ -104,7 +104,7 @@ With Safari 18.4+, properly signed extensions work without "Allow Unsigned Exten
 
 Extensions are part of the complete RecipeArchive ecosystem:
 
-- **Web App**: https://d1jcaphz4458q7.cloudfront.net
+- **Web App**: Your CloudFront URL (from `.env` CLOUDFRONT_URL)
 - **Mobile Apps**: Android and iOS Flutter applications (ready for store deployment)
 - **Cloud Sync**: Real-time synchronization across all platforms
 - **Unified Authentication**: Single sign-on across web, mobile, and extensions

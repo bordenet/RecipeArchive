@@ -1,0 +1,111 @@
+{
+  "title": "Classic Chicken Parmesan",
+  "description": "Crispy breaded chicken cutlets topped with marinara sauce and melted mozzarella cheese, served over pasta.",
+  "ingredients": [
+    {
+      "text": "4 boneless, skinless chicken breasts",
+      "quantity": 4,
+      "unit": "whole",
+      "item": "chicken breasts",
+      "preparation": "boneless, skinless"
+    },
+    {
+      "text": "1 cup all-purpose flour",
+      "quantity": 1,
+      "unit": "cup",
+      "item": "all-purpose flour"
+    },
+    {
+      "text": "2 large eggs, beaten",
+      "quantity": 2,
+      "unit": "whole",
+      "item": "eggs",
+      "preparation": "beaten"
+    },
+    {
+      "text": "2 cups Italian breadcrumbs",
+      "quantity": 2,
+      "unit": "cup",
+      "item": "Italian breadcrumbs"
+    },
+    {
+      "text": "1/2 cup grated Parmesan cheese",
+      "quantity": 0.5,
+      "unit": "cup",
+      "item": "Parmesan cheese",
+      "preparation": "grated"
+    },
+    {
+      "text": "2 cups marinara sauce",
+      "quantity": 2,
+      "unit": "cup",
+      "item": "marinara sauce"
+    },
+    {
+      "text": "2 cups shredded mozzarella cheese",
+      "quantity": 2,
+      "unit": "cup",
+      "item": "mozzarella cheese",
+      "preparation": "shredded"
+    },
+    {
+      "text": "1/4 cup olive oil",
+      "quantity": 0.25,
+      "unit": "cup",
+      "item": "olive oil"
+    },
+    {
+      "text": "Salt and pepper to taste",
+      "item": "salt and pepper",
+      "preparation": "to taste"
+    },
+    {
+      "text": "Fresh basil for garnish",
+      "item": "fresh basil",
+      "preparation": "for garnish"
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Preheat oven to 375°F (190°C)."
+    },
+    {
+      "step": 2,
+      "text": "Pound chicken breasts to 1/2 inch thickness. Season with salt and pepper."
+    },
+    {
+      "step": 3,
+      "text": "Set up breading station: flour in one dish, beaten eggs in second dish, breadcrumbs mixed with Parmesan in third dish."
+    },
+    {
+      "step": 4,
+      "text": "Dredge each chicken breast in flour, dip in egg, then coat with breadcrumb mixture."
+    },
+    {
+      "step": 5,
+      "text": "Heat olive oil in large skillet over medium-high heat. Cook chicken 3-4 minutes per side until golden brown."
+    },
+    {
+      "step": 6,
+      "text": "Transfer chicken to baking dish. Top each piece with marinara sauce and mozzarella cheese."
+    },
+    {
+      "step": 7,
+      "text": "Bake for 15-20 minutes until cheese is melted and bubbly."
+    },
+    {
+      "step": 8,
+      "text": "Garnish with fresh basil and serve over pasta."
+    }
+  ],
+  "prepTime": "20 minutes",
+  "cookTime": "30 minutes",
+  "totalTime": "50 minutes",
+  "servings": 4,
+  "cuisine": "Italian",
+  "mealType": ["dinner"],
+  "dietaryRestrictions": [],
+  "tags": ["chicken", "italian", "comfort food", "family-friendly"]
+}
+

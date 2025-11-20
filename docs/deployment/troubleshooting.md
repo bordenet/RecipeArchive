@@ -57,7 +57,7 @@ aws s3 sync build/web/ s3://bucket-name/ --delete \
 ### Distribution Details
 
 - **ID:** E1D19F7SLOJM5H
-- **Domain:** d1jcaphz4458q7.cloudfront.net
+- **Domain:** Your CloudFront distribution (from `.env` CLOUDFRONT_URL)
 - **Origin:** recipearchive-web-app-prod-990537043943.s3-website-us-west-2.amazonaws.com
 
 ### Cache Invalidation
@@ -108,7 +108,7 @@ This script now handles all the above issues automatically.
 
 ### Health Checks
 
-- **Production URL:** https://d1jcaphz4458q7.cloudfront.net/
+- **Production URL:** Your CloudFront URL (from `.env` CLOUDFRONT_URL)
 - **Expected Response:** Flutter app loading page
 - **Error Signs:** 404, NoSuchBucket, blank page
 
@@ -167,7 +167,7 @@ RESOURCE_ID=$(aws apigateway get-resources --rest-api-id $API_ID --query "items[
 aws apigateway put-method --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method OPTIONS --authorization-type NONE
 aws apigateway put-integration --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method OPTIONS --type MOCK --request-templates '{"application/json": "{\"statusCode\": 200}"}'
 aws apigateway put-method-response --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method OPTIONS --status-code 200 --response-parameters '{"method.response.header.Access-Control-Allow-Headers":false,"method.response.header.Access-Control-Allow-Methods":false,"method.response.header.Access-Control-Allow-Origin":false}'
-aws apigateway put-integration-response --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method OPTIONS --status-code 200 --response-parameters '{"method.response.header.Access-Control-Allow-Headers":"'"'"'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"'"'","method.response.header.Access-Control-Allow-Methods":"'"'"'GET,POST,PUT,DELETE,OPTIONS'"'"'","method.response.header.Access-Control-Allow-Origin":"'"'"'https://d1jcaphz4458q7.cloudfront.net'"'"'"}'
+aws apigateway put-integration-response --rest-api-id $API_ID --resource-id $RESOURCE_ID --http-method OPTIONS --status-code 200 --response-parameters '{"method.response.header.Access-Control-Allow-Headers":"'"'"'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"'"'","method.response.header.Access-Control-Allow-Methods":"'"'"'GET,POST,PUT,DELETE,OPTIONS'"'"'","method.response.header.Access-Control-Allow-Origin":"'"'"'${CLOUDFRONT_URL}'"'"'"}'
 aws apigateway create-deployment --rest-api-id $API_ID --stage-name prod
 ```
 

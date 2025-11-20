@@ -392,7 +392,7 @@ Create invitation for new user (admin only).
 ```json
 {
   "invitationId": "uuid-v4",
-  "invitationLink": "https://d1jcaphz4458q7.cloudfront.net/auth/register?token=hex-token",
+  "invitationLink": "${CLOUDFRONT_URL}/auth/register?token=hex-token",
   "token": "64-char-hex-token",
   "expiresAt": 1727788800
 }
@@ -468,7 +468,7 @@ All error responses follow this format:
 All endpoints support CORS with the following headers:
 
 ```
-Access-Control-Allow-Origin: https://d1jcaphz4458q7.cloudfront.net (or *)
+Access-Control-Allow-Origin: ${CLOUDFRONT_URL} (configured from .env)
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization
 Access-Control-Allow-Credentials: true

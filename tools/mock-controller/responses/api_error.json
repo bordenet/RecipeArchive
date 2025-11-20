@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Simulated API error for testing error handling",
+    "type": "api_error",
+    "code": "rate_limit_exceeded"
+  }
+}
+

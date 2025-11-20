@@ -1,6 +1,28 @@
 # RecipeArchive Project Guide
 
-**Production**: https://d1jcaphz4458q7.cloudfront.net
+**Production URL**: Configured in `.env` file (`CLOUDFRONT_URL` variable)
+
+## CRITICAL: Environment Configuration Policy
+
+**NEVER hardcode infrastructure URLs in source code, scripts, or documentation.**
+
+All deployment-specific values MUST be sourced from the `.env` file:
+- ✅ **CloudFront URLs**: Use `${CLOUDFRONT_URL}` from `.env`
+- ✅ **S3 Bucket Names**: Use `${S3_WEB_APP_BUCKET}` from `.env`
+- ✅ **API Gateway URLs**: Use `${API_BASE_URL}` from `.env`
+- ✅ **Distribution IDs**: Use `${CLOUDFRONT_DISTRIBUTION_ID}` from `.env`
+
+**Shell Scripts**: Always call `load_env_file` after `init_script` to load environment variables.
+
+**Documentation**: Reference `.env` configuration instead of hardcoded values.
+
+**Why This Matters**:
+- Enables new adopters to use their own infrastructure without forking
+- Prevents accidental commits of production credentials
+- Supports multiple environments (dev, staging, prod)
+- Maintains clean separation between code and configuration
+
+See `.env.example` for all required environment variables.
 
 ## CRITICAL: Git Workflow Policy
 
@@ -41,6 +63,42 @@ The monorepo validator features a real-time terminal UI with structured logging:
 See [docs/validation-dashboard-design.md](docs/validation-dashboard-design.md) for complete design documentation.
 
 ALWAYS review COMMANDS.md to find project-specific tools, including tools for diagnostic error harvesting, tracing, and deployments. DO NOT "wing it" with direct S3 access, direct lambda deployments, etc.
+
+## AI-Controlled Mock Testing
+
+**VS Code Only Feature** - Enables AI agents to test recipe normalization without OpenAI API costs.
+
+### Quick Start
+
+```bash
+# 1. Start mock controller
+cd tools/mock-controller && npm install && npm start
+
+# 2. Set mock response (in another terminal)
+curl -X POST http://localhost:3456/mock/set \
+  -H "Content-Type: application/json" \
+  -d '{"scenario": "successful_normalization"}'
+
+# 3. Run tests with mocking enabled
+AI_MOCK_TESTING=true npm run test:ai-controlled
+```
+
+### Available Scenarios
+
+- `successful_normalization` - Complete recipe with all fields
+- `missing_ingredients` - Recipe with no ingredients detected
+- `api_error` - Simulated API error
+
+### Purpose
+
+- **Zero API costs** during development
+- **Deterministic tests** for quality control
+- **Full end-to-end flow** testing
+- **AI-controlled scenarios** for comprehensive coverage
+
+**Important**: This feature ONLY works in VS Code (detected via `VSCODE_PID` environment variable) and is NEVER active in production deployments.
+
+See `docs/testing/ai-mock-testing.md` for comprehensive documentation.
 
 ### Infrastructure Validation Protocol
 
@@ -211,7 +269,7 @@ Both `scripts/android/build.sh` and `scripts/ios/build.sh` automatically copy th
 
 ### Development Conventions - CRITICAL
 
-These conventions ensure consistent, maintainable, production-grade automation across the project:
+These conventions ensure consistent, maintainable automation across the project:
 
 #### 1. Dependency Management
 - **ALL dependencies** must be installed via [`./scripts/setup-macos.sh`](scripts/setup-macos.sh)
@@ -219,7 +277,7 @@ These conventions ensure consistent, maintainable, production-grade automation a
 - Setup script is the single source of truth for environment configuration
 
 #### 2. Shell Scripts for Recurring Tasks
-- **Build operations**: Use shell scripts with production-grade error handling
+- **Build operations**: Use shell scripts with comprehensive error handling
 - **Clean builds**: Dedicated scripts (not ad-hoc commands)
 - **Deployment**: Simulator/device deployments via scripts
 - **AWS operations**: Backend interactions via scripts (see `scripts/aws/lambda.sh`)

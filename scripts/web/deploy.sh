@@ -44,9 +44,9 @@ readonly APP_DIR="$REPO_ROOT/recipe_archive"
 source "$SCRIPT_DIR/../load-env.sh" || die "Failed to load environment variables"
 
 # Configuration from environment variables
-readonly DISTRIBUTION_ID="${CLOUDFRONT_DISTRIBUTION_ID:-E1D19F7SLOJM5H}"
-readonly S3_BUCKET="${S3_WEB_APP_BUCKET:-recipearchive-web-app-prod-990537043943}"
-readonly CLOUDFRONT_URL="${CLOUDFRONT_URL:-https://d1jcaphz4458q7.cloudfront.net}"
+readonly DISTRIBUTION_ID="${CLOUDFRONT_DISTRIBUTION_ID:?CLOUDFRONT_DISTRIBUTION_ID not set in .env}"
+readonly S3_BUCKET="${S3_WEB_APP_BUCKET:?S3_WEB_APP_BUCKET not set in .env}"
+readonly CLOUDFRONT_URL="${CLOUDFRONT_URL:?CLOUDFRONT_URL not set in .env}"
 
 log_header "Flutter Web App Deployment to CloudFront"
 

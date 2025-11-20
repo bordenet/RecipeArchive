@@ -26,8 +26,34 @@
 # - Progress: Red-to-green gradient bars, updates every 2 seconds
 # - Interrupts: Graceful Ctrl+C handling, never leaves terminal in bad state
 #
+# REQUIREMENTS:
+# - Bash 4.0+ (for associative arrays)
+# - macOS users: Automatically uses Homebrew bash if available
+#
 ################################################################################
 
+# Check bash version and auto-upgrade if needed (require 4.0+ for associative arrays)
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    # Try to find a newer bash
+    for bash_path in /opt/homebrew/bin/bash /usr/local/bin/bash; do
+        if [ -x "$bash_path" ]; then
+            # Check if this bash is version 4+
+            bash_version=$("$bash_path" -c 'echo ${BASH_VERSINFO[0]}')
+            if [ "$bash_version" -ge 4 ]; then
+                # Re-execute this script with the newer bash
+                exec "$bash_path" "$0" "$@"
+            fi
+        fi
+    done
+
+    # If we get here, no suitable bash was found
+    echo "❌ Error: This script requires Bash 4.0 or higher"
+    echo "   Current version: $BASH_VERSION"
+    echo ""
+    echo "   macOS users: Install via Homebrew:"
+    echo "   brew install bash"
+    exit 1
+fi
 
 set -e  # Exit on any error
 set -o pipefail  # Exit on pipe failure

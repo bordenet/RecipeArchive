@@ -1,12 +1,12 @@
 # RecipeArchive - System Health Dashboard
 
-**Version:** 1.0.0
-**Last Updated:** 2025-11-06
-**Overall Status:** 🟢 Production
+**Version:** 1.3.0
+**Last Updated:** 2025-11-20
+**Overall Status:** 🟢 Operational
 
 Cross-platform recipe management system with web app, browser extensions (Chrome/Safari), mobile apps (iOS/Android), and AWS serverless backend.
 
-**Production URL:** <https://xxxxxxxxxxxx.cloudfront.net>
+**Deployment URL:** See `.env` file for `CLOUDFRONT_URL` configuration
 
 ## Service Level Objectives (SLOs)
 
@@ -94,15 +94,15 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 | Component | Status | Version | Endpoint |
 |-----------|--------|---------|----------|
-| Web App (Flutter) | 🟢 Deployed | 1.0.0 | https://xxxxxxxxxxxx.cloudfront.net |
-| API Gateway | 🟢 Live | v1 | `<https://api.YOUR_DOMAIN>` |
-| Lambda Functions | 🟢 Running | Go 1.21 | 10 functions deployed |
+| Web App (Flutter) | 🟢 Deployed | 1.3.0 | See `.env` CLOUDFRONT_URL |
+| API Gateway | 🟢 Live | v1 | AWS API Gateway |
+| Lambda Functions | 🟢 Running | Go 1.22 | 10 functions deployed |
 | S3 Storage | 🟢 Active | - | 3 buckets (recipes, images, temp) |
 | Cognito User Pool | 🟢 Active | - | Multi-tenant enabled |
-| Chrome Extension | 🟢 Ready | 1.0.0 | Manual install only |
-| Safari Extension | 🟢 Ready | 1.0.0 | Manual install only |
-| iOS App | 🟢 Ready | 1.0.0 | Local build, Share Extension |
-| Android App | 🟢 Ready | 1.0.0 | Local build, Share Extension |
+| Chrome Extension | 🟢 Available | 1.3.0 | Manual install only |
+| Safari Extension | 🟢 Available | 1.3.0 | Manual install only |
+| iOS App | 🟢 Available | 1.3.0 | Local build, Share Extension |
+| Android App | 🟢 Available | 1.3.0 | Local build, Share Extension |
 
 ### Lambda Functions (10 Deployed)
 
@@ -175,13 +175,11 @@ If granular per-endpoint limits are needed, use API Gateway stage `methodSetting
 
 ## New Adopter Quick Start
 
-**Goal:** Production deployment in 15 minutes
-
 1. **Prerequisites:** macOS, AWS account, OpenAI API key
 2. **Setup Guide:** [docs/setup/GETTING_STARTED.md](docs/setup/GETTING_STARTED.md)
-3. **Infrastructure:** `./scripts/deploy-aws-infrastructure.sh`
+3. **Infrastructure:** `./scripts/aws/deploy-infrastructure.sh`
 4. **Validation:** `./validate-monorepo.sh --all` (17 modules)
-5. **Deploy Web App:** `./scripts/web-deploy.sh`
+5. **Deploy Web App:** `./scripts/web/deploy.sh`
 
 **Security:** Extensions auto-configured for your AWS resources via `./scripts/setup-new-adopter-environment.sh`
 

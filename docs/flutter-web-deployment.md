@@ -13,7 +13,7 @@ Before deploying, ensure you have:
 
 ## Current Production Environment
 
-- **CloudFront Distribution**: https://d1jcaphz4458q7.cloudfront.net
+- **CloudFront Distribution**: See `.env` file for `CLOUDFRONT_URL` configuration
 - **S3 Bucket**: Frontend assets are served from S3
 - **Environment**: Production deployment
 
@@ -89,7 +89,7 @@ aws cloudfront create-invalidation --distribution-id E1D19F7SLOJM5H --paths "/*"
 
 After deployment, verify the application:
 
-1. **Check main URL**: Visit https://d1jcaphz4458q7.cloudfront.net
+1. **Check main URL**: Visit the URL configured in your `.env` file (`CLOUDFRONT_URL`)
 2. **Test functionality**:
    - Login with AWS Cognito
    - Browse recipe gallery
