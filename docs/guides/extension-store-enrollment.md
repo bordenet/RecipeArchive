@@ -17,7 +17,7 @@
 4. Verify your email address
 5. Complete developer profile with:
    - Developer name: "RecipeArchive"
-   - Website: https://d1jcaphz4458q7.cloudfront.net
+   - Website: Your CloudFront URL (from `.env` file)
    - Support email: (your email)
 
 ### Step 2: Prepare Extension Package

@@ -4,6 +4,14 @@
 
 set -e
 
+# Load environment variables
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/../.env" ]; then
+    set -a
+    source "$SCRIPT_DIR/../.env"
+    set +a
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -12,7 +20,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-API_URL="${API_URL:-https://d1jcaphz4458q7.cloudfront.net}"
+API_URL="${CLOUDFRONT_URL:-https://your-cloudfront-distribution.cloudfront.net}"
 TEST_URL="https://www.allrecipes.com/recipe/62696/chicken-parmesan-casserole/"
 TEST_RECIPE_TITLE="Chicken Parmesan Casserole"
 MIN_INGREDIENTS=5

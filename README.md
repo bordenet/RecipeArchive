@@ -1,8 +1,13 @@
-# RecipeArchive v1.3.0
+# RecipeArchive
 
-**Production-ready recipe management system for personal use**
+[![CI/CD](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml)
+[![Parser Health](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml)
+[![Go Version](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go)](https://go.dev/)
+[![Flutter Version](https://img.shields.io/badge/Flutter-3.35.4-02569B?logo=flutter)](https://flutter.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Save, normalize, and search recipes with browser extensions, native mobile apps, and AWS serverless backend. Get started in 15 minutes with complete infrastructure automation.
+Personal recipe management system with browser extensions, native mobile apps, and AWS serverless backend.
 
 <table style="width:100%; border-collapse: collapse;">
   <!-- Top row: Gallery image -->
@@ -10,7 +15,7 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
     <td colspan="2" style="text-align: center;">
       <img src="./docs/img/Desktop_Gallery.png" alt="v1.0 desktop website gallery view" width="85%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
       <div style="margin-top: 4px; font-size: 0.9em;">
-        <b>Production Website Sample</b>
+        <b>Web Application Gallery View</b>
       </div>
     </td>
   </tr>
@@ -43,7 +48,7 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 
 ## Quick Links
 
-- **[Get Started in 15 Minutes →](docs/setup/GETTING_STARTED.md)** - Complete setup from zero to production
+- **[Getting Started Guide →](docs/setup/GETTING_STARTED.md)** - Complete setup and deployment
 - **[System Health Dashboard →](PROJECT_STATUS.md)** - SLOs, metrics, and known issues
 - **[Command Reference →](COMMANDS.md)** - Quick lookup for all commands
 - **[Development Guide →](CONTRIBUTING.md)** - Conventions and best practices
@@ -62,19 +67,19 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 <details>
   <summary>Mobile Features</summary>
 
-- **iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
-- **Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
-- **Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
-- **iOS Development**: Complete toolchain with Xcode integration and simulator management
-- **Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
-- **Search**: Full-text search across all saved recipes with feature parity to web client
-- **Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. This is a self-hosted project designed for technical users who prefer full control over their infrastructure. All components (mobile apps, browser extensions, backend) are built and deployed locally, ensuring complete data ownership and customization flexibility.
+- **📤 iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
+- **🔒 Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
+- **🎯 Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
+- **🍎 iOS Development**: Complete toolchain with Xcode integration and simulator management
+- **🤖 Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
+- **🔍 Search**: Full-text search across all saved recipes with feature parity to web client
+- **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. Native apps can be built from this project but are not available in app stores. Browser extensions are not available in browser extension marketplaces. This is a self-hosted project requiring manual build and deployment.
 
 ### iOS Share Extension in Action
 
 <img src="./docs/img/iOS_Native_Sharing.png" alt="iOS Share Extension - Share recipes from Safari browser" width="45%" style="border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-radius: 8px;">
 
-**Native iOS Integration**: Share any recipe from Safari mobile directly to the RecipeArchive app. The backend automatically fetches and parses the recipe HTML, extracts ingredients and instructions, downloads and stores the recipe image in S3, and normalizes the content with OpenAI. Android behaves similarly.
+**Native iOS Integration**: Share recipes from Safari mobile directly to the RecipeArchive app. The backend fetches and parses the recipe HTML, extracts ingredients and instructions, downloads and stores the recipe image in S3, and normalizes the content with OpenAI. Android behaves similarly.
 
 **How it works:**
 1. Browse recipe in a web browser of your choice on iPhone/iPad or Android
@@ -82,7 +87,7 @@ Save, normalize, and search recipes with browser extensions, native mobile apps,
 3. App opens and processes the URL automatically
 4. Recipe appears in your collection with full content and images
 
-No manual copying, no desktop workflow required—just native iOS sharing!
+No manual copying or desktop workflow required.
 </details>
 <details>
   <summary>Screenshots -- Native Apps</summary>
@@ -171,30 +176,47 @@ No manual copying, no desktop workflow required—just native iOS sharing!
 git clone https://github.com/bordenet/RecipeArchive
 cd RecipeArchive && npm install
 
-# 2. Deploy AWS infrastructure (8 minutes)
-./scripts/deploy-aws-infrastructure.sh
+# 2. Deploy AWS infrastructure
+./scripts/aws/deploy-infrastructure.sh
 
-# 3. Deploy web application (3 minutes)
+# 3. Deploy web application
 ./scripts/web/deploy.sh
 
-# 4. Validate installation (1 minute)
+# 4. Validate installation
 ./validate-monorepo.sh --all
 ```
 
 **Prerequisites:** macOS, AWS account, OpenAI API key
 
-**Cost:** ~$4-7/month for active personal use (AWS Free Tier available)
+**Estimated Cost:** $4-7/month for personal use (AWS Free Tier available)
 
 ## Development
+
+### Testing & Quality
+
+```bash
+# Unit Tests
+npm run test:unit                 # Run unit tests
+npm run test:parsers              # Run parser tests
+npm run test:coverage             # Generate coverage report
+
+# Integration Tests (require network/browser)
+npm run test:integration          # Integration tests
+npm run test:e2e                  # End-to-end parser tests
+
+# Go Tests
+npm run test:go                   # Go backend tests
+cd aws-backend/functions/local-server && go test -cover -v
+
+# Validation
+./validate-monorepo.sh --all      # Full test suite (17 modules)
+./validate-monorepo.sh --p1       # Quick validation (~30s)
+./validate-monorepo.sh --mobile   # Mobile-only validation
+```
 
 ### Common Commands
 
 ```bash
-# Validation
-./validate-monorepo.sh --all      # Full test suite (17 modules)
-./validate-monorepo.sh --p1       # Quick validation
-./validate-monorepo.sh --mobile   # Mobile-only validation
-
 # Deployment
 ./scripts/web/deploy.sh           # Deploy web app
 ./scripts/aws/lambda.sh --all     # Deploy all Lambda functions (10 functions)
@@ -212,7 +234,7 @@ The deployment script skips three development tools that are not deployed to AWS
 - `s3-manager` - CLI utility for S3 operations
 - `test-tools` - Testing and validation utilities
 
-These warnings are expected and can be safely ignored. All 10 production Lambda functions deploy successfully.
+These warnings are expected and can be safely ignored. All 10 Lambda functions deploy successfully.
 
 **Complete command reference:** [COMMANDS.md](COMMANDS.md)
 
