@@ -174,8 +174,18 @@ jobs:
       - name: Generate Test Coverage Report
         run: |
           echo "📊 Generating test coverage report..."
-          npm run test:coverage -- --coverageReporters=text-summary
+          npm run test:coverage -- --coverageReporters=text-summary --coverageReporters=lcov
           echo "✅ Coverage report generated"
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-recipearchive
+          fail_ci_if_error: false
+          verbose: true
 
       - name: FAIL FAST - Block Breaking Changes
         if: failure()
