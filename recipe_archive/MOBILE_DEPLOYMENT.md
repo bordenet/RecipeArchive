@@ -99,10 +99,10 @@ The mobile app uses the same `.env` configuration as web:
 
 ```env
 # AWS Configuration
-COGNITO_USER_POOL_ID=us-west-2_qJ1i9RhxD
-COGNITO_CLIENT_ID=5grdn7qhf1el0ioqb6hkelr29s
+COGNITO_USER_POOL_ID=your-user-pool-id-here
+COGNITO_APP_CLIENT_ID=your-app-client-id-here
 AWS_REGION=us-west-2
-API_GATEWAY_URL=https://4sgexl03l7.execute-api.us-west-2.amazonaws.com/prod
+API_BASE_URL=https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod
 ```
 
 ### Platform-Specific Settings

@@ -1,0 +1,43 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://foodnetwork.com"
+    },
+    {
+      "pattern": "^https://food52.com"
+    },
+    {
+      "pattern": "^https://washingtonpost.com"
+    },
+    {
+      "pattern": "^https://www.linkedin.com"
+    },
+    {
+      "pattern": "^https://developer.apple.com"
+    },
+    {
+      "pattern": "^https://square.github.io"
+    },
+    {
+      "pattern": "^https://github.com/organizations/"
+    },
+    {
+      "pattern": "^https://your-cloudfront-distribution"
+    }
+  ],
+  "replacementPatterns": [],
+  "httpHeaders": [
+    {
+      "urls": ["https://github.com"],
+      "headers": {
+        "Accept": "text/html"
+      }
+    }
+  ],
+  "timeout": "10s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "5s",
+  "aliveStatusCodes": [200, 206, 999]
+}
+
