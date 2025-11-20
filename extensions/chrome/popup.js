@@ -3,7 +3,9 @@
 
 // Global error handling for popup
 const DIAGNOSTIC_ENDPOINT =
-  "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/report-error";
+  (typeof CONFIG !== "undefined" && CONFIG.getCurrentAPI
+    ? CONFIG.getCurrentAPI().diagnostics
+    : "http://localhost:8080/api/diagnostics");
 
 // Diagnostic reporting function
 async function reportDiagnostic(errorType, error, additionalData = {}) {
@@ -119,20 +121,35 @@ async function ensureAWSConfiguration() {
     return;
   }
 
-  // Set correct AWS configuration
-  console.log("🔧 Setting correct AWS configuration...");
-  localStorage.setItem("AWS_REGION", "us-west-2");
-  localStorage.setItem("COGNITO_USER_POOL_ID", "us-west-2_rpBcEEhYK");
-  localStorage.setItem("COGNITO_APP_CLIENT_ID", "7lm8mqr03s0m0fn17dnv373s4h");
-  localStorage.setItem(
-    "API_BASE_URL",
-    "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod"
-  );
+  const cognitoConfig =
+    typeof CONFIG !== "undefined" && CONFIG.getCognitoConfig
+      ? CONFIG.getCognitoConfig()
+      : null;
+  const apiConfig =
+    typeof CONFIG !== "undefined" && CONFIG.getCurrentAPI
+      ? CONFIG.getCurrentAPI()
+      : null;
 
-  // Enable production mode for the extension
-  localStorage.setItem("recipeArchive.dev", "false");
+  if (!cognitoConfig || !cognitoConfig.userPoolId || !cognitoConfig.clientId) {
+    console.warn(
+      "⚠️ Cannot set AWS configuration - missing Cognito environment configuration. Please configure .env and rebuild extensions."
+    );
+    return;
+  }
 
-  // Force CONFIG to reload environment configuration
+  console.log("🔧 Setting AWS configuration from environment...");
+  localStorage.setItem("AWS_REGION", cognitoConfig.region || "us-west-2");
+  localStorage.setItem("COGNITO_USER_POOL_ID", cognitoConfig.userPoolId);
+  localStorage.setItem("COGNITO_APP_CLIENT_ID", cognitoConfig.clientId);
+
+  if (apiConfig && apiConfig.base) {
+    localStorage.setItem("API_BASE_URL", apiConfig.base);
+  }
+
+  const isDevEnv =
+    typeof CONFIG !== "undefined" && CONFIG.ENVIRONMENT === "development";
+  localStorage.setItem("recipeArchive.dev", isDevEnv ? "true" : "false");
+
   if (typeof CONFIG !== "undefined" && CONFIG.reloadConfiguration) {
     CONFIG.reloadConfiguration();
   }
@@ -1685,17 +1702,10 @@ async function sendToAWSBackend(
           headers: Object.fromEntries(response.headers.entries()),
         };
 
-        // Send to S3 diagnostic bucket
+        // Send diagnostic data via the configured diagnostics endpoint
         try {
-          await fetch(
-            "https://recipe-storage-0ea7007d57f67ecb-990537043943.s3.amazonaws.com/web-extension-errors/",
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(diagnosticData),
-            }
-          );
-          console.log("📊 Diagnostic data sent to S3");
+          await reportDiagnostic("HTTP_500_AFTER_JWT_FIX", null, diagnosticData);
+          console.log("📊 Diagnostic data sent to diagnostics endpoint");
         } catch (diagError) {
           console.warn("Failed to send diagnostic data:", diagError);
         }

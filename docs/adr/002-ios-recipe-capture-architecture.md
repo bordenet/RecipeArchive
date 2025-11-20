@@ -59,7 +59,7 @@ Flutter app → Backend API (with HTML) → S3 storage
 **Limitations**:
 - ❌ Safari only (not available in Chrome, Firefox, etc.)
 - ❌ Requires iOS 15+ (App Extension with native messaging)
-- ❌ Manual Xcode configuration required (see [XCODE_WEB_EXTENSION_SETUP.md](../../XCODE_WEB_EXTENSION_SETUP.md))
+- ❌ Manual Xcode configuration required (see [SAFARI_WEB_EXTENSION_SETUP.md](../technical/SAFARI_WEB_EXTENSION_SETUP.md))
 
 ### Tier 2: WKWebView Proxy (Premium Path) ✅ **Implemented**
 
@@ -446,9 +446,9 @@ class RecipeCaptureService : AccessibilityService() {
 
 ## Related Documentation
 
-- [XCODE_WEB_EXTENSION_SETUP.md](../../XCODE_WEB_EXTENSION_SETUP.md) - Step-by-step Safari Web Extension setup
+- [SAFARI_WEB_EXTENSION_SETUP.md](../technical/SAFARI_WEB_EXTENSION_SETUP.md) - Step-by-step Safari Web Extension setup
 - [PROJECT_STATUS.md](../../PROJECT_STATUS.md) - Current implementation status
-- [CLAUDE.md](../../CLAUDE.md) - Project development guide
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and coding conventions
 
 ## Implementation Status
 

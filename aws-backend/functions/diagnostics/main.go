@@ -81,13 +81,18 @@ type DiagnosticRequest struct {
 }
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	allowedOrigin := os.Getenv("FRONTEND_BASE_URL")
+	if allowedOrigin == "" {
+		allowedOrigin = "https://localhost:3000"
+	}
+
 	if err := initAWSClients(ctx); err != nil {
 		logger.Error("failed to initialize AWS clients", "error", err)
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusInternalServerError,
 			Headers: map[string]string{
 				"Content-Type":                "application/json",
-				"Access-Control-Allow-Origin": "https://d1jcaphz4458q7.cloudfront.net",
+				"Access-Control-Allow-Origin": allowedOrigin,
 			},
 			Body: `{"error": {"code": "INITIALIZATION_ERROR", "message": "Failed to initialize AWS services"}}`,
 		}, nil
@@ -96,7 +101,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 	// Set up CORS headers
 	headers := map[string]string{
 		"Content-Type":                     "application/json",
-		"Access-Control-Allow-Origin":      "https://d1jcaphz4458q7.cloudfront.net",
+		"Access-Control-Allow-Origin":      allowedOrigin,
 		"Access-Control-Allow-Methods":     "POST, OPTIONS",
 		"Access-Control-Allow-Headers":     "Content-Type, Authorization",
 		"Access-Control-Allow-Credentials": "true",

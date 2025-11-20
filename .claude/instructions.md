@@ -545,10 +545,10 @@ go build
 
 ### AWS Environment Setup
 
-The project uses environment variables from `.env` for AWS authentication and bucket names:
-- **S3_RECIPE_STORAGE_BUCKET**: `recipe-storage-0ea7007d57f67ecb-990537043943`
-- **S3_TEMP_BUCKET_NAME**: `recipe-temp-0ea7007d57f67ecb-990537043943`
-- **S3_FAILED_PARSING_BUCKET_NAME**: `recipe-failed-0ea7007d57f67ecb-990537043943`
+The project uses environment variables from `.env` for AWS authentication and bucket names. Do **not** commit real bucket names or AWS account IDs. Use patterns/placeholders instead:
+- **S3_RECIPE_STORAGE_BUCKET**: `recipe-storage-<RANDOM_ID>-<ACCOUNT_ID>`
+- **S3_TEMP_BUCKET_NAME**: `recipe-temp-<RANDOM_ID>-<ACCOUNT_ID>`
+- **S3_FAILED_PARSING_BUCKET_NAME**: `recipe-failed-<RANDOM_ID>-<ACCOUNT_ID>`
 
 All Go tools automatically load these from `../../.env` relative to their location.
 
@@ -619,18 +619,16 @@ NEVER proactively create documentation files.
 
 ### Localhost Policy
 
-NEVER attempt to run Flutter locally or test localhost endpoints. This consistently fails and wastes significant tokens. Always work directly with the production environment at https://d1jcaphz4458q7.cloudfront.net for testing and debugging.
+NEVER attempt to run Flutter locally or test localhost endpoints. This consistently fails and wastes significant tokens. When you need to reason about or call the running system, assume the frontend is served from the URL configured in `.env` (for example `CLOUDFRONT_URL`) and avoid hard-coding any specific CloudFront domain in code, scripts, or docs.
 
 ### Post-Push Procedure
 
 **Standard process after successful GitHub push:**
 
-1. Remove all backwards-looking "Recent Completed Work" sections from CLAUDE.md
-2. Archive accomplishments to maintain lean documentation focused on:
-   - Current issues requiring attention
-   - How-to guidance for upcoming work
-   - Essential context for development workflow
-3. Keep document orientation forward-looking and actionable
+1. Keep `.claude/instructions.md` focused on forward-looking guidance for AI agents, not change logs or retrospectives.
+2. If you make structural or governance changes, update this file to reflect the new expectations for AI behavior and environment configuration.
+3. Move narrative "what changed" notes into `DEPLOYMENT_SUMMARY.md` or GitHub release notes rather than `.claude/instructions.md`.
+4. Periodically verify that documentation and scripts referenced here still exist and match the current repo layout.
 
 # important-instruction-reminders
 - Do what has been asked; nothing more, nothing less.

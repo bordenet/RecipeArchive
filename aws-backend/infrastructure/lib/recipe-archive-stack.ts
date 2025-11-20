@@ -307,7 +307,6 @@ export class RecipeArchiveStack extends cdk.Stack {
         allowOrigins: [
           "https://localhost:3000",
           "https://recipearchive.com",
-          "https://d1jcaphz4458q7.cloudfront.net",
           "chrome-extension://*",
           "safari-web-extension://*",
         ], // Restrict origins
@@ -638,7 +637,7 @@ export class RecipeArchiveStack extends cdk.Stack {
     this.api.addGatewayResponse("unauthorized", {
       type: apigateway.ResponseType.UNAUTHORIZED,
       responseHeaders: {
-        "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+        "Access-Control-Allow-Origin": "'https://recipearchive.com'",
         "Access-Control-Allow-Credentials": "'true'",
         "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
       },
@@ -647,7 +646,7 @@ export class RecipeArchiveStack extends cdk.Stack {
     this.api.addGatewayResponse("access-denied", {
       type: apigateway.ResponseType.ACCESS_DENIED,
       responseHeaders: {
-        "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+        "Access-Control-Allow-Origin": "'https://recipearchive.com'",
         "Access-Control-Allow-Credentials": "'true'",
         "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
       },
@@ -656,7 +655,7 @@ export class RecipeArchiveStack extends cdk.Stack {
     this.api.addGatewayResponse("default-4xx", {
       type: apigateway.ResponseType.DEFAULT_4XX,
       responseHeaders: {
-        "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+        "Access-Control-Allow-Origin": "'https://recipearchive.com'",
         "Access-Control-Allow-Credentials": "'true'",
         "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
       },
@@ -665,7 +664,7 @@ export class RecipeArchiveStack extends cdk.Stack {
     this.api.addGatewayResponse("default-5xx", {
       type: apigateway.ResponseType.DEFAULT_5XX,
       responseHeaders: {
-        "Access-Control-Allow-Origin": "'https://d1jcaphz4458q7.cloudfront.net'",
+        "Access-Control-Allow-Origin": "'https://recipearchive.com'",
         "Access-Control-Allow-Credentials": "'true'",
         "Access-Control-Allow-Headers": "'Content-Type,Authorization'",
       },
@@ -921,7 +920,8 @@ export class RecipeArchiveStack extends cdk.Stack {
           S3_TEMP_BUCKET: this.tempBucket.bucketName,
           S3_FAILED_PARSING_BUCKET: this.failedParsingBucket.bucketName,
           COGNITO_USER_POOL_ID: this.userPool.userPoolId,
-          API_GATEWAY_URL: "https://4eprojzbrc.execute-api.us-west-2.amazonaws.com/prod",
+          // Use the deployed API Gateway URL instead of a hard-coded value
+          API_GATEWAY_URL: this.api.url,
           NORMALIZATION_QUEUE_URL: this.recipeNormalizationQueue.queueUrl,
         },
         role: this.lambdaRole,
@@ -1154,7 +1154,7 @@ export class RecipeArchiveStack extends cdk.Stack {
             ENVIRONMENT: this.stackEnvironment,
             REGION: this.region,
             COGNITO_USER_POOL_ID: this.userPool.userPoolId,
-            FRONTEND_BASE_URL: "https://d1jcaphz4458q7.cloudfront.net",
+            FRONTEND_BASE_URL: "https://recipearchive.com",
           },
           role: this.lambdaRole,
         }

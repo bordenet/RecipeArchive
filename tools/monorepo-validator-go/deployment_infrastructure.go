@@ -50,7 +50,13 @@ func validateDeploymentInfrastructure(projectRoot string) bool {
 	go func() {
 		defer wg.Done()
 		fmt.Print("  S3 bucket configuration validation... ")
-		bucketName := "recipearchive-web-app-prod-990537043943"
+		bucketName := os.Getenv("S3_WEB_APP_BUCKET")
+		if bucketName == "" {
+			fmt.Println("⚠ (S3_WEB_APP_BUCKET not set - skipping S3 configuration check)")
+			results <- true
+			return
+		}
+
 		_, err := runCommand(projectRoot, "aws", "s3", "ls", "s3://"+bucketName)
 		if err != nil {
 			fmt.Println("⚠ (S3 bucket doesn't exist - will be created during deployment)")
@@ -71,7 +77,13 @@ func validateDeploymentInfrastructure(projectRoot string) bool {
 	go func() {
 		defer wg.Done()
 		fmt.Print("  CloudFront distribution status... ")
-		distributionID := "E1D19F7SLOJM5H"
+		distributionID := os.Getenv("CLOUDFRONT_DISTRIBUTION_ID")
+		if distributionID == "" {
+			fmt.Println("⚠ (CLOUDFRONT_DISTRIBUTION_ID not set - skipping CloudFront check)")
+			results <- true
+			return
+		}
+
 		_, err := runCommand(projectRoot, "aws", "cloudfront", "get-distribution", "--id", distributionID)
 		if err != nil {
 			fmt.Printf("✗\n    Error: %v\n", err)

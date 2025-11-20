@@ -178,7 +178,8 @@ class AdvancedSearchService {
   
   AdvancedSearchService(this._authService);
   
-  String get apiUrl => dotenv.env['API_BASE_URL'] ?? 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
+  String get apiUrl => dotenv.env['API_BASE_URL'] ??
+      'https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod';
 
   // Comprehensive search using new backend endpoint
   Future<SearchResult> searchRecipes(SearchParameters parameters) async {

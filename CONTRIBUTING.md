@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to RecipeArchive. This guide provides technical conventions and best practices for development.
 
-**Production URL**: https://d1jcaphz4458q7.cloudfront.net
+
 
 ## Table of Contents
 
@@ -184,6 +184,27 @@ npm run test:e2e
 # Test specific recipe site
 npm run test:e2e -- -t "food52"
 ```
+
+### AI-Controlled Mock Testing (zero-cost OpenAI simulation)
+
+Use the mock controller to exercise AI-assisted normalization flows without hitting real OpenAI APIs:
+
+```bash
+# Start mock controller (once per dev session)
+cd tools/mock-controller
+npm install
+npm start
+
+# In another terminal, select a scenario
+curl -X POST http://localhost:3456/mock/set \
+  -H "Content-Type: application/json" \
+  -d '{"scenario": "successful_normalization"}'
+
+# Run tests with mock responses enabled
+AI_MOCK_TESTING=true npm run test:ai-controlled
+```
+
+See [docs/testing/ai-mock-testing.md](docs/testing/ai-mock-testing.md) for additional scenarios and safety constraints.
 
 ## Deployment
 

@@ -38,7 +38,7 @@ npm run test:parsers
 ## Integration
 
 Extensions integrate seamlessly with:
-- **Web App**: https://d1jcaphz4458q7.cloudfront.net
+- **Web App**: https://your-cloudfront-distribution-id.cloudfront.net (from `.env` WEB_APP_URL)
 - **Mobile Apps**: Android and iOS Flutter applications
 - **AWS Backend**: Real-time sync and cloud storage
 

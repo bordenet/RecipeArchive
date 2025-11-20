@@ -572,4 +572,4 @@ npm test -- parser-registry-integration.test.js
 
 - [GO_STYLE_GUIDE.md](GO_STYLE_GUIDE.md) - Go coding standards
 - [KOTLIN_STYLE_GUIDE.md](KOTLIN_STYLE_GUIDE.md) - Android/Kotlin standards
-- [CLAUDE.md](../CLAUDE.md) - Project development guide
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution workflow and project development guide

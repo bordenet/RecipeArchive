@@ -7,13 +7,15 @@
 const AWS = require("aws-sdk");
 const jwt = require("jsonwebtoken");
 
-// Configuration from .env file
+// Configuration from environment / .env file
 const config = {
-  region: "us-west-2",
-  userPoolId: "us-west-2_rpBcEEhYK",
-  clientId: "7lm8mqr03s0m0fn17dnv373s4h",
-  apiUrl: "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/recipes",
-  testEmail: "mattbordenet@hotmail.com",
+  region: process.env.AWS_REGION || "us-west-2",
+  userPoolId: process.env.COGNITO_USER_POOL_ID || "",
+  clientId: process.env.COGNITO_APP_CLIENT_ID || "",
+  apiUrl: process.env.API_BASE_URL
+    ? `${process.env.API_BASE_URL.replace(/\/$/, "")}/recipes`
+    : "",
+  testEmail: process.env.TEST_USER_EMAIL || "your-test-user@example.com",
   testPassword: process.env.TEST_USER_PASSWORD || "CHANGE_ME",
 };
 
@@ -22,6 +24,26 @@ console.log("==========================================");
 
 async function testAuthentication() {
   try {
+    if (!config.userPoolId || !config.clientId) {
+      console.error(
+        "❌ COGNITO_USER_POOL_ID and COGNITO_APP_CLIENT_ID must be set in your .env file for this test."
+      );
+      process.exit(1);
+    }
+
+    if (!config.apiUrl) {
+      console.error(
+        "❌ API_BASE_URL must be set in your .env file for this test (used to derive the recipes endpoint)."
+      );
+      process.exit(1);
+    }
+
+    if (!config.testEmail || !config.testPassword || config.testPassword === "CHANGE_ME") {
+      console.error(
+        "❌ TEST_USER_EMAIL and TEST_USER_PASSWORD must be set in your .env file for this test."
+      );
+      process.exit(1);
+    }
     // Configure AWS
     AWS.config.update({
       region: config.region,

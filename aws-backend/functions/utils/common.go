@@ -48,45 +48,37 @@ func GetAWSRegion() string {
 	return "us-west-2" // fallback to default region
 }
 
-// GetS3BucketName returns the S3 bucket name from environment variable with fallback
+// GetS3BucketName returns the S3 bucket name from environment variable
 func GetS3BucketName() string {
 	if S3RecipeStorageBucket != "" {
 		return S3RecipeStorageBucket
 	}
-	return "recipe-storage-0ea7007d57f67ecb-990537043943" // fallback to current secure bucket
+	return ""
 }
 
-// GetCognitoConfig returns the Cognito configuration from environment variables with fallback
+// GetCognitoConfig returns the Cognito configuration from environment variables
 func GetCognitoConfig() (userPoolID, clientID string) {
 	userPoolID = os.Getenv("COGNITO_USER_POOL_ID")
-	if userPoolID == "" {
-		userPoolID = "us-west-2_rpBcEEhYK" // fallback to current secure pool
-	}
-
 	clientID = os.Getenv("COGNITO_APP_CLIENT_ID")
-	if clientID == "" {
-		clientID = "7lm8mqr03s0m0fn17dnv373s4h" // fallback to current secure client
-	}
-
 	return userPoolID, clientID
 }
 
-// GetAPIBaseURL returns the API base URL from environment variable with fallback
+// GetAPIBaseURL returns the API base URL from environment variable
 func GetAPIBaseURL() string {
 	apiURL := os.Getenv("API_BASE_URL")
 	if apiURL != "" {
 		return apiURL
 	}
-	return "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod" // fallback to working API
+	return "https://your-api-gateway-url.example.com"
 }
 
-// GetWebAppURL returns the web app URL from environment variable with fallback
+// GetWebAppURL returns the web app URL from environment variable
 func GetWebAppURL() string {
 	webURL := os.Getenv("WEB_APP_URL")
 	if webURL != "" {
 		return webURL
 	}
-	return "https://d1jcaphz4458q7.cloudfront.net" // fallback to current secure CloudFront
+	return "https://your-web-app-url.example.com"
 }
 
 // JWTClaims represents the JWT token claims

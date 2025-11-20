@@ -43,8 +43,8 @@ require("dotenv").config({ path: require("path").join(__dirname, "../../.env") }
 
 // Use CLOUDFRONT_URL from .env, fallback to placeholder for CI
 process.env.FRONTEND_BASE_URL = process.env.CLOUDFRONT_URL || "https://your-cloudfront-distribution.cloudfront.net";
-process.env.COGNITO_USER_POOL_ID = "us-west-2_qJ1i9RhxD";
-process.env.COGNITO_APP_CLIENT_ID = "5grdn7qhf1el0ioqb6hkelr29s";
+process.env.COGNITO_USER_POOL_ID = "us-west-2_EXAMPLEPOOL";
+process.env.COGNITO_APP_CLIENT_ID = "EXAMPLECLIENTID1234567890";
 
 jest.mock("aws-sdk", () => ({
   DynamoDB: jest.fn(() => mockDynamoDB),

@@ -85,54 +85,54 @@ function releaseLock() {
 // Create a simple entry point that exports all parsers
 const entryContent = `
 // TypeScript Parser Bundle Entry Point
-import { ParserRegistry } from './parser-registry';
-import { SmittenKitchenParser } from './sites/smitten-kitchen';
-import { FoodNetworkParser } from './sites/food-network';
-import { NYTCookingParser } from './sites/nyt-cooking';
-import { Food52Parser } from './sites/food52';
-import { SeriousEatsParser } from './sites/serious-eats';
-import { AllRecipesParser } from './sites/allrecipes';
-import { EpicuriousParser } from './sites/epicurious';
-import { DamnDeliciousParser } from './sites/damn-delicious';
-import { LoveAndLemonsParser } from './sites/loveandlemons';
-import { FoodAndWineParser } from './sites/food-and-wine';
-import { WashingtonPostParser } from './sites/washington-post';
-import { AlexandrasKitchenParser } from './sites/alexandras-kitchen';
-import { LemonsAndZestParser } from './sites/lemonsandzest';
-import { LauraInTheKitchenParser } from './sites/laurainthekitchen.com';
+import { ParserRegistry } from "./parser-registry";
+import { SmittenKitchenParser } from "./sites/smitten-kitchen";
+import { FoodNetworkParser } from "./sites/food-network";
+import { NYTCookingParser } from "./sites/nyt-cooking";
+import { Food52Parser } from "./sites/food52";
+import { SeriousEatsParser } from "./sites/serious-eats";
+import { AllRecipesParser } from "./sites/allrecipes";
+import { EpicuriousParser } from "./sites/epicurious";
+import { DamnDeliciousParser } from "./sites/damn-delicious";
+import { LoveAndLemonsParser } from "./sites/loveandlemons";
+import { FoodAndWineParser } from "./sites/food-and-wine";
+import { WashingtonPostParser } from "./sites/washington-post";
+import { AlexandrasKitchenParser } from "./sites/alexandras-kitchen";
+import { LemonsAndZestParser } from "./sites/lemonsandzest";
+import { LauraInTheKitchenParser } from "./sites/laurainthekitchen.com";
 
 // Initialize registry
 const registry = ParserRegistry.getInstance();
 
 // Register all parsers
-registry.registerParser('smittenkitchen.com', SmittenKitchenParser);
-registry.registerParser('foodnetwork.com', FoodNetworkParser);
-registry.registerParser('cooking.nytimes.com', NYTCookingParser);
-registry.registerParser('food52.com', Food52Parser);
-registry.registerParser('seriouseats.com', SeriousEatsParser);
-registry.registerParser('allrecipes.com', AllRecipesParser);
-registry.registerParser('epicurious.com', EpicuriousParser);
-registry.registerParser('damndelicious.net', DamnDeliciousParser);
-registry.registerParser('loveandlemons.com', LoveAndLemonsParser);
-registry.registerParser('foodandwine.com', FoodAndWineParser);
-registry.registerParser('washingtonpost.com', WashingtonPostParser);
-registry.registerParser('alexandracooks.com', AlexandrasKitchenParser);
-registry.registerParser('lemonsandzest.com', LemonsAndZestParser);
-registry.registerParser('laurainthekitchen.com', LauraInTheKitchenParser);
+registry.registerParser("smittenkitchen.com", SmittenKitchenParser);
+registry.registerParser("foodnetwork.com", FoodNetworkParser);
+registry.registerParser("cooking.nytimes.com", NYTCookingParser);
+registry.registerParser("food52.com", Food52Parser);
+registry.registerParser("seriouseats.com", SeriousEatsParser);
+registry.registerParser("allrecipes.com", AllRecipesParser);
+registry.registerParser("epicurious.com", EpicuriousParser);
+registry.registerParser("damndelicious.net", DamnDeliciousParser);
+registry.registerParser("loveandlemons.com", LoveAndLemonsParser);
+registry.registerParser("foodandwine.com", FoodAndWineParser);
+registry.registerParser("washingtonpost.com", WashingtonPostParser);
+registry.registerParser("alexandracooks.com", AlexandrasKitchenParser);
+registry.registerParser("lemonsandzest.com", LemonsAndZestParser);
+registry.registerParser("laurainthekitchen.com", LauraInTheKitchenParser);
 
 // Export for browser use
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
     window.RecipeArchiveParserRegistry = registry;
-    
+
     // Compatibility interface for content scripts
     window.TypeScriptParser = {
         async extractRecipeFromPage() {
             const url = window.location.href;
             const html = document.documentElement.outerHTML;
-            
+
             try {
                 const result = await registry.parseRecipe(html, url);
-                
+
                 if (!result) {
                     return {
                         title: document.title || "Unknown Recipe",
@@ -143,7 +143,7 @@ if (typeof window !== 'undefined') {
                         source: "no-parser-found"
                     };
                 }
-                
+
                 return result;
             } catch (error) {
                 console.error("TypeScriptParser extraction failed:", error);

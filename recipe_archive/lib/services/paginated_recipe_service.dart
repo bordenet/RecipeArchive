@@ -63,7 +63,8 @@ class PaginatedRecipesNotifier extends StateNotifier<PaginatedRecipesState> {
 
   PaginatedRecipesNotifier(this._authService) : super(const PaginatedRecipesState());
 
-  String get apiUrl => dotenv.env['API_BASE_URL'] ?? 'https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod';
+  String get apiUrl => dotenv.env['API_BASE_URL'] ??
+      'https://your-api-gateway-id.execute-api.us-west-2.amazonaws.com/prod';
 
   // Load initial page of recipes
   Future<void> loadInitialRecipes({int limit = _defaultPageSize}) async {

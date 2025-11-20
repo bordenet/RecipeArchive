@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * CLAUDE.md Review Script
+ * .claude/instructions.md Review Script
  *
- * This script runs on every commit to review CLAUDE.md and suggest pruning/consolidation
- * opportunities to keep the project guide concise and current.
+ * This script runs on every commit to review the AI instructions file
+ * (.claude/instructions.md) and suggest pruning/consolidation opportunities
+ * to keep guidance concise, current, and focused.
  */
 
 import { readFileSync, existsSync } from "fs";
@@ -14,9 +15,9 @@ import { dirname, join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, "..");
-const claudeFile = join(projectRoot, "CLAUDE.md");
+const instructionsFile = join(projectRoot, ".claude", "instructions.md");
 
-class ClaudeReviewer {
+class InstructionsReviewer {
   constructor() {
     this.warnings = [];
     this.suggestions = [];
@@ -30,12 +31,12 @@ class ClaudeReviewer {
   }
 
   review() {
-    if (!existsSync(claudeFile)) {
-      console.log("✅ No CLAUDE.md found - skipping review");
+    if (!existsSync(instructionsFile)) {
+      console.log("✅ No .claude/instructions.md found - skipping review");
       return true;
     }
 
-    const content = readFileSync(claudeFile, "utf8");
+    const content = readFileSync(instructionsFile, "utf8");
     const lines = content.split("\n");
     this.stats.totalLines = lines.length;
 
@@ -48,7 +49,7 @@ class ClaudeReviewer {
     this.reportFindings();
 
     // Always return true (non-blocking) - this is advisory only
-    // The goal is to remind developers to consider CLAUDE.md maintenance,
+    // The goal is to remind developers to consider .claude/instructions.md maintenance,
     // not to block commits
     return true;
   }
@@ -58,11 +59,11 @@ class ClaudeReviewer {
 
     if (lines.length > 400) {
       this.warnings.push(
-        `📏 CLAUDE.md is ${lines.length} lines - consider consolidating (target: <400 lines)`
+        `📏 .claude/instructions.md is ${lines.length} lines - consider consolidating (target: <400 lines)`
       );
     } else if (lines.length > 300) {
       this.suggestions.push(
-        `📏 CLAUDE.md is ${lines.length} lines - getting lengthy (target: <400 lines)`
+        `📏 .claude/instructions.md is ${lines.length} lines - getting lengthy (target: <400 lines)`
       );
     }
   }
@@ -143,7 +144,7 @@ class ClaudeReviewer {
   }
 
   reportFindings() {
-    console.log("\n🔍 CLAUDE.md Review Report");
+    console.log("\n🔍 .claude/instructions.md Review Report");
     console.log(
       "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     );
@@ -163,7 +164,9 @@ class ClaudeReviewer {
     }
 
     if (this.warnings.length === 0 && this.suggestions.length === 0) {
-      console.log("\n✅ CLAUDE.md looks good - no immediate pruning needed");
+      console.log(
+        "\n✅ .claude/instructions.md looks good - no immediate pruning needed"
+      );
     }
 
     console.log(
@@ -180,9 +183,9 @@ class ClaudeReviewer {
 }
 
 // Run the review
-const reviewer = new ClaudeReviewer();
+const reviewer = new InstructionsReviewer();
 reviewer.review();
 
 // Always exit successfully - this is an advisory script to remind developers
-// to consider CLAUDE.md maintenance, not to block commits
+// to consider .claude/instructions.md maintenance, not to block commits
 process.exit(0);

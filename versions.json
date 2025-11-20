@@ -5,13 +5,13 @@
       "version": "0.7.0",
       "filename": "RecipeArchive-Chrome-v0.7.0.zip",
       "size": 28724770,
-      "downloadUrl": "https://recipe-storage-0ea7007d57f67ecb-990537043943.s3.us-west-2.amazonaws.com/extensions/RecipeArchive-Chrome-v0.7.0.zip"
+      "downloadUrl": "https://your-recipe-storage-bucket.s3.us-west-2.amazonaws.com/extensions/RecipeArchive-Chrome-v0.7.0.zip"
     },
     "safari": {
       "version": "0.7.0",
       "filename": "RecipeArchive-Safari-v0.7.0.zip",
       "size": 15799553,
-      "downloadUrl": "https://recipe-storage-0ea7007d57f67ecb-990537043943.s3.us-west-2.amazonaws.com/extensions/RecipeArchive-Safari-v0.7.0.zip"
+      "downloadUrl": "https://your-recipe-storage-bucket.s3.us-west-2.amazonaws.com/extensions/RecipeArchive-Safari-v0.7.0.zip"
     }
   }
 }

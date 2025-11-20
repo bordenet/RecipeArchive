@@ -572,10 +572,10 @@ For complete details, see:
 - [GO_STYLE_GUIDE.md](GO_STYLE_GUIDE.md) - Full Go coding standards
 - [JAVASCRIPT_TYPESCRIPT_STYLE_GUIDE.md](JAVASCRIPT_TYPESCRIPT_STYLE_GUIDE.md) - Full JS/TS standards
 - [KOTLIN_STYLE_GUIDE.md](KOTLIN_STYLE_GUIDE.md) - Full Kotlin standards
-- [CLAUDE.md](../CLAUDE.md) - Project-wide development guidelines
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Project-wide development guidelines
 
 ---
 
 **Last Updated**: 2025-11-04
 **Maintained By**: Project maintainers
-**Questions**: Refer to language-specific style guides or CLAUDE.md
+**Questions**: Refer to language-specific style guides, CONTRIBUTING.md, or open a GitHub issue.

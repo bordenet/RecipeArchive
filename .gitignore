@@ -6,12 +6,20 @@
 .env.*.local
 .env.production
 .env.development
+
+# Generated Flutter env (copied from root .env)
+recipe_archive/.env
+
+# Other secret config files
 aws-credentials.json
 secrets.json
 config/secrets.yml
 *.pem
 *.key
 gitleaks-report.json
+
+# Generated browser extension env config
+extensions/*/env-config.js
 tree.txt
 
 # Binaries

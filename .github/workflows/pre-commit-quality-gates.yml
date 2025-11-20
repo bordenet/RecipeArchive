@@ -145,6 +145,15 @@ jobs:
           fi
           echo "✅ All linting passed"
 
+      - name: Documentation - Link Check
+        run: |
+          echo "🔗 Checking documentation links..."
+          if ! npm run docs:check-links; then
+            echo "❌ Documentation link check failed"
+            exit 1
+          fi
+          echo "✅ Documentation links are healthy"
+
       - name: CRITICAL - Run All Tests
         run: |
           echo "🧪 Running all automated tests..."

@@ -113,12 +113,20 @@ get_aws_function_name() {
     # Direct mappings for API Gateway functions (CDK-managed)
     case "$local_name" in
         "analytics-aggregator")
-            echo "RecipeAnalyticsAggregator"
+            local aws_name
+            aws_name=$(aws lambda list-functions --region "$REGION" \
+                --query "Functions[?contains(FunctionName, \`RecipeAnalyticsAggregator\`)].FunctionName" \
+                --output text 2> /tmp/deploy-lambda.log | head -1)
+            echo "$aws_name"
             return
             ;;
         "invitation-manager-s3")
             # API Gateway function name (CDK-managed)
-            echo "RecipeArchive-dev-InvitationManagerFunctionC8A45B8-yiEZQLmLoXj5"
+            local aws_name
+            aws_name=$(aws lambda list-functions --region "$REGION" \
+                --query "Functions[?contains(FunctionName, \`RecipeArchive-dev-InvitationManagerFunction\`)].FunctionName" \
+                --output text 2> /tmp/deploy-lambda.log | head -1)
+            echo "$aws_name"
             return
             ;;
         "recipes")
@@ -132,12 +140,20 @@ get_aws_function_name() {
             ;;
         "diagnostics")
             # Diagnostics function name (CDK-managed)
-            echo "RecipeArchive-dev-DiagnosticsFunctionF6482E72-GpGVR5DdZICc"
+            local aws_name
+            aws_name=$(aws lambda list-functions --region "$REGION" \
+                --query "Functions[?contains(FunctionName, \`RecipeArchive-dev-DiagnosticsFunction\`)].FunctionName" \
+                --output text 2> /tmp/deploy-lambda.log | head -1)
+            echo "$aws_name"
             return
             ;;
         "image-upload")
             # Image upload function name (CDK-managed)
-            echo "RecipeArchive-dev-ImageUploadFunction1528BFB7-SkQEMmTH8zTf"
+            local aws_name
+            aws_name=$(aws lambda list-functions --region "$REGION" \
+                --query "Functions[?contains(FunctionName, \`RecipeArchive-dev-ImageUploadFunction\`)].FunctionName" \
+                --output text 2> /tmp/deploy-lambda.log | head -1)
+            echo "$aws_name"
             return
             ;;
         "backup")

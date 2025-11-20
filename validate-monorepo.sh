@@ -595,9 +595,9 @@ test_production_api_endpoints() {
     if [ -f ".env" ]; then
         source .env
     fi
-    
-    local api_base="${API_BASE_URL:-https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod}"
-    
+
+    local api_base="${API_BASE_URL:-https://your-api-gateway-id.execute-api.${AWS_REGION:-us-west-2}.amazonaws.com/prod}"
+
     print_step "Health endpoint"
     add_test
     if curl -s --max-time 10 "${api_base}/health" | grep -q "OK\|healthy\|success" 2>/dev/null; then
@@ -810,7 +810,8 @@ run_aws_infrastructure_tests() {
     print_step "Flutter diagnostic error monitoring"
     add_operation
     if command -v aws &> /dev/null; then
-        recent_errors=$(aws s3 ls s3://recipe-storage-0ea7007d57f67ecb-990537043943/flutter-console-errors/ --recursive 2>/dev/null | wc -l | tr -d ' \n' || echo "0")
+        bucket_name="${S3_STORAGE_BUCKET:-${S3_RECIPE_STORAGE_BUCKET:-recipe-storage-<RANDOM_ID>-<ACCOUNT_ID>}}"
+        recent_errors=$(aws s3 ls "s3://$bucket_name/flutter-console-errors/" --recursive 2>/dev/null | wc -l | tr -d ' \n' || echo "0")
         if [ "$recent_errors" -gt 0 ]; then
             print_warning "Found $recent_errors diagnostic error files - review S3 bucket"
         else
@@ -826,7 +827,7 @@ run_aws_infrastructure_tests() {
     print_step "S3 diagnostic bucket access tests"
     add_test
     if command -v aws &> /dev/null; then
-        bucket_name="recipe-storage-0ea7007d57f67ecb-990537043943"
+        bucket_name="${S3_STORAGE_BUCKET:-${S3_RECIPE_STORAGE_BUCKET:-recipe-storage-<RANDOM_ID>-<ACCOUNT_ID>}}"
         s3_test_passed=true
 
         # Test parser failure bucket access
@@ -1070,7 +1071,7 @@ check_frontend_status() {
     if [ -d "recipe_archive" ]; then
         if [ -f "recipe_archive/pubspec.yaml" ]; then
             print_success
-            echo "    Flutter web app ready - production: https://d1jcaphz4458q7.cloudfront.net"
+            echo "    Flutter web app ready - production: https://your-cloudfront-distribution.cloudfront.net"
         else
             print_error
             echo "    pubspec.yaml not found in recipe_archive directory"
@@ -1111,7 +1112,7 @@ validate_deployment_infrastructure() {
 
     print_step "S3 bucket configuration validation"
     add_operation
-    local bucket_name="recipearchive-web-app-prod-990537043943"
+    local bucket_name="${S3_WEB_APP_BUCKET:-recipearchive-web-app-<ACCOUNT_ID>}"
     if aws s3 ls "s3://$bucket_name" &> /dev/null; then
         # Check if bucket is configured for website hosting
         if aws s3api get-bucket-website --bucket "$bucket_name" &> /dev/null; then
@@ -1131,7 +1132,7 @@ validate_deployment_infrastructure() {
 
     print_step "CloudFront distribution status"
     add_operation
-    local distribution_id="E1D19F7SLOJM5H"
+    local distribution_id="${CLOUDFRONT_DISTRIBUTION_ID:-<CLOUDFRONT_DISTRIBUTION_ID>}"
     if aws cloudfront get-distribution --id "$distribution_id" &> /dev/null; then
         print_success
         mark_passed
@@ -1258,9 +1259,9 @@ validate_deployment_infrastructure() {
 
         if grep -q "^CLOUDFRONT_DISTRIBUTION_ID=" .env 2>/dev/null; then
             local env_dist_id=$(grep "^CLOUDFRONT_DISTRIBUTION_ID=" .env | cut -d'=' -f2)
-            if [ "$env_dist_id" != "E1D19F7SLOJM5H" ]; then
+            if [ -z "$env_dist_id" ] || [ "$env_dist_id" = "<CLOUDFRONT_DISTRIBUTION_ID>" ]; then
                 print_warning
-                echo "    CloudFront distribution ID mismatch in .env"
+                echo "    CLOUDFRONT_DISTRIBUTION_ID in .env appears to be a placeholder; update before real deployments"
             fi
         fi
     fi
@@ -1275,7 +1276,7 @@ validate_deployment_infrastructure() {
     print_success
     echo "    ✓ Infrastructure validation complete"
     echo "    ✓ Deploy with: ./scripts/web-deploy.sh"
-    echo "    ✓ Monitoring: https://d1jcaphz4458q7.cloudfront.net/"
+    echo "    ✓ Monitoring: https://your-cloudfront-distribution.cloudfront.net/"
     mark_passed
 
     track_section_completion

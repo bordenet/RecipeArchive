@@ -186,7 +186,7 @@
 
 ## Acceptance Criteria
 
-> **Note**: Active todos consolidated in [CLAUDE.md](../../CLAUDE.md#current-development-todos)
+> **Note**: Active implementation todos are tracked in [PROJECT_STATUS.md](../../PROJECT_STATUS.md) and in the GitHub issue tracker; this document captures the product requirements rather than the current sprint plan.
 
 ### Must Have
 

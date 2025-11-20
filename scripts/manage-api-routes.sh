@@ -42,9 +42,9 @@ readonly REPO_ROOT="$(get_repo_root)"
 #
 #   - API_GATEWAY_ID:         Overrides the default API Gateway ID.
 #   - SECURE_API_GATEWAY_ID:  The ID for the secure (production) API Gateway.
-#                             (Default: "1ym0pqnaib")
+#                             (Default: "<SECURE_API_GATEWAY_ID>")
 #   - DEV_API_GATEWAY_ID:     The ID for the development API Gateway.
-#                             (Default: "4eprojzbrc")
+#                             (Default: "<DEV_API_GATEWAY_ID>")
 #
 # EXAMPLES:
 #   # Show routes for the default (secure) API
@@ -79,9 +79,9 @@ fi
 
 # Configuration (from existing infrastructure)
 # Production API Gateway (secure stack)
-SECURE_API_ID=${SECURE_API_GATEWAY_ID:-"1ym0pqnaib"}
+SECURE_API_ID=${SECURE_API_GATEWAY_ID:-"<SECURE_API_GATEWAY_ID>"}
 # Development API Gateway
-DEV_API_ID=${DEV_API_GATEWAY_ID:-"4eprojzbrc"}
+DEV_API_ID=${DEV_API_GATEWAY_ID:-"<DEV_API_GATEWAY_ID>"}
 # Default to secure API for production
 API_ID=${API_GATEWAY_ID:-$SECURE_API_ID}
 REGION=${AWS_REGION:-"us-west-2"}
@@ -277,12 +277,12 @@ fix_integrations() {
     log_info "Fixing broken integrations for API Gateway $API_ID..."
 
     case "$API_ID" in
-        "1ym0pqnaib")
-            log_info "Applying fixes for secure API Gateway"
+        "$SECURE_API_ID")
+            log_info "Applying fixes for secure API Gateway ($API_ID)"
             fix_secure_api_integrations
             ;;
-        "4eprojzbrc")
-            log_info "Applying fixes for development API Gateway"
+        "$DEV_API_ID")
+            log_info "Applying fixes for development API Gateway ($API_ID)"
             fix_dev_api_integrations
             ;;
         *)
@@ -479,8 +479,8 @@ Commands:
 
 Environment Variables:
   API_GATEWAY_ID           Override default API Gateway ID
-  SECURE_API_GATEWAY_ID    Secure API Gateway ID (default: 1ym0pqnaib)
-  DEV_API_GATEWAY_ID       Development API Gateway ID (default: 4eprojzbrc)
+  SECURE_API_GATEWAY_ID    Secure API Gateway ID (e.g. <SECURE_API_GATEWAY_ID>)
+  DEV_API_GATEWAY_ID       Development API Gateway ID (e.g. <DEV_API_GATEWAY_ID>)
 
 Examples:
   $0 show
@@ -488,7 +488,7 @@ Examples:
   $0 fix
   $0 add-analytics
   $0 deploy
-  API_GATEWAY_ID=4eprojzbrc $0 validate    # Validate dev API
+  API_GATEWAY_ID=<DEV_API_GATEWAY_ID> $0 validate    # Validate dev API
 
 EOF
 }

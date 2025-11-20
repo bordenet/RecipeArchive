@@ -116,9 +116,14 @@ type OpenAIResponse struct {
 }
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	allowedOrigin := os.Getenv("FRONTEND_BASE_URL")
+	if allowedOrigin == "" {
+		allowedOrigin = "https://localhost:3000"
+	}
+
 	headers := map[string]string{
 		"Content-Type":                     "application/json",
-		"Access-Control-Allow-Origin":      "https://d1jcaphz4458q7.cloudfront.net",
+		"Access-Control-Allow-Origin":      allowedOrigin,
 		"Access-Control-Allow-Methods":     "POST, OPTIONS",
 		"Access-Control-Allow-Headers":     "Content-Type, Authorization",
 		"Access-Control-Allow-Credentials": "true",

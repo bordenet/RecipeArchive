@@ -431,4 +431,4 @@ dependencies {
 
 - [iOS Implementation](002-ios-recipe-capture-architecture.md) - Reference architecture
 - [Backend Parser](../../aws-backend/functions/recipes/parser.go) - Server-side HTML parsing
-- [CLAUDE.md](../../CLAUDE.md) - Project development guide
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and coding conventions

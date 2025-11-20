@@ -45,7 +45,8 @@
 set -e
 
 # --- Configuration ---
-S3_BUCKET="recipe-failed-0ea7007d57f67ecb-990537043943"
+# S3 bucket for failed recipe diagnostics; configure via .env (S3_FAILED_PARSING_BUCKET_NAME)
+S3_BUCKET="${S3_FAILED_PARSING_BUCKET_NAME:-}"
 OUTPUT_DIR="./flutter-error-analysis"
 HOURS_BACK=${1:-24}
 
@@ -73,6 +74,9 @@ if ! [[ "$HOURS_BACK" =~ ^[0-9]+$ ]]; then
 fi
 
 echo "🔍 Analyzing Flutter errors from last $HOURS_BACK hours..."
+if [ -z "$S3_BUCKET" ]; then
+    error_exit "S3_FAILED_PARSING_BUCKET_NAME is not set. Please configure it in your .env file before running this script."
+fi
 echo "📊 S3 Bucket: s3://$S3_BUCKET/diagnostics/"
 
 # Create output directory
@@ -84,7 +88,8 @@ if ! aws s3 sync "s3://$S3_BUCKET/diagnostics/" "$OUTPUT_DIR/raw-data/" --quiet;
     error_exit "Failed to download diagnostic data from S3 bucket: s3://$S3_BUCKET/diagnostics/. Check AWS credentials and bucket permissions."
 fi
 
-S3_BUCKET="recipe-failed-0ea7007d57f67ecb-990537043943"
+# S3 bucket for failed recipe diagnostics; configure via .env (S3_FAILED_PARSING_BUCKET_NAME)
+S3_BUCKET="${S3_FAILED_PARSING_BUCKET_NAME:-}"
 OUTPUT_DIR="./flutter-error-analysis"
 HOURS_BACK=${1:-24}
 
@@ -112,6 +117,9 @@ if ! [[ "$HOURS_BACK" =~ ^[0-9]+$ ]]; then
 fi
 
 echo "🔍 Analyzing Flutter errors from last $HOURS_BACK hours..."
+if [ -z "$S3_BUCKET" ]; then
+    error_exit "S3_FAILED_PARSING_BUCKET_NAME is not set. Please configure it in your .env file before running this script."
+fi
 echo "📊 S3 Bucket: s3://$S3_BUCKET/diagnostics/"
 
 # Create output directory
@@ -160,7 +168,6 @@ for file in "$OUTPUT_DIR/raw-data"/*.json; do
 
         # Check if it's a Flutter error
         if jq -e '.userAgent | contains("Flutter")' "$file" >/dev/null 2>&1 || \
-           jq -e '.url | contains("d1jcaphz4458q7.cloudfront.net")' "$file" >/dev/null 2>&1 || \
            jq -e '.context | contains("flutter")' "$file" >/dev/null 2>&1; then
 
             FLUTTER_ERRORS=$((FLUTTER_ERRORS + 1))
@@ -193,8 +200,7 @@ if [ $FLUTTER_ERRORS -gt 0 ]; then
     echo "🏷️  FLUTTER ERROR TYPES:" >> "$OUTPUT_DIR/flutter-analysis.txt"
     for file in "$OUTPUT_DIR/raw-data"/*.json; do
         if [ -f "$file" ]; then
-            if jq -e '.userAgent | contains("Flutter")' "$file" >/dev/null 2>&1 || \
-               jq -e '.url | contains("d1jcaphz4458q7.cloudfront.net")' "$file" >/dev/null 2>&1; then
+            if jq -e '.userAgent | contains("Flutter")' "$file" >/dev/null 2>&1; then
                 error_type=$(jq -r '.errorType // "unknown"' "$file")
                 echo "  - $error_type" >> "$OUTPUT_DIR/flutter-analysis.txt"
             fi

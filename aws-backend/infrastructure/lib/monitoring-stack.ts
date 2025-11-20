@@ -152,10 +152,17 @@ export class MonitoringStack extends cdk.Stack {
     );
 
     // S3 Event Metrics
+    const failedParsingBucketName = new cdk.CfnParameter(this, "FailedParsingBucketName", {
+      type: "String",
+      default: "recipe-failed-<RANDOM_ID>-<ACCOUNT_ID>",
+      description:
+        "Name of the S3 bucket used to store failed parsing diagnostics. Replace with your actual bucket name when deploying.",
+    });
+
     const failedParsingBucket = s3.Bucket.fromBucketName(
       this,
       "FailedParsingBucket",
-      "recipe-failed-0ea7007d57f67ecb-990537043943"
+      failedParsingBucketName.valueAsString
     );
 
     // Add metric filter for diagnostics/ prefix

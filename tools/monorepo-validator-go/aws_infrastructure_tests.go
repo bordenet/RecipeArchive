@@ -44,7 +44,15 @@ func runAwsInfrastructureTests(projectRoot string) bool {
 			results <- true
 			return
 		}
-		_, err := runCommand(projectRoot, "aws", "s3", "ls", "s3://recipe-storage-0ea7007d57f67ecb-990537043943/flutter-console-errors/", "--recursive")
+
+		bucketName := os.Getenv("S3_RECIPE_STORAGE_BUCKET")
+		if bucketName == "" {
+			fmt.Print("Skipping S3 flutter-console-errors check (S3_RECIPE_STORAGE_BUCKET not set)")
+			results <- true
+			return
+		}
+
+		_, err := runCommand(projectRoot, "aws", "s3", "ls", "s3://"+bucketName+"/flutter-console-errors/", "--recursive")
 		results <- err == nil
 	}()
 
@@ -54,7 +62,14 @@ func runAwsInfrastructureTests(projectRoot string) bool {
 			results <- true
 			return
 		}
-		bucketName := "recipe-storage-0ea7007d57f67ecb-990537043943"
+
+		bucketName := os.Getenv("S3_RECIPE_STORAGE_BUCKET")
+		if bucketName == "" {
+			fmt.Print("Skipping S3 parser-failure/error bucket checks (S3_RECIPE_STORAGE_BUCKET not set)")
+			results <- true
+			return
+		}
+
 		s3TestPassed := true
 
 		_, err := runCommand(projectRoot, "aws", "s3", "ls", "s3://"+bucketName+"/parser-failures/")
@@ -89,10 +104,16 @@ func runAwsInfrastructureTests(projectRoot string) bool {
 
 // testAPIEndpointsWithTolerances validates critical API endpoints with tolerance for known CDK function issues
 func testAPIEndpointsWithTolerances(projectRoot string) bool {
-	// Load API base URL from environment or use default
+	// Load API base URL from environment; if not set, skip API checks for new adopters
 	apiBaseURL := os.Getenv("API_BASE_URL")
 	if apiBaseURL == "" {
-		apiBaseURL = "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod"
+		fmt.Println("Skipping API endpoint checks (API_BASE_URL not set)")
+		return true
+	}
+
+	webAppOrigin := os.Getenv("WEB_APP_URL")
+	if webAppOrigin == "" {
+		webAppOrigin = "https://your-web-app-url.example.com"
 	}
 
 	// Define endpoints with criticality flags
@@ -202,7 +223,7 @@ func testAPIEndpointsWithTolerances(projectRoot string) bool {
 		}
 
 		// Add required headers for CORS requests
-		req.Header.Set("Origin", "https://d1jcaphz4458q7.cloudfront.net")
+		req.Header.Set("Origin", webAppOrigin)
 		if endpoint.method == "OPTIONS" {
 			req.Header.Set("Access-Control-Request-Method", "POST")
 			req.Header.Set("Access-Control-Request-Headers", "Content-Type")

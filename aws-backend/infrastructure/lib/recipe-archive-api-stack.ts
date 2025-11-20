@@ -105,7 +105,7 @@ export class RecipeArchiveApiStack extends cdk.Stack {
       defaultCorsPreflightOptions: {
         allowOrigins: [
           "https://localhost:3000",
-          "https://d1jcaphz4458q7.cloudfront.net",
+          "https://recipearchive.com",
         ],
         allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowHeaders: [

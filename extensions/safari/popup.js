@@ -2,7 +2,9 @@
 
 // Global error handling for popup
 const DIAGNOSTIC_ENDPOINT =
-  "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod/report-error";
+  (typeof CONFIG !== "undefined" && CONFIG.getCurrentAPI
+    ? CONFIG.getCurrentAPI().diagnostics
+    : "http://127.0.0.1:8081/api/diagnostics");
 
 // Diagnostic reporting function
 async function reportDiagnostic(errorType, error, additionalData = {}) {
@@ -375,43 +377,49 @@ function renderUI() {
 async function ensureAWSConfiguration() {
   console.log("🔧 Checking AWS configuration...");
 
-  // Check if configuration is already set and valid with CORRECT values
+  // Check if configuration is already set and valid
   const currentUserPoolId = localStorage.getItem("COGNITO_USER_POOL_ID");
   const currentClientId = localStorage.getItem("COGNITO_APP_CLIENT_ID");
 
-  // These are the correct values we need
-  const correctUserPoolId = "us-west-2_rpBcEEhYK";
-  const correctClientId = "7lm8mqr03s0m0fn17dnv373s4h";
-
   if (
-    currentUserPoolId === correctUserPoolId &&
-    currentClientId === correctClientId
+    currentUserPoolId &&
+    currentClientId &&
+    currentUserPoolId !== "CONFIGURE_ME" &&
+    currentClientId !== "CONFIGURE_ME"
   ) {
-    console.log("✅ AWS configuration already set with correct values");
+    console.log("✅ AWS configuration already set");
     return;
   }
 
-  if (currentUserPoolId && currentClientId) {
-    console.log(
-      `🔄 Found outdated configuration - User Pool: ${currentUserPoolId}, Client: ${currentClientId}`
+  const cognitoConfig =
+    typeof CONFIG !== "undefined" && CONFIG.getCognitoConfig
+      ? CONFIG.getCognitoConfig()
+      : null;
+  const apiConfig =
+    typeof CONFIG !== "undefined" && CONFIG.getCurrentAPI
+      ? CONFIG.getCurrentAPI()
+      : null;
+
+  if (!cognitoConfig || !cognitoConfig.userPoolId || !cognitoConfig.clientId) {
+    console.warn(
+      "⚠️ Safari extension: Missing Cognito environment configuration. Please configure .env and rebuild extensions."
     );
-    console.log("🔄 Updating to correct values...");
+    return;
   }
 
-  // Set correct AWS configuration
-  console.log("🔧 Setting correct AWS configuration...");
-  localStorage.setItem("AWS_REGION", "us-west-2");
-  localStorage.setItem("COGNITO_USER_POOL_ID", "us-west-2_rpBcEEhYK");
-  localStorage.setItem("COGNITO_APP_CLIENT_ID", "7lm8mqr03s0m0fn17dnv373s4h");
-  localStorage.setItem(
-    "API_BASE_URL",
-    "https://1ym0pqnaib.execute-api.us-west-2.amazonaws.com/prod"
-  );
+  console.log("🔧 Setting AWS configuration from environment...");
+  localStorage.setItem("AWS_REGION", cognitoConfig.region || "us-west-2");
+  localStorage.setItem("COGNITO_USER_POOL_ID", cognitoConfig.userPoolId);
+  localStorage.setItem("COGNITO_APP_CLIENT_ID", cognitoConfig.clientId);
 
-  // Enable production mode for the extension
-  localStorage.setItem("recipeArchive.dev", "false");
+  if (apiConfig && apiConfig.base) {
+    localStorage.setItem("API_BASE_URL", apiConfig.base);
+  }
 
-  // Force CONFIG to reload environment configuration
+  const isDevEnv =
+    typeof CONFIG !== "undefined" && CONFIG.ENVIRONMENT === "development";
+  localStorage.setItem("recipeArchive.dev", isDevEnv ? "true" : "false");
+
   if (typeof CONFIG !== "undefined" && CONFIG.reloadConfiguration) {
     CONFIG.reloadConfiguration();
   }

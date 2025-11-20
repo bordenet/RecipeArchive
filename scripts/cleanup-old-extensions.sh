@@ -37,7 +37,7 @@ init_script
 
 # Script variables
 readonly REPO_ROOT="$(get_repo_root)"
-readonly BUCKET_NAME="${S3_RECIPE_STORAGE_BUCKET:-recipe-storage-0ea7007d57f67ecb-990537043943}"
+readonly BUCKET_NAME="${S3_RECIPE_STORAGE_BUCKET:-recipe-storage-<RANDOM_ID>-<ACCOUNT_ID>}"
 readonly EXTENSIONS_PREFIX="extensions/"
 readonly KEEP_VERSIONS=2
 

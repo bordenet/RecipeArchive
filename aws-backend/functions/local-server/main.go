@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log/slog"
 	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	
+	"log/slog"
+
 	"net/http"
 	"os"
 	"path/filepath"
@@ -216,7 +216,7 @@ func diagnosticsHandler(w http.ResponseWriter, r *http.Request) {
 		if htmlContent, ok := diagnosticData["html"].(string); ok && htmlContent != "" {
 			bucketName := os.Getenv("S3_FAILED_PARSING_BUCKET")
 			if bucketName == "" {
-				bucketName = "recipearchive-failed-parsing-dev-990537043943" // Fallback for local dev
+				bucketName = "recipearchive-failed-parsing-dev-your-account-id-here" // Fallback for local dev (example value; override via S3_FAILED_PARSING_BUCKET)
 			}
 
 			// Create a unique filename based on timestamp and URL
