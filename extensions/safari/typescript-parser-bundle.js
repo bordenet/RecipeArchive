@@ -16413,6 +16413,7 @@
       return {
         title: this.sanitizeText(jsonLd.name || "Recipe"),
         source: url,
+        author: typeof jsonLd.author === "string" ? this.sanitizeText(jsonLd.author) : this.sanitizeText(jsonLd.author?.name),
         ingredients: (jsonLd.recipeIngredient || []).map((i) => ({
           text: this.sanitizeText(i)
         })),
