@@ -39,6 +39,9 @@ test-results/*
 .validation-logs/
 wget-log
 
+# Internal documentation (not for GitHub)
+COVERAGE_NOTES.md
+
 # Backup files and development artifacts
 *.backup
 *.bak
