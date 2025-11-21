@@ -171,19 +171,35 @@ jobs:
           fi
           echo "✅ All tests passed"
 
-      - name: Generate Test Coverage Report
+      - name: Generate JavaScript/TypeScript Coverage Report
         run: |
-          echo "📊 Generating test coverage report..."
+          echo "📊 Generating JavaScript/TypeScript test coverage report..."
           npm run test:coverage -- --coverageReporters=text-summary --coverageReporters=lcov
-          echo "✅ Coverage report generated"
+          echo "✅ JS/TS coverage report generated"
 
-      - name: Upload Coverage to Codecov
+      - name: Generate Go Coverage Report
+        run: |
+          echo "📊 Generating Go test coverage report..."
+          bash scripts/test-go-coverage.sh
+          echo "✅ Go coverage report generated"
+
+      - name: Upload JavaScript/TypeScript Coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-recipearchive
+          flags: javascript,typescript
+          name: codecov-js-ts
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload Go Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./aws-backend/functions/coverage.out
+          flags: go,backend
+          name: codecov-go
           fail_ci_if_error: false
           verbose: true
 
