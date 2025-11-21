@@ -6,6 +6,10 @@ module.exports = {
   transform: {
     "^.+\\.ts$": "ts-jest",
   },
+  moduleNameMapper: {
+    // Handle .js extensions in TypeScript imports
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
   collectCoverageFrom: [
     "../sites/**/*.ts",
     "../*.ts",

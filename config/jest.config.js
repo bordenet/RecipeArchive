@@ -5,6 +5,8 @@ export default {
   moduleNameMapper: {
     "^@shared/(.*)$": "<rootDir>/extensions/shared/$1",
     "^cheerio$": "<rootDir>/parsers/tests/__mocks__/cheerio.js",
+    // Handle .js extensions in TypeScript imports
+    "^(\\.{1,2}/.*)\\.js$": "$1",
   },
   transform: {
     // eslint-disable-next-line no-useless-escape
