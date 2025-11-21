@@ -23,8 +23,7 @@ describe("Epicurious Parser", () => {
     expect(parser.canParse(url)).toBe(false);
   });
 
-  it.skip("should parse basic recipe structure from HTML fixture", async () => {
-    // Skipped: cheerio .map() function incompatibility in test environment
+  it("should parse basic recipe structure from HTML fixture", async () => {
     const html = await loadFixture("epicurious-sample.html");
     const url = "https://www.epicurious.com/recipes/food/views/test-recipe";
 
@@ -40,8 +39,7 @@ describe("Epicurious Parser", () => {
     expect(recipe.instructions.length).toBeGreaterThan(0);
   });
 
-  it.skip("should extract ingredients with proper structure", async () => {
-    // Skipped: cheerio .map() function incompatibility in test environment
+  it("should extract ingredients with proper structure", async () => {
     const html = await loadFixture("epicurious-sample.html");
     const url = "https://www.epicurious.com/recipes/food/views/test-recipe";
 
@@ -55,8 +53,7 @@ describe("Epicurious Parser", () => {
     });
   });
 
-  it.skip("should extract instructions with step numbers", async () => {
-    // Skipped: cheerio .map() function incompatibility in test environment
+  it("should extract instructions with step numbers", async () => {
     const html = await loadFixture("epicurious-sample.html");
     const url = "https://www.epicurious.com/recipes/food/views/test-recipe";
 
