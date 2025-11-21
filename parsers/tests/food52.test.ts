@@ -23,10 +23,9 @@ describe("Food52 Parser", () => {
     expect(parser.canParse(url)).toBe(false);
   });
 
-  it.skip("should parse basic recipe structure from HTML fixture", async () => {
+  it("should parse basic recipe structure from HTML fixture", async () => {
     // NOTE: food52.com blocks automated access with Vercel Security Checkpoint
     // E2E tests are excluded, but unit tests with fixtures work fine
-    // Skipped: cheerio .map() function incompatibility in test environment
     const html = await loadFixture("food52-Confit-Red-Pepper-and-Tomato-Pasta-Sauce-Recipe.html");
     const url = "https://food52.com/recipes/test-recipe";
 
@@ -42,8 +41,7 @@ describe("Food52 Parser", () => {
     expect(recipe.instructions.length).toBeGreaterThan(0);
   });
 
-  it.skip("should extract ingredients with proper structure", async () => {
-    // Skipped: cheerio .map() function incompatibility in test environment
+  it("should extract ingredients with proper structure", async () => {
     const html = await loadFixture("food52-Confit-Red-Pepper-and-Tomato-Pasta-Sauce-Recipe.html");
     const url = "https://food52.com/recipes/test-recipe";
 
@@ -57,8 +55,7 @@ describe("Food52 Parser", () => {
     });
   });
 
-  it.skip("should extract instructions with step numbers", async () => {
-    // Skipped: cheerio .map() function incompatibility in test environment
+  it("should extract instructions with step numbers", async () => {
     const html = await loadFixture("food52-Confit-Red-Pepper-and-Tomato-Pasta-Sauce-Recipe.html");
     const url = "https://food52.com/recipes/test-recipe";
 
