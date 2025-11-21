@@ -3,6 +3,9 @@
 
 const mockCheerio = {
   load: (html) => {
+    // Store the HTML for extraction
+    const htmlString = typeof html === "string" ? html : "";
+
     // Create a mock jQuery-like object that can be used in tests
     const $ = (selector) => {
       // Handle case where selector might be undefined or an element object
@@ -41,6 +44,12 @@ const mockCheerio = {
         html: () => {
           // Return JSON-LD script content for structured data tests
           if (safeSelector.includes("script[type=\"application/ld+json\"]")) {
+            // Extract actual JSON-LD from the HTML string
+            const jsonLdMatch = htmlString.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+            if (jsonLdMatch && jsonLdMatch[1]) {
+              return jsonLdMatch[1].trim();
+            }
+            // Fallback to default test data if no JSON-LD found
             return JSON.stringify({
               "@type": "Recipe",
               name: "Test Recipe",
@@ -106,10 +115,31 @@ const mockCheerio = {
               { textContent: "2 eggs", text: () => "2 eggs" },
             ];
           }
+          if (safeSelector.includes("script[type=\"application/ld+json\"]")) {
+            // Return script element with JSON-LD content
+            const jsonLdMatch = htmlString.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+            const jsonContent = jsonLdMatch ? jsonLdMatch[1].trim() : "";
+            return [{
+              textContent: jsonContent,
+              text: () => jsonContent,
+              html: () => jsonContent,
+            }];
+          }
           return [mockElement];
         },
-        length: safeSelector.includes("li") ? 2 : 1,
+        length: safeSelector.includes("li") ? 2 : (safeSelector.includes("script[type=\"application/ld+json\"]") ? 1 : 1),
       };
+
+      // Support array indexing for cheerio collections (e.g., scripts[0])
+      if (safeSelector.includes("script[type=\"application/ld+json\"]")) {
+        const jsonLdMatch = htmlString.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+        const jsonContent = jsonLdMatch ? jsonLdMatch[1].trim() : "";
+        mockElement[0] = {
+          textContent: jsonContent,
+          text: () => jsonContent,
+          html: () => jsonContent,
+        };
+      }
 
       return mockElement;
     };
