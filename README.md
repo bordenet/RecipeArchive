@@ -257,6 +257,24 @@ These warnings are expected and can be safely ignored. All 10 Lambda functions d
 
 **Tech Stack:** Go (Lambda), Flutter (web/mobile), TypeScript (extensions), AWS (S3, Cognito, API Gateway)
 
+---
+
+## Code Coverage
+
+RecipeArchive maintains comprehensive test coverage across multiple languages. The coverage visualization below shows detailed coverage by module:
+
+[![Coverage Grid](https://codecov.io/gh/bordenet/RecipeArchive/graphs/tree.svg)](https://codecov.io/gh/bordenet/RecipeArchive)
+
+**What this means:**
+- **Green**: Well-tested code (>80% coverage)
+- **Yellow**: Moderate coverage (60-80%)
+- **Red**: Needs more tests (<60%)
+- **Size**: Larger boxes = more lines of code
+
+Click the image to explore detailed coverage reports on Codecov, including line-by-line coverage, branch coverage, and historical trends.
+
+---
+
 ## About the Developer
 
 _[View my other projects](https://github.com/bordenet) and my [LinkedIn profile](https://www.linkedin.com/in/bordenet)_
