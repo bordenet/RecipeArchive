@@ -72,7 +72,8 @@ func main() {
 	// Get project root (tool is in tools/recipe-url-discovery)
 	projectRoot, err := filepath.Abs("../..")
 	if err != nil {
-		logger.Error("failed to get project root", "error", err); os.Exit(1)
+		logger.Error("failed to get project root", "error", err)
+		os.Exit(1)
 	}
 
 	parserBundlePath := filepath.Join(projectRoot, "extensions/chrome/typescript-parser-bundle.js")
@@ -82,7 +83,8 @@ func main() {
 	// Load config
 	config, err := loadConfig(configPath)
 	if err != nil {
-		logger.Error("failed to load config", "error", err); os.Exit(1)
+		logger.Error("failed to load config", "error", err)
+		os.Exit(1)
 	}
 
 	// Create components
@@ -112,13 +114,15 @@ func discoverForSite(siteName string, config *Config, discoverer *discoverers.Si
 	validator *validators.RecipeValidator, maxURLs int) {
 	siteConfig, ok := config.Sites[siteName]
 	if !ok {
-		logger.Error("site not found in config", "site", siteName); os.Exit(1)
+		logger.Error("site not found in config", "site", siteName)
+		os.Exit(1)
 	}
 
 	fmt.Printf("📡 Fetching sitemap from %s...\n", siteConfig.SitemapURL)
 	urls, err := discoverer.DiscoverURLs(siteConfig.SitemapURL, siteConfig.Domain)
 	if err != nil {
-		logger.Error("failed to discover URLs", "error", err); os.Exit(1)
+		logger.Error("failed to discover URLs", "error", err)
+		os.Exit(1)
 	}
 
 	fmt.Printf("Found %d potential recipe URLs\n", len(urls))

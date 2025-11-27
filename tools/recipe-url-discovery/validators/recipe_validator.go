@@ -128,7 +128,7 @@ const fs = require('fs');
 	if absErr != nil {
 		return nil, fmt.Errorf("failed to get absolute path to node_modules: %w", absErr)
 	}
-	cmd.Env = append(cmd.Env, "NODE_PATH=" + nodeModulesPath)
+	cmd.Env = append(cmd.Env, "NODE_PATH="+nodeModulesPath)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
