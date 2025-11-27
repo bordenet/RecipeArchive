@@ -12,10 +12,10 @@ import (
 
 // SitemapURL represents a URL from a sitemap
 type SitemapURL struct {
-    Loc        string    `xml:"loc"`
-    LastMod    string    `xml:"lastmod"`
-    ChangeFreq string    `xml:"changefreq"`
-    Priority   float64   `xml:"priority"`
+	Loc        string  `xml:"loc"`
+	LastMod    string  `xml:"lastmod"`
+	ChangeFreq string  `xml:"changefreq"`
+	Priority   float64 `xml:"priority"`
 }
 
 // Sitemap represents the root sitemap structure
@@ -132,24 +132,24 @@ func (d *SitemapDiscoverer) DiscoverURLs(sitemapURL string, domain string) ([]st
 
 // containsRecipeIndicator checks if URL likely points to a recipe
 func containsRecipeIndicator(url string) bool {
-    // Common patterns in recipe URLs
-    indicators := []string{
-        "/recipe/",
-        "/recipes/",
-        "-recipe",
-        "/dish/",
-        "/food/",
-    }
+	// Common patterns in recipe URLs
+	indicators := []string{
+		"/recipe/",
+		"/recipes/",
+		"-recipe",
+		"/dish/",
+		"/food/",
+	}
 
-    for _, indicator := range indicators {
-        if contains(url, indicator) {
-            return true
-        }
-    }
+	for _, indicator := range indicators {
+		if contains(url, indicator) {
+			return true
+		}
+	}
 
-    return false
+	return false
 }
 
 func contains(s, substr string) bool {
-    return strings.Contains(s, substr)
+	return strings.Contains(s, substr)
 }

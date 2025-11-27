@@ -148,4 +148,3 @@ func TestIsPlaceholderRecipe_AllPlaceholders(t *testing.T) {
 		t.Error("Expected completely empty recipe to be placeholder")
 	}
 }
-

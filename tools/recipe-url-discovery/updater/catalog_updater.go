@@ -1,22 +1,22 @@
 package updater
 
 import (
-    "fmt"
-    "os"
-    "regexp"
-    "strings"
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
 )
 
 // CatalogUpdater updates the E2E test catalog with new URLs
 type CatalogUpdater struct {
-    testFilePath string
+	testFilePath string
 }
 
 // NewCatalogUpdater creates a new catalog updater
 func NewCatalogUpdater(testFilePath string) *CatalogUpdater {
-    return &CatalogUpdater{
-        testFilePath: testFilePath,
-    }
+	return &CatalogUpdater{
+		testFilePath: testFilePath,
+	}
 }
 
 // UpdateURL updates a specific site's URL in the test catalog
@@ -64,12 +64,12 @@ func (u *CatalogUpdater) UpdateURL(siteName, oldURL, newURL string) error {
 
 // UpdateMultipleURLs updates multiple sites at once
 func (u *CatalogUpdater) UpdateMultipleURLs(updates map[string]string) error {
-    for siteName, newURL := range updates {
-        // Note: We don't have oldURL here, so we need to find it differently
-        // This is a simplified version - you'll need to enhance this
-        if err := u.UpdateURL(siteName, "", newURL); err != nil {
-            return err
-        }
-    }
-    return nil
+	for siteName, newURL := range updates {
+		// Note: We don't have oldURL here, so we need to find it differently
+		// This is a simplified version - you'll need to enhance this
+		if err := u.UpdateURL(siteName, "", newURL); err != nil {
+			return err
+		}
+	}
+	return nil
 }

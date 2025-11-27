@@ -154,4 +154,3 @@ func TestActiveTokensIndex_JSONMarshaling(t *testing.T) {
 		t.Errorf("Expected 3 active tokens, got %d", len(decoded.Active))
 	}
 }
-

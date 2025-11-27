@@ -15,8 +15,6 @@ import (
 	"recipe-archive/utils"
 )
 
-
-
 func main() {
 	lambda.Start(handler)
 }
@@ -292,7 +290,3 @@ func handleSearchRecipes(ctx context.Context, request events.APIGatewayProxyRequ
 	}
 	return apiResponse, nil
 }
-
-
-
-

@@ -248,7 +248,7 @@ func execValidationInProcess(name string, projectRoot string, logsDir string, st
 
 func main() {
 	// MAX OUT CPU/MEMORY USAGE - This is the only thing that matters when running
-	runtime.GOMAXPROCS(runtime.NumCPU())                       // Use ALL available CPUs
+	runtime.GOMAXPROCS(runtime.NumCPU())                  // Use ALL available CPUs
 	_ = syscall.Setpriority(syscall.PRIO_PROCESS, 0, -20) // Highest priority (requires root or sudo)
 
 	// Custom help handling
@@ -550,8 +550,8 @@ func runValidationsParallel(validator *Validator, validations []ValidationTask, 
 
 			// Move up, clear, and redraw
 			_, _ = fmt.Fprintf(originalStdout, "\033[%dA", linesToMoveUp) // Move up to dashboard start
-			_, _ = fmt.Fprint(originalStdout, "\033[J")                    // Clear from cursor to end
-			_, _ = fmt.Fprintln(originalStdout, newDashboard)              // Print updated dashboard
+			_, _ = fmt.Fprint(originalStdout, "\033[J")                   // Clear from cursor to end
+			_, _ = fmt.Fprintln(originalStdout, newDashboard)             // Print updated dashboard
 
 			// Update last dashboard for next iteration
 			lastDashboard = newDashboard

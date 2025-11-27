@@ -20,12 +20,12 @@ type SearchCacheEntry struct {
 
 // SearchCache implements an in-memory LRU cache for search results
 type SearchCache struct {
-	mu       sync.RWMutex
-	entries  map[string]*SearchCacheEntry
-	maxSize  int
-	ttl      time.Duration
-	hits     int64
-	misses   int64
+	mu        sync.RWMutex
+	entries   map[string]*SearchCacheEntry
+	maxSize   int
+	ttl       time.Duration
+	hits      int64
+	misses    int64
 	evictions int64
 }
 
@@ -191,6 +191,6 @@ func (c *SearchCache) Clear() {
 
 // Global search cache instance (survives across warm Lambda invocations)
 var searchCache = NewSearchCache(
-	100,              // maxSize: cache up to 100 unique search queries
-	5*time.Minute,    // ttl: cache entries valid for 5 minutes
+	100,           // maxSize: cache up to 100 unique search queries
+	5*time.Minute, // ttl: cache entries valid for 5 minutes
 )

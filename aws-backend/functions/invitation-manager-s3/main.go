@@ -18,8 +18,6 @@ import (
 	"recipe-archive/utils"
 )
 
-
-
 func main() {
 	lambda.Start(handler)
 }
@@ -406,4 +404,3 @@ func revokeInvitation(ctx context.Context, token, adminUserID string) (events.AP
 }
 
 // S3 Helper Functions
-

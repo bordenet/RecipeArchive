@@ -70,7 +70,8 @@ func main() {
 
 	ctx := context.Background()
 	if err := initAWSClient(ctx); err != nil {
-		logger.Error("failed to initialize AWS client", "error", err); os.Exit(1)
+		logger.Error("failed to initialize AWS client", "error", err)
+		os.Exit(1)
 	}
 
 	if *action == "" {
@@ -91,34 +92,39 @@ func main() {
 	case "load-test-data":
 		err := loadTestData(ctx, *testDataFile)
 		if err != nil {
-			logger.Error("Failed to load test data: %v", "error", err); os.Exit(1)
+			logger.Error("Failed to load test data: %v", "error", err)
+			os.Exit(1)
 		}
 		fmt.Println("✅ Test data loaded successfully")
 
 	case "cleanup-s3":
 		err := cleanupS3(ctx)
 		if err != nil {
-			logger.Error("Failed to cleanup S3: %v", "error", err); os.Exit(1)
+			logger.Error("Failed to cleanup S3: %v", "error", err)
+			os.Exit(1)
 		}
 		fmt.Println("✅ S3 bucket cleaned successfully")
 
 	case "validate-crud":
 		err := validateCRUD(ctx, *userID)
 		if err != nil {
-			logger.Error("CRUD validation failed: %v", "error", err); os.Exit(1)
+			logger.Error("CRUD validation failed: %v", "error", err)
+			os.Exit(1)
 		}
 		fmt.Println("✅ All CRUD operations validated successfully")
 
 	case "list-recipes":
 		err := listRecipes(ctx, *userID)
 		if err != nil {
-			logger.Error("Failed to list recipes: %v", "error", err); os.Exit(1)
+			logger.Error("Failed to list recipes: %v", "error", err)
+			os.Exit(1)
 		}
 
 	case "cleanup-duplicates":
 		err := cleanupDuplicateRecipes(ctx, *userID)
 		if err != nil {
-			logger.Error("Failed to cleanup duplicates: %v", "error", err); os.Exit(1)
+			logger.Error("Failed to cleanup duplicates: %v", "error", err)
+			os.Exit(1)
 		}
 
 	case "test-url-overwrite":
@@ -130,7 +136,8 @@ func main() {
 	case "test-normalizer":
 		err := testNormalizer()
 		if err != nil {
-			logger.Error("Normalizer test failed: %v", "error", err); os.Exit(1)
+			logger.Error("Normalizer test failed: %v", "error", err)
+			os.Exit(1)
 		}
 
 	default:

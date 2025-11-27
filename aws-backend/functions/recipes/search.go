@@ -81,7 +81,7 @@ func stem(word string) string {
 	if strings.HasSuffix(word, "es") && len(word) > 3 {
 		// Special case: -ches, -shes, -sses, -xes
 		if strings.HasSuffix(word, "ches") || strings.HasSuffix(word, "shes") ||
-		   strings.HasSuffix(word, "sses") || strings.HasSuffix(word, "xes") {
+			strings.HasSuffix(word, "sses") || strings.HasSuffix(word, "xes") {
 			return word[:len(word)-2] // dishes -> dish, glasses -> glass
 		}
 		return word[:len(word)-2] // tomatoes -> tomato
