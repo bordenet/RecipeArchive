@@ -33,7 +33,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # HTTP & API
-  http: ^1.1.2
+  http: ^1.6.0
 
   # JSON Serialization
   json_annotation: ^4.8.1
