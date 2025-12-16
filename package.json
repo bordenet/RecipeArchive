@@ -70,7 +70,7 @@
   "license": "MIT",
   "dependencies": {
     "aws-cdk": "^2.1026.0",
-    "aws-cdk-lib": "^2.212.0",
+    "aws-cdk-lib": "^2.232.2",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.11.0",
     "cheerio": "^1.1.2",
