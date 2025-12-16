@@ -72,7 +72,7 @@ dependencies:
   intl: ^0.20.2
 
   # Cryptography
-  crypto: ^3.0.3
+  crypto: ^3.0.7
 
   # Keep screen awake during recipe viewing
   wakelock_plus: ^1.4.0
