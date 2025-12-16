@@ -83,13 +83,21 @@ func TestGetCognitoConfig(t *testing.T) {
 	originalUserPoolID := os.Getenv("COGNITO_USER_POOL_ID")
 	originalClientID := os.Getenv("COGNITO_APP_CLIENT_ID")
 	defer func() {
-		os.Setenv("COGNITO_USER_POOL_ID", originalUserPoolID)
-		os.Setenv("COGNITO_APP_CLIENT_ID", originalClientID)
+		if err := os.Setenv("COGNITO_USER_POOL_ID", originalUserPoolID); err != nil {
+			t.Logf("Warning: failed to restore COGNITO_USER_POOL_ID: %v", err)
+		}
+		if err := os.Setenv("COGNITO_APP_CLIENT_ID", originalClientID); err != nil {
+			t.Logf("Warning: failed to restore COGNITO_APP_CLIENT_ID: %v", err)
+		}
 	}()
 
 	// Set test values
-	os.Setenv("COGNITO_USER_POOL_ID", "us-west-2_TEST123")
-	os.Setenv("COGNITO_APP_CLIENT_ID", "testclient123")
+	if err := os.Setenv("COGNITO_USER_POOL_ID", "us-west-2_TEST123"); err != nil {
+		t.Fatalf("Failed to set COGNITO_USER_POOL_ID: %v", err)
+	}
+	if err := os.Setenv("COGNITO_APP_CLIENT_ID", "testclient123"); err != nil {
+		t.Fatalf("Failed to set COGNITO_APP_CLIENT_ID: %v", err)
+	}
 
 	userPoolID, clientID := GetCognitoConfig()
 
@@ -123,10 +131,16 @@ func TestGetAPIBaseURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save original value
 			originalURL := os.Getenv("API_BASE_URL")
-			defer os.Setenv("API_BASE_URL", originalURL)
+			defer func() {
+				if err := os.Setenv("API_BASE_URL", originalURL); err != nil {
+					t.Logf("Warning: failed to restore API_BASE_URL: %v", err)
+				}
+			}()
 
 			// Set test value
-			os.Setenv("API_BASE_URL", tt.envValue)
+			if err := os.Setenv("API_BASE_URL", tt.envValue); err != nil {
+				t.Fatalf("Failed to set API_BASE_URL: %v", err)
+			}
 
 			result := GetAPIBaseURL()
 			if result != tt.expected {
@@ -153,10 +167,16 @@ func TestGetWebAppURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Save original value
 			originalURL := os.Getenv("WEB_APP_URL")
-			defer os.Setenv("WEB_APP_URL", originalURL)
+			defer func() {
+				if err := os.Setenv("WEB_APP_URL", originalURL); err != nil {
+					t.Logf("Warning: failed to restore WEB_APP_URL: %v", err)
+				}
+			}()
 
 			// Set test value
-			os.Setenv("WEB_APP_URL", tt.envValue)
+			if err := os.Setenv("WEB_APP_URL", tt.envValue); err != nil {
+				t.Fatalf("Failed to set WEB_APP_URL: %v", err)
+			}
 
 			result := GetWebAppURL()
 			if result != tt.expected {

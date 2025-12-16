@@ -1,5 +1,5 @@
 # Define global platform for the project
-platform :ios, '13.0'
+platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,6 +39,27 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # Add SUPPORTED_PLATFORMS to all targets for Xcode 26+ compatibility
+    target.build_configurations.each do |config|
+      config.build_settings['SUPPORTED_PLATFORMS'] = 'iphonesimulator iphoneos'
+      config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
+      config.build_settings['SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD'] = 'NO'
+    end
+
+    # Fix DKPhotoGallery/DKImagePickerController asset catalog compilation issue with Xcode 16+
+    # These pods have outdated asset catalogs that fail to compile with newer Xcode versions.
+    # This workaround removes the asset catalogs from the resources build phase.
+    if target.name == 'DKPhotoGallery-DKPhotoGallery' || target.name == 'DKImagePickerController-DKImagePickerController'
+      resources_build_phase = target.build_phases.find { |bp| bp.is_a?(Xcodeproj::Project::Object::PBXResourcesBuildPhase) }
+      if resources_build_phase
+        resources_build_phase.files.reject! do |file|
+          should_remove = file.display_name && file.display_name.include?('Images.xcassets')
+          puts "[Podfile] Removing Images.xcassets from #{target.name}" if should_remove
+          should_remove
+        end
+      end
+    end
   end
 
   # Exclude Share Extension from inheriting Flutter framework search paths
@@ -52,5 +73,8 @@ post_install do |installer|
       end
     end
   end
+
+  # Save the pods project after modifications
+  installer.pods_project.save
 end
 use_modular_headers!
