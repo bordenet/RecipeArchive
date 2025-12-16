@@ -184,7 +184,7 @@ jobs:
           echo "✅ Go coverage report generated"
 
       - name: Upload JavaScript/TypeScript Coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
@@ -194,7 +194,7 @@ jobs:
           verbose: true
 
       - name: Upload Go Coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./aws-backend/functions/coverage.out
