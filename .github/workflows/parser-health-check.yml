@@ -1,9 +1,9 @@
 name: Parser Health Check
 
 on:
-  schedule:
-    # Run daily at 9 AM UTC (1 AM PST, 4 AM EST)
-    - cron: "0 9 * * *"
+  #   schedule:
+  #     # Run daily at 9 AM UTC (1 AM PST, 4 AM EST)
+  #     - cron: "0 9 * * *"
   workflow_dispatch: # Allow manual trigger
   push:
     branches: [main]
