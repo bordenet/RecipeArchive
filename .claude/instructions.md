@@ -211,6 +211,36 @@ for (var item in items) {
 - `AppLogger.analytics` - Analytics tracking and reporting
 - `AppLogger.ui` - UI events, navigation, user interactions
 
+## AWS Infrastructure Hibernation Status
+
+**IMPORTANT: This project is currently in AWS HIBERNATION MODE.**
+
+The infrastructure has been safely paused to minimize costs (~$0-6/month) while preserving the ability to resume later.
+
+### Current State
+- **Infrastructure**: Intact (Lambda, Cognito, API Gateway exist but inactive)
+- **Daily tasks**: Disabled (GitHub Action cron commented out)
+- **S3 buckets**: Empty (0 objects, $0 storage cost)
+- **CloudWatch logs**: 7-day auto-expiration enabled
+- **Cognito users**: Backed up to `backups/cognito-users-backup-20260105-090330.json`
+
+### Resuming from Hibernation
+When the user wants to resume the project:
+
+1. **Re-enable GitHub Action**: Uncomment cron schedule in `.github/workflows/parser-health-check.yml`
+2. **Verify infrastructure**: Test Lambda functions and API Gateway endpoints
+3. **Restore S3 data** (if needed): Sync from `backups/` directory
+4. **See full restoration guide**: [HIBERNATION_COMPLETE.md](HIBERNATION_COMPLETE.md)
+
+### For Zero Costs (Full Teardown)
+If the user wants to completely eliminate AWS costs:
+```bash
+./scripts/aws/hibernate-infrastructure.sh --full
+```
+This destroys all infrastructure (requires 15-30 min to redeploy when resuming).
+
+**Documentation**: See [AWS_COST_REDUCTION_GUIDE.md](AWS_COST_REDUCTION_GUIDE.md) for complete details.
+
 ## Quick Start Commands
 
 ```bash

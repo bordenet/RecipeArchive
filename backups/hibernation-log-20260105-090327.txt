@@ -1,0 +1,69 @@
+[0;34m[INFO][0m Loading environment variables from .env
+[0;34m[INFO][0m Loading environment variables from .env
+[0;32m[OK][0m Environment variables loaded
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;36m[1mRecipeArchive Infrastructure Hibernation[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;34m[INFO][0m Mode: safe
+[0;34m[INFO][0m Log file: /Users/mattbordenet/GitHub/RecipeArchive/backups/hibernation-log-20260105-090327.txt
+
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;36m[1mChecking Prerequisites[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;32m[OK][0m AWS CLI found
+[0;32m[OK][0m AWS credentials configured (Account: 990537043943, User: claude-mcp)
+[0;32m[OK][0m jq found
+
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;36m[1mBacking Up Cognito Users[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;34m[INFO][0m Exporting users from pool: us-west-2_rpBcEEhYK
+[0;32m[OK][0m Backed up 3 users to: /Users/mattbordenet/GitHub/RecipeArchive/backups/cognito-users-backup-20260105-090330.json
+
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;36m[1mCreating S3 Inventory[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;34m[INFO][0m Using AWS Account ID: 990537043943
+[0;34m[INFO][0m Creating inventory for: recipearchive-storage-990537043943
+[1;33m[WARN][0m Could not create inventory for recipearchive-storage-990537043943 (bucket may not exist)
+[0;34m[INFO][0m Creating inventory for: recipearchive-temp-990537043943
+[1;33m[WARN][0m Could not create inventory for recipearchive-temp-990537043943 (bucket may not exist)
+[0;34m[INFO][0m Creating inventory for: recipearchive-failed-parsing-990537043943
+[1;33m[WARN][0m Could not create inventory for recipearchive-failed-parsing-990537043943 (bucket may not exist)
+
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;36m[1mEmptying Temporary S3 Buckets[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;34m[INFO][0m Emptying bucket: recipearchive-temp-990537043943
+[1;33m[WARN][0m Bucket does not exist: recipearchive-temp-990537043943
+[0;34m[INFO][0m Emptying bucket: recipearchive-failed-parsing-990537043943
+[1;33m[WARN][0m Bucket does not exist: recipearchive-failed-parsing-990537043943
+
+
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[0;36m[1mDeleting CloudWatch Logs[0m
+[0;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[0;34m[INFO][0m Finding RecipeArchive log groups...
+[0;34m[INFO][0m Found 27 log groups
+[0;34m[INFO][0m Deleting logs in: /aws/lambda/RecipeArchive-dev-BackgroundNormalizerFunction40DC-6N25oFUdp4Tt
+[0;32m[OK][0m   Deleted 201 log streams
+[0;34m[INFO][0m Deleting logs in: /aws/lambda/RecipeArchive-dev-BackgroundNormalizerFunction40DC-M0YYgo9x8GDU
+[0;32m[OK][0m   Deleted 105 log streams
+[0;34m[INFO][0m Deleting logs in: /aws/lambda/RecipeArchive-dev-ContentNormalizerFunction7256CD8-H9PZ1QlG31vV
+[0;32m[OK][0m   Deleted 5 log streams
+[0;34m[INFO][0m Deleting logs in: /aws/lambda/RecipeArchive-dev-ContentNormalizerFunction7256CD8-YAtnTbwUa2Kh
+[0;32m[OK][0m   Deleted 4 log streams
+[0;34m[INFO][0m Deleting logs in: /aws/lambda/RecipeArchive-dev-DiagnosticsFunctionF6482E72-7rWL0Ds1MAiV
+[0;32m[OK][0m   Deleted 1 log streams
+[0;34m[INFO][0m Deleting logs in: /aws/lambda/RecipeArchive-dev-DiagnosticsFunctionF6482E72-GpGVR5DdZICc

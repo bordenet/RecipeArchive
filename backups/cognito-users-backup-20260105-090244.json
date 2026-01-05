@@ -1,0 +1,67 @@
+{
+    "Users": [
+        {
+            "Username": "38a1b300-00f1-7055-23a0-0b57bbc08a02",
+            "Attributes": [
+                {
+                    "Name": "email",
+                    "Value": "mbordenet@gmail.com"
+                },
+                {
+                    "Name": "email_verified",
+                    "Value": "true"
+                },
+                {
+                    "Name": "sub",
+                    "Value": "38a1b300-00f1-7055-23a0-0b57bbc08a02"
+                }
+            ],
+            "UserCreateDate": "2025-10-29T14:08:19.073000-07:00",
+            "UserLastModifiedDate": "2025-10-29T14:08:51.190000-07:00",
+            "Enabled": true,
+            "UserStatus": "CONFIRMED"
+        },
+        {
+            "Username": "d801a380-d0e1-703b-93fd-513a8ae33f5b",
+            "Attributes": [
+                {
+                    "Name": "email",
+                    "Value": "mattbordenet@hotmail.com"
+                },
+                {
+                    "Name": "email_verified",
+                    "Value": "true"
+                },
+                {
+                    "Name": "sub",
+                    "Value": "d801a380-d0e1-703b-93fd-513a8ae33f5b"
+                }
+            ],
+            "UserCreateDate": "2025-09-17T21:32:25.401000-07:00",
+            "UserLastModifiedDate": "2025-09-17T21:32:32.025000-07:00",
+            "Enabled": true,
+            "UserStatus": "CONFIRMED"
+        },
+        {
+            "Username": "e8213320-50e1-7037-e99b-62cf8bece440",
+            "Attributes": [
+                {
+                    "Name": "email",
+                    "Value": "sue.cameron42@gmail.com"
+                },
+                {
+                    "Name": "email_verified",
+                    "Value": "true"
+                },
+                {
+                    "Name": "sub",
+                    "Value": "e8213320-50e1-7037-e99b-62cf8bece440"
+                }
+            ],
+            "UserCreateDate": "2025-10-29T17:54:44.849000-07:00",
+            "UserLastModifiedDate": "2025-10-29T17:54:54.599000-07:00",
+            "Enabled": true,
+            "UserStatus": "CONFIRMED"
+        }
+    ]
+}
