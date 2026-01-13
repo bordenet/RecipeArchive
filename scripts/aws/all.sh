@@ -511,6 +511,18 @@ main() {
         fi
     fi
 
+    # Enforce CloudWatch log retention to prevent cost overruns
+    if $DEPLOY_BACKEND;
+    then
+        log_header "Enforcing CloudWatch Log Retention"
+        log_info "Setting retention policies to prevent unbounded log storage costs..."
+        if "$SCRIPT_DIR/set-log-retention.sh" 7; then
+            log_success "✅ Log retention policies enforced (7 days)"
+        else
+            log_warning "⚠️ Log retention enforcement had issues (non-fatal)"
+        fi
+    fi
+
     # Final summary
     log_header "Deployment Summary"
     log_success "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"

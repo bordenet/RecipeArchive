@@ -54,16 +54,36 @@ if ! aws sts get-caller-identity > /dev/null 2>&1; then
     exit 1
 fi
 
-echo "🔍 Finding RecipeArchive log groups..."
+echo "🔍 Finding all RecipeArchive-related log groups..."
 echo ""
 
-# Get all log groups for RecipeArchive
-log_groups=$(aws logs describe-log-groups \
-    --log-group-name-prefix "/aws/lambda/RecipeArchive" \
-    --query 'logGroups[].logGroupName' \
-    --output text 2>/dev/null)
+# Search multiple prefixes to catch all RecipeArchive log groups
+# This catches: RecipeArchive-*, RecipeArchiveStack-*, recipe-*, and related API Gateway logs
+PREFIXES=(
+    "/aws/lambda/RecipeArchive"
+    "/aws/lambda/RecipeArchiveStack"
+    "/aws/lambda/recipe-"
+    "/aws/lambda/invitation-manager"
+    "/aws/lambda/RecipeAnalytics"
+    "/aws/apigateway/"
+)
 
-if [ -z "$log_groups" ]; then
+all_log_groups=""
+for prefix in "${PREFIXES[@]}"; do
+    # AWS CLI outputs tab-separated values, convert to newlines
+    groups=$(aws logs describe-log-groups \
+        --log-group-name-prefix "$prefix" \
+        --query 'logGroups[].logGroupName' \
+        --output text 2>/dev/null | tr '\t' '\n' || true)
+    if [ -n "$groups" ]; then
+        all_log_groups="$all_log_groups"$'\n'"$groups"
+    fi
+done
+
+# Deduplicate and convert to space-separated list
+log_groups=$(echo "$all_log_groups" | sort -u | grep -v '^$' | tr '\n' ' ')
+
+if [ -z "$log_groups" ] || [ "$log_groups" = " " ]; then
     echo "⚠️  No RecipeArchive log groups found"
     echo "This is normal if you haven't deployed Lambda functions yet"
     exit 0
@@ -75,18 +95,32 @@ echo ""
 
 success_count=0
 error_count=0
+already_set=0
 
 for log_group in $log_groups; do
+    # Check current retention
+    current_retention=$(aws logs describe-log-groups \
+        --log-group-name-prefix "$log_group" \
+        --query "logGroups[?logGroupName=='$log_group'].retentionInDays | [0]" \
+        --output text 2>/dev/null || echo "None")
+
+    if [ "$current_retention" = "$RETENTION_DAYS" ]; then
+        echo "⏭️  Skipping (already $RETENTION_DAYS days): $log_group"
+        already_set=$((already_set + 1))
+        continue
+    fi
+
     echo "⏱️  Setting retention for: $log_group"
+    echo "   (was: ${current_retention:-None} → $RETENTION_DAYS days)"
 
     if aws logs put-retention-policy \
         --log-group-name "$log_group" \
         --retention-in-days "$RETENTION_DAYS" > /dev/null 2>&1; then
         echo "   ✅ Success"
-        ((success_count++))
+        success_count=$((success_count + 1))
     else
         echo "   ❌ Failed"
-        ((error_count++))
+        error_count=$((error_count + 1))
     fi
 done
 
@@ -95,10 +129,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Summary"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "✅ Retention set for $success_count log groups"
+echo "📊 Total log groups: $log_count"
+echo "✅ Retention updated: $success_count"
+echo "⏭️  Already configured: $already_set"
 
 if [ "$error_count" -gt 0 ]; then
-    echo "❌ Failed for $error_count log groups"
+    echo "❌ Failed: $error_count"
 fi
 
 echo ""
@@ -108,5 +144,5 @@ echo "   • Estimated savings: \$1-2/month (depending on log volume)"
 echo "   • Ongoing: Logs auto-expire, no manual cleanup needed"
 echo ""
 echo "📊 To verify retention policies:"
-echo "   aws logs describe-log-groups --log-group-name-prefix '/aws/lambda/RecipeArchive' --query 'logGroups[].{Name:logGroupName,Retention:retentionInDays}'"
+echo "   aws logs describe-log-groups --query 'logGroups[?contains(logGroupName,\`Recipe\`) || contains(logGroupName,\`recipe\`)].{Name:logGroupName,Retention:retentionInDays}' --output table"
 echo ""
