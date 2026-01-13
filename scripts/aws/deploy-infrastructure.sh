@@ -424,6 +424,15 @@ main() {
                 log_warning "Verification had warnings but deployment succeeded"
             fi
 
+            # Enforce log retention to prevent CloudWatch cost overruns
+            log_header "Enforcing CloudWatch Log Retention"
+            log_info "Setting retention policies to prevent unbounded log storage costs..."
+            if "$REPO_ROOT/scripts/aws/set-log-retention.sh" 7; then
+                log_success "Log retention policies enforced (7 days)"
+            else
+                log_warning "Log retention enforcement had issues (non-fatal)"
+            fi
+
             local end_time=$(date +%s)
             local duration=$((end_time - start_time))
 
@@ -439,6 +448,7 @@ main() {
             echo ""
             log_info "💰 Cost optimizations deployed:"
             log_success "  ✅ Expected savings: \$45-85/month (35-40% reduction)"
+            log_success "  ✅ CloudWatch log retention: 7 days (prevents unbounded storage)"
             echo ""
             ;;
     esac
