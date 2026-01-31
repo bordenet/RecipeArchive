@@ -1,3 +1,3 @@
 # Copilot Instructions
 
-See workspace root **Agents.md** for AI guidance shared across all repos.
+See **[CLAUDE.md](../CLAUDE.md)** for AI guidance for this repository.
