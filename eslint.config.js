@@ -12,6 +12,7 @@ export default [
       "**/node_modules/**",
       "**/dist/**",
       "**/build/**",
+      "**/.dart_tool/**",
       "**/*.min.js",
       "**/typescript-parser-bundle.js",
       "**/env-config.js",
