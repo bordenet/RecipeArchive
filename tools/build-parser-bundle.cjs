@@ -25,7 +25,7 @@ function acquireLock(maxWaitSeconds = 30) {
   const startTime = Date.now();
   const maxWaitMs = maxWaitSeconds * 1000;
 
-  // eslint-disable-next-line no-constant-condition
+   
   while (true) {
     try {
       // Try to create lock file exclusively (fails if exists)
@@ -54,7 +54,7 @@ function acquireLock(maxWaitSeconds = 30) {
         // Can't read lock file - remove it
         try {
           fs.unlinkSync(lockFile);
-        // eslint-disable-next-line no-empty
+         
         } catch {
           // Best-effort cleanup
         }
@@ -183,7 +183,7 @@ if (fs.existsSync(lockFile)) {
     // Can't read lock file (corrupted?) - safe to remove
     try {
       fs.unlinkSync(lockFile);
-    // eslint-disable-next-line no-empty
+     
     } catch {
       // Best-effort cleanup
     }

@@ -109,7 +109,7 @@ class ExtensionRegressionTest {
   // Test 3: Scoping validation (prevent the error we just fixed)
   async testJavaScriptScoping() {
     await this.runTest("Extension scoping validation", () => {
-      // eslint-disable-next-line no-empty
+       
       try {
         // TODO: Implement scoping validation test
       } catch (error) {

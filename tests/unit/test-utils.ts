@@ -14,7 +14,7 @@ export function loadParser(parserFile: string) {
   // Dynamically import the parser module
   // NOTE: This assumes parsers are exported as default classes
   // You may need to adjust for your actual parser export style
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   return require(path.resolve(__dirname, "../../parsers/sites", parserFile))
     .default;
 }

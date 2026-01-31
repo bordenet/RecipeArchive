@@ -353,7 +353,7 @@ class RecipeArchiveStack extends cdk.Stack {
             requestValidator: requestValidator,
         });
         // Future recipe endpoints
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line no-unused-vars
         const recipesResource = v1.addResource("recipes");
         // Recipe CRUD operations with Authentication
         const recipesIntegration = new apigateway.LambdaIntegration(this.getRecipesFunction());

@@ -463,7 +463,7 @@ export class RecipeArchiveStack extends cdk.Stack {
 
 
     // Future recipe endpoints
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const recipesResource = v1.addResource("recipes");
 
     // Recipe CRUD operations with Authentication

@@ -22,7 +22,7 @@ export abstract class BaseParser {
         const script = scripts[i];
         let jsonText = $(script).html() || $(script).text() || "";
         // Remove control characters that break JSON.parse
-        // eslint-disable-next-line no-control-regex
+         
         jsonText = jsonText.replace(/[\u0000-\u001F\u007F]/g, "");
         // Fix undefined values in JSON (common Food52 issue)
         jsonText = jsonText
