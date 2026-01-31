@@ -6,16 +6,16 @@ import tseslint from "typescript-eslint";
 import globals from "globals";
 
 export default [
-  // Global ignores
+  // Global ignores - must use ** patterns for nested directories in flat config
   {
     ignores: [
-      "node_modules/",
-      "dist/",
-      "build/",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
       "**/*.min.js",
       "**/typescript-parser-bundle.js",
       "**/env-config.js",
-      ".web-extension-backup/",
+      ".web-extension-backup/**",
     ],
   },
 
