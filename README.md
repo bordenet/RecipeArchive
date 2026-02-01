@@ -1,16 +1,9 @@
 # RecipeArchive
 
-[![CI/CD](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml)
-[![Parser Health](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml)
-[![codecov](https://codecov.io/gh/bordenet/RecipeArchive/branch/main/graph/badge.svg?token=3adf998f-7bca-40ab-880f-0adce24f7399)](https://codecov.io/gh/bordenet/RecipeArchive)
-[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot)](https://github.com/bordenet/RecipeArchive/security/dependabot)
-[![Go Version](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go)](https://go.dev/)
-[![Flutter Version](https://img.shields.io/badge/Flutter-3.35.4-02569B?logo=flutter)](https://flutter.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?logo=node.js)](https://nodejs.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+Personal recipe management with browser extensions, native mobile apps, and AWS serverless backend.
 
-Personal recipe management system with browser extensions, native mobile apps, and AWS serverless backend.
+[![CI/CD](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml)
+[![codecov](https://codecov.io/gh/bordenet/RecipeArchive/branch/main/graph/badge.svg?token=3adf998f-7bca-40ab-880f-0adce24f7399)](https://codecov.io/gh/bordenet/RecipeArchive)
 
 <table style="width:100%; border-collapse: collapse;">
   <!-- Top row: Gallery image -->
@@ -70,13 +63,12 @@ Personal recipe management system with browser extensions, native mobile apps, a
 <details>
   <summary>Mobile Features</summary>
 
-- **📤 iOS Share Extension**: Share recipes directly from Safari browser to the native iOS app
-- **🔒 Screen Wakelock**: Screen stays awake during recipe viewing (30-40+ minutes for hands-free cooking)
-- **🎯 Device Targeting**: iOS setup supports iPhone 16e, iPad on Mac, iPhone 17 Pro Max with automated fallbacks
-- **🍎 iOS Development**: Complete toolchain with Xcode integration and simulator management
-- **🤖 Android Development**: Build and deployment scripts simplify integration tasks, from building and deploying across emulators and physical devices
-- **🔍 Search**: Full-text search across all saved recipes with feature parity to web client
-- **📱 Mobile-Optimized UX**: Extensions page guides mobile users to desktop browser workflow. Native apps can be built from this project but are not available in app stores. Browser extensions are not available in browser extension marketplaces. This is a self-hosted project requiring manual build and deployment.
+- **iOS Share Extension** — Share recipes directly from Safari to the iOS app
+- **Screen Wakelock** — Screen stays on during cooking (30-40+ minutes)
+- **Device Targeting** — iPhone 16e, iPad on Mac, iPhone 17 Pro Max with fallbacks
+- **iOS/Android Toolchains** — Xcode integration, simulator management, APK builds
+- **Full-text Search** — Same search on mobile as web
+- **Self-hosted** — Native apps and browser extensions built from this repo, not from app stores
 
 ### iOS Share Extension in Action
 
@@ -142,33 +134,13 @@ No manual copying or desktop workflow required.
 
 ## Key Features
 
-✅ **Multi-Platform Capture**
+**Capture** — Chrome/Safari extensions, iOS Share Extension, Android Share Intent (planned), direct URL import
 
-- Chrome & Safari browser extensions
-- iOS Share Extension (WKWebView-based)
-- Android Share Intent (planned)
-- Direct URL import in web/mobile apps
+**Processing** — OpenAI normalization, ingredient/instruction extraction, metadata enrichment, image storage
 
-✅ **Smart Recipe Processing**
+**Cooking UX** — Yield scaling (2x, ½x), unit conversion, screen wakelock, distraction-free view
 
-- OpenAI-powered normalization
-- Ingredient & instruction extraction
-- Metadata enrichment (prep time, servings, etc.)
-- Automatic image downloading and storage
-
-✅ **Cooking-Optimized UX**
-
-- Yield scaling (2x, 3x, ½x, etc.)
-- Unit conversion (metric ↔ imperial)
-- Screen wakelock for hands-free cooking
-- Clean, distraction-free recipe view
-
-✅ **Multi-Tenant Architecture**
-
-- Secure invitation system
-- Shared recipe collections
-- Per-tenant AWS Cognito authentication
-- S3-based storage with encryption
+**Multi-tenant** — Invitations, shared collections, per-tenant Cognito auth, encrypted S3 storage
 
 ## Quick Start
 
@@ -262,21 +234,6 @@ These warnings are expected and can be safely ignored. All 10 Lambda functions d
 
 ## Code Coverage
 
-RecipeArchive maintains comprehensive test coverage across multiple languages. The coverage visualization below shows detailed coverage by module:
-
 [![Coverage Grid](https://codecov.io/gh/bordenet/RecipeArchive/graphs/tree.svg)](https://codecov.io/gh/bordenet/RecipeArchive)
 
-**What this means:**
-- **Green**: Well-tested code (>80% coverage)
-- **Yellow**: Moderate coverage (60-80%)
-- **Red**: Needs more tests (<60%)
-- **Size**: Larger boxes = more lines of code
-
-Click the image to explore detailed coverage reports on Codecov, including line-by-line coverage, branch coverage, and historical trends.
-
----
-
-## About the Developer
-
-_[View my other projects](https://github.com/bordenet) and my [LinkedIn profile](https://www.linkedin.com/in/bordenet)_
-
+Green = >80%, Yellow = 60-80%, Red = <60%. Click for line-by-line details.
