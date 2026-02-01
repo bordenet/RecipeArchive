@@ -4,7 +4,7 @@ codecov:
 coverage:
   precision: 2
   round: down
-  range: "70...100"
+  range: "50...100"
 
   status:
     project:
@@ -21,6 +21,27 @@ coverage:
         target: 50%
         threshold: 10%
         informational: true
+
+# Define flags for different parts of the codebase
+flags:
+  javascript:
+    paths:
+      - extensions/
+      - parsers/
+    carryforward: true
+  typescript:
+    paths:
+      - extensions/
+      - parsers/
+    carryforward: true
+  go:
+    paths:
+      - aws-backend/
+    carryforward: true
+  backend:
+    paths:
+      - aws-backend/
+    carryforward: true
 
 comment:
   layout: "reach,diff,flags,tree"
