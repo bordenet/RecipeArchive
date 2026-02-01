@@ -164,3 +164,175 @@ func TestGetTextContent(t *testing.T) {
 		t.Errorf("Expected '%s', got '%s'", expected, text)
 	}
 }
+
+// Test parseDuration with ISO 8601 format
+func TestParseDuration_ISO8601(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"PT15M", 15},
+		{"PT30M", 30},
+		{"PT1H", 60},
+		{"PT1H30M", 90},
+		{"PT2H15M", 135},
+		{"", 0},
+	}
+
+	for _, tt := range tests {
+		result := parseDuration(tt.input)
+		if result != tt.expected {
+			t.Errorf("parseDuration(%q) = %d, expected %d", tt.input, result, tt.expected)
+		}
+	}
+}
+
+// Test parseDuration with text formats
+func TestParseDuration_TextFormat(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"30 minutes", 30},
+		{"1 hour", 60},
+		{"1 hour 30 minutes", 90},
+		{"2 hrs 15 mins", 135},
+		{"45 min", 45},
+	}
+
+	for _, tt := range tests {
+		result := parseDuration(tt.input)
+		if result != tt.expected {
+			t.Errorf("parseDuration(%q) = %d, expected %d", tt.input, result, tt.expected)
+		}
+	}
+}
+
+// Test parseDuration with just a number
+func TestParseDuration_JustNumber(t *testing.T) {
+	result := parseDuration("45")
+	if result != 45 {
+		t.Errorf("parseDuration(\"45\") = %d, expected 45", result)
+	}
+}
+
+// Test parseServings with string input
+func TestParseServings_String(t *testing.T) {
+	tests := []struct {
+		input    interface{}
+		expected int
+	}{
+		{"4 servings", 4},
+		{"6", 6},
+		{"Makes 8", 8},
+		{"Serves 12", 12},
+		{"", 0},
+	}
+
+	for _, tt := range tests {
+		result := parseServings(tt.input)
+		if result != tt.expected {
+			t.Errorf("parseServings(%v) = %d, expected %d", tt.input, result, tt.expected)
+		}
+	}
+}
+
+// Test parseServings with numeric input
+func TestParseServings_Numeric(t *testing.T) {
+	// Test float64
+	result := parseServings(float64(6))
+	if result != 6 {
+		t.Errorf("parseServings(float64(6)) = %d, expected 6", result)
+	}
+
+	// Test int
+	result = parseServings(4)
+	if result != 4 {
+		t.Errorf("parseServings(4) = %d, expected 4", result)
+	}
+}
+
+// Test parseServings with nil
+func TestParseServings_Nil(t *testing.T) {
+	result := parseServings(nil)
+	if result != 0 {
+		t.Errorf("parseServings(nil) = %d, expected 0", result)
+	}
+}
+
+// Test findByDataTestId
+func TestFindByDataTestId(t *testing.T) {
+	htmlStr := `<html><body><div data-testid="recipe-title">Test Recipe</div></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findByDataTestId(doc, "recipe-title")
+	if result != "Test Recipe" {
+		t.Errorf("Expected 'Test Recipe', got '%s'", result)
+	}
+}
+
+// Test findByDataTestId with no match
+func TestFindByDataTestId_NoMatch(t *testing.T) {
+	htmlStr := `<html><body><div>Content</div></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findByDataTestId(doc, "nonexistent")
+	if result != "" {
+		t.Errorf("Expected empty string, got '%s'", result)
+	}
+}
+
+// Test findElementByPattern with data-testid
+func TestFindElementByPattern_DataTestId(t *testing.T) {
+	htmlStr := `<html><body><div data-testid="my-element">Found It</div></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findElementByPattern(doc, `[data-testid="my-element"]`)
+	if result != "Found It" {
+		t.Errorf("Expected 'Found It', got '%s'", result)
+	}
+}
+
+// Test findById
+func TestFindById(t *testing.T) {
+	htmlStr := `<html><body><div id="my-id">ID Content</div></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findById(doc, "my-id")
+	if result != "ID Content" {
+		t.Errorf("Expected 'ID Content', got '%s'", result)
+	}
+}
+
+// Test findById with no match
+func TestFindById_NoMatch(t *testing.T) {
+	htmlStr := `<html><body><div>Content</div></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findById(doc, "nonexistent")
+	if result != "" {
+		t.Errorf("Expected empty string, got '%s'", result)
+	}
+}
+
+// Test findByTag
+func TestFindByTag(t *testing.T) {
+	htmlStr := `<html><body><article>Article Content</article></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findByTag(doc, "article")
+	if result != "Article Content" {
+		t.Errorf("Expected 'Article Content', got '%s'", result)
+	}
+}
+
+// Test findByTag with no match
+func TestFindByTag_NoMatch(t *testing.T) {
+	htmlStr := `<html><body><div>Content</div></body></html>`
+	doc := parseHTML(htmlStr)
+
+	result := findByTag(doc, "article")
+	if result != "" {
+		t.Errorf("Expected empty string, got '%s'", result)
+	}
+}
