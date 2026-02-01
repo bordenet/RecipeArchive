@@ -1,4 +1,5 @@
 import { WashingtonPostParser } from "../sites/washington-post";
+import { loadFixture } from "../../tests/unit/test-utils";
 import * as cheerio from "cheerio";
 
 describe("WashingtonPost Parser", () => {
@@ -200,6 +201,34 @@ describe("WashingtonPost Parser", () => {
     const recipe = await parser.parse(html, url);
 
     expect(recipe.author).toBe("Jane Doe");
+  });
+
+  it("should parse real-world HTML from fixture", async () => {
+    const html = await loadFixture("washington-post-sample.html");
+    const url = "https://www.washingtonpost.com/food/recipes/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe).toBeDefined();
+    expect(recipe.title).toBeDefined();
+    expect(recipe.title.length).toBeGreaterThan(0);
+    expect(recipe.source).toBe(url);
+    expect(recipe.ingredients).toBeDefined();
+    expect(recipe.instructions).toBeDefined();
+  });
+
+  it("should extract full metadata from real fixture", async () => {
+    const html = await loadFixture("washington-post-sample.html");
+    const url = "https://www.washingtonpost.com/food/recipes/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(Array.isArray(recipe.ingredients)).toBe(true);
+    expect(Array.isArray(recipe.instructions)).toBe(true);
+    recipe.instructions.forEach((instruction, index) => {
+      expect(instruction.stepNumber).toBe(index + 1);
+      expect(typeof instruction.text).toBe("string");
+    });
   });
 });
 

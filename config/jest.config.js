@@ -33,12 +33,11 @@ export default {
     "/tests/automation/browser-startup-debug.spec.js",
     "/tests/automation/extension-debug.spec.js",
   ],
-  // Only collect coverage from code that should be unit tested
+  // Only collect coverage from production code (parsers and shared libraries)
+  // Excludes: scripts/ (development utilities), tools/ (debugging/testing utilities)
   collectCoverageFrom: [
     "extensions/shared/**/*.{js,ts}",
     "parsers/**/*.{js,ts}",
-    "scripts/**/*.{js,ts}",
-    "tools/**/*.{js,ts}",
     // Exclude test files, mocks, and generated code
     "!**/*.test.{js,ts}",
     "!**/*.spec.{js,ts}",

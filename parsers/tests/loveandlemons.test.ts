@@ -1,4 +1,5 @@
 import { LoveAndLemonsParser } from "../sites/loveandlemons";
+import { loadFixture } from "../../tests/unit/test-utils";
 
 describe("LoveAndLemons Parser", () => {
   let parser: LoveAndLemonsParser;
@@ -22,16 +23,59 @@ describe("LoveAndLemons Parser", () => {
     expect(parser.canParse(url)).toBe(false);
   });
 
-  it.skip("should parse basic recipe structure", () => {
-    // Test implementation to be added
+  it("should parse basic recipe structure from HTML fixture", async () => {
+    const html = await loadFixture("love-lemons-sample.html");
+    const url = "https://www.loveandlemons.com/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe).toBeDefined();
+    expect(recipe.title).toBeDefined();
+    expect(recipe.title.length).toBeGreaterThan(0);
+    expect(recipe.source).toBe(url);
+    expect(recipe.ingredients).toBeDefined();
+    expect(recipe.instructions).toBeDefined();
   });
 
-  it.skip("should handle missing optional fields gracefully", () => {
-    // Test implementation to be added
+  it("should extract ingredients with proper structure", async () => {
+    const html = await loadFixture("love-lemons-sample.html");
+    const url = "https://www.loveandlemons.com/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(Array.isArray(recipe.ingredients)).toBe(true);
+    recipe.ingredients.forEach((ingredient) => {
+      expect(ingredient.text).toBeDefined();
+      expect(typeof ingredient.text).toBe("string");
+    });
   });
 
-  it.skip("should handle complex recipe with all fields", () => {
-    // Test implementation to be added
+  it("should extract instructions with step numbers", async () => {
+    const html = await loadFixture("love-lemons-sample.html");
+    const url = "https://www.loveandlemons.com/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(Array.isArray(recipe.instructions)).toBe(true);
+    recipe.instructions.forEach((instruction, index) => {
+      expect(instruction.stepNumber).toBe(index + 1);
+      expect(instruction.text).toBeDefined();
+      expect(typeof instruction.text).toBe("string");
+    });
+  });
+
+  it("should handle optional metadata fields", async () => {
+    const html = await loadFixture("love-lemons-sample.html");
+    const url = "https://www.loveandlemons.com/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    if (recipe.author) expect(typeof recipe.author).toBe("string");
+    if (recipe.imageUrl) expect(typeof recipe.imageUrl).toBe("string");
+    if (recipe.prepTime) expect(typeof recipe.prepTime).toBe("string");
+    if (recipe.cookTime) expect(typeof recipe.cookTime).toBe("string");
+    if (recipe.totalTime) expect(typeof recipe.totalTime).toBe("string");
+    if (recipe.servings) expect(typeof recipe.servings).toBe("string");
   });
 });
 

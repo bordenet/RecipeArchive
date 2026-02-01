@@ -1,4 +1,5 @@
 import { AlexandrasKitchenParser } from "../sites/alexandras-kitchen";
+import { loadFixture } from "../../tests/unit/test-utils";
 
 describe("AlexandrasKitchen Parser", () => {
   let parser: AlexandrasKitchenParser;
@@ -146,6 +147,34 @@ describe("AlexandrasKitchen Parser", () => {
     const recipe = await parser.parse(html, url);
 
     expect(recipe.imageUrl).toBe("https://example.com/image.jpg");
+  });
+
+  it("should parse real-world HTML from fixture", async () => {
+    const html = await loadFixture("alexandras-kitchen-sample.html");
+    const url = "https://alexandracooks.com/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe).toBeDefined();
+    expect(recipe.title).toBeDefined();
+    expect(recipe.title.length).toBeGreaterThan(0);
+    expect(recipe.source).toBe(url);
+    expect(recipe.ingredients).toBeDefined();
+    expect(recipe.instructions).toBeDefined();
+  });
+
+  it("should extract all metadata from real fixture", async () => {
+    const html = await loadFixture("alexandras-kitchen-sample.html");
+    const url = "https://alexandracooks.com/test-recipe/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(Array.isArray(recipe.ingredients)).toBe(true);
+    expect(Array.isArray(recipe.instructions)).toBe(true);
+    recipe.instructions.forEach((instruction, index) => {
+      expect(instruction.stepNumber).toBe(index + 1);
+      expect(typeof instruction.text).toBe("string");
+    });
   });
 });
 
