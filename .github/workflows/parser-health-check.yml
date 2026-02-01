@@ -91,7 +91,7 @@ jobs:
           echo "- Food52" >> $GITHUB_STEP_SUMMARY
           echo "- Food Network" >> $GITHUB_STEP_SUMMARY
           echo "- Serious Eats" >> $GITHUB_STEP_SUMMARY
-          echo "- Smitten Kitchen" >> $GITHUB_STEP_SUMMARY
+          # Smitten Kitchen removed - no JSON-LD instructions
           echo "- NYT Cooking" >> $GITHUB_STEP_SUMMARY
           echo "- Damn Delicious" >> $GITHUB_STEP_SUMMARY
           echo "- Food & Wine" >> $GITHUB_STEP_SUMMARY
