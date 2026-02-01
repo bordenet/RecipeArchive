@@ -203,5 +203,296 @@ describe("SmittenKitchen Parser", () => {
 
     expect(recipe.imageUrl).toBe("https://example.com/image.jpg");
   });
+
+  it("should handle instructions with name property instead of text", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Recipe with Name Instructions",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": [
+              {"@type": "HowToStep", "name": "First step using name"},
+              {"@type": "HowToStep", "name": "Second step using name"}
+            ]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/name-instructions/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.instructions.length).toBe(2);
+    expect(recipe.instructions[0].text).toContain("First step");
+  });
+
+  it("should handle instructions with description property", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Recipe with Description Instructions",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": [
+              {"@type": "HowToStep", "description": "Description based instruction"}
+            ]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/desc-instructions/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.instructions.length).toBe(1);
+    expect(recipe.instructions[0].text).toContain("Description based");
+  });
+
+  it("should default author to Deb Perelman when missing", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "No Author Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/noauthor/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.author).toBe("Deb Perelman");
+  });
+
+  it("should handle author as string", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "String Author Recipe",
+            "author": "Guest Blogger",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/guest/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.author).toBe("Guest Blogger");
+  });
+
+  it("should extract timing fields", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Timed Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"],
+            "prepTime": "PT30M",
+            "cookTime": "PT1H",
+            "totalTime": "PT1H30M"
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/timed/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.prepTime).toBe("PT30M");
+    expect(recipe.cookTime).toBe("PT1H");
+    expect(recipe.totalTime).toBe("PT1H30M");
+  });
+
+  it("should extract recipeYield as servings", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Servings Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"],
+            "recipeYield": "12 cookies"
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/servings/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.servings).toBe("12 cookies");
+  });
+
+  it("should handle image object in array format", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Array Object Image Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"],
+            "image": [{"@type": "ImageObject", "url": "https://example.com/arrobj.jpg"}]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/arrobj/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.imageUrl).toBe("https://example.com/arrobj.jpg");
+  });
+
+  it("should filter out JavaScript code from instructions", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Recipe with JS in Instructions",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": [
+              {"@type": "HowToStep", "text": "window.document.addEventListener"},
+              {"@type": "HowToStep", "text": "function() { return true; }"},
+              {"@type": "HowToStep", "text": "Actual cooking instruction"}
+            ]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/jsfilter/";
+
+    const recipe = await parser.parse(html, url);
+
+    // Should filter out JS code and fallback to placeholder
+    expect(recipe.instructions.some(i => i.text.includes("Actual cooking"))).toBe(true);
+  });
+
+  it("should handle recipeCategory as array", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Categorized Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"],
+            "recipeCategory": ["Dessert", "Baking"]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/categories/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.tags).toContain("Dessert");
+    expect(recipe.tags).toContain("Baking");
+  });
+
+  it("should handle recipeCategory as string", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Single Category Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["instruction"],
+            "recipeCategory": "Main Course"
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/singlecat/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.tags).toContain("Main Course");
+  });
+
+  it("should handle instruction object with no valid text field", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Empty Instruction Object",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": [
+              {"@type": "HowToStep", "invalidField": "no text here"},
+              "Valid string instruction"
+            ]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://smittenkitchen.com/recipe/emptyobj/";
+
+    const recipe = await parser.parse(html, url);
+
+    // Should include fallback for empty object and valid string
+    expect(recipe.instructions.length).toBeGreaterThanOrEqual(1);
+  });
 });
 

@@ -1,4 +1,4 @@
-const { isSupportedSite, SUPPORTED_SITES } = require("../supported-sites");
+const { isSupportedSite, getSupportedSites, SUPPORTED_SITES } = require("../supported-sites");
 
 describe("Supported Sites", () => {
   describe("SUPPORTED_SITES array", () => {
@@ -112,6 +112,20 @@ describe("Supported Sites", () => {
         // but www.nytimes.com should not be (only cooking subdomain)
         expect(isSupportedSite("https://www.nytimes.com/article")).toBe(false);
       });
+    });
+  });
+
+  describe("getSupportedSites function", () => {
+    it("should return a copy of SUPPORTED_SITES array", () => {
+      const sites = getSupportedSites();
+      expect(Array.isArray(sites)).toBe(true);
+      expect(sites).toEqual(SUPPORTED_SITES);
+    });
+
+    it("should return a new array (not the original)", () => {
+      const sites = getSupportedSites();
+      sites.push("test.com");
+      expect(SUPPORTED_SITES).not.toContain("test.com");
     });
   });
 });

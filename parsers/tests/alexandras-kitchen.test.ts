@@ -176,5 +176,149 @@ describe("AlexandrasKitchen Parser", () => {
       expect(typeof instruction.text).toBe("string");
     });
   });
+
+  it("should handle string author", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Guest Recipe",
+            "author": "Guest Author",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://alexandracooks.com/recipe/guest/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.author).toBe("Guest Author");
+  });
+
+  it("should default author to Alexandra Stafford when missing", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "No Author Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://alexandracooks.com/recipe/noauthor/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.author).toBe("Alexandra Stafford");
+  });
+
+  it("should handle image as array of objects", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Array Object Image",
+            "image": [{"@type": "ImageObject", "url": "https://example.com/arrobj.jpg"}],
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://alexandracooks.com/recipe/arrobj/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.imageUrl).toBe("https://example.com/arrobj.jpg");
+  });
+
+  it("should handle all timing fields", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Timed Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "prepTime": "PT20M",
+            "cookTime": "PT45M",
+            "totalTime": "PT1H5M",
+            "recipeYield": "8 servings"
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://alexandracooks.com/recipe/timed/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.prepTime).toBe("PT20M");
+    expect(recipe.cookTime).toBe("PT45M");
+    expect(recipe.totalTime).toBe("PT1H5M");
+    expect(recipe.servings).toBe("8 servings");
+  });
+
+  it("should handle recipeCategory as array", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Categorized Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "recipeCategory": ["Bread", "Breakfast"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://alexandracooks.com/recipe/categories/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.tags).toContain("Bread");
+    expect(recipe.tags).toContain("Breakfast");
+  });
+
+  it("should handle recipeCategory as string", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Single Category Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "recipeCategory": "Dinner"
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://alexandracooks.com/recipe/singlecat/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.tags).toContain("Dinner");
+  });
 });
 

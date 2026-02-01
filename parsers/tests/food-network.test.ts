@@ -248,5 +248,133 @@ describe("FoodNetwork Parser", () => {
 
     expect(recipe.author).toBe("Food Network");
   });
+
+  it("should extract timing fields from JSON-LD", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Timed Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "prepTime": "PT15M",
+            "cookTime": "PT45M",
+            "totalTime": "PT1H"
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://www.foodnetwork.com/recipes/timed";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.prepTime).toBe("PT15M");
+    expect(recipe.cookTime).toBe("PT45M");
+    expect(recipe.totalTime).toBe("PT1H");
+  });
+
+  it("should extract description as notes from JSON-LD", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Recipe with Description",
+            "description": "This is a special recipe from Food Network Kitchen.",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://www.foodnetwork.com/recipes/notes";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.notes).toBeDefined();
+    expect(recipe.notes?.length).toBe(1);
+    expect(recipe.notes?.[0]).toContain("special recipe");
+  });
+
+  it("should extract servings from recipeYield", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Servings Test",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "recipeYield": "8 servings"
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://www.foodnetwork.com/recipes/servings";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.servings).toBe("8 servings");
+  });
+
+  it("should filter out empty ingredients", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Filter Test",
+            "recipeIngredient": ["flour", "", "sugar", "   "],
+            "recipeInstructions": ["mix"]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://www.foodnetwork.com/recipes/filter";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.ingredients.length).toBe(2);
+    expect(recipe.ingredients[0].text).toBe("flour");
+    expect(recipe.ingredients[1].text).toBe("sugar");
+  });
+
+  it("should filter out empty instructions", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Instruction Filter Test",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["Step 1", "", "Step 2", "   "]
+          }
+          </script>
+        </head>
+        <body></body>
+      </html>
+    `;
+    const url = "https://www.foodnetwork.com/recipes/instfilter";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.instructions.length).toBe(2);
+    expect(recipe.instructions[0].text).toBe("Step 1.");
+    expect(recipe.instructions[1].text).toBe("Step 2.");
+  });
 });
 

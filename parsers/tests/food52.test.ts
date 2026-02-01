@@ -69,5 +69,212 @@ describe("Food52 Parser", () => {
       expect(instruction.text.length).toBeGreaterThan(0);
     });
   });
+
+  describe("parse with JSON-LD", () => {
+    it("should parse author as string", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "author": "Jane Smith",
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.author).toBe("Jane Smith");
+    });
+
+    it("should parse author as object with name", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "author": {"@type": "Person", "name": "John Doe"},
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.author).toBe("John Doe");
+    });
+
+    it("should parse keywords as array", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "keywords": ["vegan", "quick", "healthy"],
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.tags).toEqual(["vegan", "quick", "healthy"]);
+    });
+
+    it("should parse keywords as comma-separated string", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "keywords": "dinner, pasta, italian",
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.tags).toContain("dinner");
+      expect(recipe.tags).toContain("pasta");
+      expect(recipe.tags).toContain("italian");
+    });
+
+    it("should parse recipeCategory as array", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "recipeCategory": ["Main Course", "Dinner"],
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.tags).toContain("Main Course");
+      expect(recipe.tags).toContain("Dinner");
+    });
+
+    it("should parse recipeCategory as string", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "recipeCategory": "Dessert, Baking",
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.tags).toContain("Dessert");
+      expect(recipe.tags).toContain("Baking");
+    });
+
+    it("should combine keywords and recipeCategory into tags", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Test Recipe",
+              "keywords": ["healthy"],
+              "recipeCategory": ["Lunch"],
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.tags).toContain("healthy");
+      expect(recipe.tags).toContain("Lunch");
+    });
+
+    it("should handle full recipe with all fields", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Amazing Pasta",
+              "author": {"name": "Food52 Staff"},
+              "image": "https://food52.com/img.jpg",
+              "recipeIngredient": ["pasta", "olive oil"],
+              "recipeInstructions": [{"text": "Boil water"}, {"text": "Cook pasta"}],
+              "prepTime": "PT10M",
+              "cookTime": "PT15M",
+              "totalTime": "PT25M",
+              "recipeYield": "4 servings",
+              "description": "The best pasta ever"
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://food52.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.title).toBe("Amazing Pasta");
+      expect(recipe.author).toBe("Food52 Staff");
+      expect(recipe.imageUrl).toBe("https://food52.com/img.jpg");
+      expect(recipe.ingredients).toHaveLength(2);
+      expect(recipe.instructions).toHaveLength(2);
+      expect(recipe.prepTime).toBe("PT10M");
+      expect(recipe.cookTime).toBe("PT15M");
+      expect(recipe.totalTime).toBe("PT25M");
+      expect(recipe.servings).toBe("4 servings");
+      expect(recipe.notes).toEqual(["The best pasta ever"]);
+    });
+  });
 });
 

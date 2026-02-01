@@ -67,5 +67,160 @@ describe("Epicurious Parser", () => {
       expect(instruction.text.length).toBeGreaterThan(0);
     });
   });
+
+  describe("parse with JSON-LD", () => {
+    it("should parse all JSON-LD fields", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Beef Wellington",
+              "author": {"@type": "Person", "name": "Gordon Ramsay"},
+              "image": "https://epicurious.com/img.jpg",
+              "recipeIngredient": ["beef tenderloin", "puff pastry", "mushrooms"],
+              "recipeInstructions": [{"@type": "HowToStep", "text": "Sear the beef"}, {"@type": "HowToStep", "text": "Wrap in pastry"}],
+              "prepTime": "PT45M",
+              "cookTime": "PT25M",
+              "totalTime": "PT70M",
+              "recipeYield": "6 servings",
+              "description": "A classic British dish"
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://epicurious.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.title).toBe("Beef Wellington");
+      expect(recipe.author).toBe("Gordon Ramsay");
+      expect(recipe.imageUrl).toBe("https://epicurious.com/img.jpg");
+      expect(recipe.ingredients).toHaveLength(3);
+      expect(recipe.instructions).toHaveLength(2);
+      expect(recipe.prepTime).toBe("PT45M");
+      expect(recipe.cookTime).toBe("PT25M");
+      expect(recipe.totalTime).toBe("PT70M");
+      expect(recipe.servings).toBe("6 servings");
+      expect(recipe.notes).toEqual(["A classic British dish"]);
+    });
+
+    it("should handle string author", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Simple Recipe",
+              "author": "Epicurious Staff",
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://epicurious.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.author).toBe("Epicurious Staff");
+    });
+
+    it("should handle string instructions", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "String Steps",
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["First step", "Second step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://epicurious.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.instructions).toHaveLength(2);
+      expect(recipe.instructions[0].text).toContain("First step");
+    });
+
+    it("should handle image as array", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Array Images",
+              "image": ["https://example.com/img1.jpg", "https://example.com/img2.jpg"],
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://epicurious.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.imageUrl).toBe("https://example.com/img1.jpg");
+    });
+
+    it("should handle image as object", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Object Image",
+              "image": {"@type": "ImageObject", "url": "https://example.com/object.jpg"},
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://epicurious.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.imageUrl).toBe("https://example.com/object.jpg");
+    });
+
+    it("should handle image as array of objects", async () => {
+      const html = `
+        <html>
+          <head>
+            <script type="application/ld+json">
+            {
+              "@type": "Recipe",
+              "name": "Array of Objects",
+              "image": [{"@type": "ImageObject", "url": "https://example.com/arr-obj.jpg"}],
+              "recipeIngredient": ["ingredient"],
+              "recipeInstructions": ["step"]
+            }
+            </script>
+          </head>
+          <body></body>
+        </html>
+      `;
+      const url = "https://epicurious.com/recipes/test";
+      const recipe = await parser.parse(html, url);
+
+      expect(recipe.imageUrl).toBe("https://example.com/arr-obj.jpg");
+    });
+  });
 });
 

@@ -229,4 +229,112 @@ describe("Security Features", () => {
       expect(result.sanitized.tags).toHaveLength(3);
     });
   });
+
+  describe("Additional JWT Coverage", () => {
+    test("validates non-string tokens", () => {
+      const result = jwtValidator.validateJWT(123);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("Failed to parse JWT");
+    });
+
+    test("isValid returns true for valid JWT structure", () => {
+      const validJWT = "header.payload.signature";
+      expect(jwtValidator.isValid(validJWT)).toBe(true);
+    });
+
+    test("isValid returns false for invalid JWT structure", () => {
+      expect(jwtValidator.isValid("notajwt")).toBe(false);
+      expect(jwtValidator.isValid(123)).toBe(false);
+    });
+
+    test("getUser returns mock user info", () => {
+      const user = jwtValidator.getUser("any.token.here");
+      expect(user.email).toBe("test@example.com");
+      expect(user.sub).toBe("user-123");
+    });
+
+    test("parseJWT returns null for invalid token", () => {
+      const result = jwtValidator.parseJWT("invalid");
+      expect(result).toBeNull();
+    });
+
+    test("extractCognitoUserInfo returns empty object for invalid token", () => {
+      const result = jwtValidator.extractCognitoUserInfo("invalid");
+      expect(result).toEqual({});
+    });
+
+    test("throwError method throws an error", () => {
+      expect(() => jwtValidator.throwError()).toThrow("JWT error");
+    });
+
+    test("prototype properties are defined", () => {
+      expect(JWTValidator.prototype["throw new Error"]).toBe("throw new Error");
+      expect(JWTValidator.prototype.iat).toBe("iat");
+    });
+  });
+
+  describe("Additional Security Validator Coverage", () => {
+    test("validateIngredient rejects empty string", () => {
+      const result = securityValidator.validateIngredient("");
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("cannot be empty");
+    });
+
+    test("validateIngredient rejects too long ingredient", () => {
+      const longIngredient = "A".repeat(201);
+      const result = securityValidator.validateIngredient(longIngredient);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("200 characters or less");
+    });
+
+    test("validateIngredient accepts valid ingredient", () => {
+      const result = securityValidator.validateIngredient("1 cup flour");
+      expect(result.valid).toBe(true);
+      expect(result.value).toBe("1 cup flour");
+    });
+
+    test("validateIngredients rejects empty array", () => {
+      const result = securityValidator.validateIngredients([]);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("At least one ingredient");
+    });
+
+    test("getLimits returns field limits", () => {
+      const limits = SecurityValidator.getLimits();
+      expect(limits.title).toBe(200);
+      expect(limits.description).toBe(1000);
+      expect(limits.ingredient).toBe(200);
+      expect(limits.url).toBe(500);
+    });
+
+    test("getPatterns returns validation patterns", () => {
+      const patterns = securityValidator.getPatterns();
+      expect(patterns.email).toBeDefined();
+      expect(patterns.url).toBeDefined();
+      expect(patterns.time).toBeDefined();
+      expect(patterns.serving).toBeDefined();
+    });
+
+    test("sanitizeHTML handles non-string input", () => {
+      const result = securityValidator.sanitizeHTML(123);
+      expect(result).toBe(123);
+    });
+
+    test("stripHTML handles non-string input", () => {
+      const result = securityValidator.stripHTML(null);
+      expect(result).toBeNull();
+    });
+
+    test("validateTitle rejects non-string input", () => {
+      const result = securityValidator.validateTitle(null);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("cannot be empty");
+    });
+
+    test("validateIngredient rejects non-string input", () => {
+      const result = securityValidator.validateIngredient(null);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("cannot be empty");
+    });
+  });
 });

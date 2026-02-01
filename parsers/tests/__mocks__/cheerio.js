@@ -49,17 +49,8 @@ const mockCheerio = {
             if (jsonLdMatch && jsonLdMatch[1]) {
               return jsonLdMatch[1].trim();
             }
-            // Fallback to default test data if no JSON-LD found
-            return JSON.stringify({
-              "@type": "Recipe",
-              name: "Test Recipe",
-              recipeIngredient: ["1 cup flour", "2 eggs"],
-              recipeInstructions: [
-                { text: "Mix flour and eggs" },
-                { text: "Bake for 30 minutes" },
-              ],
-              image: "https://example.com/image.jpg",
-            });
+            // Return empty if no JSON-LD found - allows fallback parsing to be tested
+            return "";
           }
           return "<div>Mock HTML</div>";
         },
@@ -116,29 +107,42 @@ const mockCheerio = {
             ];
           }
           if (safeSelector.includes("script[type=\"application/ld+json\"]")) {
-            // Return script element with JSON-LD content
+            // Return script element with JSON-LD content only if found
             const jsonLdMatch = htmlString.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-            const jsonContent = jsonLdMatch ? jsonLdMatch[1].trim() : "";
-            return [{
-              textContent: jsonContent,
-              text: () => jsonContent,
-              html: () => jsonContent,
-            }];
+            if (jsonLdMatch) {
+              const jsonContent = jsonLdMatch[1].trim();
+              return [{
+                textContent: jsonContent,
+                text: () => jsonContent,
+                html: () => jsonContent,
+              }];
+            }
+            // Return empty array if no JSON-LD found
+            return [];
           }
           return [mockElement];
         },
-        length: safeSelector.includes("li") ? 2 : (safeSelector.includes("script[type=\"application/ld+json\"]") ? 1 : 1),
+        length: (() => {
+          if (safeSelector.includes("li")) return 2;
+          if (safeSelector.includes("script[type=\"application/ld+json\"]")) {
+            const jsonLdMatch = htmlString.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+            return jsonLdMatch ? 1 : 0;
+          }
+          return 1;
+        })(),
       };
 
       // Support array indexing for cheerio collections (e.g., scripts[0])
       if (safeSelector.includes("script[type=\"application/ld+json\"]")) {
         const jsonLdMatch = htmlString.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-        const jsonContent = jsonLdMatch ? jsonLdMatch[1].trim() : "";
-        mockElement[0] = {
-          textContent: jsonContent,
-          text: () => jsonContent,
-          html: () => jsonContent,
-        };
+        if (jsonLdMatch) {
+          const jsonContent = jsonLdMatch[1].trim();
+          mockElement[0] = {
+            textContent: jsonContent,
+            text: () => jsonContent,
+            html: () => jsonContent,
+          };
+        }
       }
 
       return mockElement;

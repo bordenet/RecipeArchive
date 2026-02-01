@@ -147,5 +147,148 @@ describe("DamnDelicious Parser", () => {
 
     expect(recipe.imageUrl).toBe("https://example.com/image.jpg");
   });
+
+  it("should extract timing fields from JSON-LD", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Timed Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "prepTime": "PT15M",
+            "cookTime": "PT30M",
+            "totalTime": "PT45M"
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://damndelicious.net/recipe/timed/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.prepTime).toBe("PT15M");
+    expect(recipe.cookTime).toBe("PT30M");
+    expect(recipe.totalTime).toBe("PT45M");
+  });
+
+  it("should extract description as notes from JSON-LD", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Recipe With Description",
+            "description": "A delicious recipe that everyone will love.",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://damndelicious.net/recipe/description/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.notes).toBeDefined();
+    expect(recipe.notes?.length).toBe(1);
+    expect(recipe.notes?.[0]).toContain("delicious recipe");
+  });
+
+  it("should extract servings from recipeYield", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Servings Test",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "recipeYield": "4 servings"
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://damndelicious.net/recipe/servings/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.servings).toBe("4 servings");
+  });
+
+  it("should handle author as string in JSON-LD", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Author String Test",
+            "author": "John Doe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://damndelicious.net/recipe/author/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.author).toBe("John Doe");
+  });
+
+  it("should default to Chungah Rhee when author is missing", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "No Author Recipe",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://damndelicious.net/recipe/noauthor/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.author).toBe("Chungah Rhee");
+  });
+
+  it("should handle image object in array format", async () => {
+    const html = `
+      <html>
+        <head>
+          <script type="application/ld+json">
+          {
+            "@type": "Recipe",
+            "name": "Image Array Object Test",
+            "recipeIngredient": ["ingredient"],
+            "recipeInstructions": ["step"],
+            "image": [{"@type": "ImageObject", "url": "https://example.com/array-obj.jpg"}]
+          }
+          </script>
+        </head>
+      </html>
+    `;
+    const url = "https://damndelicious.net/recipe/imagearray/";
+
+    const recipe = await parser.parse(html, url);
+
+    expect(recipe.imageUrl).toBe("https://example.com/array-obj.jpg");
+  });
 });
 
