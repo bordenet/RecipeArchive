@@ -3,6 +3,7 @@
 Personal recipe management with browser extensions, native mobile apps, and AWS serverless backend.
 
 [![CI/CD](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/pre-commit-quality-gates.yml)
+[![Parser Health](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml/badge.svg)](https://github.com/bordenet/RecipeArchive/actions/workflows/parser-health-check.yml)
 [![codecov](https://codecov.io/gh/bordenet/RecipeArchive/branch/main/graph/badge.svg?token=3adf998f-7bca-40ab-880f-0adce24f7399)](https://codecov.io/gh/bordenet/RecipeArchive)
 
 <table style="width:100%; border-collapse: collapse;">
@@ -134,13 +135,21 @@ No manual copying or desktop workflow required.
 
 ## Key Features
 
-**Capture** — Chrome/Safari extensions, iOS Share Extension, Android Share Intent (planned), direct URL import
+### Capture
 
-**Processing** — OpenAI normalization, ingredient/instruction extraction, metadata enrichment, image storage
+Chrome/Safari extensions, iOS Share Extension, Android Share Intent (planned), direct URL import
 
-**Cooking UX** — Yield scaling (2x, ½x), unit conversion, screen wakelock, distraction-free view
+### Processing
 
-**Multi-tenant** — Invitations, shared collections, per-tenant Cognito auth, encrypted S3 storage
+OpenAI normalization, ingredient/instruction extraction, metadata enrichment, image storage
+
+### Cooking UX
+
+Yield scaling (2x, ½x), unit conversion, screen wakelock, distraction-free view
+
+### Multi-tenant
+
+Invitations, shared collections, per-tenant Cognito auth, encrypted S3 storage
 
 ## Quick Start
 
