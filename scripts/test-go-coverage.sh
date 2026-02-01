@@ -49,19 +49,39 @@ cd "$functions_dir"
 echo ""
 echo "📊 Merging coverage reports..."
 
-# Create merged coverage file
+# Create merged coverage file with repo-relative paths for Codecov
+# Go coverage files have paths relative to aws-backend/functions/
+# Codecov needs paths relative to repo root
 merged_coverage="coverage.out"
 echo "mode: atomic" > "$merged_coverage"
 
 for file in "${coverage_files[@]}"; do
-  # Skip the first line (mode declaration) and append to merged file
-  tail -n +2 "$file" >> "$merged_coverage"
+  # Skip the first line (mode declaration) and prepend aws-backend/functions/ to paths
+  tail -n +2 "$file" | sed 's|^|aws-backend/functions/|' >> "$merged_coverage"
 done
 
 echo "✅ Coverage reports merged into: $merged_coverage"
 echo ""
 echo "📈 Overall Go coverage summary:"
-go tool cover -func="$merged_coverage" | tail -1
+# Note: go tool cover won't work with modified paths, so we calculate manually
+total_stmts=0
+covered_stmts=0
+while IFS=: read -r file rest; do
+  if [[ "$rest" =~ ([0-9]+)$ ]]; then
+    count="${BASH_REMATCH[1]}"
+    # Each line represents one statement, count > 0 means covered
+    ((total_stmts++)) || true
+    if [ "$count" -gt 0 ]; then
+      ((covered_stmts++)) || true
+    fi
+  fi
+done < <(grep -v "^mode:" "$merged_coverage")
+if [ "$total_stmts" -gt 0 ]; then
+  coverage=$(awk "BEGIN {printf \"%.1f\", ($covered_stmts / $total_stmts) * 100}")
+  echo "total: ${coverage}% of statements"
+else
+  echo "No coverage data found"
+fi
 
 # Optional: Generate HTML report
 if [ "$1" == "--html" ]; then

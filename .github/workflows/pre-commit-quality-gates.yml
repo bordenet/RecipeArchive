@@ -197,12 +197,11 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.out
+          files: ./aws-backend/functions/coverage.out
           flags: go,backend
           name: codecov-go
           fail_ci_if_error: false
           verbose: true
-          working-directory: ./aws-backend/functions
 
       - name: FAIL FAST - Block Breaking Changes
         if: failure()
