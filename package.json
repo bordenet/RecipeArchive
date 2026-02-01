@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "cd tools && ./bin/recipe-cli test run",
+    "test": "jest --testMatch='**/tests/unit/**/*.test.js'",
     "test:parsers": "jest --config=config/jest.config.js --testMatch='**/parsers/tests/**/*.test.ts'",
     "test:unit": "jest --testMatch='**/tests/unit/**/*.test.js'",
     "test:integration": "jest --testMatch='**/tests/integration/**/*.test.js' --testTimeout=20000",
