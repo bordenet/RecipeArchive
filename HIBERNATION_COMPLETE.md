@@ -211,7 +211,6 @@ See these docs for more details:
 - [AWS_COST_REDUCTION_GUIDE.md](AWS_COST_REDUCTION_GUIDE.md) - Full hibernation guide
 - [aws-backend/infrastructure/README.md](aws-backend/infrastructure/README.md) - CDK deployment
 - [docs/disaster-recovery-infrastructure.md](docs/disaster-recovery-infrastructure.md) - Recovery procedures
-- [archive/DEPLOYMENT_SUMMARY.md](archive/DEPLOYMENT_SUMMARY.md) - Deployment history
 
 ---
 

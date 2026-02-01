@@ -1,26 +1,58 @@
 # .gitignore for RecipeArchive Monorepo
 
-# SECURITY: Never commit credentials or secrets
+# =============================================================================
+# SECURITY: Never commit credentials, secrets, or user data
+# =============================================================================
 .env
 .env.local
 .env.*.local
 .env.production
 .env.development
-
-# Generated Flutter env (copied from root .env)
-recipe_archive/.env
-
-# Other secret config files
 aws-credentials.json
 secrets.json
 config/secrets.yml
 *.pem
 *.key
+*.p12
+*.pfx
 gitleaks-report.json
+
+# User data backups (contains PII like emails)
+backups/
+
+# Historical archive (outdated snapshots)
+archive/
+
+# Generated Flutter env (copied from root .env)
+recipe_archive/.env
 
 # Generated browser extension env config
 extensions/*/env-config.js
-tree.txt
+
+# =============================================================================
+# Build artifacts and caches (should never be committed)
+# =============================================================================
+
+# Python
+.coverage
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.hypothesis/
+htmlcov/
+.cache/
+
+# Obsolete backup directories
+.web-extension-backup/
 
 # Binaries
 *.exe
@@ -35,9 +67,14 @@ external-references/
 
 # Temporary files
 test-results/
-test-results/*
 .validation-logs/
 wget-log
+tree.txt
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
 # Internal documentation (not for GitHub)
 COVERAGE_NOTES.md
@@ -45,7 +82,6 @@ COVERAGE_NOTES.md
 # Backup files and development artifacts
 *.backup
 *.bak
-*.tmp
 chrome-extension.zip
 
 # AWS

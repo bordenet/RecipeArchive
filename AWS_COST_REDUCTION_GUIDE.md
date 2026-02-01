@@ -368,7 +368,6 @@ aws s3api delete-objects \
 See these docs for more details:
 - [aws-backend/infrastructure/README.md](aws-backend/infrastructure/README.md) - CDK deployment
 - [docs/disaster-recovery-infrastructure.md](docs/disaster-recovery-infrastructure.md) - Recovery procedures
-- [archive/DEPLOYMENT_SUMMARY.md](archive/DEPLOYMENT_SUMMARY.md) - Deployment history
 
 **Created by**: Claude Sonnet 4.5
 **Date**: 2026-01-05
