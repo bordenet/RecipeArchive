@@ -20,21 +20,17 @@ const {
   expect,
 } = require("@jest/globals");
 
-// Mock AWS SDK for testing
+// Mock AWS SDK v3 clients for testing
 const mockSES = {
-  sendEmail: jest.fn(),
+  send: jest.fn(),
 };
 
 const mockDynamoDB = {
-  putItem: jest.fn(),
-  getItem: jest.fn(),
-  updateItem: jest.fn(),
-  query: jest.fn(),
+  send: jest.fn(),
 };
 
 const mockCognito = {
-  adminCreateUser: jest.fn(),
-  adminSetUserPassword: jest.fn(),
+  send: jest.fn(),
 };
 
 // Mock environment variables
@@ -46,10 +42,24 @@ process.env.FRONTEND_BASE_URL = process.env.CLOUDFRONT_URL || "https://your-clou
 process.env.COGNITO_USER_POOL_ID = "us-west-2_EXAMPLEPOOL";
 process.env.COGNITO_APP_CLIENT_ID = "EXAMPLECLIENTID1234567890";
 
-jest.mock("aws-sdk", () => ({
-  DynamoDB: jest.fn(() => mockDynamoDB),
-  SES: jest.fn(() => mockSES),
-  CognitoIdentityServiceProvider: jest.fn(() => mockCognito),
+// Mock AWS SDK v3 clients
+jest.mock("@aws-sdk/client-dynamodb", () => ({
+  DynamoDBClient: jest.fn(() => mockDynamoDB),
+  PutItemCommand: jest.fn(),
+  GetItemCommand: jest.fn(),
+  UpdateItemCommand: jest.fn(),
+  QueryCommand: jest.fn(),
+}));
+
+jest.mock("@aws-sdk/client-ses", () => ({
+  SESClient: jest.fn(() => mockSES),
+  SendEmailCommand: jest.fn(),
+}));
+
+jest.mock("@aws-sdk/client-cognito-identity-provider", () => ({
+  CognitoIdentityProviderClient: jest.fn(() => mockCognito),
+  AdminCreateUserCommand: jest.fn(),
+  AdminSetUserPasswordCommand: jest.fn(),
 }));
 
 // Test data
@@ -62,10 +72,11 @@ describe.skip("Invitation Flow Integration Tests", () => {
     // Reset all mocks
     jest.clearAllMocks();
 
-    // Setup default mock responses
-    mockDynamoDB.putItem.mockResolvedValue({});
-    mockDynamoDB.updateItem.mockResolvedValue({});
-    mockSES.sendEmail.mockResolvedValue({ MessageId: "test-message-id" });
+    // Setup default mock responses for AWS SDK v3 (all use .send())
+    // The mock.send() will be configured per-test as needed
+    mockDynamoDB.send.mockResolvedValue({});
+    mockSES.send.mockResolvedValue({ MessageId: "test-message-id" });
+    mockCognito.send.mockResolvedValue({ User: { Username: "test-user-id" } });
   });
 
   afterEach(() => {

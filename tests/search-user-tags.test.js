@@ -1,74 +1,52 @@
 /**
  * Search User Tags Test
  * Validates that user-added tags (manual tags) are searchable
+ *
+ * Note: This test file uses mock S3 data - no actual AWS SDK calls are made.
+ * The mock data simulates what would be returned from S3.
  */
 
-const AWS = require("aws-sdk");
-
-// Mock AWS SDK for testing
-AWS.config.update({
-  region: "us-west-2",
-  credentials: {
-    accessKeyId: "test",
-    secretAccessKey: "test",
+// Mock S3 data for testing (simulates AWS SDK v3 responses)
+const mockRecipeData = {
+  "recipes/test-user/recipe1.json": {
+    id: "recipe1",
+    title: "Test Cocktail Recipe",
+    ingredients: [{ text: "2 oz vodka" }, { text: "1 oz lime juice" }],
+    instructions: [
+      { text: "Mix ingredients" },
+      { text: "Serve over ice" },
+    ],
+    tags: ["drink", "cocktail", "evening"], // User-added tags
+    mealType: ["drink"], // Structured metadata
+    personalRating: 0,
+    source: "manual",
   },
-});
-
-const mockS3 = {
-  listObjectsV2: () => ({
-    promise: () =>
-      Promise.resolve({
-        Contents: [
-          { Key: "recipes/test-user/recipe1.json" },
-          { Key: "recipes/test-user/recipe2.json" },
-        ],
-      }),
-  }),
-  getObject: (params) => ({
-    promise: () => {
-      if (params.Key.includes("recipe1")) {
-        return Promise.resolve({
-          Body: JSON.stringify({
-            id: "recipe1",
-            title: "Test Cocktail Recipe",
-            ingredients: [{ text: "2 oz vodka" }, { text: "1 oz lime juice" }],
-            instructions: [
-              { text: "Mix ingredients" },
-              { text: "Serve over ice" },
-            ],
-            tags: ["drink", "cocktail", "evening"], // User-added tags
-            mealType: ["drink"], // Structured metadata
-            personalRating: 0,
-            source: "manual",
-          }),
-        });
-      }
-      if (params.Key.includes("recipe2")) {
-        return Promise.resolve({
-          Body: JSON.stringify({
-            id: "recipe2",
-            title: "Pasta Salad",
-            ingredients: [
-              { text: "1 lb pasta" },
-              { text: "2 cups vegetables" },
-            ],
-            instructions: [
-              { text: "Cook pasta" },
-              { text: "Mix with vegetables" },
-            ],
-            tags: ["lunch", "cold", "easy"], // User-added tags
-            mealType: ["lunch"], // Structured metadata
-            personalRating: 0,
-            source: "manual",
-          }),
-        });
-      }
-      return Promise.reject(new Error("Recipe not found"));
-    },
-  }),
+  "recipes/test-user/recipe2.json": {
+    id: "recipe2",
+    title: "Pasta Salad",
+    ingredients: [
+      { text: "1 lb pasta" },
+      { text: "2 cups vegetables" },
+    ],
+    instructions: [
+      { text: "Cook pasta" },
+      { text: "Mix with vegetables" },
+    ],
+    tags: ["lunch", "cold", "easy"], // User-added tags
+    mealType: ["lunch"], // Structured metadata
+    personalRating: 0,
+    source: "manual",
+  },
 };
 
-AWS.S3 = jest.fn(() => mockS3);
+// Helper to get mock recipe (simulates S3 GetObject)
+function getMockRecipe(key) {
+  const recipe = mockRecipeData[key];
+  if (!recipe) {
+    throw new Error("Recipe not found");
+  }
+  return recipe;
+}
 
 describe("Search User Tags Integration Tests", () => {
   let mockRecipesFunction;

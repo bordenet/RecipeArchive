@@ -4,7 +4,10 @@
  * This will help us determine if the issue is with token generation or API validation
  */
 
-const AWS = require("aws-sdk");
+const {
+  CognitoIdentityProviderClient,
+  AdminInitiateAuthCommand,
+} = require("@aws-sdk/client-cognito-identity-provider");
 const jwt = require("jsonwebtoken");
 
 // Configuration from environment / .env file
@@ -44,19 +47,18 @@ async function testAuthentication() {
       );
       process.exit(1);
     }
-    // Configure AWS
-    AWS.config.update({
+
+    // Configure AWS SDK v3 client
+    const cognito = new CognitoIdentityProviderClient({
       region: config.region,
     });
-
-    const cognito = new AWS.CognitoIdentityServiceProvider();
 
     console.log("📧 Attempting authentication...");
     console.log(`   Email: ${config.testEmail}`);
     console.log(`   User Pool: ${config.userPoolId}`);
 
     // Authenticate with Cognito
-    const authParams = {
+    const authCommand = new AdminInitiateAuthCommand({
       AuthFlow: "ADMIN_NO_SRP_AUTH",
       UserPoolId: config.userPoolId,
       ClientId: config.clientId,
@@ -64,9 +66,9 @@ async function testAuthentication() {
         USERNAME: config.testEmail,
         PASSWORD: config.testPassword,
       },
-    };
+    });
 
-    const authResult = await cognito.adminInitiateAuth(authParams).promise();
+    const authResult = await cognito.send(authCommand);
 
     if (!authResult.AuthenticationResult) {
       throw new Error("Authentication failed - no result returned");

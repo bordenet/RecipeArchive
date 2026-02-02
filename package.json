@@ -72,9 +72,9 @@
   "author": "Matt Bordenet",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.980.0",
     "aws-cdk": "^2.1026.0",
     "aws-cdk-lib": "^2.212.0",
-    "aws-sdk": "^2.1693.0",
     "axios": "^1.11.0",
     "cheerio": "^1.1.2",
     "jsonwebtoken": "^9.0.2",
@@ -93,5 +93,8 @@
   "bugs": {
     "url": "https://github.com/bordenet/RecipeArchive/issues"
   },
-  "homepage": "https://github.com/bordenet/RecipeArchive#readme"
+  "homepage": "https://github.com/bordenet/RecipeArchive#readme",
+  "overrides": {
+    "fast-xml-parser": "^5.3.4"
+  }
 }
