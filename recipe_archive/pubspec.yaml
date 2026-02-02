@@ -36,7 +36,7 @@ dependencies:
   http: ^1.1.2
 
   # JSON Serialization
-  json_annotation: ^4.8.1
+  json_annotation: ^4.10.0
 
   # State Management
   # Use a 2.x Riverpod that supports the project's Dart SDK (CI uses Dart 3.5.4).
