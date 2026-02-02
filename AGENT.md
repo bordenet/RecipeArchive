@@ -1,3 +1,3 @@
-# Claude Code Instructions
+# Amp by Sourcegraph Instructions
 
 See **[Agents.md](./Agents.md)** for all AI guidance.
