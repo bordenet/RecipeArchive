@@ -456,3 +456,4 @@ recipe_archive/test/services/diagnostic_service_test.dart
 aws-backend/functions/diagnostics-mobile-share/diagnostics-mobile-share
 .claude/settings.local.json
 MIGRATION-PROMPT.md
+ADOPT-PROMPT.md
