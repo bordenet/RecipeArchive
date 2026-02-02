@@ -10,885 +10,118 @@ This file is self-contained and portable. No external references required.
 
 ---
 
-## Core Guidelines
+## Workflow Checklists
 
-# Workflow Checklists
+### Optional: Enhanced Workflows
 
-Use these checklists to maintain quality and consistency across all development work.
-
-## Optional: Enhanced Workflows
-
-If you have [superpowers](https://github.com/obra/superpowers) installed, run at session start:
+If [superpowers](https://github.com/obra/superpowers) is installed, run at session start:
 
 ```bash
 node ~/.codex/superpowers-augment/superpowers-augment.js bootstrap
 ```
 
-Superpowers provides interactive skill-based workflows. If not installed, use the checklists below.
+Otherwise, use the checklists below.
 
----
-
-## Before Creative/Feature Work
+### Before Creative/Feature Work
 
 - [ ] Clarify the problem being solved
-- [ ] Identify acceptance criteria and success metrics
-- [ ] Consider edge cases and error scenarios
+- [ ] Identify acceptance criteria
 - [ ] Explore 2-3 approaches with trade-offs
-- [ ] Document decision rationale before implementing
+- [ ] Document decision rationale
 
-## Before Implementation (TDD Cycle)
+### Before Implementation (TDD)
 
-- [ ] Write failing test describing desired behavior
-- [ ] Implement minimal code to pass test
-- [ ] Refactor for clarity and consistency
-- [ ] Verify all existing tests still pass
-- [ ] Repeat until feature complete
+- [ ] Write failing test first
+- [ ] Implement minimal code to pass
+- [ ] Refactor for clarity
+- [ ] Verify all tests pass
 
-## When Debugging
+### When Debugging
 
-- [ ] Gather complete error information (logs, stack traces)
-- [ ] Identify the exact failure point
+- [ ] Gather error information
 - [ ] Form hypothesis before changing code
-- [ ] Test hypothesis with minimal, isolated change
-- [ ] Verify fix doesn't break other functionality
-- [ ] Add test to prevent regression
+- [ ] Test with minimal change
+- [ ] Add regression test
 
-## Before Claiming Done
+### Before Claiming Done
 
-- [ ] All tests pass locally
-- [ ] No linting errors or warnings
-- [ ] Code reviewed (or self-reviewed against standards)
-- [ ] No secrets, credentials, or sensitive data in code
-- [ ] Documentation updated if behavior changed
+- [ ] All tests pass
+- [ ] No linting errors
+- [ ] No secrets in code
+- [ ] Documentation updated
+
+---
+
+## Communication Standards
+
+- **No flattery** - Skip "Great question!" or "Excellent point!"
+- **No hype words** - Avoid "revolutionary", "game-changing", "cutting-edge"
+- **Evidence-based** - Cite sources, provide data, or qualify as opinion
+- **Direct** - State facts without embellishment
+
+### Banned Phrases
+
+| Category | Avoid |
+|----------|-------|
+| Self-Promotion | production-grade, world-class, enterprise-ready |
+| Filler | incredibly, extremely, very, really, truly |
+| AI Tells | leverage, utilize, facilitate, streamline, optimize |
+| Sycophancy | Happy to help!, Absolutely!, I appreciate... |
+
+---
+
+## Quality Gates
+
+### Before Committing
+
+1. **Lint**: `npm run lint`
+2. **Build**: `npm run build`
+3. **Test**: `npm test`
+4. **Coverage**: Minimum 70%
+
+### Before Pushing
+
+- [ ] All tests pass
+- [ ] No linting errors
+- [ ] No secrets in code
 - [ ] Commit messages are descriptive
 
-## Before Creating PR or Merging
+### Before Deploying
 
-- [ ] Branch is up to date with target branch
-- [ ] CI pipeline passes
-- [ ] Changes match the original requirements
-- [ ] No unrelated changes included
-
-## When Stuck (2+ Failed Attempts)
-
-- [ ] Step back and re-read the error message carefully
-- [ ] Search documentation or reliable sources
-- [ ] Ask the user for clarification if requirements are unclear
-- [ ] Consider if the approach itself is wrong, not just the implementation
-
----
-
-# Communication Standards
-
-> **Priority**: HIGH - Governs all AI-generated text  
-> **Source**: superpowers-plus, genesis, codebase-reviewer, bloginator Agents.md
-
-## Core Principles
-
-1. **No flattery** - Never start responses with "Great question!" or "Excellent point!"
-2. **Evidence-based claims only** - Cite sources, provide data, or qualify as opinion
-3. **No celebratory language** - Skip "I'm excited to..." or "This is amazing!"
-4. **Direct communication** - State facts without embellishment
-
-## Status Update Template
-
-When providing status updates, use this format:
-
-```markdown
-## Status Update
-
-**Current State**: [Brief description]
-
-**Completed**:
-- [Item 1]
-- [Item 2]
-
-**In Progress**:
-- [Item with % or step indicator]
-
-**Blocked/Needs Input**:
-- [Item requiring user action]
-
-**Next Steps**:
-1. [Immediate next action]
-2. [Following action]
-```
-
-## Proactive Communication
-
-- Provide updates at natural breakpoints
-- Flag blockers early, don't wait for user to ask
-- Summarize progress after completing multi-step work
-- Ask clarifying questions before making assumptions
-
-## Tone Guidelines
-
-| Instead of | Use |
-|------------|-----|
-| "Great question!" | [Skip, answer directly] |
-| "I'd be happy to help!" | [Skip, just help] |
-| "This is a fascinating problem" | [Skip, solve the problem] |
-| "I think this might work" | "This approach handles X because Y" |
-| "Hopefully this helps" | [Skip, or ask if more needed] |
-
-## Error Communication
-
-When reporting errors or issues:
-1. State what failed
-2. State what was expected
-3. Provide relevant error output (trimmed)
-4. Suggest next steps or ask for guidance
-
-## User Deference
-
-- Never push back on user preferences without reason
-- Provide options when multiple approaches exist
-- Respect existing patterns in the codebase
-- Ask before making potentially disruptive changes
-
-
----
-
-# Anti-Slop Writing Rules
-
-> **Priority**: CRITICAL - Apply to ALL generated text  
-> **Source**: superpowers-plus, bloginator Agents.md
-
-## ⛔ Banned Phrases
-
-| Category | Banned Phrases |
-|----------|----------------|
-| **Self-Promotion** | production-grade, world-class, enterprise-ready, best-in-class, state-of-the-art |
-| **Hype Words** | game-changing, revolutionary, cutting-edge, transformative, groundbreaking, innovative |
-| **Filler Boosters** | incredibly, extremely, highly, truly, absolutely, very, really |
-| **Vague Quality** | robust, seamless, comprehensive, holistic, elegant, powerful, flexible |
-| **AI Tells** | leverage, utilize, facilitate, enable, empower, streamline, optimize |
-| **Sycophancy** | Great question!, Happy to help!, Excellent point!, I appreciate..., Absolutely! |
-
-## Writing Principles
-
-1. **Specific over vague** - "reduces build time by 40%" not "significantly improves performance"
-2. **Active over passive** - "This script validates inputs" not "Inputs are validated by this script"
-3. **Short over long** - Prefer shorter sentences when meaning is preserved
-4. **Evidence over assertion** - "Benchmarks show X" not "This is highly performant"
-
-## Sentence Structure Rules
-
-- Start with subject and verb when possible
-- Avoid starting sentences with "It is" or "There are"
-- One idea per sentence
-- Break complex sentences into multiple simpler ones
-
-## Document Structure
-
-- Lead with the most important information
-- Use headings to organize, not to impress
-- Tables for comparisons, lists for sequences
-- Code blocks with language hints
-
-## Self-Check Before Output
-
-Before generating text, mentally review:
-1. Any banned phrases present?
-2. Any unsupported claims?
-3. Any unnecessary qualifiers?
-4. Is this the shortest way to say it?
-
-## Related Skills
-
-For comprehensive slop detection and elimination:
-- `superpowers-plus/skills/detecting-ai-slop/`
-- `superpowers-plus/skills/eliminating-ai-slop/`
-
-
----
-
-## Workflows
-
-# Deployment Workflow
-
-> **Priority**: HIGH - Applies to all projects with CI/CD  
-> **Source**: strategic-proposal, architecture-decision-record, genesis Agents.md
-
-## ⚠️ MANDATORY: CI Before Deploy
-
-**NEVER deploy without green CI.** This is non-negotiable.
-
-### Three-Step Process
-
-```bash
-# Step 1: Push changes to GitHub
-git push origin main
-
-# Step 2: WAIT for CI to pass
-# ⚠️ DO NOT PROCEED until all checks are GREEN (not red X)
-
-# Step 3: Deploy ONLY after CI passes
-./scripts/deploy-web.sh  # or equivalent
-```
-
-## Quality Gates Checklist
-
-Before deployment, verify:
-- [ ] All tests pass locally
-- [ ] Linting passes with no errors
 - [ ] CI shows green checkmark
-- [ ] No security vulnerabilities (npm audit, govulncheck, pip-audit)
-- [ ] Coverage meets minimum threshold
-- [ ] Documentation updated if APIs changed
-
-## Non-Negotiable Quality Requirements
-
-1. **All code must compile/build without errors**
-2. **All tests must pass** - NEVER skip, disable, or bypass tests
-3. **No linting errors** - Fix immediately, don't defer
-4. **Commit messages must be descriptive**
-5. **Changes must be properly staged** before commit
-
-## Reference Implementations
-
-When uncertain, check these canonical implementations:
-- **PRIMARY**: `genesis-tools/architecture-decision-record/`
-- **SECONDARY**: `genesis-tools/product-requirements-assistant/`
-
-## Setup Scripts
-
-**Rule**: ALL dependencies installed via setup scripts, NEVER manual `npm install`:
-
-```bash
-./scripts/setup.sh          # Full setup
-./scripts/setup-web.sh      # Web-specific setup
-```
-
+- [ ] Security scan passed
+- [ ] Documentation updated
 
 ---
 
-# Testing Standards
+## Language Quick Reference
 
-> **Priority**: HIGH - Apply to all code changes  
-> **Source**: genesis, pr-faq-validator, bloginator, scripts Agents.md
+### JavaScript
 
-## Coverage Requirements by Language
+- Run `npm run lint` and `npm run build` before committing
+- Use ESLint with project config
+- Prefer async/await over callbacks
 
-| Language | Minimum Coverage | Target |
-|----------|-----------------|--------|
-| Go | 80% | 85%+ |
-| JavaScript | 85% | 90%+ |
-| Python | 50% | 70%+ |
-| Shell | N/A (validation) | 100% functions tested |
+### Go
 
-## Pre-Commit Validation Checklist
-
-Before committing, verify:
-
-1. **VERIFY STYLE_GUIDE.md compliance** - DO THIS FIRST
-2. **Lint the code** - No errors allowed
-3. **Test the code** - MANDATORY, all tests pass
-4. **Validate the code** - Type checking where applicable
-5. **Verify variable exports** - CRITICAL FOR LIBRARIES
-6. **Handle edge cases** - Empty inputs, missing files
-7. **Error handling** - All errors caught and handled
-8. **Input validation** - All user inputs validated
-
-## Pre-Push Audit Checklist
-
-Before pushing, verify:
-
-1. All new code has tests
-2. All tests pass locally
-3. Coverage hasn't decreased
-4. Linting passes
-5. Types check (TypeScript/mypy)
-6. Documentation updated
-7. Commit messages are descriptive
-8. No debug code left in
-9. No secrets in code
-10. Changelog updated (if applicable)
-
-## Test-Driven Development
-
-For new features, follow TDD:
-1. Write failing test first
-2. Implement minimum code to pass
-3. Refactor while keeping tests green
-4. Repeat
-
-## Never Skip Tests
-
-- NEVER use `--skip-tests` flags
-- NEVER comment out failing tests
-- NEVER reduce coverage thresholds to pass CI
-- Fix the code, not the tests
-
+- Run `golangci-lint run ./...` then `go build ./...` before committing
+- 80% test coverage minimum with table-driven tests
+- Error handling: wrap with context, no naked returns
 
 ---
 
-# Security Workflow
-
-> **Priority**: CRITICAL - IP protection and vulnerability management  
-> **Source**: codebase-reviewer, scripts Agents.md, security-upgrade skill
-
-## 🔒 Pre-Commit Hooks - NEVER BYPASS
-
-Pre-commit hooks exist to protect intellectual property. **NEVER disable or bypass them.**
-
-```bash
-# ❌ NEVER DO THIS
-git commit --no-verify
-
-# ✅ ALWAYS DO THIS
-git commit  # Let hooks run
-```
-
-## Security Scanning Tools
-
-| Language | Tool | Command |
-|----------|------|---------|
-| Node.js | npm audit | `npm audit --json` |
-| Go | govulncheck | `govulncheck ./...` |
-| Python | pip-audit | `pip-audit -r requirements.txt` |
-
-## Security Upgrade Workflow
-
-1. **Discovery** - Identify projects with dependencies
-2. **Scan** - Run security scanners
-3. **Upgrade** - Fix vulnerabilities
-4. **Validate** - Compile, test, verify
-5. **Re-scan** - Confirm fixes
-6. **Commit** - Push with green CI
-
-## CVE Response Priority
-
-| Severity | Response Time |
-|----------|---------------|
-| Critical | Immediate |
-| High | Same day |
-| Moderate | Within week |
-| Low | Next release |
-
-## Secret Management
-
-- NEVER commit secrets to git
-- Use environment variables for API keys
-- Store secrets in secure credential managers
-- Use `.env.local` files (gitignored)
-- Prompt for secrets interactively in setup scripts
-
-## Related Skills
-
-For comprehensive security workflows:
-- `superpowers-plus/skills/security-upgrade/`
-
-
----
-
-# Build Hygiene Standards
-
-> **Priority**: CRITICAL - Apply to all projects with build steps  
-> **Source**: RecipeArchive, genesis-tools Agents.md
-
-## ⚠️ NEVER Modify Source In Place
-
-Build processes should NEVER modify source files. Always output to dedicated directories.
-
-```bash
-# ❌ WRONG - modifying source
-sed -i 's/version/1.0/' src/config.js
-
-# ✅ CORRECT - build output separate from source
-npm run build  # Outputs to dist/
-cp src/config.template.js dist/config.js
-sed 's/VERSION/1.0/' < src/config.template.js > dist/config.js
-```
-
-## Go Build Hygiene
-
-**CRITICAL**: Always run `go build` after linting to verify compilation.
-
-```bash
-# Standard Go workflow
-golangci-lint run ./...    # Step 1: Lint
-go build ./...             # Step 2: ALWAYS compile after lint
-go test ./...              # Step 3: Run tests
-```
-
-The linter may pass while the code doesn't compile. **`go build` is non-negotiable.**
-
-## Compilation Validation
-
-Before committing, verify the code compiles:
-
-| Language | Compile Check |
-|----------|---------------|
-| Go | `go build ./...` |
-| TypeScript | `tsc --noEmit` |
-| Java | `mvn compile` or `gradle build` |
-| Rust | `cargo check` |
-| Dart | `dart analyze` or `flutter analyze` |
-
-## Build Output Directories
-
-Standard output directory conventions:
-
-| Language/Framework | Build Output |
-|-------------------|--------------|
-| Node.js | `dist/` or `build/` |
-| Go | `bin/` or project root |
-| Python | `dist/` (for packages) |
-| Flutter | `build/` |
-| Rust | `target/` |
-
-## Clean Builds
-
-When builds behave unexpectedly, clean and rebuild:
-
-```bash
-# Node.js
-rm -rf node_modules dist
-npm ci  # Clean install
-npm run build
-
-# Go
-go clean -cache
-go build ./...
-
-# Flutter
-flutter clean
-flutter pub get
-flutter build
-
-# Rust
-cargo clean
-cargo build
-```
-
-## CI Build Validation
-
-Ensure CI validates:
-
-1. **Lint passes** - No errors or warnings
-2. **Build succeeds** - Code compiles without errors
-3. **Tests pass** - All tests green
-4. **Coverage met** - Minimum thresholds satisfied
-
-```yaml
-# Example CI steps
-steps:
-  - run: npm run lint
-  - run: npm run build    # MUST come after lint
-  - run: npm test
-  - run: npm run coverage
-```
-
-## Build Artifacts
-
-- Never commit build artifacts to git
-- Use `.gitignore` to exclude build directories
-- CI should build fresh, not reuse local builds
-- Tag releases in git, store artifacts separately
-
-## Dependency Lock Files
-
-Always commit lock files for reproducible builds:
-
-| Package Manager | Lock File |
-|-----------------|-----------|
-| npm | `package-lock.json` |
-| yarn | `yarn.lock` |
-| pnpm | `pnpm-lock.yaml` |
-| Go | `go.sum` |
-| Cargo | `Cargo.lock` |
-| pip | `requirements.txt` (pinned) |
-| Flutter | `pubspec.lock` |
-
-
----
-
-# Context Management
-
-Manage context window effectively to prevent context rot and maximize signal-to-noise ratio.
-
-## Core Principles
-
-1. **Context Rot**: Model accuracy degrades as context window fills. Prioritize high-signal tokens.
-
-2. **Attention Budget**: LLMs have limited attention - each token depletes this budget.
-
-3. **Right Altitude**: Instructions should be specific enough to guide behavior, flexible enough to generalize.
-
-### Progressive Disclosure Strategy
-
-Load context in stages, not all upfront:
-
-```
-Level 1: Agents.md (always loaded)
-  └── Essential rules, quality gates, banned phrases
-
-Level 2: On-demand modules (loaded when relevant)
-  └── Language-specific, project-type, workflow details
-
-Level 3: Just-in-time retrieval (loaded per task)
-  └── Code snippets, API docs, error context
-```
-
-### When to Compact Context
-
-Recognize these signals:
-- Conversation exceeds 50 exchanges
-- Repeated similar errors suggesting lost context
-- Model asks for information already provided
-- Responses become generic or off-target
-
-### Compaction Techniques
-
-1. **Summarize, don't repeat**: Replace verbose history with structured summary
-2. **Keep artifacts, drop discussion**: Preserve code/decisions, remove exploration
-3. **Reference, don't inline**: Point to files instead of pasting large blocks
-4. **Prune dead ends**: Remove failed approaches once resolved
-
-### Structured Note-Taking
-
-For complex multi-step tasks, maintain notes:
-
-```markdown
-## Session Notes
-
-### Current State
-- Working on: [feature/bug description]
-- Blockers: [if any]
-
-### Key Decisions
-1. [Decision + rationale]
-
-### Pending Items
-- [ ] Item 1
-- [ ] Item 2
-
-### Files Modified
-- path/to/file.ext - [what was changed]
-```
-
-### Session Resumption
-
-When resuming after context switch or new session:
-
-1. Load Agents.md (compact if available)
-2. Review recent git commits: `git log --oneline -10`
-3. Check modified files: `git status`
-4. Load session notes if maintained
-5. State current understanding before proceeding
-
-### Anti-Patterns to Avoid
-
-| Anti-Pattern | Problem | Better Approach |
-|--------------|---------|-----------------|
-| Pasting entire files | Wastes tokens | Use view with line ranges |
-| Repeating instructions | Context bloat | Reference Agents.md |
-| Including full stack traces | Low signal | Extract relevant lines |
-| Verbose error descriptions | Token waste | State error + hypothesis |
-
-### Token Budget Guidelines
-
-| Context Size | Action |
-|--------------|--------|
-| < 50% window | Continue normally |
-| 50-75% window | Start summarizing history |
-| 75-90% window | Aggressive compaction |
-| > 90% window | Fresh session with summary |
-
-
----
-
-## Language-Specific Guidelines
-
-# JavaScript/TypeScript Coding Conventions
-
-> **Priority**: HIGH - Apply to all JS/TS projects  
-> **Source**: genesis, architecture-decision-record, strategic-proposal Agents.md
-
-## Code Quality Requirements
-
-- **Linting**: ESLint (9.x flat config preferred)
-- **Coverage**: ≥85% minimum, 90%+ target
-- **Formatting**: Consistent style enforced by config
-
-## Style Variations
-
-**Note**: Quote style varies by project. Check existing code:
-
-```javascript
-// genesis-tools pattern (single quotes)
-const message = 'Hello, world';
-
-// Other projects may use double quotes
-const message = "Hello, world";
-```
-
-Common conventions:
-- **Indentation**: 2 spaces
-- **Semicolons**: Required
-- **Trailing commas**: ES5-compatible (arrays, objects)
-
-## ESLint 9.x Flat Config
-
-```javascript
-// eslint.config.js
-import js from '@eslint/js';
-import globals from 'globals';
-
-export default [
-  js.configs.recommended,
-  {
-    languageOptions: {
-      globals: { ...globals.browser, ...globals.node }
-    },
-    rules: {
-      'no-unused-vars': 'error',
-      'no-console': 'warn'
-    }
-  },
-  {
-    // CRITICAL: Use **/ prefix for nested directories
-    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**']
-  }
-];
-```
-
-## Testing Patterns
-
-```javascript
-describe('Processor', () => {
-  describe('process()', () => {
-    it('should handle valid input', () => {
-      const result = processor.process('input');
-      expect(result).toBe('expected');
-    });
-    
-    it('should throw on invalid input', () => {
-      expect(() => processor.process(null)).toThrow();
-    });
-  });
-});
-```
-
-## Commands
+## Quick Commands
 
 ```bash
 # Lint
 npm run lint
 
-# Test with coverage
-npm test -- --coverage
+# Build
+npm run build
 
-# Security scan
-npm audit
+# Test
+npm test
 ```
-
-## ⚠️ Fix Linting Issues Immediately
-
-NEVER defer linting fixes. Fix them before committing.
-
-
----
-
-# Go Coding Conventions
-
-> **Priority**: HIGH - Apply to all Go projects  
-> **Source**: pr-faq-validator, genesis Agents.md
-
-## Code Quality Requirements
-
-- **Linting**: golangci-lint (all enabled checks)
-- **Coverage**: ≥80% minimum, 85%+ target
-- **Function length**: ≤50 lines
-- **File length**: ≤400 lines
-
-## Error Handling Pattern
-
-Always use error wrapping with context:
-
-```go
-// ✅ Correct - wrap with context
-if err != nil {
-    return fmt.Errorf("failed to open config file %s: %w", path, err)
-}
-
-// ❌ Wrong - bare error return
-if err != nil {
-    return err
-}
-
-// ❌ Wrong - losing the original error
-if err != nil {
-    return fmt.Errorf("config error: %v", err)  // Use %w, not %v
-}
-```
-
-## Package Structure
-
-```
-project/
-├── cmd/           # Entry points
-├── internal/      # Private packages
-├── pkg/           # Public packages
-├── go.mod
-└── go.sum
-```
-
-## Testing Patterns
-
-```go
-// Table-driven tests preferred
-func TestFunction(t *testing.T) {
-    tests := []struct {
-        name    string
-        input   string
-        want    string
-        wantErr bool
-    }{
-        {"valid input", "foo", "bar", false},
-        {"empty input", "", "", true},
-    }
-    
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            got, err := Function(tt.input)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
-                return
-            }
-            if got != tt.want {
-                t.Errorf("got = %v, want %v", got, tt.want)
-            }
-        })
-    }
-}
-```
-
-## ⚠️ CRITICAL: Always Build After Lint
-
-**The linter may pass while code doesn't compile.** This is a common failure mode.
-
-```bash
-# REQUIRED workflow (in this exact order)
-golangci-lint run ./...    # Step 1: Lint
-go build ./...             # Step 2: ALWAYS compile after lint
-go test ./...              # Step 3: Run tests
-```
-
-**Never skip `go build`.** It catches issues the linter misses.
-
-## Commands
-
-```bash
-# Full validation workflow
-golangci-lint run ./...
-go build ./...
-go test -coverprofile=coverage.out ./...
-go tool cover -func=coverage.out
-
-# Security scan
-govulncheck ./...
-
-# Tidy dependencies
-go mod tidy
-```
-
-
----
-
-## Project Type Guidelines
-
-# Web Application Conventions
-
-> **Priority**: HIGH - Apply to web apps/interfaces  
-> **Source**: genesis Agents.md
-
-## UI Workflow Principles
-
-> **Never assume linear user behavior.**
-
-Users will:
-- Click buttons multiple times
-- Navigate away mid-operation
-- Use browser back/forward
-- Refresh during operations
-- Open multiple tabs
-
-Design defensively for all scenarios.
-
-## ⚠️ All Clickable Elements MUST Have Event Handlers
-
-Every interactive element needs explicit handlers:
-
-```javascript
-// ✅ Correct - explicit handler
-button.addEventListener('click', handleClick);
-
-// ❌ Wrong - no handler attached
-<button>Click me</button>  // Does nothing
-```
-
-## Clipboard Operations Pattern
-
-Use throw-on-error pattern for clipboard:
-
-```javascript
-async function copyToClipboard(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        showSuccess('Copied to clipboard');
-    } catch (error) {
-        showError('Failed to copy: ' + error.message);
-        throw error;  // Re-throw for caller handling
-    }
-}
-```
-
-## Dark Mode Requirements
-
-**MANDATORY**: All web interfaces must support dark mode.
-
-```css
-/* System preference detection */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-color: #1a1a1a;
-        --text-color: #e0e0e0;
-    }
-}
-
-/* Manual toggle support */
-[data-theme="dark"] {
-    --bg-color: #1a1a1a;
-    --text-color: #e0e0e0;
-}
-```
-
-## Loading States
-
-Always show loading states for async operations:
-
-```javascript
-async function fetchData() {
-    setLoading(true);
-    try {
-        const data = await api.get('/data');
-        setData(data);
-    } finally {
-        setLoading(false);
-    }
-}
-```
-
-## Error Display
-
-- Show errors prominently
-- Provide actionable guidance
-- Allow retry where applicable
-- Log details for debugging
-
-
 
 <!-- GOLDEN:framework:end -->
 
