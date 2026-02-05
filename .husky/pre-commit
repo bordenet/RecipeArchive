@@ -1,1 +1,4 @@
+# Security scan - prevent secrets from being committed
+./scripts/check-secrets.sh || exit 1
+
 npm test
