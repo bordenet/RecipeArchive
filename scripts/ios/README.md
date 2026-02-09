@@ -27,7 +27,7 @@ If you prefer more control, use the specialized scripts in this directory.
 
 ### Main Build Script
 
-**[../ios-build.sh](../ios-build.sh)** - Build script for all iOS builds
+**`./scripts/ios/build.sh`** - Build script for all iOS builds
 
 **Development builds** (fast iteration):
 ```bash
@@ -70,7 +70,7 @@ If you prefer more control, use the specialized scripts in this directory.
 
 All iOS simulator management is handled by:
 
-**[../ios-build.sh](../ios-build.sh)** with `--run` flag
+**`./scripts/ios/build.sh`** with `--run` flag
 
 The script automatically:
 - Detects available simulators
@@ -91,7 +91,7 @@ open -a Simulator
 
 ### Build Management
 
-All build operations use the main build script ([../ios-build.sh](../ios-build.sh)). Individual helper scripts in this directory are for specialized tasks only.
+All build operations use the main build script (`./scripts/ios/build.sh`). Individual helper scripts in this directory are for specialized tasks only.
 
 ## Build Outputs
 

@@ -161,7 +161,7 @@
 
 ## Acceptance Criteria
 
-> **Note**: Active implementation todos are tracked in [PROJECT_STATUS.md](../../PROJECT_STATUS.md) and in the GitHub issue tracker; this document defines the requirements, not the current sprint plan.
+> **Note**: Active implementation todos are tracked in the GitHub issue tracker; this document defines the requirements, not the current sprint plan.
 
 ### Must Have
 

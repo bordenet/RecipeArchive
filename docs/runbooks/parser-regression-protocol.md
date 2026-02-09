@@ -89,5 +89,4 @@ npm run build:extensions
 
 ## Related
 
-- [P0-1: No End-to-End Test Suite](../../PROJECT_STATUS.md#critical-issues-p0)
 - [Parser Architecture](../architecture/website-parsers.md)

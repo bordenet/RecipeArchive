@@ -199,4 +199,3 @@ wc -l scripts/some-script.sh
 - [STYLE_GUIDE.md](../../scripts/STYLE_GUIDE.md) - Complete style guide
 - [REFACTORING_PLAN.md](./REFACTORING_PLAN.md) - Long file refactoring strategy
 - [STANDARDIZATION_STATUS.md](./STANDARDIZATION_STATUS.md) - Current status
-- [PROJECT_STATUS.md](../../PROJECT_STATUS.md) - System health dashboard

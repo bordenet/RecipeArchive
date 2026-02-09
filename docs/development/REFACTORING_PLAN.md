@@ -318,4 +318,3 @@ bash -n scripts/**/*.sh  # Syntax check
 ## Related
 
 - [Shell Script Style Guide](../../scripts/STYLE_GUIDE.md)
-- [PROJECT_STATUS.md](../../PROJECT_STATUS.md)

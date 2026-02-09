@@ -31,8 +31,6 @@ RecipeArchive requires robust extraction of recipe data from a wide variety of c
 - [data-model.md](./data-model.md): Details the shared contract and data types used by all parsers.
 - [performance-standards.md](./performance-standards.md): Outlines performance requirements for parser execution and validation.
 - [search-features.md](./search-features.md): Describes how extracted recipe data is indexed and made searchable.
-- [../development/claude-context.md](../development/claude-context.md): Provides additional context on parser migration and contract enforcement workflows.
-- [../README.md](../README.md): Project overview and architecture summary.
 
 ---
 

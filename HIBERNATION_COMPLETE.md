@@ -25,7 +25,7 @@
 ### 3. ✅ Daily GitHub Action Disabled
 - **File**: [.github/workflows/parser-health-check.yml](.github/workflows/parser-health-check.yml)
 - **Change**: Commented out cron schedule (daily at 9 AM UTC)
-- **Backup**: [.github/workflows/parser-health-check.yml.backup](.github/workflows/parser-health-check.yml.backup)
+- **Backup**: Workflow backup was made before hibernation
 - **Commit**: `4af5449` - "chore: disable daily parser health check during AWS hibernation"
 - **Manual trigger**: Still available via `workflow_dispatch`
 
@@ -181,8 +181,7 @@ aws s3 sync backups/s3-storage/ s3://recipearchive-storage-production-9905370439
 3. **[scripts/disable-daily-cron.sh](scripts/disable-daily-cron.sh)** - GitHub Action disabler
 4. **[backups/cognito-users-backup-20260105-090330.json](backups/cognito-users-backup-20260105-090330.json)** - User backup
 5. **[backups/hibernation-log-20260105-090327.txt](backups/hibernation-log-20260105-090327.txt)** - Hibernation log
-6. **[.github/workflows/parser-health-check.yml.backup](.github/workflows/parser-health-check.yml.backup)** - Workflow backup
-7. **This file**: HIBERNATION_COMPLETE.md
+6. **This file**: HIBERNATION_COMPLETE.md
 
 ---
 

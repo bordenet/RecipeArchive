@@ -126,6 +126,5 @@ aws logs filter-log-events \
 
 ## Related
 
-- [System Health Dashboard](../../PROJECT_STATUS.md)
 - [Lambda Cache Issues](./lambda-cache-invalidation.md)
 - [Parser Issues](./parser-regression-protocol.md)

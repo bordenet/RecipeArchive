@@ -252,4 +252,3 @@ See [REFACTORING_PLAN.md](./REFACTORING_PLAN.md) for detailed execution plan.
 
 - [STYLE_GUIDE.md](../../scripts/STYLE_GUIDE.md) - Shell script style guide
 - [REFACTORING_PLAN.md](./REFACTORING_PLAN.md) - Long file refactoring plan
-- [PROJECT_STATUS.md](../../PROJECT_STATUS.md) - System health dashboard

@@ -31,7 +31,7 @@ The backend is live and will automatically fetch HTML for non-Safari browsers:
 
 ## Safari Web Extension Setup
 
-Follow **[XCODE_WEB_EXTENSION_SETUP.md](XCODE_WEB_EXTENSION_SETUP.md)** for complete instructions.
+See instructions below for complete setup.
 
 **Quick Steps**:
 1. Open `recipe_archive/ios/Runner.xcworkspace`

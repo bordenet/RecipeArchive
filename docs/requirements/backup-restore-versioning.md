@@ -305,5 +305,4 @@ s3://recipearchive-storage/backups/
 
 - [recipe-schema-normalization.md](./recipe-schema-normalization.md): Schema structure backing up/restoring
 - [schema-versioning.md](./schema-versioning.md): Detailed schema evolution and migration procedures
-- [../data-integrity-measures.md](../data-integrity-measures.md): Data integrity validation procedures
 - [multi-tenant-provisioning.md](./multi-tenant-provisioning.md): Multi-tenant isolation in backup systems

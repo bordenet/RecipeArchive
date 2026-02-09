@@ -35,7 +35,7 @@ If you prefer more control:
 
 ### Main Build Script
 
-**[../android-build.sh](../android-build.sh)** - Build script for all Android builds
+**`./scripts/android/build.sh`** - Build script for all Android builds
 
 **Development builds** (fast iteration):
 ```bash

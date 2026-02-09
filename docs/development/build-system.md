@@ -296,7 +296,6 @@ ls -t ./build/android/release/RecipeArchive-*-android-release.apk | head -1
 1. ✅ Update [README.md](../../README.md) with new paths
 2. ✅ Update [COMMANDS.md](../../COMMANDS.md) with new script locations
 3. ✅ Update [.claude/instructions.md](../../.claude/instructions.md) AI instructions and governance
-4. ✅ Update [PROJECT_STATUS.md](../../PROJECT_STATUS.md) to mark Week 2 complete
 
 ## Success Criteria
 

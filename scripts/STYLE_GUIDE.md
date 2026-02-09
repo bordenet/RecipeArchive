@@ -1257,7 +1257,7 @@ require_var() {
 
 ### Complete Script Example
 
-See [`examples/template-script.sh`](examples/template-script.sh) for a complete, production-ready script template.
+Use the build scripts in `scripts/ios/` and `scripts/android/` as reference examples.
 
 ### Library Usage Example
 

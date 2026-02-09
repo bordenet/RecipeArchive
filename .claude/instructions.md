@@ -336,7 +336,7 @@ These conventions ensure consistent, maintainable automation across the project:
 #### 4. Platform-Specific Patterns
 
 **iOS (Gold Standard)**:
-- Build script: [`build-ios.sh`](scripts/build-ios.sh)
+- Build script: `scripts/ios/build.sh`
 - Direct use of native build systems (Xcode, NOT `flutter build ios`)
 - Auto-reset mechanisms (project.pbxproj) to avoid git noise
 - Clear dev vs prod modes

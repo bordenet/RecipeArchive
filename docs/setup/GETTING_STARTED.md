@@ -118,7 +118,6 @@ aws cognito-idp admin-set-user-password \
 
 ### Browser Extensions
 - [Install Chrome Extension](../../extensions/chrome/README.md)
-- [Install Safari Extension](../../extensions/safari/README.md)
 - [Supported Recipe Sites](../../README.md#supported-sites)
 
 ### Mobile Development (Optional)

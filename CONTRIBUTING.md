@@ -361,5 +361,4 @@ Never log:
 
 - See [COMMANDS.md](COMMANDS.md) for quick command reference
 - See [docs/setup/GETTING_STARTED.md](docs/setup/GETTING_STARTED.md) for detailed setup
-- See [PROJECT_STATUS.md](PROJECT_STATUS.md) for system health and known issues
 - Review language-specific style guides in [docs/](docs/)

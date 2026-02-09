@@ -4,7 +4,7 @@
 **Status:** Phase 0 Complete - Ready for Phase 1 (iOS)
 **Date:** 2025-10-25
 **Last Updated:** 2025-10-25
-**Related PRD:** [PRD-MOBILE-SHARE-TARGET.md](PRD-MOBILE-SHARE-TARGET.md)
+**Related PRD:** PRD-MOBILE-SHARE-TARGET (archived)
 
 ## ✅ Completion Status
 

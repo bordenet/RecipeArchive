@@ -74,4 +74,4 @@ Target: >70% cache hit rate
 
 ## Related
 
-- [P0-2: Lambda Cache Inefficiency](../../PROJECT_STATUS.md#critical-issues-p0)
+- Lambda Cache Inefficiency (archived)

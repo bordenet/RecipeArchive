@@ -3,8 +3,8 @@
 **Last Updated:** 2025-10-25
 **Current Phase:** Phase 0 Complete, Ready for Phase 1
 **Related Docs:**
-- [PRD](PRD-MOBILE-SHARE-TARGET.md)
-- [Implementation Plan](IMPLEMENTATION-PLAN-MOBILE-SHARE.md)
+- PRD: PRD-MOBILE-SHARE-TARGET (archived)
+- [Implementation Plan](../IMPLEMENTATION-PLAN-MOBILE-SHARE.md)
 
 ---
 
@@ -276,7 +276,7 @@ RecipeArchive/
 
 When starting fresh session:
 1. Review this status document
-2. Review [Implementation Plan](IMPLEMENTATION-PLAN-MOBILE-SHARE.md) Phase 1
+2. Review [Implementation Plan](../IMPLEMENTATION-PLAN-MOBILE-SHARE.md) Phase 1
 3. Decide: Start iOS (Phase 1) or Android (Phase 2)?
 4. If iOS: Open Xcode and begin Step 1.1
 5. If Android: Begin with AndroidManifest.xml configuration

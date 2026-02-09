@@ -178,4 +178,3 @@ Choose known-good URLs that:
 
 - [Parser Regression Protocol](../runbooks/parser-regression-protocol.md)
 - [Production Incident Response](../runbooks/production-incident-response.md)
-- [PROJECT_STATUS.md](../../PROJECT_STATUS.md)

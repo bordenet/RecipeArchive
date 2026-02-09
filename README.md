@@ -46,7 +46,6 @@ Personal recipe management with browser extensions, native mobile apps, and AWS 
 ## Quick Links
 
 - **[Getting Started Guide →](docs/setup/GETTING_STARTED.md)** - Complete setup and deployment
-- **[System Health Dashboard →](PROJECT_STATUS.md)** - SLOs, metrics, and known issues
 - **[Command Reference →](COMMANDS.md)** - Quick lookup for all commands
 - **[Development Guide →](CONTRIBUTING.md)** - Conventions and best practices
 
@@ -227,7 +226,6 @@ These warnings are expected and can be safely ignored. All 10 Lambda functions d
 | Category | Document | Purpose |
 |----------|----------|---------|
 | **Setup** | [Getting Started](docs/setup/GETTING_STARTED.md) | 15-minute production deployment |
-| **Operations** | [System Health Dashboard](PROJECT_STATUS.md) | SLOs, metrics, known issues |
 | **Development** | [Contributing Guide](CONTRIBUTING.md) | Conventions and best practices |
 | **Reference** | [Command Reference](COMMANDS.md) | Quick command lookup |
 | **Testing** | [E2E Parser Testing](docs/testing/e2e-parser-testing.md) | Automated parser validation |

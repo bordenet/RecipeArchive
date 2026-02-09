@@ -285,4 +285,3 @@ RecipeArchive MUST maintain a comprehensive, consistent recipe schema with full 
 - [web-extension-parsing.md](./web-extension-parsing.md): Recipe extraction and import requirements
 - [search-functionality.md](./search-functionality.md): Search and filtering based on schema fields
 - [backup-restore-versioning.md](./backup-restore-versioning.md): Schema versioning and migration
-- [../data-integrity-measures.md](../data-integrity-measures.md): Schema consistency procedures

@@ -35,7 +35,7 @@ Flutter app → Backend API (with HTML) → S3 storage
 ```
 
 **Components**:
-- **JavaScript Extension** ([RecipeExtension/Resources/](../../recipe_archive/ios/RecipeExtension/Resources/)):
+- **JavaScript Extension** (`RecipeExtension/Resources/`):
   - `background.js`: Handles native messaging via `browser.runtime.sendNativeMessage()`
   - `popup.js`: User interface for triggering recipe capture
   - `manifest.json`: Extension permissions and configuration
@@ -106,7 +106,7 @@ webView.evaluateJavaScript("""
 }
 ```
 
-**Integration** ([ShareViewController.swift:204-223](../../recipe_archive/ios/RecipeArchive/ShareViewController.swift:204-223)):
+**Integration** (`ShareViewController.swift:204-223`):
 ```swift
 if html == nil {
     let contentLoader = WebViewContentLoader(url: url) { [weak self] loadedHtml, imageData in
@@ -154,7 +154,7 @@ Base64 encodes images → App Group storage →
 Flutter app → Backend API → Matches images to recipe → S3 upload
 ```
 
-**Implementation** ([ShareViewController.swift](../../recipe_archive/ios/RecipeArchive/ShareViewController.swift:119-216)):
+**Implementation** (`ShareViewController.swift:119-216`):
 ```swift
 // Extract Web Archive (contains both URL and HTML)
 if attachment.hasItemConformingToTypeIdentifier("com.apple.webarchive") {
@@ -182,7 +182,7 @@ if attachment.hasItemConformingToTypeIdentifier("com.apple.webarchive") {
 }
 ```
 
-**Backend Processing** ([main.go:999-1050](../../aws-backend/functions/recipes/main.go:999-1050)):
+**Backend Processing** (`main.go:999-1050`):
 1. Parse HTML to extract recipe data (including main image URL)
 2. Search `webArchiveImages` array for matching image URL
 3. If found: decode base64 data and upload directly to S3
@@ -212,7 +212,7 @@ App Group storage → Flutter app → Backend API →
 Server-side HTML fetch → HTML parsing → S3 storage
 ```
 
-**Backend Fetch Logic** ([main.go:926-951](../../aws-backend/functions/recipes/main.go:926-951)):
+**Backend Fetch Logic** (`main.go:926-951`):
 ```go
 // BEST-EFFORT HTML FETCHING & PARSING
 if recipeData.WebArchiveHTML == nil || *recipeData.WebArchiveHTML == "" {
@@ -248,7 +248,7 @@ if recipeData.WebArchiveHTML == nil || *recipeData.WebArchiveHTML == "" {
 
 ### Recipe Processing Pipeline
 
-**Input Format** ([models/recipe.go:93-119](../../aws-backend/functions/models/recipe.go:93-119)):
+**Input Format** (`models/recipe.go:93-119`):
 ```go
 type CreateRecipeRequest struct {
     // Standard fields
@@ -276,7 +276,7 @@ type WebArchiveImage struct {
    - Parse HTML DOM for recipe metadata
    - Extract main image URL
 
-2. **Image Handling** ([main.go:999-1050](../../aws-backend/functions/recipes/main.go:999-1050)):
+2. **Image Handling** (`main.go:999-1050`):
    ```go
    if recipeData.MainPhotoURL != nil {
        imageURL := *recipeData.MainPhotoURL
@@ -446,8 +446,6 @@ class RecipeCaptureService : AccessibilityService() {
 
 ## Related Documentation
 
-- [SAFARI_WEB_EXTENSION_SETUP.md](../technical/SAFARI_WEB_EXTENSION_SETUP.md) - Step-by-step Safari Web Extension setup
-- [PROJECT_STATUS.md](../../PROJECT_STATUS.md) - Current implementation status
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and coding conventions
 
 ## Implementation Status
