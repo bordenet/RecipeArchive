@@ -5,8 +5,16 @@
 > **Type**: web-apps (monorepo with mobile apps, browser extensions, Lambda backend)
 
 **Production**: https://d1jcaphz4458q7.cloudfront.net
-
+<!-- GOLDEN:self-manage:start -->
+## ⚠️ Before ANY Task
+1. Load `.ai-guidance/invariants.md` — contains critical rules
+2. After editing ANY guidance file, check: `wc -l Agents.md .ai-guidance/*.md 2>/dev/null`
+   - `Agents.md` >150 lines → refactor into `.ai-guidance/`
+   - Any `.ai-guidance/*.md` >50 lines → split into sub-directory
+<!-- GOLDEN:self-manage:end -->
 <!-- GOLDEN:framework:start -->
+
+---
 
 ## Quality Gates (MANDATORY)
 
@@ -14,6 +22,7 @@ Before ANY commit:
 1. **Lint**: `npm run lint`
 2. **Build**: `npm run build`
 3. **Test**: `npm test`
+4. **Coverage**: Minimum 70%
 
 **Order matters.** Lint → Build → Test. Never skip steps.
 
@@ -23,39 +32,36 @@ Before ANY commit:
 
 - **No flattery** - Skip "Great question!" or "Excellent point!"
 - **No hype** - Avoid "revolutionary", "game-changing", "seamless"
+- **Evidence-based** - Cite sources or qualify as opinion
 - **Direct** - State facts without embellishment
+
+**Banned phrases**: production-grade, world-class, leverage, utilize, incredibly, extremely, Happy to help!
 
 ---
 
-## On-Demand Module Loading
+## 🚨 Progressive Module Loading
 
-**Load these modules when the context applies:**
+**STOP and load the relevant module BEFORE these actions:**
 
-### Project-Specific Modules (in `.ai-guidance/`)
+### Language Modules (🔴 Required)
+- 🔴 **BEFORE writing ANY `.js`, `.ts`, `.jsx`, `.tsx` file**: Read `$HOME/.golden-agents/templates/languages/javascript.md`
+- 🔴 **BEFORE writing  go code**: Read `$HOME/.golden-agents/templates/languages/ go.md`
+- 🔴 **BEFORE writing  dart-flutter code**: Read `$HOME/.golden-agents/templates/languages/ dart-flutter.md`
 
-| When... | Load |
-|---------|------|
-| Building iOS/Android apps | [.ai-guidance/mobile-builds.md](.ai-guidance/mobile-builds.md) |
-| Working on recipe capture | [.ai-guidance/recipe-capture.md](.ai-guidance/recipe-capture.md) |
-| Writing Dart/Flutter code | [.ai-guidance/dart-logging.md](.ai-guidance/dart-logging.md) |
-| Shell scripts or conventions | [.ai-guidance/development-conventions.md](.ai-guidance/development-conventions.md) |
-| Validation or infrastructure | [.ai-guidance/validation-dashboard.md](.ai-guidance/validation-dashboard.md) |
-| New adopter setup or security | [.ai-guidance/new-adopter-security.md](.ai-guidance/new-adopter-security.md) |
-| AI agent protocols | [.ai-guidance/ai-agent-protocols.md](.ai-guidance/ai-agent-protocols.md) |
+### Workflow Modules (🔴 Required)
+- 🔴 **BEFORE any commit, PR, push, or merge**: Read `$HOME/.golden-agents/templates/workflows/security.md`
+- 🔴 **WHEN tests fail OR after 2+ failed fix attempts**: Read `$HOME/.golden-agents/templates/workflows/testing.md`
+- 🔴 **WHEN build fails OR lint errors appear**: Read `$HOME/.golden-agents/templates/workflows/build-hygiene.md`
+- 🟡 **BEFORE deploying to any environment**: Read `$HOME/.golden-agents/templates/workflows/deployment.md`
+- 🟡 **WHEN conversation exceeds 50 exchanges**: Read `$HOME/.golden-agents/templates/workflows/context-management.md`
 
-### Generic Templates (in `$HOME/.golden-agents/templates/`)
+### Project type guidance:
+- Read `$HOME/.golden-agents/templates/project-types/web-apps (monorepo with mobile apps, browser extensions, Lambda backend).md`
 
-| When... | Load |
-|---------|------|
-| JavaScript/TypeScript | `languages/javascript.md` |
-| Go code | `languages/go.md` |
-| Debugging | `workflows/testing.md` |
-| Deploying | `workflows/deployment.md` |
-| Security concerns | `workflows/security.md` |
+### Optional: Superpowers integration
 
-### Optional: Superpowers
+If [superpowers](https://github.com/obra/superpowers) is installed, run at session start:
 
-If [superpowers](https://github.com/obra/superpowers) is installed:
 ```bash
 node ~/.codex/superpowers-augment/superpowers-augment.js bootstrap
 ```
@@ -125,4 +131,3 @@ npm run lint -- --fix                  # Fix JS quote style (double quotes requi
 1. Find ID: `cd tools/content-ops && ./content-ops -include-recipe-id "Name"`
 2. Trace: `cd tools/recipe-tracer && ./recipe-tracer -recipe ID`
 3. Analyze: Check ingredient/instruction counts, CloudWatch logs, cache hits
-
