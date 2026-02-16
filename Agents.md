@@ -45,8 +45,8 @@ Before ANY commit:
 
 ### Language Modules (🔴 Required)
 - 🔴 **BEFORE writing ANY `.js`, `.ts`, `.jsx`, `.tsx` file**: Read `$HOME/.golden-agents/templates/languages/javascript.md`
-- 🔴 **BEFORE writing  go code**: Read `$HOME/.golden-agents/templates/languages/ go.md`
-- 🔴 **BEFORE writing  dart-flutter code**: Read `$HOME/.golden-agents/templates/languages/ dart-flutter.md`
+- 🔴 **BEFORE writing  go code**: Read `$HOME/.golden-agents/templates/languages/go.md`
+- 🔴 **BEFORE writing  dart-flutter code**: Read `$HOME/.golden-agents/templates/languages/dart-flutter.md`
 
 ### Workflow Modules (🔴 Required)
 - 🔴 **BEFORE any commit, PR, push, or merge**: Read `$HOME/.golden-agents/templates/workflows/security.md`
