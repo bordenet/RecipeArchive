@@ -42,7 +42,7 @@ dependencies:
   # Use a 2.x Riverpod that supports the project's Dart SDK (CI uses Dart 3.5.4).
   # If you later upgrade the CI Dart/Flutter image to a >=3.8.0 SDK, you can
   # restore flutter_riverpod to ^3.0.0.
-  flutter_riverpod: ^2.6.1
+  flutter_riverpod: ^3.2.1
 
   # AWS Cognito Authentication
   amazon_cognito_identity_dart_2: ^3.2.1
