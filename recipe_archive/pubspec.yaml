@@ -85,7 +85,7 @@ dev_dependencies:
     sdk: flutter
 
   # Code generation
-  build_runner: ^2.4.13
+  build_runner: ^2.11.1
   json_serializable: ^6.7.1
 
   flutter_lints: ^6.0.0
