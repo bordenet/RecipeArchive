@@ -219,18 +219,18 @@ describe("Extension JavaScript Error Detection", () => {
 
     it("should detect missing global variables", () => {
       // Test for undefined global variable access
+      // Use IIFE to define and call function in the same eval context
       const testCode = `
-        function testGlobals() {
+        (function testGlobals() {
           if (typeof UndefinedGlobal !== 'undefined') {
             return UndefinedGlobal.someMethod();
           }
           return null;
-        }
+        })()
       `;
 
       expect(() => {
         eval(testCode);
-        eval("testGlobals()");
       }).not.toThrow(); // Should handle undefined gracefully
     });
   });
