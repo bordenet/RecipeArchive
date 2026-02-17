@@ -20,7 +20,7 @@ class JWTValidator {
 
       return { header, payload, signature };
     } catch (error) {
-      throw new Error(`Failed to parse JWT: ${error.message}`);
+      throw new Error(`Failed to parse JWT: ${error.message}`, { cause: error });
     }
   }
 
@@ -126,7 +126,7 @@ class JWTValidator {
         expiresAt: payload.exp,
       };
     } catch (error) {
-      throw new Error(`Failed to extract user info: ${error.message}`);
+      throw new Error(`Failed to extract user info: ${error.message}`, { cause: error });
     }
   }
 

@@ -810,7 +810,7 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         console.log(
           "⚠️ Got opaque response from no-cors fetch - cannot process image data"
         );
-        throw new Error("No-cors mode returned opaque response");
+        throw new Error("No-cors mode returned opaque response", { cause: corsError });
       } catch (noCorsError) {
         console.log(
           "📥 No-cors also failed, trying server-side fetch strategy..."
@@ -1148,7 +1148,7 @@ async function captureRecipe() {
       console.log("🔧 Tab URL:", tab.url);
 
       // Declare timeout variable outside try-catch to avoid scoping issues
-      let pingTimeout = null;
+      let pingTimeout;
 
       try {
         // Check if content script is already loaded before injecting

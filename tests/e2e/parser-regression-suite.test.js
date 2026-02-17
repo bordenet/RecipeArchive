@@ -1,4 +1,3 @@
-/* eslint-env node, browser */
 /**
  * E2E Parser Regression Test Suite
  *

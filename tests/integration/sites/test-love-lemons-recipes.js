@@ -1,6 +1,3 @@
-/* eslint-env node, browser */
-/* eslint-env node, browser */
-
 import { chromium, webkit } from "playwright";
 import fs from "fs";
 

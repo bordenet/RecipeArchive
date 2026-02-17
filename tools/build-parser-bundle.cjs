@@ -63,7 +63,7 @@ function acquireLock(maxWaitSeconds = 30) {
 
       // Check timeout
       if (Date.now() - startTime > maxWaitMs) {
-        throw new Error(`Failed to acquire build lock after ${maxWaitSeconds}s - another build is in progress`);
+        throw new Error(`Failed to acquire build lock after ${maxWaitSeconds}s - another build is in progress`, { cause: error });
       }
 
       // Wait before retry
@@ -237,5 +237,5 @@ try {
   }
   // Release lock on error
   releaseLock();
-  throw new Error("Bundle build failed");
+  throw new Error("Bundle build failed", { cause: error });
 }

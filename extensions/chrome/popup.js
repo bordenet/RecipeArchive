@@ -1,4 +1,3 @@
-/* eslint-env browser */
 // RecipeArchive Chrome Extension Popup with full backend integration
 
 // Global error handling for popup
@@ -749,7 +748,7 @@ async function downloadAndUploadImage(imageUrl, recipeTitle) {
         console.log(
           "⚠️ Got opaque response from no-cors fetch - cannot process image data"
         );
-        throw new Error("No-cors mode returned opaque response");
+        throw new Error("No-cors mode returned opaque response", { cause: corsError });
       } catch (noCorsError) {
         console.log(
           "📥 No-cors also failed, trying server-side fetch strategy..."

@@ -99,7 +99,7 @@ class ExtensionRegressionTest {
             // Use Node.js to check syntax
             execSync(`node --check "${filePath}"`, { stdio: "pipe" });
           } catch (error) {
-            throw new Error(`Syntax error in ${file}: ${error.message}`);
+            throw new Error(`Syntax error in ${file}: ${error.message}`, { cause: error });
           }
         });
       }
@@ -114,7 +114,7 @@ class ExtensionRegressionTest {
         // TODO: Implement scoping validation test
       } catch (error) {
         throw new Error(
-          `Scoping validation failed: ${error.message}`
+          `Scoping validation failed: ${error.message}`, { cause: error }
         );
       }
     });
@@ -210,7 +210,7 @@ class ExtensionRegressionTest {
         // Test that the parser bundle can be rebuilt
         execSync("npm run build:parser-bundle", { stdio: "pipe" });
       } catch (error) {
-        throw new Error("Parser bundle build failed");
+        throw new Error("Parser bundle build failed", { cause: error });
       }
     });
   }
@@ -224,7 +224,7 @@ class ExtensionRegressionTest {
         // Only fail if there are actual errors (not warnings)
         const output = error.stdout ? error.stdout.toString() : "";
         if (output.includes("error") || error.status > 1) {
-          throw new Error("Extension linting failed with errors");
+          throw new Error("Extension linting failed with errors", { cause: error });
         }
       }
     });

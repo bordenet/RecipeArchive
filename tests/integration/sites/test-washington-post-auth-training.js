@@ -1,5 +1,3 @@
-/* eslint-env node, browser */
-/* eslint-env node, browser */
 /**
  * Washington Post Authentication Training
  *

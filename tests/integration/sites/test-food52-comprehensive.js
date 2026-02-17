@@ -1,6 +1,3 @@
-/* eslint-env node, browser */
-/* eslint-env node, browser */
-
 const { chromium } = require("playwright");
 
 // Complete Food52 recipe test suite - 62 recipes from their best cookies collection

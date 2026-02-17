@@ -104,7 +104,7 @@ function testJavaScriptSyntax() {
           console.warn(`⚠️  ${file} still has unused error parameters`);
         }
       } catch (error) {
-        throw new Error(`❌ Error reading ${file}: ${error.message}`);
+        throw new Error(`❌ Error reading ${file}: ${error.message}`, { cause: error });
       }
     }
   }

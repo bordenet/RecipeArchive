@@ -1,5 +1,3 @@
-/* eslint-env node, browser */
-/* eslint-env node, browser */
 const { chromium } = require("playwright");
 
 async function testSingleRecipe(url, _expectedTitle) {

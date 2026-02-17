@@ -204,7 +204,7 @@ describe("Extension JavaScript Error Detection", () => {
         } catch (error) {
           // This should NOT cause "Can't find variable: tokenResult" because it's declared at function scope
           const hasToken = !!tokenResult?.data;
-          throw new Error(`Error with token status: ${hasToken}`);
+          throw new Error(`Error with token status: ${hasToken}`, { cause: error });
         }
       };
 
