@@ -75,7 +75,7 @@ dependencies:
   crypto: ^3.0.3
 
   # Keep screen awake during recipe viewing
-  wakelock_plus: ^1.4.0
+  wakelock_plus: ^1.5.1
 
   # Structured logging
   logger: ^2.0.2
