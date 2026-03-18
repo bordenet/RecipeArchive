@@ -72,7 +72,7 @@
   "author": "Matt Bordenet",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.980.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1011.0",
     "aws-cdk": "^2.1026.0",
     "aws-cdk-lib": "^2.212.0",
     "axios": "^1.11.0",
