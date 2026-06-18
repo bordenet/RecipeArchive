@@ -15,6 +15,14 @@ config/secrets.yml
 *.key
 *.p12
 *.pfx
+*.crt
+*.cer
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+id_ecdsa_sk
+id_ed25519_sk
 gitleaks-report.json
 
 # User data backups (contains PII like emails)

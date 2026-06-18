@@ -92,7 +92,7 @@ echo "🔍 Validating .gitignore..."
 if [[ -f ".gitignore" ]]; then
     REQUIRED_PATTERNS=(".env" "*.key" "*.pem")
     for pattern in "${REQUIRED_PATTERNS[@]}"; do
-        if ! grep -qE "^\\${pattern//./\\.}$|^${pattern}$" .gitignore 2>/dev/null; then
+        if ! grep -qF "$pattern" .gitignore 2>/dev/null; then
             echo -e "${C_YELLOW}⚠ Consider adding '$pattern' to .gitignore${C_RESET}"
         fi
     done
