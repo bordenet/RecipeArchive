@@ -160,7 +160,7 @@ func cleanupAllObjects(ctx context.Context, bucketName string, dryRun bool) erro
 	for {
 		listInput := &s3.ListObjectsV2Input{
 			Bucket:  aws.String(bucketName),
-			MaxKeys: 1000, // Max per request
+			MaxKeys: aws.Int32(1000), // Max per request
 		}
 		if continuationToken != "" {
 			listInput.ContinuationToken = aws.String(continuationToken)
@@ -190,7 +190,7 @@ func cleanupAllObjects(ctx context.Context, bucketName string, dryRun bool) erro
 				Bucket: aws.String(bucketName),
 				Delete: &types.Delete{
 					Objects: objectsToDelete,
-					Quiet:   false,
+					Quiet:   aws.Bool(false),
 				},
 			}
 
@@ -210,13 +210,13 @@ func cleanupAllObjects(ctx context.Context, bucketName string, dryRun bool) erro
 			// Dry run - just count what would be deleted
 			for _, obj := range result.Contents {
 				fmt.Printf("    Would delete: %s (%.2f KB)\\n",
-					*obj.Key, float64(obj.Size)/1024.0)
+					*obj.Key, float64(aws.ToInt64(obj.Size))/1024.0)
 				totalDeleted++
 			}
 		}
 
 		// Check if there are more objects
-		if !result.IsTruncated {
+		if !aws.ToBool(result.IsTruncated) {
 			break
 		}
 		continuationToken = *result.NextContinuationToken
@@ -260,14 +260,14 @@ func cleanupUserObjects(ctx context.Context, bucketName, userID string, dryRun b
 			objectsToDelete = append(objectsToDelete, types.ObjectIdentifier{
 				Key: obj.Key,
 			})
-			fmt.Printf("    - %s (%.2f KB)\\n", *obj.Key, float64(obj.Size)/1024.0)
+			fmt.Printf("    - %s (%.2f KB)\\n", *obj.Key, float64(aws.ToInt64(obj.Size))/1024.0)
 		}
 
 		deleteInput := &s3.DeleteObjectsInput{
 			Bucket: aws.String(bucketName),
 			Delete: &types.Delete{
 				Objects: objectsToDelete,
-				Quiet:   false,
+				Quiet:   aws.Bool(false),
 			},
 		}
 
@@ -282,7 +282,7 @@ func cleanupUserObjects(ctx context.Context, bucketName, userID string, dryRun b
 		}
 	} else {
 		for _, obj := range result.Contents {
-			fmt.Printf("    Would delete: %s (%.2f KB)\\n", *obj.Key, float64(obj.Size)/1024.0)
+			fmt.Printf("    Would delete: %s (%.2f KB)\\n", *obj.Key, float64(aws.ToInt64(obj.Size))/1024.0)
 		}
 	}
 
@@ -313,8 +313,8 @@ func listAllObjects(ctx context.Context, bucketName string) error {
 
 	var totalSize int64
 	for _, obj := range result.Contents {
-		sizeKB := float64(obj.Size) / 1024.0
-		totalSize += obj.Size
+		sizeKB := float64(aws.ToInt64(obj.Size)) / 1024.0
+		totalSize += aws.ToInt64(obj.Size)
 
 		key := *obj.Key
 		if len(key) > 54 {

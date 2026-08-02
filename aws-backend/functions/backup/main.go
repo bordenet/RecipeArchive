@@ -462,7 +462,7 @@ func handleListBackups(ctx context.Context, request events.APIGatewayProxyReques
 				backups = append(backups, BackupInfo{
 					BackupID:  backupID,
 					CreatedAt: *obj.LastModified,
-					SizeBytes: obj.Size,
+					SizeBytes: *obj.Size,
 					Available: true,
 				})
 			}
