@@ -252,7 +252,7 @@ export class RecipeArchiveSecureStack extends cdk.Stack {
 
     // Lambda Functions with secure naming and environment variables
     const healthFunction = new lambda.Function(this, "SecureHealthFunction", {
-      runtime: lambda.Runtime.PROVIDED_AL2,
+      runtime: lambda.Runtime.PROVIDED_AL2023,
       handler: "bootstrap",
       code: lambda.Code.fromAsset("../functions/dist/health-package"),
       functionName: `recipe-health-${secureId}`,
@@ -270,7 +270,7 @@ export class RecipeArchiveSecureStack extends cdk.Stack {
     });
 
     const recipesFunction = new lambda.Function(this, "SecureRecipesFunction", {
-      runtime: lambda.Runtime.PROVIDED_AL2,
+      runtime: lambda.Runtime.PROVIDED_AL2023,
       handler: "bootstrap",
       code: lambda.Code.fromAsset("../functions/dist/recipes-package"),
       functionName: `recipe-recipes-${secureId}`,

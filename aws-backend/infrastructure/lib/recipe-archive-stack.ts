@@ -877,7 +877,7 @@ export class RecipeArchiveStack extends cdk.Stack {
       });
 
       this._healthFunction = new lambda.Function(this, "HealthFunction", {
-        runtime: lambda.Runtime.PROVIDED_AL2,
+        runtime: lambda.Runtime.PROVIDED_AL2023,
         handler: "bootstrap",
         code: lambda.Code.fromAsset("../functions/dist/health-package"),
         timeout: cdk.Duration.seconds(10),
@@ -906,7 +906,7 @@ export class RecipeArchiveStack extends cdk.Stack {
       });
 
       this._recipesFunction = new lambda.Function(this, "RecipesFunction", {
-        runtime: lambda.Runtime.PROVIDED_AL2,
+        runtime: lambda.Runtime.PROVIDED_AL2023,
         handler: "bootstrap",
         code: lambda.Code.fromAsset("../functions/dist/recipes-package"),
         timeout: cdk.Duration.seconds(15),
@@ -941,7 +941,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "DiagnosticsFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset("../functions/dist/diagnostics-package"),
           timeout: cdk.Duration.seconds(15),
@@ -972,7 +972,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "ImageUploadFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset("../functions/dist/image-upload-package"),
           timeout: cdk.Duration.seconds(30), // More time for image processing
@@ -1003,7 +1003,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "FlutterConsoleDiagnosticsFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/flutter-console-diagnostics-package"
@@ -1035,7 +1035,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "ContentNormalizerFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/content-normalizer-package"
@@ -1068,7 +1068,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "BackgroundNormalizerFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/background-normalizer-package"
@@ -1108,7 +1108,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "DiagnosticProcessorFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/diagnostic-processor-package"
@@ -1141,7 +1141,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "InvitationManagerFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/invitation-manager-package"
@@ -1174,7 +1174,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "RegistrationHandlerFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/registration-handler-package"
@@ -1207,7 +1207,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "RecipeAnalyticsAggregator",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/analytics-aggregator-package"
@@ -1240,7 +1240,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "BackupFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset("../functions/dist/backup-package"),
           timeout: cdk.Duration.seconds(60), // Backup operations may take time
@@ -1271,7 +1271,7 @@ export class RecipeArchiveStack extends cdk.Stack {
         this,
         "DiagnosticsMobileShareFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset(
             "../functions/dist/diagnostics-mobile-share-package"

@@ -326,7 +326,7 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
         this,
         "SecureApiHealthFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset("../functions/dist/health-package"),
           functionName: `recipe-api-health-${secureId}`,
@@ -349,7 +349,7 @@ export class RecipeArchiveMinimalStack extends cdk.Stack {
         this,
         "SecureApiRecipesFunction",
         {
-          runtime: lambda.Runtime.PROVIDED_AL2,
+          runtime: lambda.Runtime.PROVIDED_AL2023,
           handler: "bootstrap",
           code: lambda.Code.fromAsset("../functions/dist/recipes-package"),
           functionName: `recipe-api-recipes-${secureId}`,
