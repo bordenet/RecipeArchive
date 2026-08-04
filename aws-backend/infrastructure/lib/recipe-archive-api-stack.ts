@@ -80,7 +80,7 @@ export class RecipeArchiveApiStack extends cdk.Stack {
       this,
       "SecureApiHealthFunction",
       {
-        runtime: lambda.Runtime.PROVIDED_AL2,
+        runtime: lambda.Runtime.PROVIDED_AL2023,
         handler: "bootstrap",
         code: lambda.Code.fromAsset("../functions/dist/health-package"),
         functionName: `recipe-api-health-${props.secureRandomId}`,
