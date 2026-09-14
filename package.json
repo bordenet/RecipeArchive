@@ -44,7 +44,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@babel/parser": "^7.28.3",
+    "@babel/parser": "^8.0.5",
     "@babel/traverse": "^7.28.3",
     "@eslint/js": "^10.0.1",
     "@jest/globals": "^30.2.0",
