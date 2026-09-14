@@ -69,7 +69,7 @@ dependencies:
   package_info_plus: ^9.0.1
 
   # Date formatting
-  intl: ^0.20.2
+  intl: ^0.20.3
 
   # Cryptography
   crypto: ^3.0.3
