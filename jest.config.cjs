@@ -21,7 +21,7 @@ module.exports = {
     "^.+\\.mjs$": "babel-jest"
   },
   transformIgnorePatterns: [
-    "node_modules/(?!(node-fetch|fetch-blob|formdata-polyfill|data-uri-to-buffer|@exodus/bytes|jsdom|parse5|entities|@asamuzakjp|@csstools|cssstyle|css-tree|nwsapi|rrweb-cssom|whatwg-url|tr46|w3c-xmlserializer|saxes|xml-name-validator|lru-cache)/)"
+    "node_modules/(?!(node-fetch|fetch-blob|formdata-polyfill|data-uri-to-buffer|@exodus/bytes|jsdom|parse5|entities|@asamuzakjp|@csstools|cssstyle|css-tree|nwsapi|rrweb-cssom|whatwg-url|tr46|w3c-xmlserializer|saxes|xml-name-validator|lru-cache|@bramus)/)"
   ],
   testTimeout: 10000,
   verbose: true

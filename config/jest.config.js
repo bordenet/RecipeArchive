@@ -19,12 +19,14 @@ export default {
         },
       },
     ],
+    "^.+\\.(m?js)$": "babel-jest",
   },
-  // eslint-disable-next-line no-useless-escape
-  transformIgnorePatterns: ["node_modules/(?!.*\.mjs$)"],
+  transformIgnorePatterns: [
+    "node_modules/(?!(node-fetch|fetch-blob|formdata-polyfill|data-uri-to-buffer|@exodus/bytes|jsdom|parse5|entities|@asamuzakjp|@csstools|cssstyle|css-tree|nwsapi|rrweb-cssom|whatwg-url|tr46|w3c-xmlserializer|saxes|xml-name-validator|lru-cache|@bramus)/)"
+  ],
   extensionsToTreatAsEsm: [],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-  // setupFilesAfterEnv: ["<rootDir>/extensions/shared/parsers/tests/setup.ts"], // Disabled due to JSDOM compatibility issues
+  setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
   testPathIgnorePatterns: [
     "/external-references/RecipeClipper/",
