@@ -11,6 +11,32 @@ if (!global.TextDecoder) {
   global.TextDecoder = TextDecoder;
 }
 
+// Web Platform globals polyfill — jsdom 30's bundled undici references these
+// at module-load time (webidl type assertions), but jest-environment-jsdom
+// doesn't carry them over from real Node globals by default.
+const {
+  ReadableStream,
+  WritableStream,
+  TransformStream,
+} = require("node:stream/web");
+const { Blob, File } = require("node:buffer");
+const { MessagePort } = require("node:worker_threads");
+
+const webPlatformGlobals = {
+  ReadableStream,
+  WritableStream,
+  TransformStream,
+  Blob,
+  File,
+  MessagePort,
+};
+
+for (const [name, impl] of Object.entries(webPlatformGlobals)) {
+  if (!global[name]) {
+    global[name] = impl;
+  }
+}
+
 // Mock chrome extension APIs
 global.chrome = {
   runtime: {
