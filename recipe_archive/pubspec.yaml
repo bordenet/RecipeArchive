@@ -78,7 +78,7 @@ dependencies:
   wakelock_plus: ^1.4.0
 
   # Structured logging
-  logger: ^2.0.2
+  logger: ^2.7.0
 
 dev_dependencies:
   flutter_test:
