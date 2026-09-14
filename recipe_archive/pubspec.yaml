@@ -45,7 +45,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
 
   # AWS Cognito Authentication
-  amazon_cognito_identity_dart_2: ^3.2.1
+  amazon_cognito_identity_dart_2: ^4.0.1
 
   # Environment Variables
   flutter_dotenv: ^6.0.0
