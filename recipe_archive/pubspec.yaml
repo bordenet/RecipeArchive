@@ -48,7 +48,7 @@ dependencies:
   amazon_cognito_identity_dart_2: ^4.0.1
 
   # Environment Variables
-  flutter_dotenv: ^6.0.0
+  flutter_dotenv: ^6.0.1
 
   # Secure Storage
   flutter_secure_storage: ^9.2.2
