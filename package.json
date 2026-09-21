@@ -46,7 +46,7 @@
   "devDependencies": {
     "@babel/parser": "^8.0.5",
     "@babel/preset-env": "^7.29.7",
-    "@babel/traverse": "^7.28.3",
+    "@babel/traverse": "^8.0.6",
     "@eslint/js": "^10.0.1",
     "@jest/globals": "^30.2.0",
     "@types/chrome": "^0.2.9",
