@@ -3,7 +3,7 @@ module github.com/bordenet/recipe-archive/tools
 go 1.26
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.47.0
+	github.com/aws/aws-sdk-go-v2 v1.47.1
 	github.com/aws/aws-sdk-go-v2/config v1.33.4
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.74.0
 	github.com/chromedp/cdproto v0.0.0-20260714215040-dc233986426f
