@@ -57,7 +57,7 @@ dependencies:
   url_launcher: ^6.2.0
 
   # Web platform APIs
-  web: ^1.1.0
+  web: ^1.1.2
 
   # File operations and sharing
   path_provider: ^2.1.2
