@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Build clean branch and merge into main
+      - name: Restore valid package-lock.json onto main
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -23,28 +23,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Fresh branch from current main tip
           git checkout -B "$BRANCH" origin/main
 
-          # Restore lock from last-good commit; keep helper files out of this commit
-          curl -fsSL "https://raw.githubusercontent.com/bordenet/RecipeArchive/f415e95/package-lock.json" -o package-lock.json
-          python3 -c "import json; d=json.load(open('package-lock.json')); assert len(d.get('packages',{}))>100; print('lock valid', len(d['packages']))"
+          curl -fsSL "https://raw.githubusercontent.com/bordenet/RecipeArchive/cursor/fix-package-lock-196f/package-lock.json" -o package-lock.json
+          python3 -c "import json; d=json.load(open('package-lock.json')); assert len(d.get('packages',{}))>100; assert d.get('packages',{}).get('node_modules/jest-environment-jsdom',{}).get('version')=='30.5.2'; print('lock valid', len(d['packages']), 'jest-environment-jsdom', d['packages']['node_modules/jest-environment-jsdom']['version'])"
 
           git add package-lock.json
-          git commit -m "chore(npm): restore package-lock.json from f415e95" || echo "lock already current"
+          git commit -m "fix(npm): restore valid package-lock.json (jest-environment-jsdom 30.5.2)" || echo "lock already current"
 
-          # Ensure branch has ONLY the lock change vs main (no workflow delete in same commit)
           git push -u origin "$BRANCH" --force
 
-          # Merge into main via API (PAT/Actions token can merge if no conflict)
           gh api -X POST repos/bordenet/RecipeArchive/merges \
             -f base=main \
             -f head="$BRANCH" \
-            -f commit_message="chore(npm): restore package-lock.json from f415e95"
+            -f commit_message="fix(npm): restore valid package-lock.json (jest-environment-jsdom 30.5.2)"
 
           echo MERGE_OK
 
-          # Cleanup helper workflow/marker from main tip via Contents API (best-effort)
           git fetch origin main
           git checkout -B cleanup origin/main
           rm -f .github/workflows/restore-package-lock.yml
