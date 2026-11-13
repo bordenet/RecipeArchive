@@ -291,7 +291,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final backupService = BackupService(recipeService);
     try {
       // Pick file
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
         withData: true,
