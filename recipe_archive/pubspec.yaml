@@ -39,9 +39,6 @@ dependencies:
   json_annotation: ^4.12.0
 
   # State Management
-  # Use a 2.x Riverpod that supports the project's Dart SDK (CI uses Dart 3.5.4).
-  # If you later upgrade the CI Dart/Flutter image to a >=3.8.0 SDK, you can
-  # restore flutter_riverpod to ^3.0.0.
   flutter_riverpod: ^3.5.0
 
   # AWS Cognito Authentication
