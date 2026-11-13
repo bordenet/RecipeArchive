@@ -1,0 +1,29 @@
+name: restore-package-lock
+on:
+  push:
+    paths:
+      - ".github/lock-restore/**"
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble and commit package-lock.json
+        run: |
+          set -euo pipefail
+          if [[ ! -d .github/lock-restore ]]; then
+            echo "No lock-restore parts; nothing to do"
+            exit 0
+          fi
+          cat .github/lock-restore/part*.txt > package-lock.json
+          python3 -c "import json; json.load(open('package-lock.json')); print('lock valid')"
+          rm -rf .github/lock-restore
+          rm -f .github/workflows/restore-package-lock.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git add -u .github/lock-restore .github/workflows/restore-package-lock.yml || true
+          git commit -m "chore(npm): restore package-lock.json from assembled parts"
+          git push
