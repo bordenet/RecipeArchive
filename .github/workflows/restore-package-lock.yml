@@ -4,28 +4,44 @@ on:
     paths:
       - ".github/lock-restore/**"
       - ".github/workflows/restore-package-lock.yml"
+  workflow_dispatch:
 permissions:
   contents: write
+  pull-requests: write
 jobs:
   restore:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restore package-lock.json from last-good commit
+        with:
+          fetch-depth: 0
+      - name: Restore package-lock.json onto a PR branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # f415e95 is last commit with intact lock before stub corruption
+          BRANCH="cursor/restore-package-lock-f5ec"
           curl -fsSL "https://raw.githubusercontent.com/bordenet/RecipeArchive/f415e95/package-lock.json" -o package-lock.json
           python3 -c "import json; d=json.load(open('package-lock.json')); assert len(d.get('packages',{}))>100; print('lock valid', len(d['packages']), 'packages')"
-          rm -rf .github/lock-restore
-          rm -f .github/workflows/restore-package-lock.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          rm -rf .github/lock-restore
+          rm -f .github/workflows/restore-package-lock.yml
           git add package-lock.json
           git add -u .github/lock-restore .github/workflows/restore-package-lock.yml || true
           if git diff --cached --quiet; then
-            echo "No changes"
-            exit 0
+            echo "No changes to commit"
+          else
+            git commit -m "chore(npm): restore package-lock.json from f415e95"
           fi
-          git commit -m "chore(npm): restore package-lock.json from f415e95"
-          git push
+          git push -u origin "$BRANCH" --force
+          # Open PR if missing
+          if ! gh pr list --head "$BRANCH" --state open --json number --jq 'length' | grep -vq '^0$'; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(npm): restore package-lock.json" \
+              --body "Restores package-lock.json from last-good commit f415e95 after stub corruption on main. One-shot restore; workflow self-deletes."
+          else
+            echo "PR already open"
+            gh pr list --head "$BRANCH" --state open
+          fi
