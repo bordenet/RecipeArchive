@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/recipe.dart';
 import 'auth_service.dart';
