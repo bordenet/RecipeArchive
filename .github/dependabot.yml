@@ -15,7 +15,7 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "npm"
+      - "javascript"
     commit-message:
       prefix: "deps(npm)"
 
@@ -30,8 +30,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "npm"
-      - "parsers"
+      - "javascript"
     commit-message:
       prefix: "deps(parsers)"
 
@@ -46,8 +45,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "npm"
-      - "mobile"
+      - "javascript"
     commit-message:
       prefix: "deps(mobile)"
 
@@ -78,7 +76,6 @@ updates:
     labels:
       - "dependencies"
       - "go"
-      - "aws-backend"
     commit-message:
       prefix: "deps(aws-backend)"
 
@@ -94,7 +91,6 @@ updates:
     labels:
       - "dependencies"
       - "go"
-      - "tools"
     commit-message:
       prefix: "deps(tools)"
 
@@ -109,8 +105,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "flutter"
-      - "dart"
     commit-message:
       prefix: "deps(flutter)"
 
@@ -125,7 +119,5 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "github-actions"
     commit-message:
       prefix: "deps(actions)"
-
