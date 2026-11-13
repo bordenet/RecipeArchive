@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - ".github/lock-restore/**"
+      - ".github/workflows/restore-package-lock.yml"
 permissions:
   contents: write
 jobs:
@@ -10,20 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble and commit package-lock.json
+      - name: Restore package-lock.json from last-good commit
         run: |
           set -euo pipefail
-          if [[ ! -d .github/lock-restore ]]; then
-            echo "No lock-restore parts; nothing to do"
-            exit 0
-          fi
-          cat .github/lock-restore/part*.txt > package-lock.json
-          python3 -c "import json; json.load(open('package-lock.json')); print('lock valid')"
+          # f415e95 is last commit with intact lock before stub corruption
+          curl -fsSL "https://raw.githubusercontent.com/bordenet/RecipeArchive/f415e95/package-lock.json" -o package-lock.json
+          python3 -c "import json; d=json.load(open('package-lock.json')); assert len(d.get('packages',{}))>100; print('lock valid', len(d['packages']), 'packages')"
           rm -rf .github/lock-restore
           rm -f .github/workflows/restore-package-lock.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package-lock.json
           git add -u .github/lock-restore .github/workflows/restore-package-lock.yml || true
-          git commit -m "chore(npm): restore package-lock.json from assembled parts"
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "chore(npm): restore package-lock.json from f415e95"
           git push
