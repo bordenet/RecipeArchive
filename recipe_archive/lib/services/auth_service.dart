@@ -3,6 +3,7 @@ import "package:amazon_cognito_identity_dart_2/cognito.dart";
 import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:flutter_secure_storage/flutter_secure_storage.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:flutter_riverpod/legacy.dart";
 import "package:recipe_archive/utils/app_logger.dart";
 
 // User model for authenticated state
