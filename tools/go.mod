@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.8
 	github.com/aws/aws-sdk-go-v2/config v1.33.17
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.75.10
-	github.com/chromedp/cdproto v0.159.2
+	github.com/chromedp/cdproto v0.160.1
 	github.com/chromedp/chromedp v0.23.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
